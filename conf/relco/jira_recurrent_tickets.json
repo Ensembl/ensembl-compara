@@ -57,6 +57,42 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Static+documentation+update#Staticdocumentationupdate-Schemadocumentation",
             "summary": "Update Compara schema documentation in Ensembl plugins"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "summary": "Fungi data dump server usage"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "summary": "Metazoa data dump server usage"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "summary": "Pan data dump server usage"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "summary": "Plants data dump server usage"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "summary": "Protists data dump server usage"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "summary": "Vertebrates data dump server usage"
          }
       ],
       "summary": "Release <version> Post-handover"

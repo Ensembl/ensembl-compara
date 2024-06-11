@@ -58,8 +58,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::PrepareHmmProfiles;
 use strict;
 use warnings;
 
-use File::Find;
-use LWP::Simple;
+#use File::Find;
+#use LWP::Simple;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

@@ -12,6 +12,39 @@
 
   </collections>
 
+  <pairwise_alignments>
+
+    <!-- LastZ batch -->
+    <all_vs_all method="LASTZ_NET">
+      <species_set>
+        <genome name="phytophthora_infestans"/>
+        <genome name="phytophthora_kernoviae"/>
+        <genome name="phytophthora_lateralis"/>
+        <genome name="phytophthora_parasitica"/>
+        <genome name="phytophthora_ramorum"/>
+        <genome name="pythium_aphanidermatum"/>
+        <genome name="pythium_arrhenomanes"/>
+        <genome name="pythium_irregulare"/>
+        <genome name="pythium_iwayamai"/>
+        <genome name="pythium_ultimum"/>
+        <genome name="pythium_vexans"/>
+
+        <genome name="albugo_laibachii"/>
+        <genome name="bigelowiella_natans"/>
+        <genome name="emiliania_huxleyi"/>
+        <genome name="entamoeba_histolytica"/>
+        <genome name="giardia_lamblia"/>
+        <genome name="guillardia_theta"/>
+        <genome name="hyaloperonospora_arabidopsidis"/>
+        <genome name="paramecium_tetraurelia"/>
+        <genome name="phaeodactylum_tricornutum"/>
+        <genome name="tetrahymena_thermophila"/>
+        <genome name="trypanosoma_brucei"/>
+      </species_set>
+    </all_vs_all>
+
+  </pairwise_alignments>
+
   <gene_trees>
     <protein_trees collection="default"/>
   </gene_trees>

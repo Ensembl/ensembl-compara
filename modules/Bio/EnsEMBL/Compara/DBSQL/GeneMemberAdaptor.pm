@@ -219,13 +219,12 @@ sub store {
     $sth->finish;
   } else {
     $sth->finish;
-    #UNIQUE(genome_db_id,stable_id) prevented insert since a gene_member was already inserted for this genome_db
+    #UNIQUE(genome_db_id,stable_id) prevented insert since this gene_member was already inserted for this genome_db
     #so get gene_member_id with select
     my $sth2 = $self->prepare("SELECT gene_member_id FROM gene_member WHERE genome_db_id = ? AND stable_id = ?");
     $sth2->execute($member->genome_db_id, $member->stable_id);
     my ($id) = $sth2->fetchrow_array();
-    warn("GeneMemberAdaptor: insert failed, but gene_member_id select failed too") unless($id);
-    throw(sprintf('%s already exists in this species (%s) ! Stable IDs must be unique within a species', $member->stable_id, $member->genome_db->name));
+    throw("GeneMemberAdaptor: insert failed, but gene_member_id select failed too") unless($id);
     $member->dbID($id);
     $sth2->finish;
   }

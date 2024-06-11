@@ -51,26 +51,18 @@ sub default_options {
         'taxlevels' => ['Drosophila' ,'Hymenoptera', 'Nematoda'],
 
         # GOC parameters:
-        'goc_taxlevels' => ['Diptera', 'Hymenoptera', 'Nematoda'],
+        'goc_taxlevels' => ['Decapoda', 'Daphnia','Parachela', 'Thoracicalcarea', 'Neoptera', 'Mollusca', 'Deuterostomia', 'Anthozoa'],
 
         # HighConfidenceOrthologs parameters:
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
-                'taxa'          => [ 'Euteleostomi', 'Ciona' ],
+                'taxa'          => [ 'Apinae', 'Asteroidea', 'Daphnia', 'Echinozoa', 'Haliotis', 'Parachela', 'Penaeus', 'Scleractinia', 'Thoracicalcarea' ],
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
-                'taxa'          => [ 'Aculeata', 'Anophelinae', 'Caenorhabditis', 'Drosophila', 'Glossinidae', 'Onchocercidae' ],
-                'thresholds'    => [ 50, 50, 25 ],
-            },
-            {
-                'taxa'          => [ 'Brachycera', 'Culicinae', 'Hemiptera', 'Phlebotominae' ],
+                'taxa'          => [ 'Anthozoa', 'Decapoda', 'Deuterostomia', 'Mollusca', 'Neoptera' ],
                 'thresholds'    => [ 25, 25, 25 ],
-            },
-            {
-                'taxa'          => [ 'Chelicerata', 'Diptera', 'Hymenoptera', 'Nematoda' ],
-                'thresholds'    => [ undef, undef, 25 ],
             },
             {
                 'taxa'          => [ 'all' ],
@@ -86,8 +78,9 @@ sub default_options {
         # Do we want the Gene QC part to run?
         'do_gene_qc'             => 0,
         # Do we need a mapping between homology_ids of this database to another database?
-        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 0,
+        # Do we expect to need shared homology dumps in a future release to facilitate reuse of WGA coverage data ?
+        'homology_dumps_shared_dir' => undef,
 
         # hive_capacity values for some analyses:
         'blastp_capacity'           => 420,
@@ -110,19 +103,20 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     # Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
         'mcoffee'           => '8Gb_job',
-        'mcoffee_himem'     => '32Gb_job',
+        'mcoffee_himem'     => '32Gb_24_hour_job',
         'mafft'             => '8Gb_2c_job',
-        'mafft_himem'       => '32Gb_4c_job',
-        'treebest'          => '4Gb_job',
+        'mafft_himem'       => '32Gb_4c_24_hour_job',
+        'treebest'          => '4Gb_24_hour_job',
         'members_against_allspecies_factory'        => '2Gb_job',
         'members_against_nonreusedspecies_factory'  => '2Gb_job',
-        'homology_dumps_mlss_id_factory'            => '500Mb_job',
-        'ortholog_mlss_factory'                     => '500Mb_job',
     );
 
     foreach my $logic_name (keys %overriden_rc_names) {

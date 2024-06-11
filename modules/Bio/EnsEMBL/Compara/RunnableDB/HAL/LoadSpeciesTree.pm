@@ -32,6 +32,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree');
 
@@ -44,7 +45,7 @@ sub fetch_input {
     my $mlss = $mlss_adap->fetch_by_dbID( $self->param_required('mlss_id') );
     
     my $hal_path = $mlss->url;
-    my %species_map = %{ eval $mlss->get_tagvalue('HAL_mapping') };
+    my %species_map = %{destringify($mlss->get_value_for_tag('HAL_mapping', '{}'))};
 
     die "Path to HAL file missing from  MLSS (id " . $self->param('mlss_id') . ") url field\n" unless (defined $hal_path);
     die "Species name mapping missing from method_link_species_set_tag\n" unless (%species_map);
@@ -55,6 +56,9 @@ sub fetch_input {
         my $hal_species = $species_map{$gdb_id};
         my $gdb = $gdb_adap->fetch_by_dbID($gdb_id);
         my $ens_species = $gdb->name;
+        if ( defined $gdb->genome_component ) {
+            $ens_species = $ens_species . '_' . $gdb->genome_component;
+        }
         $newick_tree =~ s/$hal_species/$ens_species/g;
     }
 

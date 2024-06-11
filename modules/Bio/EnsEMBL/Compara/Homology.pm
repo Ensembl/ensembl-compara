@@ -44,15 +44,6 @@ General getters:
  - description()
  - toString()
 
-dN/dS values:
- - n()
- - s()
- - lnl()
- - threshold_on_ds()
- - dn()
- - ds()
- _ dnds_ratio()
-
 Reconciliation with the gene tree:
  - is_tree_compliant()
  - gene_tree_node()
@@ -80,7 +71,7 @@ use warnings;
 
 use JSON;
 
-use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning deprecate);
 
 use base ('Bio::EnsEMBL::Compara::AlignedMemberSet');
 
@@ -202,99 +193,40 @@ sub is_high_confidence {
 ## dN/dS methods
 #################
 
-=head2 n
-
-  Arg [1]    : float $n (optional)
-  Example    : $n = $homology->n();
-               $homology->n(3);
-  Description: getter/setter of number of nonsynonymous positions for the homology.
-  Returntype : float
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub n {
+sub n { ## DEPRECATED
   my $self = shift;
+  deprecate("Homology::n() is deprecated and will be removed in e115.");
   $self->{'_n'} = shift if(@_);
   return $self->{'_n'};
 }
 
 
-=head2 s
-
-  Arg [1]    : float $s (optional)
-  Example    : $s = $homology->s();
-               $homology->s(4);
-  Description: getter/setter of number of synonymous positions for the homology.
-  Returntype : float
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub s {
+sub s { ## DEPRECATED
   my $self = shift;
+  deprecate("Homology::s() is deprecated and will be removed in e115.");
   $self->{'_s'} = shift if(@_);
   return $self->{'_s'};
 }
 
 
-=head2 lnl
-
-  Arg [1]    : float $lnl (optional)
-  Example    : $lnl = $homology->lnl();
-               $homology->lnl(-1234.567);
-  Description: getter/setter of number of the negative log likelihood for the dnds homology calculation.
-  Returntype : float
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub lnl {
+sub lnl { ## DEPRECATED
   my $self = shift;
+  deprecate("Homology::lnl() is deprecated and will be removed in e115.");
   $self->{'_lnl'} = shift if(@_);
   return $self->{'_lnl'};
 }
 
-=head2 threshold_on_ds
 
-  Arg [1]    : float $threshold_on_ds (optional)
-  Example    : $lnl = $homology->threshold_on_ds();
-               $homology->threshold_on_ds(1.01340);
-  Description: getter/setter of the threshold on ds for which the dnds ratio still makes sense.
-               Note that threshold_on_ds is a property of the current MethodLinkSpeciesSet, and
-               is shared by all its homologies
-  Returntype : float
-  Exceptions : none
-  Caller     : general
-
-=cut
-
-sub threshold_on_ds {
+sub threshold_on_ds { ## DEPRECATED
   my $self = shift;
+  deprecate("Homology::threshold_on_ds() is deprecated and will be removed in e115.");
   return $self->method_link_species_set->_getter_setter_for_tag('threshold_on_ds', @_);
 }
 
-=head2 dn
 
-  Arg [1]    : floating $dn (can be undef)
-  Arg [2]    : boolean $apply_threshold_on_ds (optional, default = 1)
-               Can be 0 or 1.
-  Example    : $homology->dn or $homology->dn(0.1209)
-               if you want to retrieve dn without applying threshold_on_ds, the right call
-               is $homology->dn(undef,0).
-  Description: set/get the non synonymous subtitution rate
-  Returntype : floating
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-
-sub dn {
+sub dn { ## DEPRECATED
   my ($self, $dn, $apply_threshold_on_ds) = @_;
+  deprecate("Homology::dn() is deprecated and will be removed in e115.");
 
   if (defined $dn) {
       $self->{'_dn'} = $dn;
@@ -309,24 +241,10 @@ sub dn {
   return $self->{'_dn'};
 }
 
-=head2 ds
 
-  Arg [1]    : floating $ds (can be undef)
-  Arg [2]    : boolean $apply_threshold_on_ds (optional, default = 1)
-               Can be 0 or 1. 
-  Example    : $homology->ds or $homology->ds(0.9846)
-               if you want to retrieve ds without applying threshold_on_ds, the right call
-               is $homology->dn(undef,0).
-  Description: set/get the synonymous subtitution rate
-  Returntype : floating
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-
-sub ds {
+sub ds { ## DEPRECATED
   my ($self, $ds, $apply_threshold_on_ds) = @_;
+  deprecate("Homology::ds() is deprecated and will be removed in e115.");
 
   if (defined $ds) {
       $self->{'_ds'} = $ds;
@@ -348,23 +266,10 @@ sub ds {
   return $self->{'_ds'};
 }
 
-=head2 dnds_ratio
 
-  Arg [1]    : boolean $apply_threshold_on_ds (optional, default = 1)
-               Can be 0 or 1. 
-  Example    : $homology->dnds_ratio or
-               $homology->dnds_ratio(0) if you want to obtain a result
-               even when the dS is above the threshold on dS.
-  Description: return the ratio of dN/dS
-  Returntype : floating
-  Exceptions : 
-  Caller     : 
-
-=cut
-
-
-sub dnds_ratio {
+sub dnds_ratio { ## DEPRECATED
   my $self = shift;
+  deprecate("Homology::dnds_ratio() is deprecated and will be removed in e115.");
   my $apply_threshold_on_ds = shift;
   
   $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);

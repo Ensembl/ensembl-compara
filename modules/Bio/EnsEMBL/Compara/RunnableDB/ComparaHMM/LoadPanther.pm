@@ -160,6 +160,7 @@ sub _concatenate_profiles {
     print STDERR "concatenating the HMM profiles ...\n" if ( $self->debug );
     my @hmm_list;
 
+    local $File::Find::dont_use_nlink = 1;
     find( sub { push @hmm_list, $File::Find::name if -f && /\.hmm$/ }, $self->param('panther_dir') );
 
     $self->param( 'local_hmm_library', $self->param('panther_dir') . "/" . $self->param('library_name') );

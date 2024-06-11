@@ -234,6 +234,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 method_link_species_set_id => '#ext_mlss_id#',
             },
+            -rc_name => '1Gb_24_hour_job',
             -flow_into => [ 'alignment_mlss_factory' ],
         },
 
@@ -272,7 +273,7 @@ sub tweak_analyses {
     # flow 2 "make_species_tree" jobs and add semaphore
     $analyses_by_name->{'create_mlss_ss'}->{'-flow_into'} = 'make_species_tree';
     delete $analyses_by_name->{'create_mlss_ss'}->{'-parameters'};
-    delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
+    delete $analyses_by_name->{'hc_species_tree'}->{'-flow_into'};
 
     # Rewire "create_default_pairwise_mlss" and "dump_mappings_to_file" after having trimmed the anchors
     $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'} = {
@@ -290,7 +291,6 @@ sub tweak_analyses {
 
     # set mlss_id for "extended_genome_alignment*"
     $analyses_by_name->{'extended_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
-    $analyses_by_name->{'extended_genome_alignment_again'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'extended_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'extended_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
 

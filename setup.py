@@ -12,51 +12,10 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Build script for setuptools."""
+"""setuptools-based stub for editable installs"""
 
-from setuptools import setup, find_namespace_packages
-
-
-with open('README.md') as f:
-    readme = f.read()
-
-with open('PIP_VERSION') as f:
-    version = f.read()
+from setuptools import setup
 
 
-def import_requirements(requirements_path):
-    """Import file located at the root of the repository."""
-    with open(requirements_path) as file:
-        return [line.rstrip() for line in file.readlines()]
-
-
-setup(
-    name='ensembl-compara',
-    version=version,
-    packages=find_namespace_packages(where='src/python/lib'),
-    package_dir={"": "src/python/lib"},
-    description="Ensembl Compara's Python library",
-    include_package_data=True,
-    install_requires=import_requirements('requirements.txt'),
-    tests_require=import_requirements('requirements-test.txt'),
-    long_description=readme,
-    author='Ensembl Compara',
-    author_email='dev@ensembl.org',
-    url='https://www.ensembl.org',
-    download_url='https://github.com/Ensembl/ensembl-compara',
-    license="Apache License 2.0",
-    python_requires=">=3.7",
-    classifiers=[
-        "Development Status :: 3 - Alpha",
-        "Environment :: Console",
-        "Intended Audience :: Science/Research",
-        "License :: OSI Approved :: Apache Software License",
-        "Natural Language :: English",
-        "Programming Language :: Python :: 3.7",
-        "Topic :: Scientific/Engineering :: Bio-Informatics",
-        "Topic :: Software Development :: Libraries :: Python Modules",
-    ],
-    scripts=[
-        'src/python/scripts/run_gerp.py'
-    ]
-)
+if __name__ == "__main__":
+    setup()

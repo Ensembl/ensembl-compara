@@ -60,7 +60,7 @@ sub default_options {
         },
 
     # Pan division doesn't run any type of alignment
-    'orth_wga_complete' => 1,
+    'do_orth_wga' => 0,
 
     # plots
         #compute Jaccard Index and Gini coefficient (Lorenz curve)
@@ -76,8 +76,9 @@ sub default_options {
         # Do we extract overall statistics for each pair of species ?
         'do_homology_stats'      => 1,
         # Do we need a mapping between homology_ids of this database to another database ?
-        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 0,
+        # Do we expect to need shared homology dumps in a future release to facilitate reuse of WGA coverage data ?
+        'homology_dumps_shared_dir' => undef,
 
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
@@ -100,6 +101,9 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     # Pan division doesn't run any type of alignment
@@ -110,16 +114,10 @@ sub tweak_analyses {
     ## Here we adjust the resource class of some analyses to the Pan division
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
-        'HMMer_classifyPantherScore'    => '2Gb_job',
+        'HMMer_classifyPantherScore'    => '2Gb_24_hour_job',
         'hcluster_run'                  => '1Gb_job',
         'hcluster_parse_output'         => '2Gb_job',
         # Many decision-type analyses take more memory for Pan. Because of the fatter Registry ?
-        'tree_building_entry_point'     => '500Mb_job',
-        'treebest_decision'             => '500Mb_job',
-        'hc_post_tree'                  => '500Mb_job',
-        'ortho_tree_decision'           => '500Mb_job',
-        'copy_dumps_to_shared_loc'      => '500Mb_job',
-        'homology_dumps_mlss_id_factory'    => '500Mb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};

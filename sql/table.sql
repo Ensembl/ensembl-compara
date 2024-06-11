@@ -47,7 +47,7 @@ CREATE TABLE IF NOT EXISTS meta (
 
   meta_id                     INT NOT NULL AUTO_INCREMENT,
   species_id                  INT UNSIGNED DEFAULT 1,
-  meta_key                    VARCHAR(40) NOT NULL,
+  meta_key                    VARCHAR(64) NOT NULL,
   meta_value                  TEXT NOT NULL,
 
   PRIMARY   KEY (meta_id),
@@ -122,7 +122,7 @@ CREATE TABLE ncbi_taxa_node (
 
 CREATE TABLE ncbi_taxa_name (
   taxon_id                    int(10) unsigned NOT NULL,
-  name                        varchar(255) NOT NULL,
+  name                        varchar(500) NOT NULL,
   name_class                  varchar(50) NOT NULL,
 
   FOREIGN KEY (taxon_id) REFERENCES ncbi_taxa_node(taxon_id),
@@ -653,7 +653,7 @@ CREATE TABLE dnafrag (
 @colour #808000
 
 @example    This query lists some haplotypes of the human chromosome 20, incl. the length of the complete patched chromosome and the coordinates of the region that differs.
-    @sql    SELECT dnafrag_id, name, length, dnafrag_start, dnafrag_end FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE name LIKE "CHR\_HSCHR20\_%";
+    @sql    SELECT dnafrag_id, name, length, dnafrag_start, dnafrag_end FROM dnafrag_alt_region JOIN dnafrag USING (dnafrag_id) WHERE name LIKE "HSCHR20\_%";
 
 @column dnafrag_id      External reference to dnafrag_id in the @link dnafrag table
 @column dnafrag_start   Position of the first nucleotide from this dnafrag that differs from the reference dnafrag
@@ -1035,6 +1035,7 @@ CREATE TABLE gene_member (
 
   PRIMARY KEY (gene_member_id),
   UNIQUE KEY genome_db_stable_id (genome_db_id,stable_id),
+  KEY (stable_id),
   KEY (source_name),
   KEY (canonical_member_id),
   KEY dnafrag_id_start (dnafrag_id,dnafrag_start),
@@ -1139,6 +1140,7 @@ CREATE TABLE seq_member (
 
   PRIMARY KEY (seq_member_id),
   UNIQUE KEY genome_db_stable_id (genome_db_id,stable_id),
+  KEY (stable_id),
   KEY (source_name),
   KEY (sequence_id),
   KEY (gene_member_id),
@@ -2274,11 +2276,13 @@ CREATE TABLE `CAFE_species_gene` (
 
 -- Add schema version to database
 DELETE FROM meta WHERE meta_key='schema_version';
-INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '110');
+INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_version', '113');
 -- Add schema type to database
 DELETE FROM meta WHERE meta_key='schema_type';
 INSERT INTO meta (species_id, meta_key, meta_value) VALUES (NULL, 'schema_type', 'compara');
 
 # Patch identifier
 INSERT INTO meta (species_id, meta_key, meta_value)
-  VALUES (NULL, 'patch', 'patch_109_110_a.sql|schema_version');
+  VALUES (NULL, 'patch', 'patch_112_113_a.sql|schema_version');
+INSERT INTO meta (species_id, meta_key, meta_value)
+  VALUES (NULL, 'patch', 'patch_112_113_b.sql|meta_key_64');

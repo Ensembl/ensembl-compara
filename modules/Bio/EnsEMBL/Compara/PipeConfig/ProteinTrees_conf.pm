@@ -264,8 +264,6 @@ sub default_options {
         'orth_batch_size'   => 10,
         # set to 1 when all pairwise and multiple WGA complete
         'dna_alns_complete' => 0,
-        # populated by the check_file_copy analysis when wga analyses finished
-        'orth_wga_complete' => 0,
 
         # parameters for HighConfidenceOrthologs
         'threshold_levels'            => [ ],          # division specific
@@ -344,6 +342,8 @@ sub default_options {
         'do_cafe'                => 1,
         # gene order conservation ?
         'do_goc'                 => 1,
+        # orthology wga ?
+        'do_orth_wga'            => 1,
         # compute dNdS for homologies?
         'do_dnds'                => 0,
         # Export HMMs ?
@@ -353,7 +353,6 @@ sub default_options {
         # Do we extract overall statistics for each pair of species ?
         'do_homology_stats'      => 1,
         # Do we need a mapping between homology_ids of this database to another database ?
-        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 1,
 
         # homology dumps options
@@ -458,6 +457,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'db_name'       => $self->o('db_name'),
 
         'ensembl_release' => $self->o('ensembl_release'),
+        'collection'      => $self->o('collection'),  # required for per-MLSS homology merge
 
         'reg_conf'      => $self->o('reg_conf'),
         'member_type'   => $self->o('member_type'),
@@ -509,6 +509,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'use_treerecs' => $self->o('use_treerecs'),
         'use_raxml'    => $self->o('use_raxml'),
         'do_goc'       => $self->o('do_goc'),
+        'do_orth_wga'  => $self->o('do_orth_wga'),
         'do_cafe'      => $self->o('do_cafe'),
         'do_stable_id_mapping'   => $self->o('do_stable_id_mapping'),
         'do_treefam_xref'   => $self->o('do_treefam_xref'),
@@ -517,7 +518,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'do_gene_qc'        => $self->o('do_gene_qc'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
         'dna_alns_complete' => $self->o('dna_alns_complete'), # manually change to 1 when all wgas have finished
-        'orth_wga_complete' => $self->o('orth_wga_complete'), # populated by the check_file_copy analysis when wga analyses finished
 
         'mapped_gene_ratio_per_taxon' => $self->o('mapped_gene_ratio_per_taxon'),
     };
@@ -533,6 +533,12 @@ sub core_pipeline_analyses {
             -batch_size         => 20,
     );
 
+    my %semaphore_check_params = (
+        'compara_db' => $self->pipeline_url(),
+        'datacheck_names' => [ 'TimelySemaphoreRelease' ],
+        'db_type' => $self->o('db_type'),
+        'registry_file' => undef,
+    );
 
     #-------------------------------------------------------------------------------
     # This boundaries are based on RAxML and ExaML manuals.
@@ -650,6 +656,17 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_1_before_clustering.sql.gz',
             },
             -rc_name       => '1Gb_job',
+            -flow_into  => [ { 'pre_clustering_semaphore_check' => \%semaphore_check_params } ],
+        },
+
+        {   -logic_name        => 'pre_clustering_semaphore_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
+            -flow_into         => [ { 'fire_clustering_analyses' => '{}' } ],
+        },
+
+        {   -logic_name => 'fire_clustering_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => WHEN(
                     '#are_all_species_reused# and (#reuse_level# eq "clusters")' => 'copy_clusters',
@@ -666,6 +683,17 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_2_before_tree_building.sql.gz',
             },
+            -flow_into  => [ { 'pre_tree_building_semaphore_check' => \%semaphore_check_params } ],
+        },
+
+        {   -logic_name        => 'pre_tree_building_semaphore_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
+            -flow_into         => [ { 'fire_tree_building_analyses' => '{}' } ],
+        },
+
+        {   -logic_name => 'fire_tree_building_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => [ 'cluster_factory' ],
                 'A->1'  => [ 'backbone_fire_homology_dumps' ],
@@ -674,6 +702,17 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'backbone_fire_homology_dumps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ { 'pre_homology_dump_semaphore_check' => \%semaphore_check_params } ],
+        },
+
+        {   -logic_name        => 'pre_homology_dump_semaphore_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
+            -flow_into         => [ { 'fire_homology_dump_analyses' => '{}' } ],
+        },
+
+        {   -logic_name => 'fire_homology_dump_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => [ 'snapshot_posttree', 'homology_dumps_mlss_id_factory', 'gene_dumps_genome_db_factory' ],
                 'A->1' => [ 'backbone_fire_posttree' ],
@@ -681,6 +720,17 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'backbone_fire_posttree',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ { 'posttree_semaphore_check' => \%semaphore_check_params } ],
+        },
+
+        {   -logic_name        => 'posttree_semaphore_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
+            -flow_into         => [ { 'fire_posttree_analyses' => '{}' } ],
+        },
+
+        {   -logic_name => 'fire_posttree_analyses',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => [ 'rib_group_1' ],
@@ -695,9 +745,20 @@ sub core_pipeline_analyses {
                 'exclude_list'  => 1,
                 'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
             },
-            -rc_name    => '500Mb_job',
+            -rc_name    => '1Gb_24_hour_job',
+            -flow_into  => [ { 'final_semaphore_check' => \%semaphore_check_params } ],
+        },
+
+        {   -logic_name        => 'final_semaphore_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
+            -flow_into         => [ { 'fire_final_analyses' => '{}' } ],
+        },
+
+        {   -logic_name => 'fire_final_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => [
-                'generate_tree_stats_report',
+                WHEN( '#gene_tree_stats_shared_dir#' => 'generate_tree_stats_report' ),
                 'wga_expected_dumps',
                 WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
             ],
@@ -1071,6 +1132,7 @@ sub core_pipeline_analyses {
             -parameters     => {
                 'sql'   => 'INSERT INTO hmm_annot SELECT seq_member_id, model_id, NULL FROM hmm_curated_annot hca JOIN seq_member sm ON sm.stable_id = hca.seq_member_stable_id',
             },
+            -rc_name        => '4Gb_job',
             -flow_into      => [ 'HMMer_classifyInterpro' ],
         },
 
@@ -1114,7 +1176,7 @@ sub core_pipeline_analyses {
                              'hmmer_path'          => $self->o('hmmer2_home'),
                             },
              -hive_capacity => $self->o('HMMer_classifyPantherScore_capacity'),
-             -rc_name => '4Gb_job',
+             -rc_name => '4Gb_24_hour_job',
              -flow_into => {
                            -1 => [ 'HMMer_classifyPantherScore_himem' ],  # MEMLIMIT
                            },
@@ -1233,7 +1295,6 @@ sub core_pipeline_analyses {
                 'blast_bin_dir' => $self->o('blast_bin_dir'),
                 'cmd' => '#blast_bin_dir#/makeblastdb -dbtype prot -parse_seqids -logfile #fasta_name#.blastdb_log -in #fasta_name#',
             },
-            -rc_name       => '1Gb_job',
             -flow_into  => [ 'unannotated_all_vs_all_factory' ],
         },
 
@@ -1256,7 +1317,7 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
-            -rc_name       => '250Mb_6_hour_job',
+            -rc_name       => '1Gb_6_hour_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem' ],  # MEMLIMIT
                -2 => 'break_batch_unannotated',
@@ -1284,6 +1345,7 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
+            -rc_name   => '1Gb_24_hour_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem_no_runlimit' ],  # MEMLIMIT
             },
@@ -1353,7 +1415,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'dump_canonical_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',   # Gets fasta_dir from pipeline_wide_parameters
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('reuse_capacity'),
             #-flow_into => [ 'cdhit' ],
         },
@@ -1376,7 +1437,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'dump_representative_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DumpMembersIntoFasta',
-            -rc_name    => '500Mb_job',
             -parameters => {
                 'only_canonical' => 0,
                 'only_representative' => 1,
@@ -1399,7 +1459,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'step' => $self->o('num_sequences_per_blast_job'),
             },
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => { 'blastp' => INPUT_PLUS() },
@@ -1413,7 +1472,6 @@ sub core_pipeline_analyses {
                 'species_set_id'    => '#nonreuse_ss_id#',
                 'step'              => $self->o('num_sequences_per_blast_job'),
             },
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => { 'blastp' => INPUT_PLUS() },
@@ -1428,7 +1486,7 @@ sub core_pipeline_analyses {
                 %blastp_parameters,
             },
             -batch_size    => 25,
-            -rc_name       => '250Mb_6_hour_job',
+            -rc_name       => '1Gb_6_hour_job',
             -flow_into => {
                -1 => [ 'blastp_himem' ],  # MEMLIMIT
                -2 => [ 'break_batch' ],   # RUNLIMIT
@@ -1443,7 +1501,6 @@ sub core_pipeline_analyses {
                 %blastp_parameters,
             },
             -batch_size    => 25,
-            -rc_name       => '1Gb_job',
             -hive_capacity => $self->o('blastp_capacity'),
         },
 
@@ -1567,7 +1624,7 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'cluster_tagging',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ClusterTagging',
             -hive_capacity  => $self->o('cluster_tagging_capacity'),
-            -rc_name    	=> '4Gb_job',
+            -rc_name        => '4Gb_job',
             -batch_size     => 50,
         },
 
@@ -1591,7 +1648,6 @@ sub core_pipeline_analyses {
                 'blocklist_file' => $self->o('gene_blocklist_file'),
             },
             -flow_into          => [ 'hc_clusters' ],
-            -rc_name => '500Mb_job',
         },
 
         {   -logic_name         => 'hc_clusters',
@@ -1728,7 +1784,7 @@ sub core_pipeline_analyses {
             -flow_into  => [
                     WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
                     WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
-                    { 'datacheck_trees' => { 'db_type' => $self->o('db_type'), 'compara_db' => '#ref_db#', 'registry_file' => undef, 'datacheck_names' => ['CheckFlatProteinTrees'] } },
+                    { 'datacheck_trees' => { 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef, 'datacheck_names' => ['CheckFlatProteinTrees'] } },
                 ],
             %hc_analysis_params,
         },
@@ -1738,7 +1794,6 @@ sub core_pipeline_analyses {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -analysis_capacity => 100,
             -max_retry_count   => 0,
-            -rc_name           => '500Mb_job',
             -flow_into         => {
                 '-1' => [ 'datacheck_trees_high_mem' ],
             },
@@ -1755,6 +1810,10 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'compute_jaccard_index',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeJaccardIndex',
             -parameters => {
+
+                'rscript_exe'    => $self->o('rscript_exe'),
+                'renv_dir'       => $self->o('renv_dir'),
+
                 'jaccard_index_script'  => $self->o('jaccard_index_script'),
                 'lorentz_curve_script'  => $self->o('lorentz_curve_script'),
 
@@ -1764,7 +1823,7 @@ sub core_pipeline_analyses {
                 'output_gini_file'   => '#plots_dir#/gini_coefficient.out',
                 'output_gini_pdf'    => '#plots_dir#/gini_coefficient.pdf',
             },
-            -rc_name       => '2Gb_job',
+            -rc_name       => '2Gb_24_hour_job',
         },
 
 # ---------------------------------------------[Pluggable MSA steps]----------------------------------------------------------
@@ -1780,7 +1839,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_short_capacity'),
             -batch_size           => 20,
-            -rc_name    => '1Gb_job',
+            -rc_name   => '1Gb_24_hour_job',
             -flow_into => {
                -1 => [ 'mcoffee' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
@@ -1796,7 +1855,7 @@ sub core_pipeline_analyses {
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -1,
             },
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -priority   => $self->o('mcoffee_priority'),
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
@@ -1838,7 +1897,7 @@ sub core_pipeline_analyses {
                 'extaligners_exe_dir'   => $self->o('extaligners_exe_dir'),
                 'escape_branch'         => -2,
             },
-            -rc_name    => '8Gb_job',
+            -rc_name    => '8Gb_24_hour_job',
             -priority   => $self->o('mcoffee_himem_priority'),
             -flow_into => {
                -1 => [ 'mafft_himem' ],
@@ -1853,7 +1912,7 @@ sub core_pipeline_analyses {
                 'mafft_threads'              => 4,
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
-            -rc_name    => '8Gb_4c_job',
+            -rc_name    => '8Gb_4c_24_hour_job',
             -priority   => $self->o('mafft_himem_priority'),
             -flow_into     => {
                 -1 => [ 'mafft_huge' ],
@@ -1870,7 +1929,7 @@ sub core_pipeline_analyses {
                 'tmp_dir'                    => $self->o('tmp_dir'),
             },
             -hive_capacity        => $self->o('mafft_himem_capacity'),
-            -rc_name    => '16Gb_8c_job',
+            -rc_name    => '16Gb_8c_24_hour_job',
             -priority   => $self->o('mafft_himem_priority'),
             -flow_into  => {
                 -1 => [ 'mafft_mammoth' ],
@@ -1886,7 +1945,7 @@ sub core_pipeline_analyses {
                 'tmp_dir'       => $self->o('tmp_dir'),
             },
             -hive_capacity => $self->o('mafft_himem_capacity'),
-            -rc_name       => '128Gb_16c_job',
+            -rc_name       => '128Gb_16c_24_hour_job',
             -priority      => $self->o('mafft_himem_priority'),
         },
 
@@ -1902,7 +1961,6 @@ sub core_pipeline_analyses {
                     ELSE 'aln_tagging',
                 ),
             },
-            -rc_name    => '500Mb_job',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -batch_size     => 20,
         },
@@ -1937,7 +1995,6 @@ sub core_pipeline_analyses {
                 split_genes_gene_count  => $self->o('split_genes_gene_count'),
             },
             -hive_capacity  => $self->o('split_genes_capacity'),
-            -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => {
                 '2->A' => 'split_genes_per_species',
@@ -1949,7 +2006,6 @@ sub core_pipeline_analyses {
         {   -logic_name     => 'split_genes_per_species',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
-            -rc_name        => '500Mb_job',
         },
 
         {   -logic_name     => 'split_genes_himem',
@@ -2032,7 +2088,6 @@ sub core_pipeline_analyses {
                 #'trimal_exe'    => $self->o('trimal_exe'),
             #},
             #-hive_capacity  => $self->o('alignment_filtering_capacity'),
-            #-rc_name        => '500Mb_job',
             #-batch_size     => 5,
             #-flow_into      => [ 'aln_filtering_tagging' ],
         #},
@@ -2210,7 +2265,6 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('treebest_capacity'),
-            -rc_name    => '500Mb_job',
             -batch_size => 10,
             -flow_into  => {
                 -1 => 'treebest',
@@ -2227,7 +2281,7 @@ sub core_pipeline_analyses {
                 'treebest_exe'              => $self->o('treebest_exe'),
             },
             -hive_capacity        => $self->o('treebest_capacity'),
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -flow_into  => {
                 -1 => 'treebest_long_himem',
                 -2 => 'treebest_long_himem',
@@ -2243,7 +2297,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('treebest_capacity'),
             -priority             => $self->o('treebest_long_himem_priority'),
-            -rc_name    => '8Gb_job',
+            -rc_name              => '8Gb_168_hour_job',
         },
 
 # ---------------------------------------------[tree building with raxml]-------------------------------------------------------------
@@ -2291,7 +2345,7 @@ sub core_pipeline_analyses {
                     '(#raxml_cores# >  4)  && (#raxml_cores# <= 8)'     => 'raxml_parsimony_8_cores',
                     '(#raxml_cores# >  8)  && (#raxml_cores# <= 16)'    => 'raxml_parsimony_16_cores',
                     '(#raxml_cores# >  16) && (#raxml_cores# <= 32)'    => 'raxml_parsimony_32_cores',
-                    '(#raxml_cores# >  32)'                             => 'raxml_parsimony_64_cores',
+                    '(#raxml_cores# >  32)'                             => 'raxml_parsimony_48_cores',
                 ),
                 'A->1' => 'raxml_decision',
             },
@@ -2375,7 +2429,7 @@ sub core_pipeline_analyses {
                 'escape_branch'             => -1,
             },
             -hive_capacity  => $self->o('raxml_capacity'),
-            -rc_name 		=> '16Gb_8c_job',
+            -rc_name        => '16Gb_8c_job',
             -flow_into      => {
                 -1 => [ 'raxml_parsimony_8_cores_himem' ],
             }
@@ -2439,31 +2493,31 @@ sub core_pipeline_analyses {
             -rc_name 		=> '32Gb_32c_job',
         },
 
-        {   -logic_name => 'raxml_parsimony_64_cores',
+        {   -logic_name => 'raxml_parsimony_48_cores',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
             -parameters => {
                 %raxml_parsimony_parameters,
-                'raxml_number_of_cores'     => 64,
+                'raxml_number_of_cores'     => 48,
                 'cmd_max_runtime'           => '518400',
                 'escape_branch'             => -1,
             },
             -hive_capacity  => $self->o('raxml_capacity'),
-            -rc_name 		=> '16Gb_64c_job',
+            -rc_name 		=> '16Gb_48c_job',
             -flow_into      => {
-                -1 => [ 'raxml_parsimony_64_cores_himem' ],
+                -1 => [ 'raxml_parsimony_48_cores_himem' ],
                 -2 => [ 'fasttree' ],
             }
         },
 
-        {   -logic_name => 'raxml_parsimony_64_cores_himem',
+        {   -logic_name => 'raxml_parsimony_48_cores_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_parsimony',
             -parameters => {
                 %raxml_parsimony_parameters,
-                'raxml_number_of_cores'     => 64,
+                'raxml_number_of_cores'     => 48,
                 'cmd_max_runtime'           => '518400',
             },
             -hive_capacity  => $self->o('raxml_capacity'),
-            -rc_name 		=> '32Gb_64c_job',
+            -rc_name 		=> '32Gb_48c_job',
             -flow_into      => {
                 -2 => [ 'fasttree' ],
             }
@@ -2478,7 +2532,7 @@ sub core_pipeline_analyses {
                 'input_clusterset_id'      => 'default',
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name 		=> '32Gb_32c_job',
+            -rc_name              => '32Gb_32c_job',
         },
 
         {   -logic_name => 'raxml_decision',
@@ -2497,9 +2551,9 @@ sub core_pipeline_analyses {
                     '(#raxml_cores# >  8)  && (#raxml_cores# <= 16)'    => 'raxml_16_cores',
                     # examl can handle ~4x more patterns
                     '(#raxml_cores# >  16) && (#raxml_cores# <= 32)'    => 'examl_8_cores',
-                    '(#raxml_cores# >  32) && (#raxml_cores# <= 64)'    => 'examl_16_cores',
-                    '(#raxml_cores# >  64) && (#raxml_cores# <= 128)'   => 'examl_32_cores',
-                    '(#raxml_cores# >  128)'                            => 'examl_64_cores',
+                    '(#raxml_cores# >  32) && (#raxml_cores# <= 48)'    => 'examl_16_cores',
+                    '(#raxml_cores# >  48) && (#raxml_cores# <= 128)'   => 'examl_32_cores',
+                    '(#raxml_cores# >  128)'                            => 'examl_48_cores',
                 ),
             },
         },
@@ -2511,7 +2565,7 @@ sub core_pipeline_analyses {
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '8Gb_8c_mpi',
+            -rc_name => '8Gb_8c_168_hour_mpi',
             -flow_into => {
                -1 => [ 'examl_8_cores_himem' ],  # MEMLIMIT
                -2 => [ 'examl_16_cores' ],       # RUNTIME
@@ -2535,7 +2589,7 @@ sub core_pipeline_analyses {
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '8Gb_16c_mpi',
+            -rc_name => '8Gb_16c_168_hour_mpi',
             -flow_into => {
                -1 => [ 'examl_16_cores_himem' ],  # MEMLIMIT
                -2 => [ 'examl_32_cores' ],  	  # RUNTIME
@@ -2559,10 +2613,10 @@ sub core_pipeline_analyses {
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '8Gb_32c_mpi',
+            -rc_name => '8Gb_32c_168_hour_mpi',
             -flow_into => {
                -1 => [ 'examl_32_cores_himem' ],  # MEMLIMIT
-               -2 => [ 'examl_64_cores' ],  	  # RUNTIME
+               -2 => [ 'examl_48_cores' ],  	  # RUNTIME
             }
         },
 
@@ -2573,10 +2627,10 @@ sub core_pipeline_analyses {
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '32Gb_32c_mpi',
+            -rc_name => '32Gb_32c_168_hour_mpi',
         },
 
-        {   -logic_name => 'examl_64_cores',
+        {   -logic_name => 'examl_48_cores',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
@@ -2584,15 +2638,15 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '8Gb_64c_mpi',
-            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge.
+            -rc_name => '8Gb_48c_168_hour_mpi',
+            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 48 cores. It will probably not converge.
             -flow_into => {
-               -1 => [ 'examl_64_cores_himem' ],  # MEMLIMIT
+               -1 => [ 'examl_48_cores_himem' ],  # MEMLIMIT
                -2 => [ 'fasttree' ],  # RUNLIMIT
             }
         },
 
-        {   -logic_name => 'examl_64_cores_himem',
+        {   -logic_name => 'examl_48_cores_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExaML',
             -parameters => {
                 %examl_parameters,
@@ -2600,8 +2654,8 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '32Gb_64c_mpi',
-            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 64 cores. It will probably not converge.
+            -rc_name => '32Gb_48c_168_hour_mpi',
+            -max_retry_count => 3, #We restart this jobs 3 times then they will run in FastTree. After 18 days (3*518400) of ExaML 48 cores. It will probably not converge.
             -flow_into => {
                -2 => [ 'fasttree' ],  # RUNLIMIT
             }
@@ -2698,7 +2752,7 @@ sub core_pipeline_analyses {
                 'raxml_number_of_cores'     => 2,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name 		=> '4Gb_2c_job',
+            -rc_name 		=> '4Gb_2c_24_hour_job',
             -flow_into  => {
                 -1 => [ 'raxml_2_cores_himem' ],
                 -2 => [ 'raxml_4_cores' ],
@@ -2722,7 +2776,7 @@ sub core_pipeline_analyses {
                 'raxml_number_of_cores'     => 4,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name 		=> '8Gb_4c_job',
+            -rc_name 		=> '8Gb_4c_24_hour_job',
             -flow_into  => {
                 -1 => [ 'raxml_4_cores_himem' ],
                 -2 => [ 'raxml_8_cores' ],
@@ -2746,7 +2800,7 @@ sub core_pipeline_analyses {
                 'raxml_number_of_cores'     => 8,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name 		=> '16Gb_8c_job',
+            -rc_name    => '16Gb_8c_168_hour_job',
             -flow_into  => {
                 -1 => [ 'raxml_8_cores_himem' ],
                 -2 => [ 'examl_16_cores' ],
@@ -2769,7 +2823,7 @@ sub core_pipeline_analyses {
                 'raxml_number_of_cores'     => 16,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name 		=> '16Gb_16c_job',
+            -rc_name 		=> '16Gb_16c_168_hour_job',
             -flow_into  => {
                 -1 => [ 'raxml_16_cores_himem' ],
                 -2 => [ 'examl_32_cores' ],
@@ -2783,7 +2837,7 @@ sub core_pipeline_analyses {
                 'raxml_number_of_cores'     => 16,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name 		=> '32Gb_16c_job',
+            -rc_name 		=> '32Gb_16c_168_hour_job',
         },
 
 
@@ -2915,7 +2969,7 @@ sub core_pipeline_analyses {
                     '(#tree_gene_count# > 500)  && (#tree_gene_count# <= 1000)' => 'raxml_bl_8',
                     '(#tree_gene_count# > 1000) && (#tree_gene_count# <= 2000)' => 'raxml_bl_16',
                     '(#tree_gene_count# > 3000) && (#tree_gene_count# <= 10000)' => 'raxml_bl_32',
-                    '(#tree_gene_count# > 10000)'                                => 'raxml_bl_64',
+                    '(#tree_gene_count# > 10000)'                                => 'raxml_bl_48',
                 ),
             },
             %decision_analysis_params,
@@ -2976,14 +3030,14 @@ sub core_pipeline_analyses {
             }
         },
 
-        {   -logic_name => 'raxml_bl_64',
+        {   -logic_name => 'raxml_bl_48',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_bl',
             -parameters => {
                 %raxml_bl_parameters,
-                'raxml_number_of_cores'     => 64,
+                'raxml_number_of_cores'     => 48,
             },
             -hive_capacity        => $self->o('raxml_capacity'),
-            -rc_name    => '256Gb_64c_job',
+            -rc_name    => '256Gb_48c_job',
             -flow_into  => {
                 1  => [ 'copy_raxml_bl_tree_2_default_tree' ],
                 2 => [ 'copy_treebest_tree_2_raxml_bl_tree' ],
@@ -3066,7 +3120,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => -10,
-            -rc_name        => '1Gb_job',
+            -rc_name        => '1Gb_24_hour_job', 
             -flow_into      => {
                 1   => [ 'final_tree_steps' ],
                 -1  => 'ortho_tree_himem',
@@ -3083,7 +3137,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('ortho_tree_capacity'),
             -priority       => 20,
-            -rc_name        => '4Gb_job',
+            -rc_name        => '4Gb_24_hour_job',
             -flow_into      => [ 'final_tree_steps' ],
         },
 
@@ -3100,7 +3154,7 @@ sub core_pipeline_analyses {
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
             -batch_size    => 5,
-            -rc_name       => '500Mb_job',
+            -rc_name       => '1Gb_24_hour_job',
             -flow_into     => {
                 -1 => [ 'ktreedist_himem' ],
             },
@@ -3113,14 +3167,14 @@ sub core_pipeline_analyses {
                                'ktreedist_exe' => $self->o('ktreedist_exe'),
                               },
             -hive_capacity => $self->o('ktreedist_capacity'),
-            -rc_name       => '4Gb_job',
+            -rc_name       => '4Gb_24_hour_job',
         },
 
         {   -logic_name     => 'consensus_cigar_line_prep',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnConsensusCigarLine',
-            -rc_name        => '500Mb_job',
             -hive_capacity  => $self->o('ktreedist_capacity'),
             -batch_size     => 20,
+            -rc_name        => '1Gb_24_hour_job',
             -flow_into      => {
                 -1  => [ 'consensus_cigar_line_prep_himem' ],
             },
@@ -3153,7 +3207,6 @@ sub core_pipeline_analyses {
                 'hmmer_version'     => 3,
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
-            -rc_name        => '1Gb_job',
         },
 
         {   -logic_name => 'build_HMM_cds_v3',
@@ -3165,7 +3218,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity  => $self->o('build_hmm_capacity'),
             -batch_size     => 5,
-            -rc_name        => '500Mb_job',
             -flow_into      => {
                 -1  => 'build_HMM_cds_v3_himem'
             },
@@ -3192,7 +3244,7 @@ sub core_pipeline_analyses {
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
-            -rc_name   => '2Gb_job',
+            -rc_name   => '2Gb_24_hour_job',
             -flow_into => {
                 1 => [ 'other_paralogs', 'subcluster_factory' ],
                 -1 => 'quick_tree_break_himem',
@@ -3207,7 +3259,7 @@ sub core_pipeline_analyses {
                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
             },
             -hive_capacity        => $self->o('quick_tree_break_capacity'),
-            -rc_name   => '4Gb_job',
+            -rc_name   => '8Gb_24_hour_job',
             -flow_into => [ 'other_paralogs_himem', 'subcluster_factory' ],
         },
 
@@ -3218,6 +3270,7 @@ sub core_pipeline_analyses {
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
+            -rc_name        => '1Gb_24_hour_job',
             -flow_into      => {
                 -1 => [ 'other_paralogs_himem', ],
                 3 => [ 'other_paralogs' ],
@@ -3231,7 +3284,7 @@ sub core_pipeline_analyses {
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '1Gb_job',
+            -rc_name        => '2Gb_24_hour_job',
             -flow_into      => {
                 3 => [ 'other_paralogs_himem' ],
             }
@@ -3281,7 +3334,7 @@ sub core_pipeline_analyses {
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '1Gb_job',
+            -rc_name        => '1Gb_24_hour_job',
             -flow_into      => {
                 -1 => [ 'panther_paralogs_himem', ],
                 3 => [ 'panther_paralogs' ],
@@ -3295,7 +3348,7 @@ sub core_pipeline_analyses {
                 'output_flatfile'     => '#orthotree_dir#/#hashed_gene_tree_id#/#gene_tree_id#.orthotree.tsv',
             },
             -hive_capacity  => $self->o('other_paralogs_capacity'),
-            -rc_name        => '4Gb_job',
+            -rc_name        => '4Gb_24_hour_job',
             -flow_into      => {
                 3 => [ 'panther_paralogs_himem' ],
             }
@@ -3312,7 +3365,7 @@ sub core_pipeline_analyses {
                 'type'          => 't',
             },
             -flow_into          => [ 'hc_stable_id_mapping' ],
-            -rc_name => '2Gb_job',
+            -rc_name => '4Gb_job',
         },
 
         {   -logic_name         => 'hc_stable_id_mapping',
@@ -3344,7 +3397,6 @@ sub core_pipeline_analyses {
                 # We don't use build_HMM_aa_v2 because hmmcalibrate takes ages
                 2 => [ 'build_HMM_aa_v3', 'build_HMM_cds_v3' ],
             },
-            -rc_name => '1Gb_job',
         },
 
 # ---------------------------------------------[homology step]-----------------------------------------------------------------------
@@ -3387,12 +3439,8 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_high_confidence_orths',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
-            -parameters => {
-                'switch_name' => 'orth_wga_complete',
-            },
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => [ 'mlss_id_for_high_confidence_factory', 'paralogue_for_import_factory' ],
-            -max_retry_count => 0,
         },
 
         {   -logic_name => 'paralogue_for_import_factory',
@@ -3484,6 +3532,7 @@ sub core_pipeline_analyses {
                 'output_file'   => '#dump_dir#/snapshot_3_after_tree_building.sql.gz',
             },
             -hive_capacity => 9, # this prevents too many competing `dump_per_mlss_homologies_tsv` jobs being spawned
+            -rc_name        => '1Gb_24_hour_job',
         },
 
         {   -logic_name => 'rib_fire_cafe',
@@ -3521,7 +3570,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name    => 'compute_statistics',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComputeStatistics',
-            -rc_name       => '500Mb_job',
+            -rc_name       => '1Gb_168_hour_job',
             -flow_into     => {
                 '1->A'  => [ 'write_stn_tags' ],
                 'A->1'  => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef } },
@@ -3561,7 +3610,6 @@ sub core_pipeline_analyses {
                     'ENSEMBL_ORTHOLOGUES'   => 2,
                 },
             },
-            -rc_name   => '500Mb_job',
             -flow_into => {
                 2 => [ 'mlss_id_mapping' ],
             },
@@ -3573,7 +3621,6 @@ sub core_pipeline_analyses {
                 'prev_rel_db'   => '#mapping_db#',
             },
             -hive_capacity => $self->o('homology_dNdS_capacity'),
-            -rc_name   => '500Mb_job',
             -flow_into  => {
                 -1 => [ 'mlss_id_mapping_himem' ],
                 1 => { 'homology_id_mapping' => INPUT_PLUS() },
@@ -3610,7 +3657,6 @@ sub core_pipeline_analyses {
                 'homology_mapping_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#homo_mlss_id#.#member_type#.homology_id_map.tsv',
             },
             -hive_capacity => $self->o('homology_dNdS_factory_capacity'),
-            -rc_name       => '500Mb_job',
             -flow_into => {
                 'A->1' => [ 'hc_dnds' ],
                 '2->A' => [ 'homology_dNdS' ],
@@ -3664,10 +3710,12 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_orth_wga',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
-            -parameters => {
-                'switch_name' => 'dna_alns_complete',
-            },
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN('#do_orth_wga#' => 'check_dna_alns_complete'),
+        },
+
+        {   -logic_name => 'check_dna_alns_complete',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckDnaAlnsComplete',
             -flow_into  => {
                 1 => { 'pair_species' => { 'species_set_name' => $self->o('wga_species_set_name') } },
             },
@@ -3683,7 +3731,6 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('homology_dNdS_capacity'),
             -priority=> 20,
-            -rc_name => '500Mb_job',
         },
 
         {   -logic_name => 'copy_homology_dNdS',
@@ -3691,7 +3738,6 @@ sub core_pipeline_analyses {
             -parameters => {
             },
             -hive_capacity        => $self->o('copy_homology_dNdS_capacity'),
-            -rc_name => '500Mb_job',
             -batch_size => 5,
             -flow_into  => {
                 2 => [ 'homology_dNdS' ],
@@ -3719,7 +3765,6 @@ sub core_pipeline_analyses {
         {   -logic_name => 'threshold_on_dS_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Threshold_on_dS',
             -hive_capacity => $self->o('homology_dNdS_capacity'),
-            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'rib_fire_goc',
@@ -3731,7 +3776,8 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -rc_name    => '1Gb_job',
             -parameters => {
-                'component_genomes' => 0,
+                'component_genomes' => 1,
+                'polyploid_genomes' => 0,
                 'fan_branch_code' => 1,
             },
             -flow_into  => [ 'count_genes_in_tree' ],
@@ -3753,7 +3799,6 @@ sub core_pipeline_analyses {
                     'ENSEMBL_PARALOGUES'    => 3,
                 },
             },
-            -rc_name   => '500Mb_job',
             -flow_into => {
                 2 => [ 'orthology_stats', ],
                 3 => [ 'paralogy_stats',  ],
@@ -3766,7 +3811,6 @@ sub core_pipeline_analyses {
                 'hashed_mlss_id'    => '#expr(dir_revhash(#mlss_id#))expr#',
                 'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
             },
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
@@ -3777,7 +3821,6 @@ sub core_pipeline_analyses {
                 'homology_flatfile' => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.homologies.tsv',
                 'species_tree_label'    => $self->o('use_notung') ? 'binary' : 'default',
             },
-            -rc_name       => '500Mb_job',
             -hive_capacity => $self->o('ortho_stats_capacity'),
         },
 
@@ -3795,7 +3838,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'cmd'         => '/bin/bash -c "mkdir -p #homology_dumps_shared_dir# && rsync -rtO #homology_dumps_dir#/ #homology_dumps_shared_dir#"',
             },
-            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'wga_expected_dumps',

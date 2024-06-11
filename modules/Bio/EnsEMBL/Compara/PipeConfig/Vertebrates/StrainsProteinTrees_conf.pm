@@ -89,6 +89,15 @@ sub core_pipeline_analyses {
         @{$self->SUPER::core_pipeline_analyses},
 
         # include strain-specific analyses
+
+        {   -logic_name => 'find_overlapping_genomes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes',
+            -parameters => {
+                'collection' => $self->o('collection'),
+            },
+            -flow_into  => [ 'check_strains_cluster_factory' ],
+        },
+
         {   -logic_name => 'check_strains_cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -102,7 +111,6 @@ sub core_pipeline_analyses {
         },
         {   -logic_name => 'cleanup_strains_clusters',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
-
         },
 
 
@@ -119,7 +127,6 @@ sub tweak_analyses {
 
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = $self->o('multifurcation_deletes_all_subnodes');
-    $analyses_by_name->{'expand_clusters_with_projections'}->{'-rc_name'} = '500Mb_job';
     $analyses_by_name->{'split_genes'}->{'-hive_capacity'} = 300;
 
     # datacheck specific tweaks for pipelines
@@ -127,8 +134,8 @@ sub tweak_analyses {
     $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
 
     # wire up strain-specific analyses
-    $analyses_by_name->{'remove_blacklisted_genes'}->{'-flow_into'} = ['check_strains_cluster_factory'];
-    push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';
+    $analyses_by_name->{'remove_blocklisted_genes'}->{'-flow_into'} = ['find_overlapping_genomes'];
+    push @{$analyses_by_name->{'fire_final_analyses'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 }
 
 

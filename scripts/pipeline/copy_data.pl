@@ -265,6 +265,9 @@ foreach my $one_method_link_type (@method_link_types) {
                 } else {
                     print "\tSkipping empty MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type'\n";
                 }
+            } elsif ($one_method_link_type =~ /^(CACTUS_HAL|CACTUS_HAL_PW)$/) {
+                print "Will be adding MLSS '$one_mlss_name' with dbID '$one_mlss_id' found using method_link_type '$one_method_link_type'\n";
+                $all_mlss_objects{ $one_mlss_id } = $one_mlss_object;
             }
         }
     } else {

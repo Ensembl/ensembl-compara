@@ -44,7 +44,8 @@ sub pipeline_analyses_prep_master_db_for_release {
         {   -logic_name => 'patch_master_db',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
-                'cmd' => [$self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#master_db#', '--fixlast', '--nointeractive'],
+                'cmd' => [$self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#master_db#', '--fix', '--oldest', '#oldest_patch_release#', '--nointeractive'],
+                'oldest_patch_release' => $self->o('rel_with_suffix'),
             },
             -flow_into  => ['load_ncbi_node'],
         },
@@ -121,7 +122,6 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'list_genomes_script'   => $self->o('list_genomes_script'),
                 'report_genomes_script' => $self->o('report_genomes_script'),
-                'additional_species'    => $self->o('additional_species'),
                 'work_dir'              => $self->o('work_dir'),
                 'annotation_file'       => $self->o('annotation_file'),
                 'meta_host'             => $self->o('meta_host'),
@@ -211,8 +211,15 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'report_file'         => $self->o('report_file'),
                 'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
             },
+            -flow_into  => [ 'tag_alignments_being_patched' ],
+        },
+
+        {   -logic_name => 'tag_alignments_being_patched',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::TagAlignmentsBeingPatched',
+            -parameters => {
+                'work_dir' => $self->o('work_dir'),
+            },
             -flow_into  => [ 'retire_old_species_sets' ],
-            -rc_name    => '500Mb_job',
         },
 
         {   -logic_name => 'retire_old_species_sets',
@@ -239,7 +246,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn'     => '#master_db#',
-                'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl"',
+                'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl" AND method_link_id != 22 AND method_link_id != 23',
             },
             -flow_into  => [ 'dc_master' ],
         },

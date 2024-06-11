@@ -31,13 +31,19 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-5 -port 4615{code}",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Checkcoredatabases",
+            "summary": "Check the core databases"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-5 -port 4615{code}",
             "summary": "Prepare the master database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps\n*GitHub*: [DumpGenomes_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps\n*GitHub*: [DumpGenomes_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "summary": "Run the genome dumping pipeline",
             "name_on_graph": "Genome dumps"
          },
@@ -50,15 +56,15 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the member loading pipeline",
             "name_on_graph": "Member loading"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [CreateSpeciesTree_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/CreateSpeciesTree_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::CreateSpeciesTree_conf -host mysql-ens-compara-prod-X -port XXXX -division plants -output_file $ENSEMBL_ROOT_DIR/ensembl-compara/conf/plants/species_tree.rice.branch_len.nw -species_set_id XXXXXX{code}\n(!) Only needs to be recomputed if there is a change to the rice {{species_set}}",
-            "summary": "Import the species-tree",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Species-tree\n*GitHub*: [SpeciesTreeFromBusco|https://github.com/Ensembl/ensembl-compara/tree/release/<version>/pipelines/SpeciesTreeFromBusco]",
+            "summary": "Run BUSCO species-tree pipeline",
             "name_on_graph": "Species-tree"
          }
       ],
@@ -69,32 +75,65 @@
       "component": "Relco tasks",
       "description": "*Intentions for release*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>\n*Production pipelines brief*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+Pipelines+Brief",
       "subtasks": [{
+            "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the Protein-trees pipeline",
             "name_on_graph": "Protein-trees"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*GitHub*: [WheatCultivarsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/WheatCultivarsProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::WheatCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*GitHub*: [WheatCultivarsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/WheatCultivarsProteinTrees_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::WheatCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the wheat cultivars Protein-trees pipeline",
             "name_on_graph": "Protein-trees:Wheat cultivars"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "Mark as done when all LastZs have been merged into the new release database.",
-            "summary": "All LastZ",
-            "name_on_graph": "All LastZ"
+            "description": "*GitHub*: [RiceCultivarsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/RiceCultivarsProteinTrees_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::RiceCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "summary": "Run the rice cultivars Protein-trees pipeline",
+            "name_on_graph": "Protein-trees:Rice cultivars"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*GitHub*: [Plants/EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/EPOwithExt_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name rice{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
+            "description": "Review the gene-tree stats for each gene-tree pipeline, and address any issues.",
+            "summary": "Check gene-tree stats",
+            "name_on_graph": "Check gene-tree stats"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "Mark as done when all LastZs have been merged into the new release database.",
+            "summary": "Merge all LastZ",
+            "name_on_graph": "Merge all LastZ"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
+            "summary": "Register HAL alignment data",
+            "name_on_graph": "Register HAL alignment data"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "*GitHub*: [Plants/EPOwithExt_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/EPOwithExt_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::EPOwithExt_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -species_set_name rice{code}\n(!) remember to set {{pipeline_wide_parameters.lastz_complete}} to 1 when relevant LASTZs are ready",
             "summary": "Run the Rice EPOwithExt pipeline",
             "name_on_graph": "EPOwithExt:Rice"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
+            "description": "Review the stats for each MSA pipeline, and address any issues.",
+            "summary": "Check MSA stats",
+            "name_on_graph": "Check MSA stats"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
          }
@@ -117,7 +156,14 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "summary": "Merge DNA data",
-            "name_on_graph": "All alignments for WGA Orthology QC"
+            "name_on_graph": "Merge all alignments for WGA Orthology QC"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-Preliminaries",
+            "summary": "Backup release database",
+            "name_on_graph": "Backup the release database before merging the homology data"
          },
          {
             "assignee": "<RelCo>",
@@ -129,7 +175,8 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
-            "summary": "Merge the homology pipelines"
+            "summary": "Merge the homology pipelines",
+            "name_on_graph": "Merge the homology pipelines"
          },
          {
             "assignee": "<RelCo>",
@@ -155,21 +202,25 @@
             "summary": "Ask the <Division> team to test the staging server"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
             "summary": "Test the DNA data"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
             "summary": "Test the homologies data"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
             "summary": "Test the downloads"
          },
          {
+            "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
             "summary": "Test the documentation and statistics"
@@ -186,6 +237,44 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisionswithanancestraldatabase(e.g.Plants)",
             "summary": "Handover of ancestral DB"
+         }
+      ],
+      "labels": ["Merge_anchor"],
+      "summary": "<Division> Release <version> Database merge and handover"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "Clean up any <division> database backups that are no longer needed",
+            "summary": "Clean up unneeded <division> database backups"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks#Posthandovertasks-MovepipelinedirectoriestoNFS",
+            "summary": "Move pipeline directories to NFS"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks#Posthandovertasks-Cleanuphomologydumps",
+            "summary": "Clean up homology dumps"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks#Posthandovertasks-Cleanupgenomedumps",
+            "summary": "Clean up genome dumps"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "Ensure that the division production_reg_conf.pl is up to date on GitHub",
+            "summary": "Update conf/<division>/production_reg_conf.pl"
          },
          {
             "assignee": "<RelCo>",
@@ -194,8 +283,7 @@
             "summary": "Update conf/<division>/jira_recurrent_tickets.json"
          }
       ],
-      "labels": ["Merge_anchor"],
-      "summary": "<Division> Release <version> Database merge and handover"
+      "summary": "<Division> Release <version> Post-handover tasks"
    },
    {
       "assignee": "<RelCo>",
@@ -215,24 +303,5 @@
          }
       ],
       "summary": "<Division> Release <version> Final checks before public release"
-   },
-   {
-      "assignee": "<RelCo>",
-      "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps",
-      "subtasks": [{
-            "assignee": "<RelCo>",
-            "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Databaseupdate",
-            "summary": "Incremental copy back release database"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Runningthepipeline",
-            "summary": "Data dump"
-         }
-      ],
-      "summary": "<Division> Release <version> FTP Dumps"
    }
 ]

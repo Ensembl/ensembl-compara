@@ -275,6 +275,27 @@ sub _check_is_good_for_alignment {
 }
 
 
+sub find_overlapping_genome_db_ids {
+    my ($compara_dba, $collection_name, $ref_collection_names) = @_;
+
+    my $species_set_adaptor = $compara_dba->get_SpeciesSetAdaptor;
+
+    my %ref_genome_id_set;
+    foreach my $ref_collection_name (@{$ref_collection_names}) {
+        my $ref_collection = $species_set_adaptor->fetch_collection_by_name($ref_collection_name);
+        throw("Cannot find reference collection '$ref_collection_name' in database") unless $ref_collection;
+        foreach my $genome_db (@{$ref_collection->genome_dbs}) {
+            $ref_genome_id_set{$genome_db->dbID} = 1;
+        }
+    }
+
+    my $collection = $species_set_adaptor->fetch_collection_by_name($collection_name);
+    throw("Cannot find collection '$collection_name' in database") unless $collection;
+    my @collection_genome_ids = map { $_->dbID } @{$collection->genome_dbs};
+
+    return [grep { exists $ref_genome_id_set{$_} } @collection_genome_ids];
+}
+
 ############################################################
 #                 update_genome.pl methods                 #
 ############################################################
@@ -790,7 +811,7 @@ sub create_mlsss_on_pairs {
     my @input_genome_dbs = @$genome_dbs;
     while (my $gdb1 = shift @input_genome_dbs) {
         foreach my $gdb2 (@input_genome_dbs) {
-            push @mlsss, create_mlss($method, [$gdb1, $gdb2], undef, $source, $url);
+            push @mlsss, create_mlss($method, [$gdb1, $gdb2], $source, $url);
         }
     }
     return \@mlsss;

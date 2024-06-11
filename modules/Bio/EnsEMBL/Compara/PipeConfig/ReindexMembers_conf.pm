@@ -149,7 +149,7 @@ sub pipeline_wide_parameters {
 }
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     my $hc_analyses = Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf::pipeline_analyses($self);
@@ -204,7 +204,6 @@ sub pipeline_analyses {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
                 'extra_parameters'  => [ 'locator' ],
             },
-            -rc_name   => '500Mb_job',
             -flow_into => {
                 '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, }, # fan
                 'A->1' => 'create_mlss_ss',
@@ -219,11 +218,10 @@ sub pipeline_analyses {
         {   -logic_name => 'create_mlss_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareSpeciesSetsMLSS',
             -parameters => {
-                'whole_method_links'        => [ 'PROTEIN_TREES', 'NC_TREES' ],
+                'whole_method_links'        => [ $self->o('member_type') eq "protein" ? 'PROTEIN_TREES' : 'NC_TREES' ],
                 'singleton_method_links'    => [ 'ENSEMBL_PARALOGUES', 'ENSEMBL_HOMOEOLOGUES' ],
                 'pairwise_method_links'     => [ 'ENSEMBL_ORTHOLOGUES' ],
             },
-            -rc_name    => '500Mb_job',
             -flow_into  => {
                 1 => 'load_members_factory',
             },
@@ -344,6 +342,15 @@ sub pipeline_analyses {
             -flow_into      => {
                 '2->A' => 'exon_boundaries_prep',
                 'A->1' => 'pipeline_entry',
+                1      => 'hc_deletion',
+            },
+        },
+        {   -logic_name     => 'hc_deletion',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::DeletionHealthcheck',
+            -parameters     => {
+                'diff_limit'    => -2.5,
+            },
+            -flow_into      => {
             },
         },
 
@@ -352,7 +359,6 @@ sub pipeline_analyses {
             -flow_into      => {
                 -1 => 'exon_boundaries_prep_himem',
             },
-            -rc_name        => '500Mb_job',
             -hive_capacity  => 100,
             -batch_size     => 20,
         },

@@ -47,8 +47,6 @@ sub default_options {
         'dump_dir'          => $self->o('dump_root') . '/release-' . $self->o('eg_release'),
 
         'division'          => 'fungi',
-
-        'prev_rel_ftp_root' => $self->o('ftp_root') . '/release-' . $self->o('prev_eg_release') . '/' . $self->o('division'),
     };
 }
 

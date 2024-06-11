@@ -53,6 +53,7 @@ perl create_mlss.pl
     [--ref_species] when using --pw, only produce pairs with ref present
     [--sg] singleton
     [--use_genomedb_ids] use GenomeDB IDs in MLSS name than truncated GenomeDB names
+    [--use_binomials]
     [--species_set_name species_set_name] 
     [--taxon_id taxon_id]
     [--only_with_karyotype]
@@ -122,6 +123,16 @@ in the list i.e. [1] [2] [3] [4] for a given  method link.
 Force the names of the create MLSS to use the Genome DB ID rather than the truncated form
 of its name (which is normally of the form H.sap).
 
+=item B<[--use_binomials]>
+
+Force the created MLSS to use abbreviated names derived from the first
+two parts of the full Genome DB name, ignoring any subsequent parts.
+
+This option is useful if you have many trinomial Genome DB
+names with a common prefix in the third part of their name.
+
+If the '--use_genomedb_ids' flag is specified, this option is ignored.
+
 =item B<[--species_set_name species_set_name]>
 
 Set the name for this species_set.
@@ -189,6 +200,7 @@ my $force = 0;
 my $pairwise = 0;
 my $singleton = 0;
 my $use_genomedb_ids = 0;
+my $use_binomials = 0;
 my $species_set_name;
 my $collection;
 my $release;
@@ -213,6 +225,7 @@ GetOptions(
     "sg" => \$singleton,
     "ref_species=s" => \$ref_name,
     "use_genomedb_ids" => \$use_genomedb_ids,
+    "use_binomials" => \$use_binomials,
     "species_set_name|species_set_tag=s" => \$species_set_name,
     "collection=s" => \$collection,
     'release' => \$release,
@@ -458,6 +471,13 @@ sub create_mlss {
         foreach my $gdb (@{$all_genome_dbs}) {
           my $species_name = $gdb->name;
           $species_name =~ s/\b(\w)/\U$1/g;
+
+          if ($use_binomials) {
+            my @species_name_split = split('_', $species_name);
+            my @first_two_species_name_split = @species_name_split[0, 1];
+            $species_name = join('_', @first_two_species_name_split);
+          }
+
           $species_name =~ s/(\S)\S+\_/$1\./;
           $species_name = substr($species_name, 0, 5);
           push @individual_names, $species_name;
@@ -504,6 +524,7 @@ sub create_mlss {
   }
   
   my $new_mlss = Bio::EnsEMBL::Compara::MethodLinkSpeciesSet->new(
+                                                                 -adaptor => $mlssa,
                                                                  -method => $method,
                                                                  -species_set => $species_set,
                                                                  -name => $mlss_name,

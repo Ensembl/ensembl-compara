@@ -26,7 +26,7 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
-use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert :check);
 
@@ -633,20 +633,10 @@ sub store {
   return $hom->dbID;
 }
 
-
-=head2 update_genetic_distance
-
- Arg [1]    : Bio::EnsEMBL::Compara::Homology $homology
- Example    : $HomologyAdaptor->update_genetic_distance($homology)
- Description: updates the n,s,dn,ds,lnl values from a homology object into a compara database
- Exceptions : when isa if Arg [1] is not Bio::EnsEMBL::Compara::Homology
- Caller     : Bio::EnsEMBL::Compara::Runnable::Homology_dNdS
-
-=cut
-
-sub update_genetic_distance {
+sub update_genetic_distance { ## DEPRECATED
   my $self = shift;
   my $hom = shift;
+  deprecate("DBSQL::HomologyAdaptor::update_genetic_distance() is deprecated and will be removed in e115.");
 
   assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology', 'hom');
 

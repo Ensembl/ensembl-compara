@@ -81,8 +81,9 @@ sub default_options {
         # Do we want the Gene QC part to run?
         'do_gene_qc'             => 0,
         # Do we need a mapping between homology_ids of this database to another database?
-        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 0,
+        # Do we expect to need shared homology dumps in a future release to facilitate reuse of WGA coverage data ?
+        'homology_dumps_shared_dir' => undef,
         # Quick tree break is not suitable for protists dataset due to divergence causing inappropriate subtrees
         'use_quick_tree_break' => 0,
 
@@ -91,6 +92,9 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'HMMer_classify_factory'}->{'-parameters'}->{'step'} = 50;

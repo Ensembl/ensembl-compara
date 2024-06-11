@@ -102,7 +102,6 @@ sub pipeline_analyses {
 
         {   -logic_name => 'summarise_wga_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SummariseWGAStats',
-            -rc_name    => '500Mb_job',
             -flow_into  => ['backbone_end'],
         },
 

@@ -9,6 +9,27 @@
 
   </collections>
 
+  <pairwise_alignments>
+    <all_vs_all method="LASTZ_NET">
+      <species_set>
+       <genome name="ashbya_gossypii"/>
+       <genome name="fusarium_oxysporum"/>
+       <genome name="fusarium_solani"/>
+       <genome name="fusarium_verticillioides"/>
+       <genome name="magnaporthe_oryzae"/>
+       <genome name="magnaporthe_poae"/>
+       <genome name="puccinia_graminis"/>
+       <genome name="puccinia_triticina"/>
+       <genome name="saccharomyces_cerevisiae"/>
+       <genome name="schizosaccharomyces_cryophilus"/>
+       <genome name="schizosaccharomyces_japonicus"/>
+       <genome name="schizosaccharomyces_octosporus"/>
+       <genome name="schizosaccharomyces_pombe"/>
+       <genome name="trichoderma_virens"/>
+      </species_set>
+    </all_vs_all>
+  </pairwise_alignments>
+
   <gene_trees>
     <protein_trees collection="default"/>
   </gene_trees>

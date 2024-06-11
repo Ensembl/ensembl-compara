@@ -836,7 +836,7 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
-            -rc_name       => '250Mb_6_hour_job',
+            -rc_name       => '1Gb_6_hour_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem' ],  # MEMLIMIT
                -2 => 'break_batch',
@@ -978,7 +978,6 @@ sub core_pipeline_analyses {
                 'blocklist_file' => $self->o('gene_blocklist_file'),
             },
             -flow_into          => [ 'clusterset_backup' ],
-            -rc_name => '500Mb_job',
         },
 
         {   -logic_name         => 'create_additional_clustersets',
@@ -1299,7 +1298,6 @@ sub core_pipeline_analyses {
                 split_genes_gene_count  => $self->o('split_genes_gene_count'),
             },
             -hive_capacity  => $self->o('split_genes_capacity'),
-            -rc_name        => '500Mb_job',
             -batch_size     => 20,
             -flow_into      => [ 'build_HMM_aa_v3' ],
         },

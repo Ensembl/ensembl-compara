@@ -87,7 +87,6 @@ sub pipeline_analyses_epo_anchor_mapping {
                     'compara_db'            => '#master_db#',   # that's where genome_db_ids come from
                     'extra_parameters'      => [ 'locator' ],
                 },
-                -rc_name   => '500Mb_job',
                 -flow_into => {
                     '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, },
                     'A->1' => [ 'create_mlss_ss' ],
@@ -97,7 +96,6 @@ sub pipeline_analyses_epo_anchor_mapping {
             {   -logic_name => 'load_genomedb',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
 		-hive_capacity => $self->o('low_capacity'),
-                -rc_name   => '500Mb_job',
                 -flow_into => [ 'copy_dnafrags_from_master' ],
             },
 
@@ -118,7 +116,6 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'do_not_reuse_list' => $self->o('do_not_reuse_list'),
                 },
-                -rc_name   => '500Mb_job',
                 -flow_into => {
                     2 => '?accu_name=reused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
                     3 => '?accu_name=nonreused_gdb_ids&accu_address=[]&accu_input_variable=genome_db_id',
@@ -131,7 +128,6 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'whole_method_links'    => [ 'EPO' ],
                 },
-                -rc_name   => '500Mb_job',
                 -flow_into => [ 'reuse_anchor_align_factory' ],
             },
 
@@ -140,7 +136,6 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'species_set_id'    => '#reuse_ss_id#',
                 },
-                -rc_name   => '500Mb_job',
                 -flow_into => {
                     '2->A' => [ 'reuse_anchor_align' ],
                     'A->1' => [ 'map_anchor_align_genome_factory' ],
@@ -163,7 +158,6 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'species_set_id'    => '#nonreuse_ss_id#',
                 },
-                -rc_name   => '500Mb_job',
                 -flow_into => {
                     '2->A'  => [ 'map_anchors_factory' ],
                     'A->1'  => [ 'remove_overlaps' ],
@@ -252,7 +246,6 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -parameters => {
                     'anchor_batch_size' => 100,
                 },
-                -rc_name   => '500Mb_job',
                 -flow_into => {
                     2 => { 'map_anchors_no_server' => INPUT_PLUS(), },
                 },
@@ -274,7 +267,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 -flow_into => {
                                2 => { 'trim_anchor_align' => INPUT_PLUS() },
                               },  
-		-rc_name => '4Gb_job',
+		-rc_name => '4Gb_24_hour_job',
             },  
 
 	    {   -logic_name => 'trim_anchor_align',			

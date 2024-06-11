@@ -1,5 +1,5 @@
 1	\N	schema_type	core
-2	\N	schema_version	109
+2	\N	schema_version	113
 3	\N	patch	patch_65_66_a.sql|schema_version
 4	\N	patch	patch_65_66_b.sql|fix_external_db_id
 5	\N	patch	patch_65_66_c.sql|reorder_unmapped_obj_index
@@ -201,3 +201,12 @@
 658	\N	patch	patch_107_108_a.sql|schema_version
 659	\N	patch	patch_108_109_a.sql|schema_version
 660	\N	patch	patch_108_109_b.sql|Added xref source GeneCards into external_db
+661	\N	patch	patch_109_110_a.sql|schema_version
+662	\N	patch	patch_109_110_b.sql|Add IS_PAR relationship to link X- and Y-PAR genes
+663	\N	patch	patch_109_110_c.sql|Allow gene id to belong to multiple alt allele groups
+664	\N	patch	patch_110_111_a.sql|schema_version
+665	\N	patch	patch_111_112_a.sql|schema_version
+666	\N	patch	patch_111_112_b.sql|Allow meta_value to be null
+667	\N	patch	patch_111_112_c.sql|Extend meta_key length to 64
+668	\N	patch	patch_112_113_a.sql|schema_version
+669	\N	patch	patch_112_113_b.sql|Ensure meta_value is not null

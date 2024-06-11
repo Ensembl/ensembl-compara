@@ -79,7 +79,6 @@ sub pipeline_analyses_dump_homologies_posttree {
               'healthcheck' => 'line_count',
           },
           -hive_capacity => 10,
-          -rc_name => '500Mb_job',
         },  
     ];
 }
@@ -104,7 +103,7 @@ sub pipeline_analyses_split_homologies_posttree {
 
         { -logic_name => 'split_tree_homologies',
           -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SplitOrthoTreeOutput',
-          -rc_name    => '500Mb_job',
+          -rc_name => '1Gb_24_hour_job',
         },
     ];
 }

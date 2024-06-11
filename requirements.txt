@@ -1,7 +1,0 @@
-ensembl-prodinf-tools@git+https://github.com/Ensembl/ensembl-prodinf-tools.git@main#egg=ensembl-prodinf-tools
-argschema>=3.0.1
-biopython>=1.76
-ete3>=3.1.1
-pandas>=0.24.2
-pybedtools==0.8.2
-sqlalchemy>=1.4.0

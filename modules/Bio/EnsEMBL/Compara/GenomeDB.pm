@@ -185,7 +185,7 @@ sub db_adaptor {
             $self->genebuild( $meta_container->get_genebuild );
             $self->has_karyotype( $genome_container->has_karyotype );
             $self->is_good_for_alignment( 0 );  # Cannot be inferred without the dnafrags
-            $self->strain_name( $strain_name );
+            $self->strain_name( $strain_name ) if $strain_name;
             $self->display_name( $meta_container->get_display_name );
             $dba->{_dbc}->disconnect_if_idle unless $was_connected;
         }
@@ -268,6 +268,21 @@ sub name{
   return $self->{'name'};
 }
 
+=head2 get_distinct_name
+
+  Example     : print $genome_db->get_distinct_name();
+  Description : Returns the name of the GenomeDB, with additional information
+                (e.g. genome component) appended if relevant to allow it to be
+                distinguished from other GenomeDBs with the same name.
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub get_distinct_name {
+    my $self = shift;
+    return $self->genome_component ? $self->name . '_' . $self->genome_component : $self->name;
+}
 
 =head2 get_short_name
 

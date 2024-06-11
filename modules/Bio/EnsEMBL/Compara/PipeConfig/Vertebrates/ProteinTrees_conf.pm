@@ -100,20 +100,18 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
-        'CAFE_table'                => '24Gb_job',
+        'CAFE_table'                => '24Gb_24_hour_job',
         'hcluster_run'              => '1Gb_job',
-        'hcluster_parse_output'     => '1Gb_job',
+        'hcluster_parse_output'     => '4Gb_job',
         'split_genes'               => 'default',   # This is 250Mb
         'CAFE_species_tree'         => '24Gb_job',
-        'stable_id_mapping'         => '4Gb_job',
-        'pair_species'              => '500Mb_job',
-        'ortholog_mlss_factory'     => '500Mb_job',
-        'expand_clusters_with_projections' => '500Mb_job',
-        'homology_dumps_mlss_id_factory'   => '500Mb_job',
         'get_long_short_orth_genes_himem'  => '4Gb_job',
     );
     foreach my $logic_name (keys %overriden_rc_names) {

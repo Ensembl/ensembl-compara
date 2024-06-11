@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
@@ -38,15 +27,6 @@ Base adaptor for Member objects.  This adaptor cannot be used directly.
 
   Bio::EnsEMBL::Compara::DBSQL::MemberAdaptor
   +- Bio::EnsEMBL::Compara::DBSQL::BaseAdaptor
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
 
 =cut
 
@@ -120,6 +100,38 @@ sub fetch_by_stable_id_GenomeDB {
     else {
         return undef;
     }
+}
+
+sub fetch_all_by_stable_id {
+    my ($self, $stable_id) = @_;
+
+    throw("MemberAdaptor::fetch_all_by_stable_id() must have a stable_id") unless $stable_id;
+
+    my $members = [];
+
+    my $constraint1 = 'm.stable_id = ?';
+    $self->bind_param_generic_fetch($stable_id, SQL_VARCHAR);
+    foreach my $member (@{$self->generic_fetch($constraint1)}) {
+        push @{$members}, $member;
+    }
+
+    # In fetch_by_stable_id_GenomeDB we could return matching members already,
+    # but this method is intended to fetch all matches, so we press on.
+    my $vindex = rindex( $stable_id, '.' );
+    if ($vindex > 0) { # skip if no dot (unversioned stable_id) or string starts with dot (empty stable_id)
+        my $unversioned_id = substr( $stable_id, 0, $vindex );
+        my $version = substr( $stable_id, ($vindex + 1) );
+        if ( looks_like_number( $version ) ) {
+            my $constraint2 = 'm.stable_id = ? AND m.version = ?';
+            $self->bind_param_generic_fetch( $unversioned_id, SQL_VARCHAR );
+            $self->bind_param_generic_fetch( $version, SQL_INTEGER );
+            foreach my $member ( @{$self->generic_fetch( $constraint2 )} ) {
+                push @{$members}, $member;
+            }
+        }
+    }
+
+    return $members;
 }
 
 =head2 fetch_all_by_stable_id_list
@@ -364,6 +376,38 @@ sub count_all_by_source_taxon {
     return $self->generic_count('source_name=? AND taxon_id=?');
 }
 
+=head2 count_all_by_GenomeDB
+
+  Arg [1]    : integer $genome_db_id or Bio::EnsEMBL::Compara::GenomeDB object
+  Example    : my $gdb_gene_count = $member_adaptor->count_all_by_GenomeDB($genome_db);
+  Description: Returns the number of members for the given GenomeDB
+  Returntype : int
+  Exceptions : argument undefined or of inappropriate type
+
+=cut
+
+sub count_all_by_GenomeDB {
+  my ($self,$genome_db) = @_;
+
+    if (!$genome_db) {
+        throw("MemberAdaptor::count_all_by_GenomeDB() must have a genome_db");
+    }
+
+    my $genome_db_id;
+    if ( $genome_db and ($genome_db =~ /^\d+$/) ) {
+        $genome_db_id = $genome_db;
+    }
+    else {
+        assert_ref($genome_db, 'Bio::EnsEMBL::Compara::GenomeDB', 'genome_db');
+        $genome_db_id = $genome_db->dbID;
+        if (!$genome_db_id) {
+            throw( "[$genome_db] does not have a dbID" );
+        }
+    }
+
+    $self->bind_param_generic_fetch($genome_db_id, SQL_INTEGER);
+    return $self->generic_count('genome_db_id=?');
+}
 
 =head2 get_source_breakdown_by_member_ids
 

@@ -115,7 +115,6 @@ sub pipeline_analyses_alt_alleles {
         {   -logic_name => 'import_altalleles_as_homologies_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ImportAltAlleGroupAsHomologies',
             -hive_capacity => $self->o('import_altalleles_as_homologies_capacity'),
-            -rc_name    => '500Mb_job',
         },
 
     ];

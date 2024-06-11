@@ -1,15 +1,21 @@
 digraph {
     rankdir=LR;  # Left-to-right graph instead of top-to-bottom
+    "Register HAL alignment data";
     "Patches against their primary assembly";
 
     "Genome dumps" -> { "Species-tree", "LastZ" };
     "Species-tree" -> { "EPOwithExt", "Protein-trees", "Update MSA", "Mercator Pecan" };
-    "All LastZ" -> "EPOwithExt";
+    "Merge all LastZ" -> "EPOwithExt";
     "Member loading" -> { "Protein-trees", "ncRNA-trees", "Gene-tree reindexing", "Alt-alleles import" };
-    {"All LastZ", "EPOwithExt", "Update MSA"} -> "All alignments for WGA Orthology QC";
-    "All alignments for WGA Orthology QC" -> "Protein-trees" [fontsize="8", label="Orthologues\nonly"];
-    "All alignments for WGA Orthology QC" -> "ncRNA-trees" [fontsize="8", label="Orthologues\nonly"];
-    "LastZ" -> "All LastZ" -> "Synteny";
+    { "EPOwithExt", "Update MSA" } -> "Check MSA stats";
+    { "Merge all LastZ", "Check MSA stats" } -> "Merge all alignments for WGA Orthology QC";
+    "Merge all alignments for WGA Orthology QC" -> "Protein-trees" [fontsize="8", label="Orthologues\nonly"];
+    "Merge all alignments for WGA Orthology QC" -> "ncRNA-trees" [fontsize="8", label="Orthologues\nonly"];
+    "LastZ" -> "Merge all LastZ" -> "Synteny";
+
+    { "Protein-trees", "ncRNA-trees" } -> "Check gene-tree stats";
+    { "Check gene-tree stats", "Gene-tree reindexing", "Alt-alleles import" } -> "Backup the release database before merging the homology data";
+    "Backup the release database before merging the homology data" -> "Merge the homology pipelines";
 
     "Gene-tree reindexing" -> "ncRNA-trees" [style="dashed", dir=none, fontsize="8", label="XOR"];
     "Gene-tree reindexing" -> "Protein-trees" [style="dashed", dir=none, fontsize="8", label="XOR"];

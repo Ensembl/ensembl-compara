@@ -112,6 +112,8 @@ use XML::LibXML;
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
+use Bio::EnsEMBL::Utils::Scalar qw(:assert);
+use JSON;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
@@ -175,6 +177,7 @@ if ($@) {
 }
 print "'$xml_config' valid. Now parsing ...\n";
 
+my %unstored_collection_names;
 my %collections;
 my @mlsss;
 
@@ -217,13 +220,25 @@ sub fetch_genome_dbs_by_taxon_name {
     return fetch_genome_dbs_by_taxon_id($taxon->dbID, $pool);
 }
 
+sub fetch_most_recent_current_collection_by_name {
+    my ($ss_adaptor, $collection) = @_;
+
+    assert_ref($ss_adaptor, 'Bio::EnsEMBL::Compara::DBSQL::SpeciesSetAdaptor', 'ss_adaptor');
+    throw('$collection is required') unless $collection;
+
+    my @matching_ss = @{$ss_adaptor->fetch_all_by_name($collection =~ /^collection-/ ? $collection : "collection-$collection")};
+
+    my @matching_current_ss = grep { $_->is_current() } @matching_ss;
+
+    return $ss_adaptor->_find_most_recent(\@matching_current_ss);
+}
+
 sub make_species_set_from_XML_node {
     my ($xml_ss, $pool) = @_;
 
     if ($xml_ss->hasAttribute('in_collection')) {
         my $collection = find_collection_from_xml_node_attribute($xml_ss, 'in_collection', 'species-set');
-        # Exclude genome components from the pool
-        $pool = [grep { !$_->genome_component } @{$collection->genome_dbs}];
+        $pool = $collection->genome_dbs;
     }
 
     my @selected_gdbs;
@@ -256,7 +271,28 @@ sub make_species_set_from_XML_node {
         my $gdb = find_genome_from_xml_node_attribute($child, 'name', 'assembly');
         # If the genome is not current, warn the user and do not add it to the species set
         warn "The genome matching '" . $gdb->name . "' (assembly " . $gdb->assembly . ") is not current. Skipped" unless $gdb->is_current;
-        $some_genome_dbs = ($gdb->is_current) ? [$gdb] : [];
+        next unless $gdb->is_current;
+        # Matching GenomeDB by name ensures we draw its genome components from the pool.
+        $some_genome_dbs = [grep {$_->name eq $gdb->name} @$pool];
+        # Matching by genome_component allows us to work with an
+        # individual polyploid principal or component genome.
+        if ($child->hasAttribute('genome_component')) {
+            my $genome_component = $child->getAttribute('genome_component');
+            my $component_description;
+            if ($genome_component) {
+                $some_genome_dbs = [grep {$_->genome_component eq $genome_component} @$some_genome_dbs];
+                $component_description = "component GenomeDB $genome_component";
+            } else {
+                # If the genome_component attribute is an empty string,
+                # we treat it as NULL and take the principal genome_db.
+                $some_genome_dbs = [grep {!$_->genome_component} @$some_genome_dbs];
+                $component_description = 'principal GenomeDB';
+            }
+            if (scalar(@$some_genome_dbs) != 1) {
+                my $quantifier = scalar(@$some_genome_dbs) > 1 ? 'unique' : 'any';
+                throw(sprintf("Cannot find %s %s of genome %s (assembly %s)", $quantifier, $component_description, $gdb->name, $gdb->assembly));
+            }
+        }
       } elsif ($child->nodeName =~ /^#(comment|text)$/) {
         next;
       } elsif ($child->nodeName eq 'base_collection') {
@@ -277,11 +313,17 @@ sub make_species_set_from_XML_node {
 }
 
 sub make_named_species_set_from_XML_node {
-    my ($xml_ss_parent, $method, $pool) = @_;
+    my ($xml_ss_parent, $method, $pool, $allow_components) = @_;
 
     if ($xml_ss_parent->hasAttribute('collection')) {
         my $collection_name = $xml_ss_parent->getAttribute('collection');
         my $species_set = find_collection_from_xml_node_attribute($xml_ss_parent, 'collection', $method->type);
+
+        if (!$allow_components && grep {$_->genome_component} @{$species_set->genome_dbs}) {
+            throw(sprintf("Cannot use the collection named '%s' because it contains component GenomeDBs, which are not allowed for %s",
+                          $collection_name, $method->type));
+        }
+
         return $species_set;
 
     } else {
@@ -292,6 +334,10 @@ sub make_named_species_set_from_XML_node {
         }
         my $genome_dbs = make_species_set_from_XML_node($xml_species_set, $collection ? $collection->genome_dbs : $pool);
 
+        if (!$allow_components) {
+            $genome_dbs = [grep {!$_->genome_component} @$genome_dbs];
+        }
+
         my $species_set = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, $xml_species_set->getAttribute('name'));
         $species_set->add_tag('display_name', $xml_species_set->getAttribute('display_name')) if $xml_species_set->hasAttribute('display_name');
         return $species_set;
@@ -301,19 +347,36 @@ sub make_named_species_set_from_XML_node {
 # There can be a single 'compara_db' node in the document
 my $division_node = $xml_document->documentElement();
 my $division_name = $division_node->getAttribute('division');
-my $division_species_set = $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name)
-    ? $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($division_name)
-    : $compara_dba->get_SpeciesSetAdaptor->fetch_collection_by_name("default");
+
+my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
+my $division_species_set = fetch_most_recent_current_collection_by_name($ss_adaptor, $division_name);
+if (!defined $division_species_set) {
+    $division_species_set = fetch_most_recent_current_collection_by_name($ss_adaptor, 'default');
+
+    if (!defined $division_species_set) {
+        throw("Cannot find a current division collection named '$division_name' or 'default'");
+    }
+}
+
 $collections{$division_name} = $division_species_set;
 my $division_genome_dbs = [sort {$a->dbID <=> $b->dbID} @{$division_species_set->genome_dbs}];
 foreach my $collection_node (@{$division_node->findnodes('collections/collection')}) {
     my $no_release = $collection_node->getAttribute('no_release') || 0;
     my $genome_dbs = make_species_set_from_XML_node($collection_node, $division_genome_dbs);
+
+    my $no_components = $collection_node->getAttribute('no_components') // 0;
+    if ($no_components) {
+        $genome_dbs = [grep {!$_->genome_component} @$genome_dbs];
+    }
+
     my $collection_name = $collection_node->getAttribute('name');
     $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name", $no_release);
+
+    my $no_store = $collection_node->getAttribute('no_store') // 0;
+    if ($no_store) {
+        $unstored_collection_names{$collection_name} = 1;
+    }
 }
-# Do not create MLSSs for genome components (polyploids will be handled by each pipeline accordingly)
-@{$division_genome_dbs} = grep {!$_->genome_component} @{$division_genome_dbs};
 
 foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignments/pairwise_alignment')}) {
     my $ref_gdb = find_genome_from_xml_node_attribute($xml_one_vs_all_node, 'ref_genome');
@@ -334,7 +397,7 @@ foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignment
     } else {
         $genome_dbs = make_species_set_from_XML_node($xml_one_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
     }
-    $genome_dbs = [grep {$_->dbID ne $ref_gdb->dbID} @$genome_dbs];
+    $genome_dbs = [grep {$_->dbID ne $ref_gdb->dbID && !$_->genome_component} @$genome_dbs];
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
     my $target_ref_gdbs;
     if ($xml_one_vs_all_node->hasAttribute('ref_amongst')) {
@@ -343,6 +406,7 @@ foreach my $xml_one_vs_all_node (@{$division_node->findnodes('pairwise_alignment
     } elsif (my ($xml_ref_set) = $xml_one_vs_all_node->getChildrenByTagName('ref_genome_set')) {
         $target_ref_gdbs = make_species_set_from_XML_node($xml_ref_set, $division_genome_dbs);
     }
+    $target_ref_gdbs = [grep {!$_->genome_component} @$target_ref_gdbs];
     if ($target_ref_gdbs and scalar(@$target_ref_gdbs)) {
         push @refs, [$ref_gdb, $method, {map {$_->dbID => 1} @$target_ref_gdbs}];
     }
@@ -352,13 +416,14 @@ foreach my $xml_all_vs_one_node (@{$division_node->findnodes('pairwise_alignment
     my $target_gdb = find_genome_from_xml_node_attribute($xml_all_vs_one_node, 'target_genome');
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_all_vs_one_node->getAttribute('method') );
     my $genome_dbs = make_species_set_from_XML_node($xml_all_vs_one_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
-    $genome_dbs = [grep {$_->dbID ne $target_gdb->dbID} @$genome_dbs];
+    $genome_dbs = [grep {$_->dbID ne $target_gdb->dbID && !$_->genome_component} @$genome_dbs];
     push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $_, $target_gdb) } for @$genome_dbs;
 }
 
 foreach my $xml_all_vs_all_node (@{$division_node->findnodes('pairwise_alignments/all_vs_all')}) {
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type( $xml_all_vs_all_node->getAttribute('method') );
     my $genome_dbs = make_species_set_from_XML_node($xml_all_vs_all_node->getChildrenByTagName('species_set')->[0], $division_genome_dbs);
+    $genome_dbs = [grep {!$_->genome_component} @$genome_dbs];
     while (my $ref_gdb = shift @$genome_dbs) {
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_pairwise_wga_mlsss($compara_dba, $method, $ref_gdb, $_) } for @$genome_dbs;
     }
@@ -382,7 +447,7 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
         # Assume we combine two pipelines (presumably EPO and EPO_EXTENDED)
         my $method1 = $compara_dba->get_MethodAdaptor->fetch_by_type($1);
         my $method2 = $compara_dba->get_MethodAdaptor->fetch_by_type($2);
-        my $species_set2 = make_named_species_set_from_XML_node($xml_msa, $method2, $division_genome_dbs);
+        my $species_set2 = make_named_species_set_from_XML_node($xml_msa, $method2, $division_genome_dbs, 0);
         my @good_gdbs = grep {$_->is_good_for_alignment} @{$species_set2->genome_dbs};
         if (scalar(@good_gdbs) < 3) {
             throw(sprintf('Only %d "good for alignment" genomes in the "%s" set. Need 3 or more for %s.', scalar(@good_gdbs), $species_set2->name, $method1->type));
@@ -396,7 +461,7 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
     }
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type($xml_msa->getAttribute('method'));
     my $species_set = make_named_species_set_from_XML_node($xml_msa, $method, $division_genome_dbs);
-    push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method, $species_set, ($xml_msa->getAttribute('gerp') // 0), $no_release) };
+    push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method, $species_set, ($xml_msa->getAttribute('gerp') // 0), $no_release, undef, $xml_msa->getAttribute('url')) };
 }
 
 foreach my $xml_self_aln (@{$division_node->findnodes('self_alignments/genome')}) {
@@ -411,29 +476,29 @@ foreach my $xml_asm_patch (@{$division_node->findnodes('assembly_patches/genome'
 
 my $fam_method = $compara_dba->get_MethodAdaptor->fetch_by_type('FAMILY');
 foreach my $fam_node (@{$division_node->findnodes('families/family')}) {
-    my $species_set = make_named_species_set_from_XML_node($fam_node, $fam_method, $division_genome_dbs);
+    my $species_set = make_named_species_set_from_XML_node($fam_node, $fam_method, $division_genome_dbs, 0);
     push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($fam_method, $species_set);
 }
 
 foreach my $gt (qw(protein nc)) {
     my $gt_method = $compara_dba->get_MethodAdaptor->fetch_by_type((uc $gt).'_TREES');
-    my @genome_db_with_comp = Bio::EnsEMBL::Compara::Utils::MasterDatabase::_expand_components($division_genome_dbs);
     foreach my $gt_node (@{$division_node->findnodes("gene_trees/${gt}_trees")}) {
-        my $species_set = make_named_species_set_from_XML_node($gt_node, $gt_method, \@genome_db_with_comp);
+        my $allow_components = $gt eq 'protein';
+        my $species_set = make_named_species_set_from_XML_node($gt_node, $gt_method, $division_genome_dbs, $allow_components);
         push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_homology_mlsss($compara_dba, $gt_method, $species_set) }
     }
 }
 
 my $st_method = $compara_dba->get_MethodAdaptor->fetch_by_type('SPECIES_TREE');
 foreach my $st_node (@{$division_node->findnodes('species_trees/species_tree')}) {
-    my $species_set = make_named_species_set_from_XML_node($st_node, $st_method, $division_genome_dbs);
+    my $species_set = make_named_species_set_from_XML_node($st_node, $st_method, $division_genome_dbs, 1);
     push @mlsss, Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_mlss($st_method, $species_set);
 }
 
 my $method_adaptor = $compara_dba->get_MethodAdaptor;
-my $ss_adaptor = $compara_dba->get_SpeciesSetAdaptor;
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 my %mlss_ids_to_find = map {$_->dbID => $_} @{$mlss_adaptor->fetch_all_current};
+my @genome_db_without_comp = grep {!$_->genome_component} @{$division_genome_dbs};
 
 my @mlsss_created;
 my @mlsss_existing;
@@ -444,12 +509,13 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
         if ($verbose) {
             print "\n0. Division:\n\n" if $verbose;
             print "DIVISION: ", $division_name, "\n";
-            print $_->toString, "\n" for sort {$a->dbID <=> $b->dbID} @{$division_genome_dbs};
-            print "=", scalar(@{$division_genome_dbs}), " genomes\n\n";
+            print $_->toString, "\n" for sort {$a->dbID <=> $b->dbID} @genome_db_without_comp;
+            print "=", scalar(@genome_db_without_comp), " genomes\n\n";
             print "1. Collections that need to be created:\n\n";
         }
 
         foreach my $collection_name (sort keys %collections) {
+            next if exists $unstored_collection_names{$collection_name};
             next if $collection_name eq $division_name;
             my $collection = $collections{$collection_name};
             # Check if it is already in the database
@@ -548,6 +614,21 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
 my $current_version = software_version();
 my %methods_not_worth_reporting = map {$_ => 1} qw(SYNTENY ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES ENSEMBL_PROJECTIONS CACTUS_HAL_PW GERP_CONSTRAINED_ELEMENT GERP_CONSERVATION_SCORE);
 
+sub mlss2hash {
+    my $mlss = shift;
+    my $res = {
+        db_id            => $mlss->dbID,
+        name             => ($mlss->name ? $mlss->name : '(unnamed)'),
+        method_type      => $mlss->method->type,
+        species_set_name => $mlss->species_set->name,
+        species_set_id   => $mlss->species_set->dbID
+    };
+    if ($mlss->{url}) {
+        $res->{url} = $mlss->{url};
+    }
+    return $res;
+}
+
 my $mlss_ids_fh;
 if ($output_file) {
     open($mlss_ids_fh, '>', $output_file) or die "Cannot open file '$output_file'\n";
@@ -555,36 +636,52 @@ if ($output_file) {
     $mlss_ids_fh = \*STDOUT;
 }
 
-print $mlss_ids_fh "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
+my $mlss_summary;
+
+$mlss_summary .= "\nWhat has ".($dry_run ? '(not) ' : '')."been created ?\n-----------------------".($dry_run ? '------' : '')."\n";
 my $n = 0;
+my $summary_created = [];
 foreach my $mlss (@mlsss_created) {
+    push @$summary_created, mlss2hash($mlss);
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss_ids_fh $mlss->toString, "\n";
+        $mlss_summary .= $mlss->toString ."\n";
     } else {
         $n++
     }
 }
-print $mlss_ids_fh "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+$mlss_summary .= "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 
-print $mlss_ids_fh "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
+$mlss_summary .= "\nWhat has ".($dry_run ? '(not) ' : '')."been retired ?\n-----------------------".($dry_run ? '------' : '')."\n";
+my $summary_retired = [];
 $n = 0;
 foreach my $mlss (@mlsss_retired) {
+    push @$summary_retired, mlss2hash($mlss);
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss_ids_fh $mlss->toString, "\n";
+        $mlss_summary .= $mlss->toString . "\n";
     } else {
         $n++
     }
 }
-print $mlss_ids_fh "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+$mlss_summary .= "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
 
-print $mlss_ids_fh "\nWhat else is new in e$current_version ?\n-------------------------\n";
+$mlss_summary .= "\nWhat else is new in e$current_version ?\n-------------------------\n";
+my $summary_existing = [];
 $n = 0;
 foreach my $mlss (@mlsss_existing) {
     next if !$mlss->first_release || $mlss->first_release != $current_version;
+    push @$summary_existing, mlss2hash($mlss);
     unless ($methods_not_worth_reporting{$mlss->method->type}) {
-        print $mlss_ids_fh $mlss->toString, "\n";
+        $mlss_summary .= $mlss->toString . "\n";
     } else {
         $n++
     }
 }
-print $mlss_ids_fh "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+$mlss_summary .= "(and $n derived MLSS".($n > 1 ? 's' : '').")\n" if $n;
+
+my $out = [ {"mlss_summary" => $mlss_summary},
+            {"created" => $summary_created, "retired" => $summary_retired, "existing" => $summary_existing}
+          ];
+
+my $json = JSON->new->utf8;
+my $encoded = $json->pretty->encode( $out );
+print $mlss_ids_fh $encoded;

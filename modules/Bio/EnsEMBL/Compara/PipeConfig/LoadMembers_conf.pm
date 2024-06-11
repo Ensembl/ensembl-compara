@@ -70,8 +70,8 @@ sub default_options {
         'load_uniprot_members'      => 0,
         'work_dir'        => $self->o('pipeline_dir'),
         'uniprot_dir'     => $self->o('work_dir').'/uniprot',
-        'uniprot_rel_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
-        'uniprot_ftp_url' => 'ftp://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
+        'uniprot_rel_url' => 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
+        'uniprot_ftp_url' => 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
@@ -117,7 +117,8 @@ sub pipeline_checks_pre_init {
         and ref $self->o('curr_file_sources_locs') and not scalar(@{$self->o('curr_file_sources_locs')});
 
     # The master db must be defined to allow mapping stable_ids and checking species for reuse
-    die "No master database provided" if not $self->o('master_db');
+    # ...but note that the master database is not required in the current QfO SOP.
+    #die "No master database provided" if not $self->o('master_db');
     die "Species reuse is only possible with a master database" if $self->o('reuse_member_db') and not $self->o('master_db');
     die "Species reuse is only possible with some previous core databases" if $self->o('reuse_member_db') and ref $self->o('prev_core_sources_locs') and not scalar(@{$self->o('prev_core_sources_locs')});
 }
@@ -203,7 +204,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
-                'all_current'       => 1,
+                'all_in_current_gene_trees' => 1,
                 'extra_parameters'  => [ 'locator' ],
             },
             -rc_name => '2Gb_job',
@@ -262,6 +263,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_reuse_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
+            -rc_name    => '2Gb_job',
             -flow_into  => [ 'compare_non_reused_genome_list' ],
         },
 
@@ -487,7 +489,7 @@ sub core_pipeline_analyses {
                 'store_others'                  => $self->o('store_others'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name => '4Gb_job',
+            -rc_name => '4Gb_24_hour_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
 
@@ -516,12 +518,13 @@ sub core_pipeline_analyses {
         {   -logic_name      => 'datachecks',
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
             -parameters      => {
-                'datacheck_names'  => ['BlankEnums', 'CheckSequenceTable'],
+                'datacheck_names'  => ['BlankEnums', 'CanonicalMemberCore', 'CheckSequenceTable'],
                 'work_dir'         => $self->o('work_dir'),
                 'history_file'     => '#work_dir#/datacheck.compara_load_members.history.json',
                 'output_file'      => '#work_dir#/datacheck.compara_load_members.tap.txt',
                 'failures_fatal'   => 1,
                 'pdbname'          => $self->o('pipeline_name'),
+                'registry_file'    => $self->o('reg_conf'),
                 'dbtype'           => 'compara',
             },
             -max_retry_count => 0,

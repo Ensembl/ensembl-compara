@@ -8,30 +8,29 @@
 
 ----
 
-# Deprecated namespaces scheduled for deletion
-
-_All modules under these namespaces will be deleted_
-
-* `Bio::EnsEMBL::Compara::Filter` in Ensembl 101
-* `Bio::EnsEMBL::Compara::Production::Projection` in Ensembl 101
-
-_All files (e.g. scripts) under these directories will be deleted_
-
-* `scripts/projection` in Ensembl 101
-
 # Deprecated methods scheduled for deletion
 
-* `AlignedMember::get_cigar_breakout()` in Ensembl 102
-* `AlignedMember::get_cigar_array()` in Ensembl 102
+## Ensembl 115
+
+* `Homology::dn()`
+* `Homology::dnds_ratio()`
+* `Homology::ds()`
+* `Homology::lnl()`
+* `Homology::n()`
+* `Homology::s()`
+* `Homology::threshold_on_ds()`
+* `HomologyAdaptor::update_genetic_distance()`
 
 # Deprecated methods not yet scheduled for deletion
 
+* `AlignedMember::get_cigar_array()`
+* `AlignedMember::get_cigar_breakout()`
 * `GenomicAlignTree::genomic_align_array()`
 * `GenomicAlignTree::get_all_GenomicAligns()`
 
 # Methods removed in previous versions of Ensembl
 
-## Ensembl 109
+## Ensembl 110
 
 * `DBSQL::'*MemberAdaptor::fetch_by_stable_id()`
 

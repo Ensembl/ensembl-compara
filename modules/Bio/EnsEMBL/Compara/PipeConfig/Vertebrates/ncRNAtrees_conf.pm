@@ -59,6 +59,7 @@ sub default_options {
 
             # misc parameters
             'binary_species_tree_input_file' => $self->o('binary_species_tree'), # you can define your own species_tree for 'CAFE'. It *has* to be binary
+            'model_name_blocklist' => ['tRNA'],
 
             # CAFE parameters
             'do_cafe'  => 1,
@@ -86,6 +87,9 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;

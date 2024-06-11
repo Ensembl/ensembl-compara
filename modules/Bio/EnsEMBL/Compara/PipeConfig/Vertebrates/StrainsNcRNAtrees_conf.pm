@@ -49,6 +49,9 @@ sub default_options {
             # collection in master that will have overlapping data
             'ref_collection'   => 'default',
 
+            # misc parameters
+            'model_name_blocklist' => [],
+
             # CAFE parameters
             'do_cafe'  => 0,
 
@@ -69,6 +72,14 @@ sub core_pipeline_analyses {
     my ($self) = @_;
     return [
         @{$self->SUPER::core_pipeline_analyses},
+
+        {   -logic_name => 'find_overlapping_genomes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes',
+            -parameters => {
+                'collection' => $self->o('collection'),
+            },
+            -flow_into  => [ 'check_strains_cluster_factory' ],
+        },
 
         {   -logic_name => 'check_strains_cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
@@ -103,7 +114,7 @@ sub tweak_analyses {
     $analyses_by_name->{'orthotree_himem'}->{'-rc_name'} = '2Gb_job';
 
     # wire up strain-specific analyses
-    $analyses_by_name->{'expand_clusters_with_projections'}->{'-flow_into'} = 'check_strains_cluster_factory';
+    $analyses_by_name->{'expand_clusters_with_projections'}->{'-flow_into'} = 'find_overlapping_genomes';
     push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 
     # datacheck specific tweaks for pipelines
