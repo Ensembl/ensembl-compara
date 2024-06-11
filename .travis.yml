@@ -126,10 +126,10 @@ jobs:
 
     - language: python
       python: "3.10"
+      dist: bionic
       name: "Python unit tests on the minimum version"
       install:
         - pip install --upgrade pip
-        - pip install setuptools==58.1.0
         - pip install codecov
         - pip install -r requirements.txt -r requirements-test.txt
         - pip install .
@@ -142,7 +142,6 @@ jobs:
       name: "Python unit tests on the latest version, with code coverage"
       install:
         - pip install --upgrade pip
-        - pip install setuptools==58.1.0
         - pip install codecov
         - pip install -r requirements.txt -r requirements-test.txt
         - pip install .
