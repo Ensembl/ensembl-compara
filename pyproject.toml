@@ -51,7 +51,6 @@ dependencies = [
     "pybedtools==0.8.2",
     "sqlalchemy>=1.4.0",
     "xmlschema>=2.5.1",
-    "PyYAML>=6.0.1",
     "types-PyYAML>=6.0.12.20240311"
 ]
 
