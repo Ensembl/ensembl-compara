@@ -70,7 +70,13 @@ def detect_job_scheduler():
 
 
 def subprocess_call(
-    command, work_dir=None, shell=False, use_job_scheduler=False, job_name=None
+    command,
+    stdout_file="/dev/null",
+    stderr_file="/dev/null",
+    work_dir=None,
+    shell=False,
+    use_job_scheduler=False,
+    job_name=None,
 ):
     """
     Subprocess function to execute the given command line.
@@ -98,6 +104,8 @@ def subprocess_call(
                 "--mem-per-cpu=4gb",
                 "--cpus-per-task=1",
                 "--export=ALL",
+                f"--output={stdout_file}",
+                f"--error={stderr_file}",
                 f"--job-name={job_name}",
                 f"--wrap={' '.join(command)}",
             ]
@@ -110,6 +118,8 @@ def subprocess_call(
                 "rusage[mem=4096]",
                 "-J",
                 job_name,
+                f"-o {stdout_file}",
+                f"-e {stderr_file}",
             ] + command
 
     logging.info("Running: %s", " ".join(command))
@@ -137,7 +147,14 @@ def subprocess_call(
 
 
 def download_file(
-    host, port, core_db, fasta_filename, genome_component="", mask="soft"
+    host,
+    port,
+    core_db,
+    fasta_filename,
+    stdout_file="/dev/null",
+    stderr_file="/dev/null",
+    genome_component="",
+    mask="soft",
 ):
     """
     Download the FASTA file from the core DB using a PERL script `dump_genome_from_core.pl`.
@@ -187,6 +204,8 @@ def download_file(
             command=perl_call,
             use_job_scheduler=True,
             job_name=f"{core_db}_{genome_component}",
+            stderr_file=stderr_file,
+            stdout_file=stdout_file,
         )
 
     except KeyError as e:
@@ -280,6 +299,8 @@ def parse_yaml(file, dest):
                     core_db=core_db,
                     genome_component=genome_component,
                     fasta_filename=os.path.join(dest, f"{filename}.fa"),
+                    stdout_file=os.path.join(dest, f"{filename}.out"),
+                    stderr_file=os.path.join(dest, f"{filename}.err"),
                 )
 
 
