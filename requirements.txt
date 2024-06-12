@@ -1,6 +1,6 @@
-ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@1.0.0#egg=ensembl-py
+ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@1.2.3a1#egg=ensembl-py
 biopython>=1.76
 ete3>=3.1.1
 pandas>=0.24.2
-pybedtools==0.8.2
+pybedtools>=0.8.2
 sqlalchemy>=1.4.0
