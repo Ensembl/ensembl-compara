@@ -1090,7 +1090,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -batch_size           => 20,
-            -rc_name    => '1Gb_job',
+            -rc_name    => '1Gb_24_hour_job',
             -flow_into => {
                -1 => [ 'mcoffee' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
@@ -1107,7 +1107,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -1,
             },
             -analysis_capacity    => $self->o('mcoffee_capacity'),
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -priority   => $self->o('mcoffee_priority'),
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
@@ -1139,7 +1139,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name    => '8Gb_job',
+            -rc_name    => '8Gb_24_hour_job',
             -priority   => $self->o('mcoffee_himem_priority'),
             -flow_into => {
                -1 => [ 'mafft_himem' ],
@@ -1443,7 +1443,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -batch_size           => 20,
-            -rc_name    => '1Gb_job',
+            -rc_name    => '1Gb_24_hour_job',
             -flow_into => {
                -1 => [ 'cdhit_mcoffee' ],  # MEMLIMIT
                -2 => [ 'cdhit_mafft' ],
@@ -1460,7 +1460,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -1,
             },
             -analysis_capacity    => $self->o('mcoffee_capacity'),
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -priority   => $self->o('mcoffee_priority'),
             -flow_into => {
                -1 => [ 'cdhit_mcoffee_himem' ],  # MEMLIMIT
@@ -1492,7 +1492,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name    => '8Gb_job',
+            -rc_name    => '8Gb_24_hour_job',
             -priority   => $self->o('mcoffee_himem_priority'),
             -flow_into => {
                -1 => [ 'cdhit_mafft_himem' ],
