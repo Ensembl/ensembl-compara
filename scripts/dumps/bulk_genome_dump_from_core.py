@@ -233,7 +233,7 @@ def parse_yaml(file, dest):
         file (file object): The file object.
         dest (str): The destination PATH where the FASTA file will be stored.
     """
-    content = yaml.load(file, Loader=SafeLoader)
+    content = yaml.safe_load(file)
     for data in content:
         host = data["host"]
         port = data["port"]
