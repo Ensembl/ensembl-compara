@@ -21,15 +21,7 @@ import subprocess
 import os
 import sys
 import logging
-
-try:
-    import yaml
-    from yaml.loader import SafeLoader  # For older PyYAML versions
-except ModuleNotFoundError:
-    logging.critical(
-        "Error: The 'PyYAML' module is not installed. Please install it using 'pip install PyYAML'."
-    )
-    sys.exit(1)  # Exit with an error code
+from yaml.loader import SafeLoader  # For older PyYAML versions
 
 
 def setup_logging():
