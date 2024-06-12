@@ -234,6 +234,7 @@ def parse_yaml(file, dest):
         dest (str): The destination PATH where the FASTA file will be stored.
     """
     content = yaml.safe_load(file)
+    download_content = []
     for data in content:
         host = data["host"]
         port = data["port"]
@@ -280,21 +281,19 @@ def parse_yaml(file, dest):
                 else [(fasta_file_name, "")]
             )
 
-            # Process each filename
+            # Collect download information
             for filename, genome_component in dump_filenames:
                 logging.info("fasta_file_name=%s", filename)
                 logging.info("genome_component=%s", genome_component)
+                download_content.append({
+                    "host": host,
+                    "port": port,
+                    "core_db": core_db,
+                    "genome_component": genome_component,
+                    "fasta_filename": filename,
+                })
 
-                download_file(
-                    host=host,
-                    port=port,
-                    core_db=core_db,
-                    genome_component=genome_component,
-                    fasta_filename=os.path.join(dest, f"{filename}.fa"),
-                    stdout_file=os.path.join(dest, f"{filename}.out"),
-                    stderr_file=os.path.join(dest, f"{filename}.err"),
-                )
-
+    return download_content
 
 def main():
     """
@@ -327,8 +326,18 @@ def main():
             )
             sys.exit(1)
 
-        parse_yaml(file=f, dest=args.output)
+        download_content = parse_yaml(file=f, dest=args.output)
 
+    for content in download_content:
+        download_file(
+            host=content["host"],
+            port=content["port"],
+            core_db=content["core_db"],
+            genome_component=content["genome_component"],
+            fasta_filename=os.path.join(args.output, f"{content['fasta_filename']}.fa"),
+            stdout_file=os.path.join(args.output, f"{content['fasta_filename']}.out"),
+            stderr_file=os.path.join(args.output, f"{content['fasta_filename']}.err"),
+        )
 
 if __name__ == "__main__":
     main()
