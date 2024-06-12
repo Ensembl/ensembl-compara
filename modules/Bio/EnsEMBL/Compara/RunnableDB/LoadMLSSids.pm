@@ -119,6 +119,7 @@ sub param_defaults {
         'add_sister_mlsss'  => 0,
         'use_prev_epo_ext'  => 0,
         'branch_code'       => undef,
+        'linked_mlss_unreleased' => 0,
     }
 }
 
@@ -164,8 +165,41 @@ sub fetch_input {
             } else {
                 # Fetch the linked MLSS id
                 my $linked_method_type = $is_epo ? 'EPO_EXTENDED' : 'EPO';
-                @linked_mlss = grep { ($_->species_set->name =~ /^(collection-)?$species_set_name$/ ) && $_->is_in_release($release) }
-                    @{ $mlss_adaptor->fetch_all_by_method_link_type($linked_method_type) };
+                @linked_mlss = grep {
+                    ($_->species_set->name =~ /^(collection-)?$species_set_name$/)
+                    && ($_->is_in_release($release) || $self->param('linked_mlss_unreleased'))
+                } @{ $mlss_adaptor->fetch_all_by_method_link_type($linked_method_type) };
+
+                if ($self->param('linked_mlss_unreleased')) {  # e.g. Pig breeds EPO
+                    my %mlss_gdb_set = map { $_->dbID => 1 } @{ $mlss->species_set->genome_dbs };
+
+                    # If the MLSSes in @linked_mlss are unreleased, the lack of release information makes
+                    # it more challenging to filter outdated MLSSes with a matching species-set name. But
+                    # we can at least whittle down candidate linked MLSSes to those that are link-able...
+                    my @linkable_mlsses;
+                    if ($is_epo) {
+                        foreach my $this_linked_mlss (@linked_mlss) {
+                            my %linked_mlss_gdb_set = map { $_->dbID => 1 } @{ $this_linked_mlss->species_set->genome_dbs };
+                            my @common_gdb_ids = grep { exists $mlss_gdb_set{$_} } keys %linked_mlss_gdb_set;
+                            if (scalar(@common_gdb_ids) == $mlss->species_set->size) {
+                                push(@linkable_mlsses, $this_linked_mlss);
+                            }
+                        }
+                    } else {
+                        foreach my $this_linked_mlss (@linked_mlss) {
+                            my %linked_mlss_gdb_set = map { $_->dbID => 1 } @{ $this_linked_mlss->species_set->genome_dbs };
+                            my @common_gdb_ids = grep { exists $linked_mlss_gdb_set{$_} } keys %mlss_gdb_set;
+                            if (scalar(@common_gdb_ids) == $this_linked_mlss->species_set->size) {
+                                push(@linkable_mlsses, $this_linked_mlss);
+                            }
+                        }
+                    }
+
+                    # ...and sorting by descending MLSS dbID should help us
+                    # pick up the most recently created of the linkable MLSSes.
+                    @linked_mlss = sort { $b->dbID <=> $a->dbID } @linkable_mlsses;
+                }
+
                 $self->throw(sprintf("No %s MLSS found for MLSS '%s' (%s)", $linked_method_type, $mlss->name, $mlss->dbID)) unless @linked_mlss;
             }
             # Assign the EPO MLSS id to mlss_id and EPO Extended MLSS id to ext_mlss_id
