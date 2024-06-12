@@ -14,24 +14,16 @@
 # limitations under the License.
 
 [build-system]
-requires = [
-    "setuptools",
-    "wheel"
-]
+requires = ["setuptools", "wheel"]
 build-backend = "setuptools.build_meta"
 
 [project]
 name = "ensembl-compara"
 description = "Ensembl Compara's Python library"
 requires-python = ">= 3.9"
-dynamic = [
-    "readme",
-    "version",
-]
-authors = [
-    {name = "Ensembl Compara", email = "dev@ensembl.org"},
-]
-license = {text = "Apache License 2.0"}
+dynamic = ["readme", "version"]
+authors = [{ name = "Ensembl Compara", email = "dev@ensembl.org" }]
+license = { text = "Apache License 2.0" }
 classifiers = [
     "Development Status :: 3 - Alpha",
     "Environment :: Console",
@@ -51,6 +43,7 @@ dependencies = [
     "pybedtools==0.8.2",
     "sqlalchemy>=1.4.0",
     "xmlschema>=2.5.1",
+    "PyYAML>=6.0.1"
 ]
 
 [project.optional-dependencies]
@@ -64,26 +57,19 @@ dev = [
     "sphinx-rtd-theme",
     "yamllint",
 ]
-doc = [
-    "mock",
-    "Sphinx",
-    "sphinx-rtd-theme",
-]
-test = [
-    "coverage[toml]",
-    "pytest-cov",
-]
+doc = ["mock", "Sphinx", "sphinx-rtd-theme"]
+test = ["coverage[toml]", "pytest-cov"]
 
 [project.urls]
 homepage = "https://www.ensembl.org"
 repository = "https://github.com/Ensembl/ensembl-compara"
 
 [tool.setuptools]
-package-dir = {"" = "src/python/lib"}
+package-dir = { "" = "src/python/lib" }
 
 [tool.setuptools.dynamic]
-readme = {file = ["README.md"]}
-version = {file = ["PIP_VERSION"]}
+readme = { file = ["README.md"] }
+version = { file = ["PIP_VERSION"] }
 
 [tool.pytest.ini_options]
 # CITest project is on hold and it needs to be updated before resuming its unit tests
@@ -108,5 +94,5 @@ disable = [
     "too-many-locals",
     "too-many-statements",
     "unspecified-encoding",
-    "wildcard-import"
+    "wildcard-import",
 ]
