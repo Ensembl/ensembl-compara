@@ -538,7 +538,7 @@ process calcProtTrees {
     # Remove taxa with gaps and stop codons only:
     ${params.seqkit_exe} grep -v -s -r -p "^[*-]*\$" $aln > ${aln}.proc
     # Run iqtree:
-    ${params.iqtree_exe} -s ${aln}.proc -m LG+F+G --fast -T ${params.cores}
+    ${params.iqtree_exe} -s ${aln}.proc -m LG+I+G --fast -T ${params.cores}
     """
 }
 
@@ -597,7 +597,7 @@ process refineProtTree {
     script:
     if (params.dir == "")
     """
-    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G $consNwk -t $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+I+G $consNwk -t $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
@@ -607,7 +607,7 @@ process refineProtTree {
     """
     else
     """
-    ${params.iqtree_exe} -s $aln --mem 100G -m LG+F+G $consNwk -t $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+I+G $consNwk -t $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
@@ -767,7 +767,7 @@ workflow {
     alignProt(collateBusco.out.prot_seq.flatten(), collateBusco.out.cdnas.flatten())
 
     // Trim protein alignments (removed):
-    trimAlignments(alignProt.out.prot_aln)
+    // trimAlignments(alignProt.out.prot_aln)
 
     // Convert protein alignments to codon alignment:
     protAlnToCodon(alignProt.out.prot_aln, alignProt.out.cdnas)
@@ -785,7 +785,7 @@ workflow {
     runAstral(trees)
 
     // Merge protein alignments:
-    mergeProtAlns(trimAlignments.out.trim_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
+    mergeProtAlns(alignProt.out.prot_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
 
     // Merge codon alignments:
     mergeCodonAlns(removeStopCodons.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
