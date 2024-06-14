@@ -21,7 +21,7 @@ import subprocess
 import os
 import sys
 import logging
-from yaml.loader import SafeLoader  # For older PyYAML versions
+import yaml
 
 
 def setup_logging():
