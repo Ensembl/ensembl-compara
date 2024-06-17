@@ -23,7 +23,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ensembl-compara"
 description = "Ensembl Compara's Python library"
-requires-python = ">= 3.9"
+requires-python = ">= 3.10"
 dynamic = [
     "readme",
     "version",
@@ -38,7 +38,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -48,7 +48,7 @@ dependencies = [
     "ete3>=3.1.1",
     "lxml>=4.9.2",
     "pandas>=0.24.2",
-    "pybedtools==0.8.2",
+    "pybedtools>=0.8.2",
     "sqlalchemy>=1.4.0",
     "xmlschema>=2.5.1",
 ]
