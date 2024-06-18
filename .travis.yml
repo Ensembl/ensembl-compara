@@ -141,7 +141,8 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      python: 3.9
+      dist: bionic
+      python: "3.10"
       name: "Python unit tests on the minimum version"
       install:
         - pip install --upgrade pip
@@ -151,11 +152,10 @@ jobs:
 
     - language: python
       dist: bionic
-      python: "3.10"
+      python: "3.11"
       name: "Python unit tests on the latest version, with code coverage"
       install:
         - pip install --upgrade pip
-        - pip install setuptools==58.1.0
         - pip install codecov
         - pip install .[test]
       script:
@@ -166,9 +166,11 @@ jobs:
         - codecov
 
     - language: python
-      python: 3.9
+      dist: bionic
+      python: "3.10"
       name: "Python linter"
       install:
+        - pip install --upgrade pip
         - pip install pylint mypy
         - pip install .
       script: ./travisci/python-linter_harness.sh
