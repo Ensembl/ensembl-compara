@@ -37,6 +37,13 @@ use Bio::EnsEMBL::Compara::Utils::FlatFile qw( dump_string_into_file );
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    return {
+        'multiplealigner_stats_table' => 'species_tree_node_tag',
+    };
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 
@@ -52,7 +59,17 @@ sub run {
     # Run epo_stats.pl and capture the output
     my $stats_exe = $self->param_required('stats_exe');
     my $db_url    = $self->compara_dba->url;
-    my $stats_cmd = [ $stats_exe, '-url', $db_url, '-mlss_id', $self->param('mlss_id') ];
+
+    my $stats_cmd = [
+        $stats_exe,
+        '-url',
+        $db_url,
+        '-mlss_id',
+        $self->param('mlss_id'),
+        '-table',
+        $self->param('multiplealigner_stats_table'),
+    ];
+
     my $output = $self->get_command_output($stats_cmd);
 
     $self->param('stats_table', $output);
