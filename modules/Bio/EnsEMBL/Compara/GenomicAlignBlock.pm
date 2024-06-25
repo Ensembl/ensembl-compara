@@ -1423,7 +1423,7 @@ sub get_GenomicAlignTree {
 
     #Check if a GenomicAlignTree object already exists and return
     my $genomic_align_tree;
-    unless ( $self->method_link_species_set->method->type =~ /CACTUS_HAL/  ) {
+    unless ( $self->method_link_species_set->method->type =~ /^(CACTUS_HAL|CACTUS_HAL_PW|CACTUS_DB)$/ ) {
       eval {
           my $genomic_align_tree_adaptor = $self->adaptor->db->get_GenomicAlignTreeAdaptor;
           $genomic_align_tree = $genomic_align_tree_adaptor->fetch_by_GenomicAlignBlock($self);

@@ -92,7 +92,7 @@ sub _check_valid_type {
     unless ($mlss->method->class =~ /^GenomicAlign/) {
         die sprintf("%s (%s) MLSSs cannot be dumped with this pipeline !\n", $mlss->method->type, $mlss->method->class);
     }
-    if ($mlss->method->type =~ /^CACTUS_HAL/) {
+    if ($mlss->method->type =~ /^(CACTUS_HAL|CACTUS_HAL_PW|CACTUS_DB)$/) {
         die "Cactus alignments cannot be dumped because they already exist as files\n";
     }
 }
