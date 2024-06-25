@@ -64,6 +64,7 @@ my %glob_exp_per_mlss = (
     ENSEMBL_PARALOGUES       => 'tsv/ensembl-compara/homologies/#species_name#/*.tsv.gz tsv/ensembl-compara/homologies/*_collection/#species_name#/*.tsv.gz',
     SPECIES_TREE             => 'compara/species_trees/*.nh',
     CACTUS_HAL               => 'compara/species_trees/*.nh',
+    CACTUS_DB                => 'compara/species_trees/*.nh',
 );
 
 # Prepend ftp_root to each segment of the glob expression
