@@ -263,6 +263,7 @@ sub store_chunk_in_chunkset {
         if (!$self->param('mix_cellular_components') and ($self->param('current_cellular_component') ne $chunk->dnafrag->cellular_component)) {
             print "Creating new chunkset for ".$chunk->dnafrag->cellular_component."\n";
             $self->define_new_chunkset;
+            $self->param('current_cellular_component', $chunk->dnafrag->cellular_component);
         }
     } else {
         $self->param('current_cellular_component', $chunk->dnafrag->cellular_component);
