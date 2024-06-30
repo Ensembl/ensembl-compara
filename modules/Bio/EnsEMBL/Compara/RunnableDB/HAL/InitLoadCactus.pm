@@ -43,10 +43,10 @@ sub run {
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
     my %mlss_gdb_name_to_id = map { $_->name => $_->dbID } @{$mlss->species_set->genome_dbs};
 
-    my $ref_genome_name = $mlss->get_value_for_tag('reference_genome');
+    my $ref_genome_name = $mlss->get_value_for_tag('reference_species');
 
     unless (defined $ref_genome_name) {
-        $self->die_no_retry("MLSS $mlss_id lacks required tag 'reference_genome'");
+        $self->die_no_retry("MLSS $mlss_id lacks required tag 'reference_species'");
     }
 
     unless (exists $mlss_gdb_name_to_id{$ref_genome_name} && defined $mlss_gdb_name_to_id{$ref_genome_name}) {
