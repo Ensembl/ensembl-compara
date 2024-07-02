@@ -104,6 +104,7 @@ my $compara_dbs = {
 
     # LASTZ dbs
     'lastz_batch_1'    => [ 'mysql-ens-compara-prod-3', 'twalsh_vertebrates_lastz_batch1_113' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-3', 'twalsh_vertebrates_lastz_batch2_113' ],
     'unidir_lastz'     => [ 'mysql-ens-compara-prod-1', 'ensembl_vertebrates_unidirectional_lastz' ],
 
     # EPO dbs
