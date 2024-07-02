@@ -128,7 +128,26 @@ sub createPairAlignerJobs
 
   # Prepopulate the cellular_component
   foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
-    my $query_cellular_component = $query_dnafrag_chunk_set->get_all_DnaFragChunks->[0]->dnafrag->cellular_component;
+
+    my $query_cellular_component;
+    if (!$self->param('mix_cellular_components')) {
+        my $query_dnafrag_chunks = $query_dnafrag_chunk_set->get_all_DnaFragChunks();
+        my %query_cellular_component_set = map { $_->dnafrag->cellular_component => 1 } @{$query_dnafrag_chunks};
+        my @query_cellular_components = keys %query_cellular_component_set;
+
+        if (scalar(@query_cellular_components) == 1) {
+            $query_cellular_component = $query_cellular_components[0];
+        } else {
+            $self->die_no_retry(
+                sprintf(
+                    "query chunk set %d has mixed components (%s)",
+                    $query_dnafrag_chunk_set->dbID,
+                    join(', ', @query_cellular_components),
+                )
+            );
+        }
+    }
+
     $query_dnafrag_chunk_set->{'tmp_query_cellular_component'} = $query_cellular_component;
   }
 
@@ -137,7 +156,24 @@ sub createPairAlignerJobs
     
     $pairaligner_hash->{'dbChunkSetID'} = $target_dnafrag_chunk_set->dbID;
 
-    my $target_cellular_component = $target_dnafrag_chunk_set->get_all_DnaFragChunks->[0]->dnafrag->cellular_component;
+    my $target_cellular_component;
+    if (!$self->param('mix_cellular_components')) {
+        my $target_dnafrag_chunks = $target_dnafrag_chunk_set->get_all_DnaFragChunks();
+        my %target_cellular_component_set = map { $_->dnafrag->cellular_component => 1 } @{$target_dnafrag_chunks};
+        my @target_cellular_components = keys %target_cellular_component_set;
+
+        if (scalar(@target_cellular_components) == 1) {
+            $target_cellular_component = $target_cellular_components[0];
+        } else {
+            $self->die_no_retry(
+                sprintf(
+                    "target chunk set %d has mixed components (%s)",
+                    $pairaligner_hash->{'dbChunkSetID'},
+                    join(', ', @target_cellular_components),
+                )
+            );
+        }
+    }
 
     foreach my $query_dnafrag_chunk_set (@{$query_dnafrag_chunk_set_list}) {
 
