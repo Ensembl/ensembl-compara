@@ -94,6 +94,8 @@ my $compara_dbs = {
     'protostomes_ptrees' => [ 'mysql-ens-compara-prod-9', 'thiagogenez_protostomes_metazoa_protein_trees_112' ],
     'insects_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbotond_insects_metazoa_protein_trees_113' ],
     'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-9', 'thiagogenez_pangenome_drosophila_metazoa_protein_trees_112' ],
+
+    'drosophila_cactus'  => [ 'mysql-ens-compara-prod-6', 'twalsh_pangenome_drosophila_metazoa_load_cactus_113' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
