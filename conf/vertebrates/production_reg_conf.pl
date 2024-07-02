@@ -143,6 +143,8 @@ my $compara_dbs = {
 
     'compara_syntenies'   => [ 'mysql-ens-compara-prod-1', 'twalsh_vertebrates_synteny_113' ],
 
+    'primates_cactus'      => [ 'mysql-ens-compara-prod-8', 'twalsh_primates_vertebrates_load_cactus_113' ],
+    'rodents_cactus'       => [ 'mysql-ens-compara-prod-9', 'twalsh_rodents_vertebrates_load_cactus_113' ],
     #'aves_cactus'         => [ 'mysql-ens-compara-prod-X', ''],
     #'mammals_cactus'      => [ 'mysql-ens-compara-prod-X', ''],
 
