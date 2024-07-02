@@ -1155,6 +1155,29 @@ sub _create_from_a_list_of_ungapped_genomic_align_blocks {
   return $self;
 }
 
+# Return true if this GenomicAlignBlock overlaps the given locus, false otherwise. The locus may be
+# a Bio::EnsEMBL::Compara::Locus object or a hashref with keys 'dnafrag_id', 'dnafrag_start' and 'dnafrag_end'.
+# This method is adapted from, and should remain consistent with, the fetch_by_Slice_MethodLinkSpeciesSet
+# method in the Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor module.
+sub _overlaps_Locus {
+    my ($self, $target_locus) = @_;
+
+    if (!defined $target_locus) {
+        throw("Target locus must be specified!");
+    }
+
+    my $overlap_status = 0;
+    foreach my $genomic_align (@{$self->get_all_GenomicAligns()}) {
+        if ($genomic_align->dnafrag->dbID == $target_locus->{'dnafrag_id'}
+                && $genomic_align->dnafrag_start <= $target_locus->{'dnafrag_end'}
+                && $genomic_align->dnafrag_end >= $target_locus->{'dnafrag_start'}) {
+            $overlap_status = 1;
+            last;
+        }
+    }
+
+    return $overlap_status;
+}
 
 =head2 get_all_ungapped_GenomicAlignBlocks
 
