@@ -1,210 +1,448 @@
-import os 
-import argparse 
-import re 
-import shutil 
-import logging 
+#!/usr/bin/env python3
+
+# See the NOTICE file distributed with this work for additional information
+# regarding copyright ownership.
+#
+# Licensed under the Apache License, Version 2.0 (the "License");
+# you may not use this file except in compliance with the License.
+# You may obtain a copy of the License at
+#
+#     http://www.apache.org/licenses/LICENSE-2.0
+#
+# Unless required by applicable law or agreed to in writing, software
+# distributed under the License is distributed on an "AS IS" BASIS,
+# WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+# See the License for the specific language governing permissions and
+# limitations under the License.
+""" Clean-up Homology dumps """
+
+import argparse
+import logging
+import os
+import re
+import shutil
+from typing import Any, List, Optional, Tuple
+from urllib.parse import urlparse
+
 import pymysql
 
+# Type aliases for readability
+ParsedURL = Tuple[str, str, int, str]
+SQLResult = List[Tuple[Any, ...]]
+ResultTuples = List[Tuple[str]]
+UniqueCollections = List[str]
+
 # Parse the database url and extract user, host, port, database 
-def parse_database_url(db_url):
+def parse_database_url(db_url: str) -> ParsedURL:
     """
-    Parses a MySQL database URL and extracts the user, host, port, and database name.
+    Parses a MySQL database URL and extracts connection parameters.
+
+    This function takes a database URL in the format `mysql://user@host:port/database`,
+    validates the URL scheme, and extracts the username, hostname, port, and database name.
+    If the URL does not conform to the expected format or is missing any required components,
+    a `ValueError` is raised.
 
     Args:
-    - db_url (str): The MySQL database URL in the format "mysql://user@host:port/database".
+        db_url (str): The database URL to be parsed.
 
     Returns:
-    - tuple: A tuple containing the following elements:
-        - user (str): The username extracted from the URL.
-        - host (str): The hostname or IP address extracted from the URL.
-        - port (int): The port number extracted from the URL.
-        - database (str): The database name extracted from the URL.
+        ParsedURL: A tuple containing the username, hostname, port, and database name.
 
     Raises:
-    - ValueError: If the database URL does not match the expected format.
+        ValueError: If the URL scheme is not 'mysql' or if any required components are missing.
 
     Example:
-    >>> parse_database_url("mysql://user@localhost:3306/my_database")
-    ('user', 'localhost', 3306, 'my_database')
-
-    The function uses a regular expression to extract the components of the URL. 
-    The expected format is 'mysql://user@host:port/database'.
-    If the URL does not match this format, a ValueError is raised.
+        >>> db_url = "mysql://user@localhost:3306/my_database"
+        >>> user, host, port, database = parse_database_url(db_url)
+        >>> print(user, host, port, database)
+        ('user', 'localhost', 3306, 'my_database')
     """
+    result = urlparse(db_url)
 
-    # Regex pattern to extract the hostname and port from the URL
-    pattern = r'mysql:\/\/(?P<user>[^@]+)@(?P<host>[a-zA-Z0-9.-]+):(?P<port>\d+)\/(?P<database>[a-zA-Z0-9_]+)'
-    match = re.search(pattern, db_url)
-    if match:
-        user = match.group('user')
-        host = match.group('host')
-        port = int(match.group('port'))  # Convert port to integer
-        database = match.group('database')
-        return user, host, port, database
-    else:
+    if result.scheme != 'mysql':
+        raise ValueError("Invalid database URL scheme")
+
+    user = result.username
+    host = result.hostname
+    port = result.port
+    database = result.path.lstrip('/')
+
+    if user is None or host is None or port is None or not database:
         raise ValueError("Invalid database URL format")
 
-def mysql_connection(query, host, database, port, user):
+    return user, host, port, database
+    
+def mysql_connection(query: str, host: str, database: str, port: int, user: str, params: Optional[Tuple[int, ...]] = None) -> SQLResult:
     """
-    Executes a given SQL query on a MySQL database and fetches the result.
+    Executes a MySQL query and returns the result.
 
-    This function establishes a connection to the MySQL database using provided connection details.
-    It then executes the given query using a cursor obtained from the connection. After executing the query,
-    it fetches all the rows of the query result and returns them. The function handles any errors that might
-    occur during the process and ensures that the database connection is closed before returning the result.
+    This function connects to a MySQL database using the provided connection parameters,
+    executes a query, and returns the fetched results. It handles optional query parameters,
+    logs any MySQL errors that occur, and ensures the database connection is closed properly.
 
     Args:
         query (str): The SQL query to be executed.
-        database (str): The name of the database to connect to.
-        host (str): The host name or IP address of the MySQL server.
-        port (int): The port number to use for the connection.
-        user (str): The username to use for the database connection.
+        host (str): The hostname of the MySQL server.
+        database (str): The name of the MySQL database.
+        port (int): The port number of the MySQL server.
+        user (str): The username to use for authentication.
+        params (Optional[Tuple[int, ...]]): Optional parameters to include in the query.
 
     Returns:
-        tuple: A tuple of tuples containing the rows returned by the query execution.
+        SQLResult: The result of the query as a list of tuples. If an error occurs, an empty list is returned.
 
-    Note:
-        This function does not handle database password authentication. Ensure that the provided user
-        has the necessary permissions and that the database is configured to allow password-less connections
-        from the given host.
+    Raises:
+        pymysql.Error: Logs MySQL errors if they occur during the connection or query execution.
+
+    Example:
+        >>> query = "SELECT * FROM my_table WHERE id = %s"
+        >>> host = "localhost"
+        >>> database = "my_database"
+        >>> port = 3306
+        >>> user = "my_user"
+        >>> params = (1,)
+        >>> result = mysql_connection(query, host, database, port, user, params)
+        >>> print(result)
+        [(1, 'data1'), (2, 'data2')]
     """
+
     try:
         conn = pymysql.connect(
             host=host, user=user, port=port, database=database.strip()
         )
         cursor = conn.cursor()
-        cursor.execute(query)
+        if params:
+            cursor.execute(query, params)
+        else:
+            cursor.execute(query)
         info = cursor.fetchall()
     except pymysql.Error as err:
         logging.error(f"MySQL Error: {err}")
-    cursor.close()
-    conn.close()
-    try: 
-        return info
-    except UnboundLocalError:
-        logging.error(f"\nNothing returned for SQL query: {query}\n")
-        sys.exit()
+        return []
+    finally:
+        cursor.close()
+        conn.close()
 
-def get_unique_collections(result_tuples):
+    return list(info)
+    
+
+def get_collections(db_url: str, before_release: int) -> UniqueCollections:
     """
-    Extracts and returns a sorted list of unique collection names from a list of tuples.
+    Retrieves unique collection names from a MySQL database before a specified Ensembl release.
 
-    This function processes a list of tuples where each tuple contains a collection name as its first element.
-    If the collection name starts with the prefix 'collection-', this prefix is removed before adding the name
-    to a set to ensure uniqueness. Finally, the unique collection names are returned as a sorted list.
+    This function connects to a MySQL database using the provided database URL, executes a query
+    to retrieve distinct collection names related to 'PROTEIN_TREES' and 'NC_TREES' that were
+    first released on or before the specified Ensembl release number. It then processes these
+    names to remove the 'collection-' prefix if present and returns a sorted list of unique names.
 
     Args:
-    - result_tuples (list of tuples): A list of tuples, each containing collection names as their first element.
+        db_url (str): The database URL in the format 'mysql://user:password@host:port/database'.
+        before_release (int): The Ensembl release number to use as a cutoff for selecting collections.
 
     Returns:
-    - list: A sorted list of unique collection names with the 'collection-' prefix removed if present.
+        UniqueCollections: A sorted list of unique collection names with the 'collection-' prefix removed if present.
+
+    Raises:
+        ValueError: If the database URL is invalid or the connection parameters are incorrect.
+        pymysql.Error: If there is an error executing the MySQL query.
 
     Example:
-    >>> get_unique_collections([('collection-abc',), ('collection-xyz',), ('abc',), ('collection-abc',)])
-    ['abc', 'xyz']
-    
-    The function uses a set to ensure uniqueness of the collection names. It then converts the set to a sorted list
-    before returning it.
+        >>> db_url = "mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master"
+        >>> before_release = 110
+        >>> collections = get_collections(db_url, before_release)
+        >>> print(collections)
+        ['vertebrates', 'plants', 'fungi']
     """
-    unique_strings = set()  # Using a set to store unique strings
 
-    for item in result_tuples:
-        collection = item[0]
-        if collection.startswith('collection-'):
-            collection = collection[len('collection-'):]
-        unique_strings.add(collection)
-    
-    return sorted(unique_strings)  # Convert the set to a list if needed
+    collections_query = "SELECT DISTINCT ssh.name " \
+                        "FROM method_link_species_set mlss " \
+                        "JOIN method_link ml USING(method_link_id) " \
+                        "JOIN species_set_header ssh USING(species_set_id) " \
+                        "WHERE ml.type IN ('PROTEIN_TREES', 'NC_TREES') " \
+                        "AND mlss.first_release IS NOT NULL " \
+                        "AND mlss.first_release <= %s;"
 
-
-def get_info_from_master_db(db_url, query):
-    """
-    Fetches and returns unique collection names from a master database based on a given SQL query.
-
-    This function connects to a MySQL database using the provided database URL and executes the given SQL query.
-    It then processes the query result to extract and return a sorted list of unique collection names.
-
-    Args:
-    - db_url (str): The database URL in the format 'mysql://<user>@<host>:<port>/<database>'.
-    - query (str): The SQL query to be executed on the database.
-
-    Returns:
-    - list: A sorted list of unique collection names.
-
-    Example:
-    >>> db_url = "mysql://user@localhost:3306/database"
-    >>> query = "SELECT DISTINCT collection_name FROM collections"
-    >>> get_info_from_master_db(db_url, query)
-    ['collection1', 'collection2', 'collection3']
-    
-    The function performs the following steps:
-    1. Parses the database URL to extract the user, host, port, and database name.
-    2. Connects to the MySQL database and executes the given SQL query.
-    3. Processes the query result to extract unique collection names.
-    4. Returns the unique collection names as a sorted list.
-    """
+    params = (before_release,)
     user, host, port, database = parse_database_url(db_url)
-    sql = mysql_connection(query, host, database, port, user)
-    result = get_unique_collections(sql)
+    sql = mysql_connection(collections_query, host, database, port, user, params)
+    result = sorted(set(collection.removeprefix('collection-') for collection, in sql))
     return result
 
-
-def cleanup_homology_dumps(homology_dumps_dir, before_release, dry_run, log_file=None):
+def get_division_info(db_url: str) -> SQLResult:
     """
-    Cleans up all homology dump directories before a user specified release number and the collection, 
-    division information is obtained from the user defined master database url.
+    Retrieves division and schema version information from a MySQL database.
+
+    This function connects to a MySQL database using the provided database URL and executes a query
+    to retrieve values for the 'division' and 'schema_version' keys from the 'meta' table. The retrieved
+    values are then returned as a SQLResult.
 
     Args:
-    - homology_dumps_dir (str): Root directory of homology dumps to be cleaned up.
-    - before_release (int): Ensembl release cutoff; directories with numeric names less than this value will be removed.
-    - dry_run (bool): If True, performs a dry run without actually deleting directories.
-    - log_file (str, optional): Optional filename for logging cleanup activities. If provided, logs will be written to this file.
+        db_url (str): The database URL in the format 'mysql://user:password@host:port/database'.
 
     Returns:
-    - None
+        SQLResult: A tuple containing tuples of the retrieved meta values.
 
-    This function iterates through the directory structure under homology_dumps_dir.
-    It identifies directories based on specific criteria (e.g., division name, collection name, numeric directory names).
-    If dry_run is False, it attempts to delete identified directories.
-    Logs are generated for each step, including directories found, checked, and removed or planned for removal in dry run mode.
-    If no directories meet the removal criteria and dry_run is False, logs indicate no directories were found for removal.
+    Raises:
+        ValueError: If the database URL is invalid or the connection parameters are incorrect.
+        pymysql.Error: If there is an error executing the MySQL query.
+
+    Example:
+        >>> db_url = "mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master"
+        >>> division_info = get_division_info(db_url)
+        >>> print(division_info)
+        (('vertebrates',), ('113',))
+    """
+
+    div_rel_query = "SELECT meta_value " \
+                    "FROM meta " \
+                    "WHERE meta_key IN ('division', 'schema_version');"
+
+    user, host, port, database = parse_database_url(db_url)
+    sql = mysql_connection(div_rel_query, host, database, port, user)
+    return sql
+
+
+def remove_directory(dir_path: str, dry_run: bool) -> None:
+    """
+    Removes a directory if dry_run is False.
+
+    This function attempts to remove the specified directory. If `dry_run` is True, it logs the 
+    action that would have been taken without actually deleting the directory. If `dry_run` is 
+    False, it deletes the directory and logs the deletion. If an error occurs during the deletion 
+    process, it logs the error and raises the exception.
+
+    Args:
+        dir_path (str): The path to the directory to be removed.
+        dry_run (bool): If True, the directory will not be removed, and the action will only be logged.
+
+    Returns:
+        None
+
+    Raises:
+        Exception: If an error occurs while attempting to remove the directory and `dry_run` is False.
+
+    Example:
+        >>> remove_directory("/path/to/directory", dry_run=True)
+        Dry run mode: Would have removed directory: /path/to/directory
+
+        >>> remove_directory("/path/to/directory", dry_run=False)
+        Removed directory: /path/to/directory
+    """
+
+    if not dry_run:
+        try:
+            shutil.rmtree(dir_path)
+            logging.info(f"Removed directory: {dir_path}")
+        except Exception as err:
+            logging.error(f"Error removing directory: {dir_path}: {err}")
+            raise
+    else:
+        logging.info(f"Dry run mode: Would have removed directory: {dir_path}")
+
+def process_collection_directory(collection_path: str, before_release: int, dry_run: bool) -> bool:
+    """
+    Processes a collection directory and removes subdirectories older than before_release.
+
+    This function scans the specified collection directory for subdirectories with numeric names.
+    If the numeric value of the subdirectory name is less than the specified before_release value,
+    the subdirectory is removed, unless dry_run is True. In dry_run mode, the function logs the 
+    actions it would take without actually performing any deletions. 
+
+    Args:
+        collection_path (str): Path to the collection directory to process.
+        before_release (int): Ensembl release cutoff; subdirectories with numeric names less than 
+                              this value will be considered for removal.
+        dry_run (bool): If True, performs a dry run without actually deleting directories.
+
+    Returns:
+        bool: True if any directories were removed; False otherwise.
+
+    Raises:
+        OSError: If an error occurs while accessing the collection directory.
+
+    Example:
+        >>> process_collection_directory("/path/to/collection", 110, dry_run=True)
+        Dry run mode: Would have removed directory: /path/to/collection/109
+
+        >>> process_collection_directory("/path/to/collection", 110, dry_run=False)
+        Removed directory: /path/to/collection/109
+    """
+
+    dirs_removed = False
+    with os.scandir(collection_path) as coll_path:
+        for k in coll_path:
+            try:
+                k_release = int(k.name)
+            except ValueError:
+                continue
+            if k.is_dir() and k_release < before_release:
+                dirs_to_remove = os.path.join(collection_path, k.name)
+                remove_directory(dirs_to_remove, dry_run)
+                dirs_removed = True
+
+    if not dirs_removed and not dry_run:
+        logging.info(f"No directories found for removal in {collection_path} collection.")
+
+    return dirs_removed
+
+def iterate_collection_dirs(div_path: str, collections: UniqueCollections, before_release: int, dry_run: bool) -> None:
+    """
+    Iterates over collection directories within a division path and processes each collection.
+
+    This function scans the specified division directory for subdirectories that match the names
+    in the provided collections. For each matching collection directory, it calls 
+    `process_collection_directory` to remove subdirectories older than before_release, unless 
+    dry_run is True. In dry_run mode, the function logs the actions it would take without 
+    actually performing any deletions.
+
+    Args:
+        div_path (str): Path to the division directory containing collection directories.
+        collections (UniqueCollections): A list of collection names to look for within the division directory.
+        before_release (int): Ensembl release cutoff; subdirectories within each collection directory with 
+                              numeric names less than this value will be considered for removal.
+        dry_run (bool): If True, performs a dry run without actually deleting directories.
+
+    Returns:
+        None
+
+    Raises:
+        OSError: If an error occurs while accessing the division directory or its subdirectories.
+
+    Example:
+        >>> iterate_collection_dirs("/path/to/division", ["collection1", "collection2"], 110, dry_run=True)
+        Dry run mode: Would have removed directory: /path/to/division/collection1/109
+
+        >>> iterate_collection_dirs("/path/to/division", ["collection1", "collection2"], 110, dry_run=False)
+        Removed directory: /path/to/division/collection1/109
+    """
+    with os.scandir(div_path) as div_dir:
+        for j in div_dir:
+            if j.is_dir() and j.name in collections:
+                collection_path = os.path.join(div_path, j.name)
+                process_collection_directory(collection_path, before_release, dry_run)
+
+def iterate_division_dirs(homology_dumps_dir: str, collections: UniqueCollections, div_info: SQLResult,before_release: int, dry_run: bool) -> None:
+    """
+    Iterates over division directories within the homology dumps directory and processes each division.
+
+    This function scans the specified homology dumps directory for subdirectories that match the division
+    name provided in `div_info`. For each matching division directory, it calls `iterate_collection_dirs`
+    to process collection directories within the division directory, removing subdirectories older than 
+    `before_release`, unless `dry_run` is True. In dry_run mode, the function logs the actions it would take 
+    without actually performing any deletions.
+
+    Args:
+        homology_dumps_dir (str): Path to the homology dumps directory containing division directories.
+        collections (UniqueCollections): A list of collection names to look for within each division directory.
+        div_info (SQLResult): A list of tuples containing division information, first tuple has the division name 
+                                and the second tuple has the schema version
+        before_release (int): Ensembl release cutoff; subdirectories within each collection directory with 
+                              numeric names less than this value will be considered for removal.
+        dry_run (bool): If True, performs a dry run without actually deleting directories.
+
+    Returns:
+        None
+
+    Raises:
+        OSError: If an error occurs while accessing the homology dumps directory or its subdirectories.
+
+    Example:
+        >>> iterate_division_dirs("/path/to/homology_dumps", ["collection1", "collection2"], 
+                                  [("vertebrates",), ("110",)], 110, dry_run=True)
+        Dry run mode: Would have processed directories in /path/to/homology_dumps/vertebrates
+
+        >>> iterate_division_dirs("/path/to/homology_dumps", ["collection1", "collection2"], 
+                                  [("vertebrates",), ("110",)], 110, dry_run=False)
+        Removed directory: /path/to/homology_dumps/vertebrates/collection1/109
+    """
+    with os.scandir(homology_dumps_dir) as dump_dir:
+        for i in dump_dir:
+            if i.is_dir() and i.name in div_info[0]:
+                div_path = os.path.join(homology_dumps_dir, i.name)
+                iterate_collection_dirs(div_path, collections, before_release, dry_run)
+
+
+def cleanup_homology_dumps(homology_dumps_dir: str, before_release: int, dry_run: bool, log_file: Optional[str] = None, collections: UniqueCollections = [], div_info: SQLResult = []) -> None:
+    """
+    Cleans up outdated homology dump directories based on specified criteria.
+
+    This function coordinates the cleanup process for homology dump directories. It iterates through division
+    directories within the specified `homology_dumps_dir`, processing each division using `iterate_division_dirs`.
+    For each division, it checks for collections listed in `collections` and uses division information from `div_info`
+    to determine which directories to remove. Directories with numeric names less than `before_release` are considered
+    for removal unless `dry_run` is True. In dry run mode, the function logs the actions it would take without
+    performing any deletions.
+
+    Args:
+        homology_dumps_dir (str): Path to the homology dumps directory containing division directories.
+        before_release (int): Ensembl release cutoff; subdirectories within each collection directory with numeric names
+                              less than this value will be considered for removal.
+        dry_run (bool): If True, performs a dry run without actually deleting directories.
+        log_file (Optional[str], optional): Path to the log file where logging messages will be written.
+        collections (UniqueCollections, optional): A list of collection names to look for within each division directory.
+                                                   Defaults to an empty list.
+        div_info (SQLResult, optional): A list of tuples containing division information, first tuple has the division name 
+                                        and the second tuple has the schema version
+
+    Returns:
+        None
+
+    Raises:
+        OSError: If an error occurs while accessing the homology dumps directory or its subdirectories.
+
+    Example:
+        >>> cleanup_homology_dumps("/path/to/homology_dumps", 110, dry_run=True, log_file="cleanup.log", 
+                                   collections=["collection1", "collection2"], div_info=[("vertebrates",),("110",)])
+        Dry run mode: Would have processed directories in /path/to/homology_dumps/vertebrates
+
+        >>> cleanup_homology_dumps("/path/to/homology_dumps", 110, dry_run=False, log_file="cleanup.log", 
+                                   collections=["collection1", "collection2"], div_info=[("vertebrates",), ("110",)])
+        Removed directory: /path/to/homology_dumps/vertebrates/collection1/109
     """
     if log_file:
         logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(message)s')
-    dirs_removed = False
 
-    with os.scandir(homology_dumps_dir) as dump_dir:
-        for i in dump_dir:
-            if i.is_dir() and i.name == div_info[1]:
-                div_path = os.path.join(homology_dumps_dir, i.name)
+    #div, version = div_info
+    iterate_division_dirs(homology_dumps_dir, collections, div_info, before_release, dry_run)
 
-                with os.scandir(div_path) as div_dir:
-                    for j in div_dir:
-                        if j.is_dir() and j.name in collections:
-                            collection_path = os.path.join(div_path, j.name)
-                            #logging.info(f"Found collection directory: {collection_path}")
+    if not dry_run:
+        logging.info("Cleanup process completed.")
+    else:
+        logging.info("Dry run mode: Cleanup process completed.")
 
-                            with os.scandir(collection_path) as coll_path:
-                                for k in coll_path:
-                                    if k.is_dir() and k.name.isdigit() and int(k.name) < before_release:
-                                        dirs_to_remove = os.path.join(collection_path, k.name)
-                                        #logging.info(f"Checking directory: {dirs_to_remove}")
-                                        if not dry_run:
-                                            try:
-                                                logging.info(f"Removed directory: {dirs_to_remove}")
-                                                shutil.rmtree(dirs_to_remove)
-                                                dirs_removed = True
-                                            except Exception as err:
-                                                logging.error(f"Error removing directory: {dirs_to_remove}: {err}")
-                                                raise         
-                                        else:
-                                            logging.info(f"Dry run mode: Would have removed directory: {dirs_to_remove}")
-                            
-                            if not dirs_removed and not dry_run:
-                                logging.info("No directories found for removal based on the specified criteria.")
 
+def parse_args():
+    """
+    Parse command-line arguments for the homology dumps cleanup script.
+
+    Returns:
+    - argparse.Namespace: An object containing parsed command-line arguments.
+
+    This function uses argparse to define and parse command-line arguments for the homology dumps cleanup script.
+    It expects the following arguments:
+    
+    --homology_dumps_dir (str): Required. Root directory of the homology dumps.
+    --master_db_url (str): Required. URL of the master database.
+    --before_release (int): Required. Ensembl release cutoff for cleanup (non-inclusive).
+    --dry_run (flag): Optional. If present, performs a dry run without deleting files.
+    --log (str): Optional. Path to an optional log file to record deleted files.
+
+    Example:
+    >>> parse_args()
+    Namespace(dry_run=True, homology_dumps_dir='/path/to/homology_dumps', log=None, master_db_url='mysql://user:password@host:port/database', before_release=110)
+    """
+
+    parser = argparse.ArgumentParser(description='Homology dumps cleanup script')
+
+    parser.add_argument('--homology_dumps_dir', type=str, required=True, help='Root directory of the homology dumps.')
+    parser.add_argument('--master_db_url', type=str, required=True, help='URL of the master database.')
+    parser.add_argument('--before_release', type=int, required=True, help='Ensembl release cutoff for cleanup (non-inclusive).')
+    parser.add_argument('--dry_run', action='store_true', help='Perform a dry run without deleting files.')
+    parser.add_argument('--log', type=str, help='Optional log file to record deleted files.')
+
+    return parser.parse_args()
           
-def main():
+def main() -> None:
     """
     Entry point for the homology dumps cleanup script.
 
@@ -217,48 +455,29 @@ def main():
 
     Command-line Arguments:
         --homology_dumps_dir (str): The root directory of the homology dumps. Required.
-        --master_db_url (str): The URL of the master database. Optional.
+        --master_db_url (str): The URL of the master database. Required.
         --before_release (int): The Ensembl release cutoff for cleanup (non-inclusive). Required.
         --dry_run: Perform a dry run without deleting files. Optional.
         --log (str): Optional log file to record deleted files.
 
     Returns:
         None
+
+    Example command to run this script from command line:
+    >>> ./homology_dump_cleanup.py --homology_dumps_dir /hps/nobackup/flicek/ensembl/compara/sbhurji/scripts/homology_dumps 
+    --master_db_url mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants --before_release 110 --dry_run 
+    --log /hps/nobackup/flicek/ensembl/compara/sbhurji/scripts/clean.log
     """
-    # Create the parser
-    parser = argparse.ArgumentParser(description='Homology dumps cleanup script')
 
-    parser.add_argument('--homology_dumps_dir', type=str, required=True, help='Root directory of the homology dumps.')
-    parser.add_argument('--master_db_url', type=str, required=False, help='URL of the master database.')
-    parser.add_argument('--before_release', type=int, required=True, help='Ensembl release cutoff for cleanup (non-inclusive).')
-    parser.add_argument('--dry_run', action='store_true', help='Perform a dry run without deleting files.')
-    parser.add_argument('--log', type=str, help='Optional log file to record deleted files.')
-
-    args = parser.parse_args()
+    args = parse_args()
     logging.basicConfig(filename=args.log, level=logging.INFO, format='%(asctime)s - %(message)s')
 
-    # Get collections and division info from master database
-    global collections, div_info
-
-    #Update this query to set a cutoff release before which collections should be ignored
-    #Update this query to have a placeholder for current_release where it is 113
-    collections_query = "SELECT DISTINCT ssh.name " \
-                        "FROM method_link_species_set mlss " \
-                        "JOIN method_link ml USING(method_link_id) " \
-                        "JOIN species_set_header ssh USING(species_set_id) " \
-                        "WHERE ml.type IN ('PROTEIN_TREES', 'NC_TREES') " \
-                        "AND mlss.first_release IS NOT NULL " \
-                        "AND mlss.first_release <= 113;"
-
-    div_rel_query = "SELECT meta_value " \
-                    "FROM meta " \
-                    "WHERE meta_key IN ('division', 'schema_version');"
-
-    collections = get_info_from_master_db(args.master_db_url, collections_query)
-    div_info = get_info_from_master_db(args.master_db_url, div_rel_query)
+    collections = get_collections(args.master_db_url, args.before_release)
+    div_info = get_division_info(args.master_db_url)
 
     #Perform cleanup
-    cleanup_homology_dumps(args.homology_dumps_dir, args.before_release, args.dry_run, args.log)
+    cleanup_homology_dumps(args.homology_dumps_dir, args.before_release, args.dry_run, args.log, collections, div_info)
+
 
 if __name__ == '__main__':
     main()
