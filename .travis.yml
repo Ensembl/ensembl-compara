@@ -172,3 +172,9 @@ jobs:
         - pip install pylint mypy
         - pip install .
       script: ./travisci/python-linter_harness.sh
+
+notifications:
+  slack:
+    # yamllint disable-line rule:line-length
+    secure: uVl/Dqi55XHUTCbQugrqnKYqpxYYooEmfml+szFvZCVhIPOqE3GZqgqdTOm7IurFw0jv2En91SxaNsM383VugtfmqqdEjT7/CHX6CHIHL0FDtTeBe6tOe1rMFJeYmFksNsUjBG8uZWBiywwbAxzDLbWsLlnO0q1D3OtEdNQTpN3Ru634WGaKVCtN0vIxBnFSkqwXdVKgqnIyvOl5+QzizzPp7rouI/GOXUXFYQNEIGzjTJ7h8xeg5swAjx1dYl2vl86K4WN+u0kLhR5U5FRLIajeWDlJxAc1Ht83Aviw3qciubKM17viKUtxAwqzXbiHV61WaKb8OquKeeqr+orC1Smdp+BSuWzTSrzlvgxyskZvTxjA3AMLuQVVcfjS36kZlCwgF7OH1vczhEp7lSRbU4Bo2GQRk6kiOpsDFLcOL6sqx/fi44sASYp7lvi6y6JJEim7C04+24dC1L2AGUp5DtvwXmfU/DyTvcXonMS+PU1+ZYD+T/c0h9srKYZWpGapRwEc9DfUJNt6ZVv20KrI6qOjPWNoRUpB81jk+KUVMmhp0LqjrWlkZENsxQ1dW6PSPXz3AJ4PXjTrIBzJchMP3MeKxvkjO9BzpOhzC+UryGulNq7befwEu+fPFP5HrigP+HFiGty5iywSSYDoWfD5GGL+z3aVNGMZl2S26wGTrnQ=
+    
