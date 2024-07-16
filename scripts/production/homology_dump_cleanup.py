@@ -47,15 +47,6 @@ def parse_database_url(db_url: str) -> ParsedURL:
 
     Returns:
         ParsedURL: A tuple containing the username, hostname, port, and database name.
-
-    Raises:
-        ValueError: If the URL scheme is not 'mysql' or if any required components are missing.
-
-    Example:
-        >>> db_url = "mysql://user@localhost:3306/my_database"
-        >>> user, host, port, database = parse_database_url(db_url)
-        >>> print(user, host, port, database)
-        ('user', 'localhost', 3306, 'my_database')
     """
     result = urlparse(db_url)
 
@@ -72,7 +63,7 @@ def parse_database_url(db_url: str) -> ParsedURL:
 
     return user, host, port, database
     
-def mysql_connection(query: str, host: str, database: str, port: int, user: str, params: Optional[Tuple[int, ...]] = None) -> SQLResult:
+def mysql_query(query: str, host: str, database: str, port: int, user: str, params: Optional[Tuple[int, ...]] = None) -> SQLResult:
     """
     Executes a MySQL query and returns the result.
 
@@ -90,22 +81,7 @@ def mysql_connection(query: str, host: str, database: str, port: int, user: str,
 
     Returns:
         SQLResult: The result of the query as a list of tuples. If an error occurs, an empty list is returned.
-
-    Raises:
-        pymysql.Error: Logs MySQL errors if they occur during the connection or query execution.
-
-    Example:
-        >>> query = "SELECT * FROM my_table WHERE id = %s"
-        >>> host = "localhost"
-        >>> database = "my_database"
-        >>> port = 3306
-        >>> user = "my_user"
-        >>> params = (1,)
-        >>> result = mysql_connection(query, host, database, port, user, params)
-        >>> print(result)
-        [(1, 'data1'), (2, 'data2')]
     """
-
     try:
         conn = pymysql.connect(
             host=host, user=user, port=port, database=database.strip()
@@ -141,19 +117,7 @@ def get_collections(db_url: str, before_release: int) -> UniqueCollections:
 
     Returns:
         UniqueCollections: A sorted list of unique collection names with the 'collection-' prefix removed if present.
-
-    Raises:
-        ValueError: If the database URL is invalid or the connection parameters are incorrect.
-        pymysql.Error: If there is an error executing the MySQL query.
-
-    Example:
-        >>> db_url = "mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master"
-        >>> before_release = 110
-        >>> collections = get_collections(db_url, before_release)
-        >>> print(collections)
-        ['vertebrates', 'plants', 'fungi']
     """
-
     collections_query = "SELECT DISTINCT ssh.name " \
                         "FROM method_link_species_set mlss " \
                         "JOIN method_link ml USING(method_link_id) " \
@@ -164,7 +128,7 @@ def get_collections(db_url: str, before_release: int) -> UniqueCollections:
 
     params = (before_release,)
     user, host, port, database = parse_database_url(db_url)
-    sql = mysql_connection(collections_query, host, database, port, user, params)
+    sql = mysql_query(collections_query, host, database, port, user, params)
     result = sorted(set(collection.removeprefix('collection-') for collection, in sql))
     return result
 
@@ -181,24 +145,13 @@ def get_division_info(db_url: str) -> SQLResult:
 
     Returns:
         SQLResult: A tuple containing tuples of the retrieved meta values.
-
-    Raises:
-        ValueError: If the database URL is invalid or the connection parameters are incorrect.
-        pymysql.Error: If there is an error executing the MySQL query.
-
-    Example:
-        >>> db_url = "mysql://ensro@mysql-ens-compara-prod-1:4485/ensembl_compara_master"
-        >>> division_info = get_division_info(db_url)
-        >>> print(division_info)
-        (('vertebrates',), ('113',))
     """
-
     div_rel_query = "SELECT meta_value " \
                     "FROM meta " \
                     "WHERE meta_key IN ('division', 'schema_version');"
 
     user, host, port, database = parse_database_url(db_url)
-    sql = mysql_connection(div_rel_query, host, database, port, user)
+    sql = mysql_query(div_rel_query, host, database, port, user)
     return sql
 
 
@@ -217,18 +170,7 @@ def remove_directory(dir_path: str, dry_run: bool) -> None:
 
     Returns:
         None
-
-    Raises:
-        Exception: If an error occurs while attempting to remove the directory and `dry_run` is False.
-
-    Example:
-        >>> remove_directory("/path/to/directory", dry_run=True)
-        Dry run mode: Would have removed directory: /path/to/directory
-
-        >>> remove_directory("/path/to/directory", dry_run=False)
-        Removed directory: /path/to/directory
     """
-
     if not dry_run:
         try:
             shutil.rmtree(dir_path)
@@ -256,18 +198,7 @@ def process_collection_directory(collection_path: str, before_release: int, dry_
 
     Returns:
         bool: True if any directories were removed; False otherwise.
-
-    Raises:
-        OSError: If an error occurs while accessing the collection directory.
-
-    Example:
-        >>> process_collection_directory("/path/to/collection", 110, dry_run=True)
-        Dry run mode: Would have removed directory: /path/to/collection/109
-
-        >>> process_collection_directory("/path/to/collection", 110, dry_run=False)
-        Removed directory: /path/to/collection/109
     """
-
     dirs_removed = False
     with os.scandir(collection_path) as coll_path:
         for k in coll_path:
@@ -304,16 +235,6 @@ def iterate_collection_dirs(div_path: str, collections: UniqueCollections, befor
 
     Returns:
         None
-
-    Raises:
-        OSError: If an error occurs while accessing the division directory or its subdirectories.
-
-    Example:
-        >>> iterate_collection_dirs("/path/to/division", ["collection1", "collection2"], 110, dry_run=True)
-        Dry run mode: Would have removed directory: /path/to/division/collection1/109
-
-        >>> iterate_collection_dirs("/path/to/division", ["collection1", "collection2"], 110, dry_run=False)
-        Removed directory: /path/to/division/collection1/109
     """
     with os.scandir(div_path) as div_dir:
         for j in div_dir:
@@ -342,18 +263,6 @@ def iterate_division_dirs(homology_dumps_dir: str, collections: UniqueCollection
 
     Returns:
         None
-
-    Raises:
-        OSError: If an error occurs while accessing the homology dumps directory or its subdirectories.
-
-    Example:
-        >>> iterate_division_dirs("/path/to/homology_dumps", ["collection1", "collection2"], 
-                                  [("vertebrates",), ("110",)], 110, dry_run=True)
-        Dry run mode: Would have processed directories in /path/to/homology_dumps/vertebrates
-
-        >>> iterate_division_dirs("/path/to/homology_dumps", ["collection1", "collection2"], 
-                                  [("vertebrates",), ("110",)], 110, dry_run=False)
-        Removed directory: /path/to/homology_dumps/vertebrates/collection1/109
     """
     with os.scandir(homology_dumps_dir) as dump_dir:
         for i in dump_dir:
@@ -386,18 +295,6 @@ def cleanup_homology_dumps(homology_dumps_dir: str, before_release: int, dry_run
 
     Returns:
         None
-
-    Raises:
-        OSError: If an error occurs while accessing the homology dumps directory or its subdirectories.
-
-    Example:
-        >>> cleanup_homology_dumps("/path/to/homology_dumps", 110, dry_run=True, log_file="cleanup.log", 
-                                   collections=["collection1", "collection2"], div_info=[("vertebrates",),("110",)])
-        Dry run mode: Would have processed directories in /path/to/homology_dumps/vertebrates
-
-        >>> cleanup_homology_dumps("/path/to/homology_dumps", 110, dry_run=False, log_file="cleanup.log", 
-                                   collections=["collection1", "collection2"], div_info=[("vertebrates",), ("110",)])
-        Removed directory: /path/to/homology_dumps/vertebrates/collection1/109
     """
     if log_file:
         logging.basicConfig(filename=log_file, level=logging.INFO, format='%(asctime)s - %(message)s')
@@ -426,14 +323,8 @@ def parse_args():
     --before_release (int): Required. Ensembl release cutoff for cleanup (non-inclusive).
     --dry_run (flag): Optional. If present, performs a dry run without deleting files.
     --log (str): Optional. Path to an optional log file to record deleted files.
-
-    Example:
-    >>> parse_args()
-    Namespace(dry_run=True, homology_dumps_dir='/path/to/homology_dumps', log=None, master_db_url='mysql://user:password@host:port/database', before_release=110)
     """
-
     parser = argparse.ArgumentParser(description='Homology dumps cleanup script')
-
     parser.add_argument('--homology_dumps_dir', type=str, required=True, help='Root directory of the homology dumps.')
     parser.add_argument('--master_db_url', type=str, required=True, help='URL of the master database.')
     parser.add_argument('--before_release', type=int, required=True, help='Ensembl release cutoff for cleanup (non-inclusive).')
@@ -468,13 +359,9 @@ def main() -> None:
     --master_db_url mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants --before_release 110 --dry_run 
     --log /hps/nobackup/flicek/ensembl/compara/sbhurji/scripts/clean.log
     """
-
     args = parse_args()
-    logging.basicConfig(filename=args.log, level=logging.INFO, format='%(asctime)s - %(message)s')
-
     collections = get_collections(args.master_db_url, args.before_release)
     div_info = get_division_info(args.master_db_url)
-
     #Perform cleanup
     cleanup_homology_dumps(args.homology_dumps_dir, args.before_release, args.dry_run, args.log, collections, div_info)
 
