@@ -166,6 +166,7 @@ jobs:
       python: 3.9
       name: "Python linter"
       install:
+        - pip uninstall dataclasses -y
         - pip install pylint mypy
         - pip install .
       script: ./travisci/python-linter_harness.sh
