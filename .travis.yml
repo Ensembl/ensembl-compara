@@ -176,8 +176,6 @@ jobs:
       script: ./travisci/python-linter_harness.sh
 
 notifications:
-  slack:
-    rooms:
-      # yamllint disable-line rule:line-length
-      - secure: YIRsp4JAvvdJ4rvTTAFQFuLLJ2DFOWPO4cYa9X3eRcFwcvXPmTT2w7pzWzyakkP5S4S1LEMNC9fJTZgvsjPifmDk+RQCDKRQAhjx8dRvm/CM/FRkNTgpuxi8pJM1nzOZWLYy8NHmwJ8pYjUPBntr6kglDwnlhPN85eDXGayaTyadF+aHcRZsUMxVuSnXJ/KcMyvFmViR9uEYDcPacP5EMPXF34cDwTtFDcCFjge2VXUgZWwj2SxDHYmo/Ln8xQKWYdxZPhRCUdGoSEkmrPPOOhuUmez0H6N0BZedT3Ss8xV6XqqzH9j8UO4I6ObvIjPjCGwNp6p8itw18r2q1nV0k4E9MLEve4nB/z83r8jl/UsfFTIgWuLdjOPNo7DCxKZ1jp6INSmoLj6XDfnIm5F8ZYJGgX9akwVQx+x4Z8SLO0bdJjykrDvo4a3bRJC5k35KYKNiHmQCksfXptAoGOA/AE12XgJ4cvAoJtLxVTAu+cg3hBGhXGrRpmjxD1xInK158YIThCo7jLEpK1ZLQwimB2a4nG+8bMoStYRoSbhfz8B4yr7VNeDVrihXQr2guIsZ6AJ+1QL9ddE1ORx77VU7bTS0Qz8Rs+ZyIXg024nnPOsBysWONsKFS68vS1tuKd0n2FeNPVm1Ccjq/Uovnt5rpCIFh2VSIyqQG1R+KMFhmRU=
+  email:
     on_success: always
+    on_failure: always
