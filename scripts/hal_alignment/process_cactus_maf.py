@@ -18,7 +18,6 @@
 import argparse
 import json
 import os
-import re
 import shutil
 from tempfile import TemporaryDirectory
 
@@ -30,14 +29,14 @@ import numpy as np
 
 def trimming_maf_iterator(stream):
     """Yields a MAF block with gap-only columns trimmed out."""
-    for i, maf_block in enumerate(MafIterator(stream), start=1):
-        gap_column = np.vstack(np.repeat(b"-", len(maf_block)))
-        block_arr = np.array(maf_block, dtype=bytes)
+    for aln_block in MafIterator(stream):
+        gap_column = np.vstack(np.repeat(b"-", len(aln_block)))
+        block_arr = np.array(aln_block, dtype=bytes)
         gap_col_mask = (block_arr == gap_column).all(axis=0)
         if gap_col_mask.any():
-            for row, rec in zip(block_arr[:, ~gap_col_mask], maf_block):
-                rec.seq = Seq(row.tobytes().decode("ascii"))
-        yield maf_block
+            for row_arr, aln_row in zip(block_arr[:, ~gap_col_mask], aln_block):
+                aln_row.seq = Seq(row_arr.tobytes().decode("ascii"))
+        yield aln_block
 
 
 if __name__ == "__main__":
