@@ -90,6 +90,8 @@ if __name__ == "__main__":
     elif args.mlss_path_type == "directory":
         root_to_mlss_dir_path = mlss_path
         path_spec = "*"
+    else:
+        raise ValueError(f"unknown MLSS path type: {args.mlss_path_type}")
 
     prev_mlss_dir_path = prev_ftp_dump_root / root_to_mlss_dir_path
     prev_mlss_file_paths = list(prev_mlss_dir_path.glob(path_spec))
