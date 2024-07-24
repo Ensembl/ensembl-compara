@@ -306,13 +306,7 @@ def main():
         description="Wrapper of dump_genome_from_core.pl to dump a list of FASTA files."
     )
     parser.add_argument("--yaml", required=True, type=str, help="YAML input file")
-    parser.add_argument(
-        "--output",
-        required=False,
-        default=None,
-        type=str,
-        help="Processed output directory",
-    )
+    parser.add_argument("--output", help="Processed output directory")
     args = parser.parse_args()
 
     with open(args.yaml, mode="r", encoding="utf-8") as f:
