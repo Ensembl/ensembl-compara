@@ -300,7 +300,7 @@ def main():
     """
     Main function to parse arguments and handle the processing of a YAML file to dump a list of FASTA files.
     """
-    setup_logging()
+    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
 
     parser = argparse.ArgumentParser(
         description="Wrapper of dump_genome_from_core.pl to dump a list of FASTA files."
