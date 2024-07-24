@@ -28,9 +28,7 @@ import pymysql
 # Type aliases for readability
 ParsedURL = Tuple[str, str, int, str]
 SQLResult = List[Tuple[Any, ...]]
-ResultTuples = List[Tuple[str]]
 UniqueCollections = List[str]
-
 
 # Parse the database url and extract user, host, port, database
 def parse_database_url(db_url: str) -> ParsedURL:
@@ -70,7 +68,7 @@ def mysql_query(
     database: str,
     port: int,
     user: str,
-    params: Optional[Tuple[int, ...]] = None,
+    params: Optional[Any] = None,
 ) -> SQLResult:
     """
     Executes a MySQL query and returns the result.
@@ -89,25 +87,22 @@ def mysql_query(
 
     Returns:
         SQLResult: The result of the query as a list of tuples.
-                    If an error occurs, an empty list is returned.
+                    If a connection error occurs, it raises an error.
     """
     try:
         conn = pymysql.connect(host=host, user=user, port=port, database=database.strip())
-        cursor = conn.cursor()
-        if params:
-            cursor.execute(query, params)
-        else:
-            cursor.execute(query)
-        info = cursor.fetchall()
-    except pymysql.Error as err:
-        logging.error(f"MySQL Error: {err}")
-        return []
-    finally:
-        cursor.close()
-        conn.close()
-
-    return list(info)
-
+        with conn:
+            with conn.cursor() as cursor:
+                if params:
+                    cursor.execute(query, params)
+                else:
+                    cursor.execute(query)
+                info = cursor.fetchall()
+        return list(info)
+    except pymysql.MySQLError as err:
+        logging.exception(f"MySQL Error: {err}")
+        raise
+        
 
 def get_collections(db_url: str, before_release: int) -> UniqueCollections:
     """
@@ -156,7 +151,7 @@ def get_division_info(db_url: str) -> SQLResult:
     Returns:
         SQLResult: A tuple containing tuples of the retrieved meta values.
     """
-    div_rel_query = "SELECT meta_value " "FROM meta " "WHERE meta_key IN ('division', 'schema_version');"
+    div_rel_query = "SELECT meta_value FROM meta WHERE meta_key IN ('division', 'schema_version');"
 
     user, host, port, database = parse_database_url(db_url)
     sql = mysql_query(div_rel_query, host, database, port, user)
@@ -345,8 +340,8 @@ def parse_args():
     Returns:
     - argparse.Namespace: An object containing parsed command-line arguments.
 
-    This function uses argparse to define and parse command-line arguments for the homology dumps cleanup script.
-    It expects the following arguments:
+    This function uses argparse to define and parse command-line 
+    arguments for the homology dumps cleanup script. It expects the following arguments:
 
     --homology_dumps_dir: Required. Root directory of the homology dumps.
     --master_db_url: Required. URL of the master database.
@@ -357,7 +352,6 @@ def parse_args():
     parser = argparse.ArgumentParser(description="Homology dumps cleanup script")
     parser.add_argument(
         "--homology_dumps_dir",
-        type=str,
         required=True,
         help="Root directory of the homology dumps.",
     )
@@ -414,9 +408,9 @@ def main() -> None:
         args.homology_dumps_dir,
         args.before_release,
         args.dry_run,
-        args.log,
         collections,
         div_info,
+        args.log,
     )
 
 
