@@ -58,7 +58,8 @@ def detect_job_scheduler():
         ):
             return scheduler
 
-    return "NONE"  # Return 'NONE' if no scheduler is found
+    logging.error("No job scheduler detected.")
+    sys.exit(1)
 
 
 def subprocess_call(
