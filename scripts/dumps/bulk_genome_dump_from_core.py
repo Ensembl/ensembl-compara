@@ -165,7 +165,7 @@ def download_file(
 
         perl_call = [
             "perl",
-            os.path.join(work_dir, script),
+            os.path.join(script_dir, script),
             "--core_db",
             core_db,
             "--host",
