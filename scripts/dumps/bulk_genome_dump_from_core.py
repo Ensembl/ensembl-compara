@@ -100,7 +100,7 @@ def subprocess_call(
                 f"--output={stdout_file}",
                 f"--error={stderr_file}",
                 f"--job-name={job_name}",
-                f"--wrap={' '.join(command)}",
+                f"--wrap={shlex.join(command)}",
             ]
         elif job_scheduler == "LSF":
             command = [
