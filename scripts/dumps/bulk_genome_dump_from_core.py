@@ -226,13 +226,12 @@ def query_coredb(host, core_db, query):
     return subprocess_call(command=mysql_call)
 
 
-def parse_yaml(file, dest):
+def parse_yaml(file):
     """
     YAML parser.
 
     Args:
         file (file object): The file object.
-        dest (str): The destination PATH where the FASTA file will be stored.
     """
     content = yaml.safe_load(file)
     download_content = []
