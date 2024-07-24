@@ -21,8 +21,8 @@ import subprocess
 import os
 import sys
 import logging
+import shlex
 import yaml
-
 
 def setup_logging():
     """
@@ -155,14 +155,20 @@ def download_file(
         str: The output of the subprocess call to download the FASTA file.
     """
     try:
-        work_dir = os.path.join(
-            os.environ["ENSEMBL_ROOT_DIR"],
-            "ensembl-compara",
-            "scripts",
-            "dumps",
-        )
-        script = "dump_genome_from_core.pl"
+        ensembl_root_dir = os.environ["ENSEMBL_ROOT_DIR"]
+    except KeyError:
+        logging.exception("Environment variable ENSEMBL_ROOT_DIR not set")
+        raise
 
+    script_dir = os.path.join(
+        ensembl_root_dir,
+        "ensembl-compara",
+        "scripts",
+        "dumps",
+    )
+    script = "dump_genome_from_core.pl"
+
+    try:
         perl_call = [
             "perl",
             os.path.join(script_dir, script),
@@ -192,10 +198,6 @@ def download_file(
             stderr_file=stderr_file,
             stdout_file=stdout_file,
         )
-
-    except KeyError as e:
-        logging.error("Environment variable not set: %s", e)
-        raise
 
     except Exception as e:
         logging.error("An unexpected error occurred: %s", e)
@@ -277,21 +279,26 @@ def parse_yaml(file):
             for filename, genome_component in dump_filenames:
                 logging.info("fasta_file_name=%s", filename)
                 logging.info("genome_component=%s", genome_component)
-                download_content.append({
-                    "host": host,
-                    "port": port,
-                    "core_db": core_db,
-                    "genome_component": genome_component,
-                    "fasta_filename": filename,
-                })
+                download_content.append(
+                    {
+                        "host": host,
+                        "port": port,
+                        "core_db": core_db,
+                        "genome_component": genome_component,
+                        "fasta_filename": filename,
+                    }
+                )
 
     return download_content
+
 
 def main():
     """
     Main function to parse arguments and handle the processing of a YAML file to dump a list of FASTA files.
     """
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s")
+    logging.basicConfig(
+        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
+    )
 
     parser = argparse.ArgumentParser(
         description="Wrapper of dump_genome_from_core.pl to dump a list of FASTA files."
@@ -312,7 +319,7 @@ def main():
             )
             sys.exit(1)
 
-        download_content = parse_yaml(file=f, dest=args.output)
+        download_content = parse_yaml(file=f)
 
     for content in download_content:
         download_file(
@@ -324,6 +331,7 @@ def main():
             stdout_file=os.path.join(args.output, f"{content['fasta_filename']}.out"),
             stderr_file=os.path.join(args.output, f"{content['fasta_filename']}.err"),
         )
+
 
 if __name__ == "__main__":
     main()
