@@ -88,6 +88,8 @@ sub default_options {
         'trim_anchor_align_capacity'    => 500,
 
         # Options
+        # linked MLSS is unreleased (e.g. Pig breeds EPO)
+        'linked_mlss_unreleased'     => 0,
         # Avoid reusing any species?
         'do_not_reuse_list'          => undef,
         #skip this module if set to 1
@@ -175,6 +177,7 @@ sub core_pipeline_analyses {
                 'species_set_name' => $self->o('species_set_name'),
                 'release'          => $self->o('ensembl_release'),
                 'add_sister_mlsss' => 1,
+                'linked_mlss_unreleased' => $self->o('linked_mlss_unreleased'),
             },
             -input_ids  => [{}],
             -flow_into  => {

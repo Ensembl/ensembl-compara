@@ -71,6 +71,7 @@ our %PLAIN_TEXT_DESCRIPTIONS = (
     'PECAN'                 => 'Mercator-Pecan',
     'CACTUS_HAL'            => 'Cactus',
     'CACTUS_HAL_PW'         => 'Cactus (restricted)',
+    'CACTUS_DB'             => 'Cactus',
     'SYNTENY'               => 'Synteny',
     'FAMILY'                => 'Families',
     'PROTEIN_TREES'         => 'Protein-trees',

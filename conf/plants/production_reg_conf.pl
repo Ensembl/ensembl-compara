@@ -116,9 +116,9 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'        => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_load_members_113'],
-    #'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', '' ],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'twalsh_default_plants_protein_trees_113' ],
     'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', 'twalsh_rice_cultivars_plants_protein_trees_lsf_112' ],
-    #'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-X', '' ],
+    'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-6', 'thiagogenez_wheat_cultivars_plants_protein_trees_113' ],
 
     # LASTZ dbs
     'lastz_batch_1'  => [ 'mysql-ens-compara-prod-8', 'twalsh_plants_lastz_batch1_113' ],
@@ -129,8 +129,11 @@ my $compara_dbs = {
     'lastz_batch_6'  => [ 'mysql-ens-compara-prod-4', 'twalsh_plants_lastz_batch6_113' ],
     'lastz_batch_7'  => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_lastz_batch7_113' ],
 
+    # other alignments
+    'wheat_cactus'   => [ 'mysql-ens-compara-prod-8', 'twalsh_wheat_plants_load_cactus_take2_113' ],
+
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_synteny_113' ],
 
     # EPO dbs
     ## rice

@@ -1155,6 +1155,29 @@ sub _create_from_a_list_of_ungapped_genomic_align_blocks {
   return $self;
 }
 
+# Return true if this GenomicAlignBlock overlaps the given locus, false otherwise. The locus may be
+# a Bio::EnsEMBL::Compara::Locus object or a hashref with keys 'dnafrag_id', 'dnafrag_start' and 'dnafrag_end'.
+# This method is adapted from, and should remain consistent with, the fetch_by_Slice_MethodLinkSpeciesSet
+# method in the Bio::EnsEMBL::Compara::DBSQL::AlignSliceAdaptor module.
+sub _overlaps_Locus {
+    my ($self, $target_locus) = @_;
+
+    if (!defined $target_locus) {
+        throw("Target locus must be specified!");
+    }
+
+    my $overlap_status = 0;
+    foreach my $genomic_align (@{$self->get_all_GenomicAligns()}) {
+        if ($genomic_align->dnafrag->dbID == $target_locus->{'dnafrag_id'}
+                && $genomic_align->dnafrag_start <= $target_locus->{'dnafrag_end'}
+                && $genomic_align->dnafrag_end >= $target_locus->{'dnafrag_start'}) {
+            $overlap_status = 1;
+            last;
+        }
+    }
+
+    return $overlap_status;
+}
 
 =head2 get_all_ungapped_GenomicAlignBlocks
 
@@ -1423,7 +1446,7 @@ sub get_GenomicAlignTree {
 
     #Check if a GenomicAlignTree object already exists and return
     my $genomic_align_tree;
-    unless ( $self->method_link_species_set->method->type =~ /CACTUS_HAL/  ) {
+    unless ( $self->method_link_species_set->method->type =~ /^(CACTUS_HAL|CACTUS_HAL_PW|CACTUS_DB)$/ ) {
       eval {
           my $genomic_align_tree_adaptor = $self->adaptor->db->get_GenomicAlignTreeAdaptor;
           $genomic_align_tree = $genomic_align_tree_adaptor->fetch_by_GenomicAlignBlock($self);
@@ -1474,7 +1497,7 @@ sub get_GenomicAlignTree {
         $species_tree_string = Bio::EnsEMBL::Compara::Utils::SpeciesTree->create_species_tree(-compara_dba => $self->adaptor->db,
                                                                                               -allow_subtaxa => 1,
                                                                                               -species_set => $species_set)->newick_format('ryo', '%{g}');
-    } elsif ($self->method_link_species_set->dbID == 313160 && $self->method_link_species_set->name eq '16 wheat Cactus') {  # hack for e112
+    } elsif ($self->method_link_species_set->dbID == 314995 && $self->method_link_species_set->name eq '16 wheat Cactus') {  # hack for e113
         $species_tree_string = '(((((((((((((((2195,2107),2199),2120),2198),2116),2211),2208),2205),2203),2207),2274),2209),2202),2210),2102);';
     } else {
         #Multiple alignment

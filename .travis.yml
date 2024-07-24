@@ -171,6 +171,7 @@ jobs:
       name: "Python linter"
       install:
         - pip install --upgrade pip
+        - pip uninstall dataclasses -y
         - pip install pylint mypy
         - pip install .
       script: ./travisci/python-linter_harness.sh

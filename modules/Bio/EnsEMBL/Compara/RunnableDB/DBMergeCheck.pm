@@ -521,16 +521,17 @@ sub run {
             }
             if ($bad) {
 
-                if ($merging_table_per_mlss && $table eq 'peptide_align_feature') {
-                    # Per-MLSS merge of the peptide_align_feature table requires
-                    # that there is no overlap between peptide_align_feature_ids.
-                    $self->die_no_retry(" -ERROR- ranges of the key '$key' overlap, so cannot merge table 'peptide_align_feature' per MLSS");
-                }
+                if ($merging_table_per_mlss && $table =~ /^(hmm_annot|method_link_species_set_attr|method_link_species_set_tag|peptide_align_feature)$/) {
 
-                if ($merging_table_per_mlss && $key eq 'method_link_species_set_id') {
-                    # If we're merging a database table by MLSS, there cannot be a key clash
-                    # involving a table with 'method_link_species_set_id' as its primary key.
-                    print " -INFO- merging $table by MLSS, skipping range check of key 'method_link_species_set_id'\n" if $self->debug;
+                    if ($table eq 'peptide_align_feature') {
+                        # Per-MLSS merge of the peptide_align_feature table requires
+                        # that there is no overlap between peptide_align_feature_ids.
+                        $self->die_no_retry(" -ERROR- ranges of the key '$key' overlap, so cannot merge table 'peptide_align_feature' per MLSS");
+                    }
+
+                    # With the current per-MLSS merge implementation, a key clash is not possible when merging
+                    # any of the hmm_annot, method_link_species_set_attr or method_link_species_set_tag tables.
+                    print " -INFO- merging $table by MLSS, skipping range check of key '$key'\n" if $self->debug;
 
                 } elsif (grep { $table_size->{$_}->{$table} <= $self->param('max_nb_elements_to_fetch') } @dbs) {
 
@@ -796,7 +797,7 @@ sub _get_effective_table_size {
                         hmember.genome_db_id IN $overlap_gdb_id_placeholders
                 /;
 
-                $n_rows -= $helper->execute_single_result( -SQL => $sql_overlap, -PARAMS => \@overlap_gdb_ids );
+                $n_rows -= $helper->execute_single_result( -SQL => $sql_overlap, -PARAMS => [@overlap_gdb_ids, @overlap_gdb_ids] );
             }
 
         } else {

@@ -1397,12 +1397,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
           $mlss_with_mapping = $mlss_adaptor->fetch_by_dbID($alt_mlss_id);
       }
 
-      if ($mlss_with_mapping->dbID == 313160 && $mlss_with_mapping->name eq '16 wheat Cactus') {  # hack for e112
-          $mlss->{'_is_wheat_cactus'} = 1;
-      } else {
-          $mlss->{'_is_wheat_cactus'} = 0;
-      }
-
       # Load the chromosome-names mapping
       Bio::EnsEMBL::Compara::HAL::UCSCMapping::load_mapping_from_mlss($mlss_with_mapping);
 
@@ -1485,7 +1479,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
       my $targets_str = join(',', @hal_targets);
 
       # Default values for Ensembl
-      my $max_ref_gap = $mlss->{'_is_wheat_cactus'} ? 0 : ($num_targets > 1 ? 500 : 50);
+      my $max_ref_gap = $num_targets > 1 ? 500 : 50;
       my $max_block_length = $num_targets > 1 ? 1_000_000 : 500_000;
       my $maf_file_str = $hal_adaptor->msa_blocks( $targets_str, $hal_ref_name, $hal_seq_reg, $start-1, $end, $max_ref_gap, $max_block_length );
 

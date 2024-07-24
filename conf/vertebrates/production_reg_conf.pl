@@ -90,20 +90,21 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'         => [ 'mysql-ens-compara-prod-1',  'twalsh_vertebrates_load_members_113' ],
-    #'compara_ptrees'          => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_ptrees'          => [ 'mysql-ens-compara-prod-2',  'twalsh_default_vertebrates_protein_trees_113' ],
     'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-2',  'twalsh_default_vertebrates_protein_trees_112' ],
-    #'compara_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
+    'compara_nctrees'         => [ 'mysql-ens-compara-prod-3',  'twalsh_default_vertebrates_ncrna_trees_113' ],
     'murinae_ptrees'          => [ 'mysql-ens-compara-prod-4',  'twalsh_murinae_vertebrates_protein_trees_113' ],
-    #'murinae_nctrees'         => [ 'mysql-ens-compara-prod-X',  '' ],
+    'murinae_nctrees'         => [ 'mysql-ens-compara-prod-4',  'twalsh_murinae_vertebrates_ncrna_trees_113' ],
     'murinae_ptrees_prev'     => [ 'mysql-ens-compara-prod-4',  'sbhurji_vertebrates_murinae_protein_reindexed_trees_112' ],
     'murinae_nctrees_prev'    => [ 'mysql-ens-compara-prod-4',  'sbhurji_vertebrates_murinae_ncrna_reindexed_trees_112' ],
-    #'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-X',  '' ],
-    #'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-X',  '' ],
+    'pig_breeds_ptrees'       => [ 'mysql-ens-compara-prod-9',  'twalsh_pig_breeds_vertebrates_protein_trees_take1_113' ],
+    'pig_breeds_nctrees'      => [ 'mysql-ens-compara-prod-8',  'twalsh_pig_breeds_vertebrates_ncrna_trees_take1_113' ],
     'pig_breeds_ptrees_prev'  => [ 'mysql-ens-compara-prod-1',  'twalsh_pig_breeds_vertebrates_protein_trees_111' ],
     'pig_breeds_nctrees_prev' => [ 'mysql-ens-compara-prod-4',  'sbhurji_pig_breeds_vertebrates_ncrna_trees_112' ],
 
     # LASTZ dbs
     'lastz_batch_1'    => [ 'mysql-ens-compara-prod-3', 'twalsh_vertebrates_lastz_batch1_113' ],
+    'lastz_batch_2'    => [ 'mysql-ens-compara-prod-3', 'twalsh_vertebrates_lastz_batch2_113' ],
     'unidir_lastz'     => [ 'mysql-ens-compara-prod-1', 'ensembl_vertebrates_unidirectional_lastz' ],
 
     # EPO dbs
@@ -141,8 +142,10 @@ my $compara_dbs = {
     'amniotes_pecan'      => [ 'mysql-ens-compara-prod-1', 'twalsh_amniotes_pecan_update_111' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-1', 'twalsh_amniotes_pecan_update_111' ],
 
-    #'compara_syntenies'   => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_syntenies'   => [ 'mysql-ens-compara-prod-1', 'twalsh_vertebrates_synteny_113' ],
 
+    'primates_cactus'      => [ 'mysql-ens-compara-prod-8', 'twalsh_primates_vertebrates_load_cactus_113' ],
+    'rodents_cactus'       => [ 'mysql-ens-compara-prod-9', 'twalsh_rodents_vertebrates_load_cactus_113' ],
     #'aves_cactus'         => [ 'mysql-ens-compara-prod-X', ''],
     #'mammals_cactus'      => [ 'mysql-ens-compara-prod-X', ''],
 
@@ -156,7 +159,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
-    #'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
+    'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 
     'mammals_ancestral'    => [ 'mysql-ens-compara-prod-3', 'twalsh_mammals_ancestral_core_111' ],
     'primates_ancestral'   => [ 'mysql-ens-compara-prod-2', 'twalsh_primates_ancestral_core_106' ],

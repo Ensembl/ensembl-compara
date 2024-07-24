@@ -1839,7 +1839,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_short_capacity'),
             -batch_size           => 20,
-            -rc_name   => '1Gb_24_hour_job',
+            -rc_name   => '1Gb_6_hour_job',
             -flow_into => {
                -1 => [ 'mcoffee' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
@@ -2502,7 +2502,7 @@ sub core_pipeline_analyses {
                 'escape_branch'             => -1,
             },
             -hive_capacity  => $self->o('raxml_capacity'),
-            -rc_name 		=> '16Gb_48c_job',
+            -rc_name 		=> '16Gb_48c_168_hour_job',
             -flow_into      => {
                 -1 => [ 'raxml_parsimony_48_cores_himem' ],
                 -2 => [ 'fasttree' ],
@@ -2517,7 +2517,7 @@ sub core_pipeline_analyses {
                 'cmd_max_runtime'           => '518400',
             },
             -hive_capacity  => $self->o('raxml_capacity'),
-            -rc_name 		=> '32Gb_48c_job',
+            -rc_name 		=> '32Gb_48c_168_hour_job',
             -flow_into      => {
                 -2 => [ 'fasttree' ],
             }
@@ -2579,7 +2579,7 @@ sub core_pipeline_analyses {
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '32Gb_8c_mpi',
+            -rc_name => '32Gb_8c_168_hour_mpi',
         },
 
         {   -logic_name => 'examl_16_cores',
@@ -2603,7 +2603,7 @@ sub core_pipeline_analyses {
                 'cmd_max_runtime'       => '518400',
             },
             -hive_capacity        => $self->o('examl_capacity'),
-            -rc_name => '32Gb_16c_mpi',
+            -rc_name => '32Gb_16c_168_hour_mpi',
         },
 
         {   -logic_name => 'examl_32_cores',

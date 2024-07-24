@@ -96,7 +96,7 @@ sub fetch_input {
 		if ( $mlss_id_to_dump{$mlss->dbID} ) {
 			# new analysis/user defined mlss! must be dumped
 			if ( $method_class =~ /^GenomicAlign/ ) { # all alignments
-				next if ($mlss->method->type =~ /^(CACTUS_HAL|CACTUS_HAL_PW)$/);  # ... except for Cactus
+				next if ($mlss->method->type =~ /^(CACTUS_HAL|CACTUS_HAL_PW|CACTUS_DB)$/);  # ... except for Cactus
 				push( @{$dumps{DumpMultiAlign}}, $mlss );
 				# only dump ancestors when EPO primates has been run
 				$self->param( 'dump_ancestral_alleles', 1 ) if ( $mlss->method->type eq 'EPO' && $mlss->species_set->name eq 'primates' );
