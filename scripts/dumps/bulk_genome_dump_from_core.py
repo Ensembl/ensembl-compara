@@ -47,15 +47,7 @@ def detect_job_scheduler():
     }
 
     for scheduler, command in schedulers.items():
-        if (
-            subprocess.run(
-                ["which", command],
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-                check=False,
-            ).returncode
-            == 0
-        ):
+        if subprocess.run(["which", command], check=False).returncode == 0:
             return scheduler
 
     logging.error("No job scheduler detected.")
