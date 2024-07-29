@@ -56,14 +56,9 @@ dependencies = [
 
 [project.optional-dependencies]
 dev = [
-    "coverage[toml]",
-    "pylint",
-    "mock",
+    "black",
     "mypy",
-    "pytest-cov",
-    "Sphinx",
-    "sphinx-rtd-theme",
-    "yamllint",
+    "pylint",
 ]
 doc = [
     "mock",
@@ -72,7 +67,11 @@ doc = [
 ]
 test = [
     "coverage[toml]",
+    "mock",
+    "mypy",
+    "pylint",
     "pytest-cov",
+    "yamllint",
 ]
 
 [project.urls]
