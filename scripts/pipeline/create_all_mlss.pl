@@ -372,6 +372,11 @@ foreach my $collection_node (@{$division_node->findnodes('collections/collection
     my $collection_name = $collection_node->getAttribute('name');
     $collections{$collection_name} = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_species_set($genome_dbs, "collection-$collection_name", $no_release);
 
+    my $strain_type = $collection_node->getAttribute('strain_type');
+    if (defined $strain_type) {
+        $collections{$collection_name}->add_tag('strain_type', $strain_type);
+    }
+
     my $no_store = $collection_node->getAttribute('no_store') // 0;
     if ($no_store) {
         $unstored_collection_names{$collection_name} = 1;

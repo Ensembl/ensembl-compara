@@ -45,7 +45,7 @@
     </collection>
 
     <!-- Wheat cultivars -->
-    <collection name="wheat_cultivars">
+    <collection name="wheat_cultivars" strain_type="cultivar">
       <genome name="aegilops_tauschii"/>
       <genome name="hordeum_vulgare"/>
       <genome name="secale_cereale"/>
@@ -98,7 +98,7 @@
     </collection>
 
     <!-- Rice Cultivars -->
-    <collection name="rice_cultivars">
+    <collection name="rice_cultivars" strain_type="cultivar">
       <genome name="oryza_glaberrima"/>
       <genome name="oryza_brachyantha"/>
       <genome name="oryza_sativa"/>
