@@ -146,6 +146,15 @@
                 </attribute>
               </optional>
               <optional>
+                <attribute name="strain_type" blockly:blockName="Predominant strain type of this collection">
+                  <choice>
+                    <value blockly:blockName="Strain">strain</value>
+                    <value blockly:blockName="Breed">breed</value>
+                    <value blockly:blockName="Cultivar">cultivar</value>
+                  </choice>
+                </attribute>
+              </optional>
+              <optional>
                   <element name="base_collection" blockly:blockName="Include collection as base">
                     <attribute name="name" blockly:blockName="Collection name"/>
                   </element>

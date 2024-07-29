@@ -74,12 +74,12 @@
     </collection>
 
     <!-- Mouse-strains analyses, i.e. incl. the closely relative -->
-    <collection name="murinae">
+    <collection name="murinae" strain_type="strain">
       <taxonomic_group taxon_name="Murinae"/>
     </collection>
 
     <!-- Pig-breeds analyses, incl. closely related outgroups -->
-    <collection name="pig_breeds">
+    <collection name="pig_breeds" strain_type="breed">
       <taxonomic_group taxon_name="Sus"/>
       <genome name="bos_taurus"/>
       <genome name="equus_caballus"/>
