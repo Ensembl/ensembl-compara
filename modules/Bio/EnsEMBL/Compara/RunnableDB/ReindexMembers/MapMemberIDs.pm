@@ -33,29 +33,44 @@ package Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs;
 use strict;
 use warnings;
 
+use File::Spec::Functions qw(catfile);
+use JSON qw(decode_json);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param_required('genome_db_id');
+    my $curr_gdb_id = $self->param_required('genome_db_id');
+    my $prev_gdb_id = $curr_gdb_id;
+
+    if ($self->param('do_genome_reindexing') && $self->param('num_reindexed_genomes') > 0) {
+
+        my $reindexing_dir = $self->param_required('genome_reindexing_dir');
+        my $gdb_map_file = catfile($reindexing_dir, 'genome_db_id.json');
+        my $gdb_reindexing_map = decode_json($self->_slurp($gdb_map_file));
+        my %gdb_reindexing_rev_map = reverse %{$gdb_reindexing_map};
+
+        if (exists $gdb_reindexing_rev_map{$curr_gdb_id}) {
+            $prev_gdb_id = $gdb_reindexing_rev_map{$curr_gdb_id};
+        }
+    }
 
     my $reuse_compara_dba = $self->get_cached_compara_dba('prev_tree_db');
 
-    $self->param('current_members', $self->_fetch_members($self->compara_dba->dbc));
-    $self->param('previous_members', $self->_fetch_members($reuse_compara_dba->dbc));
+    $self->param('current_members', $self->_fetch_members($self->compara_dba->dbc, $curr_gdb_id));
+    $self->param('previous_members', $self->_fetch_members($reuse_compara_dba->dbc, $prev_gdb_id));
 }
 
 sub _fetch_members {
-    my $self = shift @_;
-    my $dbc = shift;
+    my ($self, $dbc, $genome_db_id) = @_;
 
     my $sql = 'SELECT gene_member_id, gene_member.stable_id AS gene_member_stable_id, seq_member_id, seq_member.stable_id AS seq_member_stable_id, md5sum
                FROM gene_member JOIN seq_member USING (gene_member_id) JOIN sequence USING (sequence_id) WHERE gene_member.genome_db_id = ?';
 
     my $sth = $dbc->prepare($sql);
-    $sth->execute($self->param('genome_db_id'));
+    $sth->execute($genome_db_id);
     my $rows = $sth->fetchall_arrayref( {} );   # Get an arrayref of hashrefs
     $sth->finish;
     $self->warning('Fetched ' . scalar(@$rows) . ' genes from '. $dbc->dbname);

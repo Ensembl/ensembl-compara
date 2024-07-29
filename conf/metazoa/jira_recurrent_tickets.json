@@ -99,6 +99,34 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
+            "description": "*GitHub*: [ReindexMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Metazoa/ReindexMembers_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Metazoa::ReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection default -do_genome_reindexing 1{code}",
+            "summary": "Reindex default Metazoa protein trees",
+            "name_on_graph": "Gene-tree reindexing:Default Metazoa"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "*GitHub*: [ReindexMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Metazoa/ReindexMembers_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Metazoa::ReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection protostomes -do_genome_reindexing 1{code}",
+            "summary": "Reindex Protostomes protein trees",
+            "name_on_graph": "Gene-tree reindexing:Protostomes"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "*GitHub*: [ReindexMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Metazoa/ReindexMembers_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Metazoa::ReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection insects -do_genome_reindexing 1{code}",
+            "summary": "Reindex Insects protein trees",
+            "name_on_graph": "Gene-tree reindexing:Insects"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "*GitHub*: [ReindexMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Metazoa/ReindexMembers_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Metazoa::ReindexMembers_conf -host mysql-ens-compara-prod-X -port XXXX -collection pangenome_drosophila -do_genome_reindexing 1{code}",
+            "summary": "Reindex Drosophila protein trees",
+            "name_on_graph": "Gene-tree reindexing:Drosophila"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
             "description": "Mark as done when all LastZs have been merged into the new release database.",
             "summary": "Merge all LastZ",
             "name_on_graph": "Merge all LastZ"
