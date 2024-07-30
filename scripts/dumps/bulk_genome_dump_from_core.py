@@ -25,6 +25,7 @@ import shlex
 
 import yaml
 
+
 def setup_logging():
     """
     Sets up logging configuration.
@@ -89,7 +90,7 @@ def subprocess_call(
 
     Returns:
         str: The subprocess output or None otherwise.
-    
+
     Raises:
         RuntimeError if the subprocess return code is nonzero.
     """
@@ -171,7 +172,7 @@ def download_file(
 
     Returns:
         str: The output of the subprocess call to download the FASTA file.
-    
+
     Raises:
         KeyError if environment variable ENSEMBL_ROOT_DIR is not set.
     """
@@ -220,8 +221,8 @@ def download_file(
             stdout_file=stdout_file,
         )
 
-    except Exception as e:
-        logging.exception("An unexpected error occurred: ")
+    except Exception:
+        logging.exception("An unexpected error occurred")
         raise
 
 
