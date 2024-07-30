@@ -143,7 +143,7 @@ sub pipeline_analyses {
                              },
               -batch_size => 1,
               -hive_capacity => $self->o('base_age_capacity'),
-              -rc_name => '4Gb_job',
+              -rc_name => '4Gb_24_hour_job',
               -flow_into => {
                   2 => { 'sort_bed' => INPUT_PLUS(), },
               },
@@ -171,7 +171,7 @@ sub pipeline_analyses {
                                'chr_sizes_file' => $self->o('chr_sizes_file'),
                                'chr_sizes' => '#bed_dir#/#chr_sizes_file#',
                               },
-               -rc_name => '16Gb_job',
+               -rc_name => '16Gb_24_hour_job',
              },
 
      ];
