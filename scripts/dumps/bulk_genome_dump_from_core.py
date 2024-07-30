@@ -33,6 +33,21 @@ def setup_logging():
     )
 
 
+def parse_arguments():
+    """
+    Parses command-line arguments.
+
+    Returns:
+        argparse.Namespace: The parsed arguments.
+    """
+    parser = argparse.ArgumentParser(
+        description="Wrapper of dump_genome_from_core.pl to dump a list of FASTA files."
+    )
+    parser.add_argument("--yaml", required=True, type=str, help="YAML input file")
+    parser.add_argument("--output", help="Processed output directory")
+    return parser.parse_args()
+
+
 def detect_job_scheduler():
     """
     Detect if the system is using SLURM, LSF, or no job scheduler.
@@ -296,9 +311,10 @@ def main():
     """
     Main function to parse arguments and handle the processing of a YAML file to dump a list of FASTA files.
     """
-    logging.basicConfig(
-        level=logging.INFO, format="%(asctime)s - %(levelname)s - %(message)s"
-    )
+
+    setup_logging()
+
+    args = parse_arguments()
 
     parser = argparse.ArgumentParser(
         description="Wrapper of dump_genome_from_core.pl to dump a list of FASTA files."
