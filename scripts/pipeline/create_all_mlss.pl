@@ -567,8 +567,8 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                         $compara_dba->dbc->do(
                             'UPDATE species_set_header SET name = ? WHERE species_set_id = ?',
                             undef,
-                            $exist_mlss->species_set->name,
-                            $exist_mlss->species_set->dbID
+                            $mlss_ss_name,
+                            $exist_mlss->species_set->dbID,
                         );
                     }
                 }
