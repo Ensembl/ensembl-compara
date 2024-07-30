@@ -195,7 +195,7 @@ sub is_high_confidence {
 
 sub n { ## DEPRECATED
   my $self = shift;
-  deprecate("Homology::n() is deprecated and will be removed in e115.");
+  deprecate("Homology::n() is deprecated.");
   $self->{'_n'} = shift if(@_);
   return $self->{'_n'};
 }
@@ -203,7 +203,7 @@ sub n { ## DEPRECATED
 
 sub s { ## DEPRECATED
   my $self = shift;
-  deprecate("Homology::s() is deprecated and will be removed in e115.");
+  deprecate("Homology::s() is deprecated.");
   $self->{'_s'} = shift if(@_);
   return $self->{'_s'};
 }
@@ -211,7 +211,7 @@ sub s { ## DEPRECATED
 
 sub lnl { ## DEPRECATED
   my $self = shift;
-  deprecate("Homology::lnl() is deprecated and will be removed in e115.");
+  deprecate("Homology::lnl() is deprecated.");
   $self->{'_lnl'} = shift if(@_);
   return $self->{'_lnl'};
 }
@@ -219,14 +219,14 @@ sub lnl { ## DEPRECATED
 
 sub threshold_on_ds { ## DEPRECATED
   my $self = shift;
-  deprecate("Homology::threshold_on_ds() is deprecated and will be removed in e115.");
+  deprecate("Homology::threshold_on_ds() is deprecated.");
   return $self->method_link_species_set->_getter_setter_for_tag('threshold_on_ds', @_);
 }
 
 
 sub dn { ## DEPRECATED
   my ($self, $dn, $apply_threshold_on_ds) = @_;
-  deprecate("Homology::dn() is deprecated and will be removed in e115.");
+  deprecate("Homology::dn() is deprecated.");
 
   if (defined $dn) {
       $self->{'_dn'} = $dn;
@@ -244,7 +244,7 @@ sub dn { ## DEPRECATED
 
 sub ds { ## DEPRECATED
   my ($self, $ds, $apply_threshold_on_ds) = @_;
-  deprecate("Homology::ds() is deprecated and will be removed in e115.");
+  deprecate("Homology::ds() is deprecated.");
 
   if (defined $ds) {
       $self->{'_ds'} = $ds;
@@ -269,7 +269,7 @@ sub ds { ## DEPRECATED
 
 sub dnds_ratio { ## DEPRECATED
   my $self = shift;
-  deprecate("Homology::dnds_ratio() is deprecated and will be removed in e115.");
+  deprecate("Homology::dnds_ratio() is deprecated.");
   my $apply_threshold_on_ds = shift;
   
   $apply_threshold_on_ds = 1 unless (defined $apply_threshold_on_ds);
