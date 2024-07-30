@@ -22,6 +22,7 @@ import os
 import sys
 import logging
 import shlex
+
 import yaml
 
 def setup_logging():
@@ -73,8 +74,6 @@ def subprocess_call(
     command,
     stdout_file="/dev/null",
     stderr_file="/dev/null",
-    work_dir=None,
-    shell=False,
     use_job_scheduler=False,
     job_name=None,
 ):
@@ -83,19 +82,22 @@ def subprocess_call(
 
     Args:
         command (list): The command that the subprocess will execute.
-        work_dir (str): The location where the command should be run.
-        shell (bool): If True, the specified command will be executed through the shell.
+        stdout_file (str): Job scheduler standard output file (default: '/dev/null').
+        stderr_file (str): Job scheduler standard error file (default: '/dev/null').
         use_job_scheduler (bool): If True, the command will be submitted to a job scheduler.
+        job_name (bool): If using the job scheduler, this sets the job name.
 
     Returns:
         str: The subprocess output or None otherwise.
+    
+    Raises:
+        RuntimeError if the subprocess return code is nonzero.
     """
     if use_job_scheduler:
         job_scheduler = detect_job_scheduler()
 
-        if job_scheduler == "NONE":
-            logging.error("No job scheduler detected.")
-            sys.exit(1)
+        if not job_name:
+            job_name = os.path.basename(__file__)
 
         if job_scheduler == "SLURM":
             command = [
@@ -125,11 +127,9 @@ def subprocess_call(
     logging.info("Running: %s", " ".join(command))
     with subprocess.Popen(
         command,
-        shell=shell,
-        cwd=work_dir,
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        universal_newlines=True,
+        text=True,
     ) as process:
         output, stderr = process.communicate()
 
@@ -164,10 +164,16 @@ def download_file(
         port (str): The port number.
         core_db (str): The core_db name.
         fasta_filename (str): The name given for the FASTA file.
+        stdout_file (str): Job scheduler standard output file (default: '/dev/null').
+        stderr_file (str): Job scheduler standard error file (default: '/dev/null').
+        genome_component (str): Optional subgenome component of polyploid genome.
         mask (str): The mask format for the FASTA file.
 
     Returns:
         str: The output of the subprocess call to download the FASTA file.
+    
+    Raises:
+        KeyError if environment variable ENSEMBL_ROOT_DIR is not set.
     """
     try:
         ensembl_root_dir = os.environ["ENSEMBL_ROOT_DIR"]
@@ -215,7 +221,7 @@ def download_file(
         )
 
     except Exception as e:
-        logging.error("An unexpected error occurred: %s", e)
+        logging.exception("An unexpected error occurred: ")
         raise
 
 
