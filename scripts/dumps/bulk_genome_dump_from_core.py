@@ -326,7 +326,6 @@ def main():
     setup_logging()
 
     args = parse_arguments()
-    args = parser.parse_args()
 
     with open(args.yaml, mode="r", encoding="utf-8") as f:
         if args.output is None:
