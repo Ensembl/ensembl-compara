@@ -326,12 +326,6 @@ def main():
     setup_logging()
 
     args = parse_arguments()
-
-    parser = argparse.ArgumentParser(
-        description="Wrapper of dump_genome_from_core.pl to dump a list of FASTA files."
-    )
-    parser.add_argument("--yaml", required=True, type=str, help="YAML input file")
-    parser.add_argument("--output", help="Processed output directory")
     args = parser.parse_args()
 
     with open(args.yaml, mode="r", encoding="utf-8") as f:
