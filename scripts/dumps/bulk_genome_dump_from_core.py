@@ -248,6 +248,10 @@ def parse_yaml(file):
 
     Args:
         file (file object): The file object.
+
+    Returns:
+        list[dict]: A list of dictionaries, each with information
+            about a genome (or genome component) to be downloaded.
     """
     content = yaml.safe_load(file)
     download_content = []
