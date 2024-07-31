@@ -10,7 +10,7 @@
     "big_wig_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/bedGraphToBigWig",
     "bl2seq_exe"                : null,
     "blast_bin_dir"             : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin",
-    "blastn_exe"                : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/balstn",
+    "blastn_exe"                : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/blastn",
     "blat_exe"                  : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/blat",
     "cactus_hal2maf_exe"        : "/hps/software/users/ensembl/compara/shared/build/cactus/2.8.2/bin/cactus-hal2maf",
     "cafe_shell"                : "/hps/software/users/ensembl/compara/shared/build/cafe/4.2.1/bin/cafe",
