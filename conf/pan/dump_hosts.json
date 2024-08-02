@@ -12,7 +12,7 @@
         "core_dump_hosts": [
             "mysql-ens-sta-1-b",
             "mysql-ens-sta-3-b",
-            "mysql-ens-sta-4-b"
+            "mysql-ens-sta-4"
         ]
     }
 }

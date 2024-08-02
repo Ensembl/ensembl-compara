@@ -8,10 +8,12 @@
 
 ----
 
-# Deprecated methods scheduled for deletion
+# Deprecated methods not yet scheduled for deletion
 
-## Ensembl 115
-
+* `AlignedMember::get_cigar_array()`
+* `AlignedMember::get_cigar_breakout()`
+* `GenomicAlignTree::genomic_align_array()`
+* `GenomicAlignTree::get_all_GenomicAligns()`
 * `Homology::dn()`
 * `Homology::dnds_ratio()`
 * `Homology::ds()`
@@ -20,13 +22,6 @@
 * `Homology::s()`
 * `Homology::threshold_on_ds()`
 * `HomologyAdaptor::update_genetic_distance()`
-
-# Deprecated methods not yet scheduled for deletion
-
-* `AlignedMember::get_cigar_array()`
-* `AlignedMember::get_cigar_breakout()`
-* `GenomicAlignTree::genomic_align_array()`
-* `GenomicAlignTree::get_all_GenomicAligns()`
 
 # Methods removed in previous versions of Ensembl
 
