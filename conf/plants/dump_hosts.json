@@ -1,6 +1,6 @@
 {
     "even": {
-        "compara_dump_host": "mysql-ens-sta-3",
+        "compara_dump_host": "mysql-ens-compara-prod-5",
         "ancestral_dump_host": "mysql-ens-sta-3",
         "core_dump_hosts": [
             "mysql-ens-sta-1",
@@ -8,7 +8,7 @@
         ]
     },
     "odd": {
-        "compara_dump_host": "mysql-ens-sta-3-b",
+        "compara_dump_host": "mysql-ens-compara-prod-5",
         "ancestral_dump_host": "mysql-ens-sta-3-b",
         "core_dump_hosts": [
             "mysql-ens-sta-1-b",
