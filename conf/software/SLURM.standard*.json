@@ -31,7 +31,7 @@
     "extaligners_exe_dir"       : "##linuxbrew_home##/bin/",
     "fasta2esd_exe"             : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/fasta2esd",
     "fasttree_exe"              : ["check_exe_in_cellar","fasttree/2.1.8/bin/FastTree"],
-    "faToNib_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/faToNib_exe",
+    "faToNib_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/faToNib",
     "gerp_exe_dir"              : ["check_dir_in_cellar","gerp/20080211_1/bin"],
     "getPatterns_exe"           : ["check_exe_in_cellar","raxml-get-patterns/1.0/bin/getPatterns"],
     "halStats_exe"              : ["check_exe_in_cellar","hal/d864ed8/bin/halStats"],
