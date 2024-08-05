@@ -21,88 +21,52 @@ import logging
 import os
 import shutil
 from typing import Any, List, Optional, Tuple
-from urllib.parse import urlparse
 
-import pymysql
+from sqlalchemy import create_engine, text
+from sqlalchemy.exc import SQLAlchemyError
 
 # Type aliases for readability
-ParsedURL = Tuple[str, str, int, str]
 SQLResult = List[Tuple[Any, ...]]
 UniqueCollections = List[str]
-
-# Parse the database url and extract user, host, port, database
-def parse_database_url(db_url: str) -> ParsedURL:
-    """
-    Parses a MySQL database URL and extracts connection parameters.
-
-    This function takes a database URL in the format `mysql://user@host:port/database`,
-    validates the URL scheme, and extracts the username, hostname, port, and database name.
-    If the URL does not conform to the expected format or is missing any required components,
-    a `ValueError` is raised.
-
-    Args:
-        db_url: The database URL to be parsed.
-
-    Returns:
-        ParsedURL: A tuple containing the username, hostname, port, and database name.
-    """
-    result = urlparse(db_url)
-
-    if result.scheme != "mysql":
-        raise ValueError("Invalid database URL scheme")
-
-    user = result.username
-    host = result.hostname
-    port = result.port
-    database = result.path.lstrip("/")
-
-    if user is None or host is None or port is None or not database:
-        raise ValueError("Invalid database URL format")
-
-    return user, host, port, database
 
 
 def mysql_query(
     query: str,
-    host: str,
-    database: str,
-    port: int,
-    user: str,
+    db_url: str,
     params: Optional[Any] = None,
 ) -> SQLResult:
     """
-    Executes a MySQL query and returns the result.
+    Execute a MySQL query and return the result.
 
-    This function connects to a MySQL database using the provided connection parameters,
-    executes a query, and returns the fetched results. It handles optional query parameters,
-    logs any MySQL errors that occur, and ensures the database connection is closed properly.
+    This function takes a SQL query as a string and a database URL,
+    executes the query, and returns the result as a list of tuples.
+    It optionally accepts parameters to bind to the query.
 
-    Args:
-        query: The SQL query to be executed.
-        host: The hostname of the MySQL server.
-        database: The name of the MySQL database.
-        port: The port number of the MySQL server.
-        user: The username to use for authentication.
-        params: Optional parameters to include in the query.
+    Parameters:
+    query (str): The SQL query to be executed.
+    db_url (str): The database URL for connecting to the MySQL database.
+    params (Optional[Any]): Optional parameters to bind to the SQL query.
+                            If not provided, an empty dictionary is used.
 
     Returns:
-        SQLResult: The result of the query as a list of tuples.
-                    If a connection error occurs, it raises an error.
+    SQLResult: A list of tuples containing the rows returned by the query.
+
+    Raises:
+    SQLAlchemyError: If an error occurs during the execution of the query.
     """
+
+    if not params:
+        params = {}
+
     try:
-        conn = pymysql.connect(host=host, user=user, port=port, database=database.strip())
-        with conn:
-            with conn.cursor() as cursor:
-                if params:
-                    cursor.execute(query, params)
-                else:
-                    cursor.execute(query)
-                info = cursor.fetchall()
-        return list(info)
-    except pymysql.MySQLError as err:
-        logging.exception(f"MySQL Error: {err}")
+        engine = create_engine(db_url)
+        with engine.connect() as conn:
+            info = conn.execute(query, **params)
+            return [tuple(x) for x in info]
+    except SQLAlchemyError:
+        logging.exception("MySQL Error")
         raise
-        
+
 
 def get_collections(db_url: str, before_release: int) -> UniqueCollections:
     """
@@ -120,19 +84,18 @@ def get_collections(db_url: str, before_release: int) -> UniqueCollections:
     Returns:
         UniqueCollections: A sorted list of unique collection names.
     """
-    collections_query = (
+    collections_query = text(
         "SELECT DISTINCT ssh.name "
         "FROM method_link_species_set mlss "
         "JOIN method_link ml USING(method_link_id) "
         "JOIN species_set_header ssh USING(species_set_id) "
         "WHERE ml.type IN ('PROTEIN_TREES', 'NC_TREES') "
         "AND mlss.first_release IS NOT NULL "
-        "AND mlss.first_release <= %s;"
+        "AND mlss.first_release <= :before_release;"
     )
 
-    params = (before_release,)
-    user, host, port, database = parse_database_url(db_url)
-    sql = mysql_query(collections_query, host, database, port, user, params)
+    params = {"before_release": before_release}
+    sql = mysql_query(collections_query, db_url, params)
     result = sorted(set(collection.removeprefix("collection-") for collection, in sql))
     return result
 
@@ -141,9 +104,9 @@ def get_division_info(db_url: str) -> SQLResult:
     """
     Retrieves division and schema version information from a MySQL database.
 
-    This function connects to a MySQL database using the provided database URL and executes a query
-    to retrieve values for the 'division' and 'schema_version' keys from the 'meta' table. The retrieved
-    values are then returned as a SQLResult.
+    This function connects to a MySQL database using the provided database URL and executes
+    a query to retrieve values for the 'division' and 'schema_version' keys from the 'meta' table.
+    The retrieved values are then returned as a SQLResult.
 
     Args:
         db_url: The database URL in the format 'mysql://user:password@host:port/database'.
@@ -151,10 +114,11 @@ def get_division_info(db_url: str) -> SQLResult:
     Returns:
         SQLResult: A tuple containing tuples of the retrieved meta values.
     """
-    div_rel_query = "SELECT meta_value FROM meta WHERE meta_key IN ('division', 'schema_version');"
+    div_rel_query = (
+        "SELECT meta_value FROM meta WHERE meta_key IN ('division', 'schema_version');"
+    )
 
-    user, host, port, database = parse_database_url(db_url)
-    sql = mysql_query(div_rel_query, host, database, port, user)
+    sql = mysql_query(div_rel_query, db_url)
     return sql
 
 
@@ -177,15 +141,17 @@ def remove_directory(dir_path: str, dry_run: bool) -> None:
     if not dry_run:
         try:
             shutil.rmtree(dir_path)
-            logging.info(f"Removed directory: {dir_path}")
+            logging.info("Removed directory: %s", dir_path)
         except Exception as err:
-            logging.error(f"Error removing directory: {dir_path}: {err}")
+            logging.error("Error removing directory: %s: %s", dir_path, err)
             raise
     else:
-        logging.info(f"Dry run mode: Would have removed directory: {dir_path}")
+        logging.info("Dry run mode: Would have removed directory: %s", dir_path)
 
 
-def process_collection_directory(collection_path: str, before_release: int, dry_run: bool) -> bool:
+def process_collection_directory(
+    collection_path: str, before_release: int, dry_run: bool
+) -> bool:
     """
     Processes a collection directory and removes subdirectories older than before_release.
 
@@ -216,7 +182,9 @@ def process_collection_directory(collection_path: str, before_release: int, dry_
                 dirs_removed = True
 
     if not dirs_removed and not dry_run:
-        logging.info(f"No directories found for removal in {collection_path} collection.")
+        logging.info(
+            "No directories found for removal in %s collection.", collection_path
+        )
 
     return dirs_removed
 
@@ -248,41 +216,6 @@ def iterate_collection_dirs(
             if j.is_dir() and j.name in collections:
                 collection_path = os.path.join(div_path, j.name)
                 process_collection_directory(collection_path, before_release, dry_run)
-
-
-def iterate_division_dirs(
-    homology_dumps_dir: str,
-    collections: UniqueCollections,
-    div_info: SQLResult,
-    before_release: int,
-    dry_run: bool,
-) -> None:
-    """
-    Iterates over division directories within the homology dumps directory and processes each division.
-
-    This function scans the specified homology dumps directory for subdirectories that match the division
-    name provided in `div_info`. For each matching division directory, it calls `iterate_collection_dirs`
-    to process collection directories within the division directory, removing subdirectories older than
-    `before_release`, unless `dry_run` is True. In dry_run mode, the function logs the actions it would take
-    without actually performing any deletions.
-
-    Args:
-        homology_dumps_dir: Path to the homology dumps directory containing division directories.
-        collections: A list of collection names to look for within each division directory.
-        div_info: A list of tuples containing division information, first tuple has the division name
-                and the second tuple has the schema version
-        before_release: Ensembl release cutoff; subdirectories within each collection directory with
-                              numeric names less than this value will be considered for removal.
-        dry_run: If True, performs a dry run without actually deleting directories.
-
-    Returns:
-        None
-    """
-    with os.scandir(homology_dumps_dir) as dump_dir:
-        for i in dump_dir:
-            if i.is_dir() and i.name in div_info[0]:
-                div_path = os.path.join(homology_dumps_dir, i.name)
-                iterate_collection_dirs(div_path, collections, before_release, dry_run)
 
 
 def cleanup_homology_dumps(
@@ -322,10 +255,13 @@ def cleanup_homology_dumps(
         None
     """
     if log_file:
-        logging.basicConfig(filename=log_file, level=logging.INFO, format="%(asctime)s - %(message)s")
+        logging.basicConfig(
+            filename=log_file, level=logging.INFO, format="%(asctime)s - %(message)s"
+        )
 
     # div, version = div_info
-    iterate_division_dirs(homology_dumps_dir, collections, div_info, before_release, dry_run)
+    div_path = os.path.join(homology_dumps_dir, div_info[0][0])
+    iterate_collection_dirs(div_path, collections, before_release, dry_run)
 
     if not dry_run:
         logging.info("Cleanup process completed.")
@@ -340,7 +276,7 @@ def parse_args():
     Returns:
     - argparse.Namespace: An object containing parsed command-line arguments.
 
-    This function uses argparse to define and parse command-line 
+    This function uses argparse to define and parse command-line
     arguments for the homology dumps cleanup script. It expects the following arguments:
 
     --homology_dumps_dir: Required. Root directory of the homology dumps.
@@ -355,7 +291,9 @@ def parse_args():
         required=True,
         help="Root directory of the homology dumps.",
     )
-    parser.add_argument("--master_db_url", type=str, required=True, help="URL of the master database.")
+    parser.add_argument(
+        "--master_db_url", type=str, required=True, help="URL of the master database."
+    )
     parser.add_argument(
         "--before_release",
         type=int,
@@ -367,7 +305,9 @@ def parse_args():
         action="store_true",
         help="Perform a dry run without deleting files.",
     )
-    parser.add_argument("--log", type=str, help="Optional log file to record deleted files.")
+    parser.add_argument(
+        "--log", type=str, help="Optional log file to record deleted files."
+    )
 
     return parser.parse_args()
 
@@ -394,7 +334,7 @@ def main() -> None:
         None
 
     Example command to run this script from command line:
-    >>> ./homology_dump_cleanup.py 
+    >>> ./homology_dump_cleanup.py
     --homology_dumps_dir /hps/nobackup/flicek/ensembl/compara/sbhurji/scripts/homology_dumps
     --master_db_url mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants
     --before_release 110 --dry_run
@@ -403,7 +343,13 @@ def main() -> None:
     args = parse_args()
     collections = get_collections(args.master_db_url, args.before_release)
     div_info = get_division_info(args.master_db_url)
-    # Perform cleanup
+
+    if args.before_release > int(div_info[1][0]):
+        raise ValueError(
+            f"The value {args.before_release} is greater than the allowed before_release "
+            + f"limit of {div_info[1][0]}."
+        )
+
     cleanup_homology_dumps(
         args.homology_dumps_dir,
         args.before_release,

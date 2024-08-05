@@ -59,7 +59,6 @@ dev = [
     "pylint",
     "mock",
     "mypy",
-    "types-PyMySQL",
     "pytest-cov",
     "Sphinx",
     "sphinx-rtd-theme",
