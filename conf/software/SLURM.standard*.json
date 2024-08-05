@@ -48,7 +48,7 @@
     "mcl_bin_dir"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin",
     "mcoffee_exe"               : ["check_exe_in_cellar","t-coffee/9.03.r1318/bin/t_coffee"],
     "mercator_exe"              : ["check_exe_in_cellar","cndsrc/2013.01.11/bin/mercator"],
-    "mpirun_exe"                : ["check_exe_in_cellar","open-mpi/4.1.0_1/bin/mpirun"],
+    "mpirun_exe"                : "/hps/software/spack/opt/spack/linux-rocky8-cascadelake/gcc-11.2.0/openmpi-4.1.5-lcbtwbhjm5p3dlttbconb6si7n4j3xsl/bin/mpirun",
     "noisy_exe"                 : ["check_exe_in_cellar","noisy/1.5.12/bin/noisy"],
     "notung_jar"                : ["check_file_in_cellar","notung/2.6.0/libexec/Notung-2.6.jar"],
     "ortheus_bin_dir"           : ["check_dir_in_compara","ortheus/rc3/bin"],
