@@ -112,6 +112,10 @@ sub default_options {
         # Params for healthchecks;
         'hc_capacity'                     => 40,
         'hc_batch_size'                   => 10,
+
+        # GenomeDB reindexing parameters
+        'do_genome_reindexing'  => 0,
+        'genome_reindexing_dir' => $self->o('work_dir') . '/' . 'genome_reindexing',
     };
 }
 
@@ -119,7 +123,7 @@ sub pipeline_create_commands {
     my ($self) = @_;
     return [
         @{$self->SUPER::pipeline_create_commands},  # here we inherit creation of database, hive tables and compara tables
-        $self->pipeline_create_commands_rm_mkdir(['output_dir_path']),
+        $self->pipeline_create_commands_rm_mkdir(['genome_reindexing_dir', 'output_dir_path']),
 
         $self->db_cmd('CREATE TABLE datacheck_results (
                           submission_job_id INT,
@@ -142,9 +146,15 @@ sub pipeline_wide_parameters {
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
         'prev_tree_db'  => $self->o('prev_tree_db'),
+        'collection'    => $self->o('collection'),
         'member_type'   => $self->o('member_type'),
+        'ensembl_release' => $self->o('ensembl_release'),
         'output_dir_path' => $self->o('output_dir_path'),
         'db_name'         => $self->o('db_name'),
+
+        # GenomeDB reindexing parameters
+        'do_genome_reindexing'  => $self->o('do_genome_reindexing'),
+        'genome_reindexing_dir' => $self->o('genome_reindexing_dir'),
     }
 }
 
@@ -172,7 +182,7 @@ sub core_pipeline_analyses {
             -input_ids  => [ {} ],
             -flow_into  => {
                 '2->A' => 'copy_table_from_master',
-                'A->1' => 'find_mlss_id',
+                'A->1' => 'load_mlss_id',
             },
         },
 
@@ -187,15 +197,15 @@ sub core_pipeline_analyses {
 
 # -------------------------------------------[load GenomeDB entries and copy the other tables]------------------------------------------
 
-        {   -logic_name => 'find_mlss_id',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        {   -logic_name => 'load_mlss_id',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
             -parameters => {
-                'db_conn'    => '#prev_tree_db#',
-                'inputquery' => 'SELECT method_link_species_set_id AS mlss_id, member_type FROM gene_tree_root LIMIT 1',
+                'method_type'      => ($self->o('member_type') eq 'protein' ? 'PROTEIN_TREES' : 'NC_TREES'),
+                'species_set_name' => $self->o('collection'),
+                'release'          => '#ensembl_release#',
+                'add_prev_mlss'    => 1,
             },
-            -flow_into  => {
-                2 => 'load_genomedb_factory',
-            },
+            -flow_into  => 'load_genomedb_factory',
         },
 
         {   -logic_name => 'load_genomedb_factory',
@@ -231,7 +241,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
                 '2->A' => { 'genome_member_copy' => INPUT_PLUS },
-                'A->1' => 'gene_tree_tables_factory',
+                'A->1' => 'fire_gene_tree_table_copy',
             },
         },
 
@@ -242,6 +252,31 @@ sub core_pipeline_analyses {
                 'biotype_filter'        => q{#expr(#member_type# eq "protein" ? 'biotype_group = "coding"' : 'biotype_group LIKE "%noncoding"')expr#},
             },
             -analysis_capacity => $self->o('copy_capacity'),
+        },
+
+        {   -logic_name    => 'fire_gene_tree_table_copy',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into     => WHEN(
+                '#do_genome_reindexing#' => 'prep_genome_reindexing',
+                ELSE 'assert_mlsses_match',
+            ),
+        },
+
+        {   -logic_name => 'prep_genome_reindexing',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::PrepGenomedbReindexing',
+            -rc_name    => '2Gb_job',
+            -parameters => {
+                'genome_dumps_dir' => $self->o('genome_dumps_dir'),
+            },
+            -flow_into  => 'gene_tree_tables_factory',
+        },
+
+        {   -logic_name    => 'assert_mlsses_match',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::AssertNumericParamsEqual',
+            -parameters        => {
+                'param_names' => ['mlss_id', 'prev_mlss_id'],
+            },
+            -flow_into     => 'gene_tree_tables_factory',
         },
 
         {   -logic_name => 'gene_tree_tables_factory',
@@ -260,6 +295,14 @@ sub core_pipeline_analyses {
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
             -analysis_capacity => $self->o('copy_capacity'),
+            -flow_into  => WHEN(
+                '#do_genome_reindexing# && #num_reindexed_genomes# > 0' => { 'reindex_genomes' => INPUT_PLUS() }
+            ),
+        },
+
+        {   -logic_name    => 'reindex_genomes',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::ReindexGenomedbs',
+            -hive_capacity => 1,  # Because of transactions, concurrent jobs will have deadlocks
         },
 
 # ---------------------------------------------[Update the gene-tree tables]---------------------------------------------
