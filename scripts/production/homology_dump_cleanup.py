@@ -20,6 +20,7 @@ import argparse
 import logging
 import os
 import shutil
+import textwrap
 from typing import Any, List, Optional, Tuple
 
 from sqlalchemy import create_engine, text
@@ -39,20 +40,20 @@ def mysql_query(
     Execute a MySQL query and return the result.
 
     This function takes a SQL query as a string and a database URL,
-    executes the query, and returns the result as a list of tuples.
+    executes the query, and returns the result as SQLResult.
     It optionally accepts parameters to bind to the query.
 
     Parameters:
-    query (str): The SQL query to be executed.
-    db_url (str): The database URL for connecting to the MySQL database.
-    params (Optional[Any]): Optional parameters to bind to the SQL query.
-                            If not provided, an empty dictionary is used.
+        query : The SQL query to be executed.
+        db_url : The database URL for connecting to the MySQL database.
+        params : Optional parameters to bind to the SQL query.
+                    If not provided, an empty dictionary is used.
 
     Returns:
-    SQLResult: A list of tuples containing the rows returned by the query.
+        A list of tuples containing the rows returned by the query.
 
     Raises:
-    SQLAlchemyError: If an error occurs during the execution of the query.
+        If an error occurs during the execution of the query.
     """
 
     if not params:
@@ -73,16 +74,15 @@ def get_collections(db_url: str, before_release: int) -> UniqueCollections:
     Retrieves unique collection names from a MySQL database before a specified Ensembl release.
 
     This function connects to a MySQL database using the provided database URL, executes a query
-    to retrieve distinct collection names related to 'PROTEIN_TREES' and 'NC_TREES' that were
-    first released on or before the specified Ensembl release number. It then processes these
-    names to remove the 'collection-' prefix if present and returns a sorted list of unique names.
+    to retrieve distinct collection names. It processes these names to remove the 'collection-'
+    prefix if present and returns a sorted list of unique names.
 
     Args:
         db_url: The database URL in the format 'mysql://user:password@host:port/database'.
         before_release: The Ensembl release number to use as a cutoff for selecting collections.
 
     Returns:
-        UniqueCollections: A sorted list of unique collection names.
+        A sorted list of unique collection names.
     """
     collections_query = text(
         "SELECT DISTINCT ssh.name "
@@ -134,16 +134,13 @@ def remove_directory(dir_path: str, dry_run: bool) -> None:
     Args:
         dir_path: The path to the directory to be removed.
         dry_run: If True, the directory will not be removed, and the action will only be logged.
-
-    Returns:
-        None
     """
     if not dry_run:
         try:
             shutil.rmtree(dir_path)
             logging.info("Removed directory: %s", dir_path)
-        except Exception as err:
-            logging.error("Error removing directory: %s: %s", dir_path, err)
+        except Exception:
+            logging.exception("Error removing directory: %s", dir_path)
             raise
     else:
         logging.info("Dry run mode: Would have removed directory: %s", dir_path)
@@ -163,11 +160,11 @@ def process_collection_directory(
     Args:
         collection_path: Path to the collection directory to process.
         before_release: Ensembl release cutoff; subdirectories with numeric names less than
-                              this value will be considered for removal.
+                            this value will be considered for removal.
         dry_run: If True, performs a dry run without actually deleting directories.
 
     Returns:
-        bool: True if any directories were removed; False otherwise.
+        True if any directories were removed; False otherwise.
     """
     dirs_removed = False
     with os.scandir(collection_path) as coll_path:
@@ -205,11 +202,8 @@ def iterate_collection_dirs(
         div_path: Path to the division directory containing collection directories.
         collections: A list of collection names to look for within the division directory.
         before_release: Ensembl release cutoff; subdirectories within each collection directory with
-                              numeric names less than this value will be considered for removal.
+                            numeric names less than this value will be considered for removal.
         dry_run: If True, performs a dry run without actually deleting directories.
-
-    Returns:
-        None
     """
     with os.scandir(div_path) as div_dir:
         for j in div_dir:
@@ -227,15 +221,13 @@ def cleanup_homology_dumps(
     log_file: Optional[str] = None,
 ) -> None:
     """
-    Cleans up outdated homology dump directories based on specified criteria.
+    Cleans up homology dump directories based on specified criteria.
 
     This function coordinates the cleanup process for homology dump directories.
-    It iterates through division directories within the specified `homology_dumps_dir`,
-    processing each division using `iterate_division_dirs`.
-    For each division, it checks for collections listed in `collections`
-    and uses division information from `div_info`to determine which directories to remove.
-    Directories with numeric names less than `before_release` are considered
-    for removal unless `dry_run` is True.
+    It iterates through collection directories within the specified `div_path`,
+    processing each collection using `iterate_collection_dirs`. For each matching
+    collection directory, it calls `process_collection_directory` to remove
+    subdirectories older than before_release, unless dry_run is True.
     In dry run mode, the function logs the actions it would take without
     performing any deletions.
 
@@ -247,12 +239,9 @@ def cleanup_homology_dumps(
         dry_run : If True, performs a dry run without actually deleting directories.
         log_file : Path to the log file.
         collections : A list of collection names to look for within each division directory.
-                                                   Defaults to an empty list.
+                        Defaults to an empty list.
         div_info : A list of tuples containing division information,
         first tuple has the division name and the second tuple has the schema version
-
-    Returns:
-        None
     """
     if log_file:
         logging.basicConfig(
@@ -269,23 +258,24 @@ def cleanup_homology_dumps(
         logging.info("Dry run mode: Cleanup process completed.")
 
 
-def parse_args():
+def parse_args() -> argparse.Namespace:
     """
-    Parse command-line arguments for the homology dumps cleanup script.
-
-    Returns:
-    - argparse.Namespace: An object containing parsed command-line arguments.
-
-    This function uses argparse to define and parse command-line
-    arguments for the homology dumps cleanup script. It expects the following arguments:
-
-    --homology_dumps_dir: Required. Root directory of the homology dumps.
-    --master_db_url: Required. URL of the master database.
-    --before_release: Required. Ensembl release cutoff for cleanup (non-inclusive).
-    --dry_run: Optional. If present, performs a dry run without deleting files.
-    --log: Optional. Path to an optional log file to record deleted files.
+    Returns command-line arguments for the homology dumps cleanup script.
     """
-    parser = argparse.ArgumentParser(description="Homology dumps cleanup script")
+    description = textwrap.dedent(
+        """\
+    Homology dumps cleanup script
+    Example command to run this script from command line:
+    >>> ./homology_dump_cleanup.py
+    --homology_dumps_dir /hps/nobackup/flicek/ensembl/compara/sbhurji/scripts/homology_dumps
+    --master_db_url mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants
+    --before_release 110 --dry_run
+    --log /hps/nobackup/flicek/ensembl/compara/sbhurji/scripts/clean.log
+    """
+    )
+    parser = argparse.ArgumentParser(
+        description=description, formatter_class=argparse.RawDescriptionHelpFormatter
+    )
     parser.add_argument(
         "--homology_dumps_dir",
         required=True,
@@ -314,31 +304,13 @@ def parse_args():
 
 def main() -> None:
     """
-    Entry point for the homology dumps cleanup script.
+    This is the main function to parse arguments, retrieve database collections, 
+    obtain division information, validate input, and initiate the 
+    cleanup of homology dumps.
 
-    This function performs the following tasks:
-    1. Parses command-line arguments to get the homology dumps directory, master database URL,
-       release cutoff, dry run option, and log file path.
-    2. Configures logging based on the provided log file path, if any.
-    3. Retrieves collections and division information from the master database using the provided URL.
-    4. Calls the cleanup_homology_dumps function to perform the cleanup based on the parsed arguments.
-
-    Command-line Arguments:
-        --homology_dumps_dir (str): The root directory of the homology dumps. Required.
-        --master_db_url (str): The URL of the master database. Required.
-        --before_release (int): The Ensembl release cutoff for cleanup (non-inclusive). Required.
-        --dry_run: Perform a dry run without deleting files. Optional.
-        --log (str): Optional log file to record deleted files.
-
-    Returns:
-        None
-
-    Example command to run this script from command line:
-    >>> ./homology_dump_cleanup.py
-    --homology_dumps_dir /hps/nobackup/flicek/ensembl/compara/sbhurji/scripts/homology_dumps
-    --master_db_url mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants
-    --before_release 110 --dry_run
-    --log /hps/nobackup/flicek/ensembl/compara/sbhurji/scripts/clean.log
+    Raises:
+        ValueError: If `before_release` is greater than the allowed limit specified in the
+                    division information.
     """
     args = parse_args()
     collections = get_collections(args.master_db_url, args.before_release)
