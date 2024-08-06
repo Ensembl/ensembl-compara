@@ -248,7 +248,6 @@ def cleanup_homology_dumps(
             filename=log_file, level=logging.INFO, format="%(asctime)s - %(message)s"
         )
 
-    # div, version = div_info
     div_path = os.path.join(homology_dumps_dir, div_info[0][0])
     iterate_collection_dirs(div_path, collections, before_release, dry_run)
 
