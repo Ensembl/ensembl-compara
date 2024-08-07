@@ -20,6 +20,7 @@ import argparse
 import logging
 import os
 import shutil
+import sys
 import textwrap
 from typing import Any, List, Optional, Tuple
 
@@ -243,10 +244,16 @@ def cleanup_homology_dumps(
         div_info : A list of tuples containing division information,
         first tuple has the division name and the second tuple has the schema version
     """
+    logging_kwargs: dict = {
+        "format": "%(asctime)s - %(message)s",
+        "level": logging.INFO,
+    }
     if log_file:
-        logging.basicConfig(
-            filename=log_file, level=logging.INFO, format="%(asctime)s - %(message)s"
-        )
+        logging_kwargs["filename"] = log_file
+    else:
+        logging_kwargs["stream"] = sys.stdout
+    logging.basicConfig(**logging_kwargs)
+
 
     div_path = os.path.join(homology_dumps_dir, div_info[0][0])
     iterate_collection_dirs(div_path, collections, before_release, dry_run)
