@@ -51,28 +51,23 @@ dependencies = [
     "pybedtools==0.8.2",
     "sqlalchemy>=1.4.0",
     "xmlschema>=2.5.1",
-    "types-PyYAML>=6.0.12.20240311"
 ]
 
 [project.optional-dependencies]
-dev = [
-    "coverage[toml]",
-    "pylint",
-    "mock",
-    "mypy",
-    "pytest-cov",
-    "Sphinx",
-    "sphinx-rtd-theme",
-    "yamllint",
-]
 doc = [
     "mock",
     "Sphinx",
     "sphinx-rtd-theme",
 ]
 test = [
+    "black",
     "coverage[toml]",
+    "mock",
+    "mypy",
+    "pylint",
     "pytest-cov",
+    "types-PyYAML>=6.0.12.20240311",
+    "yamllint",
 ]
 
 [project.urls]
