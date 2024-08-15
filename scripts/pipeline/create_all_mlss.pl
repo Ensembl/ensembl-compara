@@ -563,8 +563,19 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 if ($exist_mlss->name ne $mlss->name) {
                     $compara_dba->dbc->do('UPDATE method_link_species_set SET name = ? WHERE method_link_species_set_id = ?', undef, $mlss->name, $exist_mlss->dbID);
                 }
-                if ($exist_mlss->species_set->name ne $mlss->species_set->name) {
-                    $compara_dba->dbc->do('UPDATE species_set_header SET name = ? WHERE species_set_id = ?', undef, $mlss->species_set->name, $exist_mlss->species_set->dbID);
+
+                # Update MLSS species-set name in database ...
+                my $mlss_ss_name = $mlss->species_set->name;
+                if ($mlss_ss_name ne $exist_mlss->species_set->name) {
+                    # ... unless this would have the effect of removing the 'collection-' prefix from a collection.
+                    unless ("collection-$mlss_ss_name" eq $exist_mlss->species_set->name && exists $collections{$mlss_ss_name}) {
+                        $compara_dba->dbc->do(
+                            'UPDATE species_set_header SET name = ? WHERE species_set_id = ?',
+                            undef,
+                            $mlss_ss_name,
+                            $exist_mlss->species_set->dbID,
+                        );
+                    }
                 }
 
                 # handle re-release : when an object was retired, but is being made current again.
