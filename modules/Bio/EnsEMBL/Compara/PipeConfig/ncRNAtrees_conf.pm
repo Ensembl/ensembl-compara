@@ -661,8 +661,16 @@ sub core_pipeline_analyses {
                                },
                 -flow_into     => {
                                    '2->A' => WHEN( '#skip_epo#' => 'msa_chooser', ELSE 'recover_epo' ),
-                                   'A->1' => [ 'hc_global_tree_set' ],
+                                   'A->1' => [ 'global_tree_processing' ],
                                   },
+            },
+
+            {   -logic_name => 'global_tree_processing',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => {
+                    '1->A' => [ 'hc_global_tree_set', 'hc_supertree_factory' ],
+                    'A->1' => [ 'fire_cafe' ],
+                },
             },
 
             { -logic_name         => 'hc_global_tree_set',
@@ -670,12 +678,31 @@ sub core_pipeline_analyses {
               -parameters         => {
                                       mode            => 'global_tree_set',
                                      },
-              -flow_into          => [
-                                       # 'backbone_fire_homology_dumps',
-                                        WHEN('#do_cafe# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
-                                        WHEN('#do_cafe# and !#binary_species_tree_input_file#', 'make_full_species_tree'),
-                                    ],
               %hc_params,
+            },
+
+            { -logic_name => 'hc_supertree_factory',
+              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+              -parameters => {
+                  'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "supertree"',
+              },
+              -flow_into  => {
+                  2 => 'hc_supertree'
+              },
+            },
+
+            { -logic_name => 'hc_supertree',
+              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneSupertree',
+            },
+
+            { -logic_name => 'fire_cafe',
+              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+              -flow_into  => WHEN( '#do_cafe#' => 'species_tree_decision' ),
+            },
+
+            { -logic_name => 'species_tree_decision',
+              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+              -flow_into  => WHEN( '#binary_species_tree_input_file#' => 'CAFE_species_tree', ELSE 'make_full_species_tree' ),
             },
 
         {

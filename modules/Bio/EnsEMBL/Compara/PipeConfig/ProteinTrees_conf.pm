@@ -1745,7 +1745,7 @@ sub core_pipeline_analyses {
                     ELSE 'alignment_entry_point',
                 ),
                 '1->A' => [ 'join_panther_subfam' ],
-                'A->1' => [ 'hc_global_tree_set' ],
+                'A->1' => [ 'global_tree_processing' ],
             },
             -rc_name    => '2Gb_job',
         },
@@ -1781,14 +1781,42 @@ sub core_pipeline_analyses {
             %decision_analysis_params,
         },
 
+        {   -logic_name => 'global_tree_processing',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => {
+                '1->A'  => [ 'hc_global_tree_set', 'hc_supertree_factory' ],
+                'A->1'  => [ 'tree_id_mapping' ],
+            },
+        },
+
+        {   -logic_name => 'tree_id_mapping',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [
+                WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
+                WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
+            ],
+        },
+
+        {   -logic_name => 'hc_supertree_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "supertree"',
+            },
+            -flow_into  => {
+                2 => 'hc_supertree'
+            },
+        },
+
+        {   -logic_name => 'hc_supertree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneSupertree',
+        },
+
         {   -logic_name         => 'hc_global_tree_set',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
             -parameters         => {
                 mode            => 'global_tree_set',
             },
             -flow_into  => [
-                    WHEN('#do_stable_id_mapping#' => 'stable_id_mapping'),
-                    WHEN('#do_treefam_xref#' => 'treefam_xref_idmap'),
                     { 'datacheck_trees' => { 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef, 'datacheck_names' => ['CheckFlatProteinTrees'] } },
                 ],
             %hc_analysis_params,
