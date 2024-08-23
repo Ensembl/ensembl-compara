@@ -172,8 +172,7 @@ jobs:
       install:
         - pip install --upgrade pip
         - pip uninstall dataclasses -y
-        - pip install pylint mypy
-        - pip install .
+        - pip install .[test]
       script: ./travisci/python-linter_harness.sh
 
 notifications:
