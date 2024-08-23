@@ -219,19 +219,6 @@ while (my ($division, $species_names) = each %{$additional_species}) {
 
 my $core_db_pattern = qr/^[a-z0-9_]+(?<collection_core_tag>_collection)?_core(?:_\d+)?_\d+_\w+$/;
 
-my $species_meta_query = q/
-    SELECT species_id, meta_key, meta_value
-    FROM meta
-    WHERE meta_key IN ('species.division', 'species.production_name')
-/;
-
-my $version_query = q/
-    SELECT meta_value
-    FROM meta
-    WHERE meta_key = 'schema_version'
-/;
-
-
 my %core_adaptor_param_sets;
 foreach my $core_host (@{$dump_host_map{'core_dump_hosts'}}) {
     my $core_port = Bio::EnsEMBL::Compara::Utils::Registry::get_port($core_host);
@@ -249,16 +236,28 @@ foreach my $core_host (@{$dump_host_map{'core_dump_hosts'}}) {
         }
     }
 
-    foreach my $core_db_name (@core_db_names) {
-        my $core_dbc = Bio::EnsEMBL::DBSQL::DBConnection->new(
-            -dbname => $core_db_name,
-            -host   => $core_host,
-            -port   => $core_port,
-            -user   => 'ensro',
-        );
+    my $core_host_dbc = Bio::EnsEMBL::DBSQL::DBConnection->new(
+        -host   => $core_host,
+        -port   => $core_port,
+        -user   => 'ensro',
+    );
 
-        my $core_version = $core_dbc->sql_helper->execute_single_result(-SQL => $version_query);
-        my $results = $core_dbc->sql_helper->execute(-SQL => $species_meta_query);
+    foreach my $core_db_name (@core_db_names) {
+
+        my $core_version_query = qq/
+            SELECT meta_value
+            FROM ${core_db_name}.meta
+            WHERE meta_key = 'schema_version'
+        /;
+
+        my $core_species_meta_query = qq/
+            SELECT species_id, meta_key, meta_value
+            FROM ${core_db_name}.meta
+            WHERE meta_key IN ('species.division', 'species.production_name')
+        /;
+
+        my $core_version = $core_host_dbc->sql_helper->execute_single_result(-SQL => $core_version_query);
+        my $results = $core_host_dbc->sql_helper->execute(-SQL => $core_species_meta_query);
 
         my %meta_by_species_id;
         foreach my $result (@{$results}) {
@@ -298,6 +297,8 @@ foreach my $core_host (@{$dump_host_map{'core_dump_hosts'}}) {
             }
         }
     }
+
+    $core_host_dbc->disconnect_if_idle;
 }
 
 while (my ($division, $species_name_set) = each %exp_sp_info) {
@@ -307,6 +308,13 @@ while (my ($division, $species_name_set) = each %exp_sp_info) {
         }
     }
 }
+
+
+my $version_query = q/
+    SELECT meta_value
+    FROM meta
+    WHERE meta_key = 'schema_version'
+/;
 
 my $compara_db_name = $div_to_compara_db_name{$division};
 my $compara_host = $dump_host_map{'compara_dump_host'};
