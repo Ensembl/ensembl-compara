@@ -693,7 +693,7 @@ sub core_pipeline_analyses {
 
             { -logic_name => 'hc_supertree',
               -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneSupertree',
-              %hc_analysis_params,
+              %hc_params,
             },
 
             { -logic_name => 'fire_cafe',
