@@ -111,7 +111,7 @@ if __name__ == '__main__':
         # Filter out sequences with lengths not divisible by 3:
         s = [x for x in s if len(x.seq) % 3 == 0]
         # Filter out gene if we don't have enough taxa:
-        if len(s) / len(taxa) < float(args.m):
+        if len(s) / len(taxa) < args.m:
             continue
         with open(path.join(args.o, f"gene_cdna_{g}.fas"), "w") as output_handle:
             SeqIO.write(s, output_handle, "fasta")

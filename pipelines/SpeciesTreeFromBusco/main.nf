@@ -341,6 +341,7 @@ process transAlign {
     set +e
     ${params.pagan_exe} -s $cdnas --translate --threads 16 -o pagan_out
     exit_code=\$?
+    set -e
 
     # Check if pagan succeeded
     if [ \$exit_code -eq 0 ]; then
