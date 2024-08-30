@@ -673,7 +673,6 @@ workflow {
     }
     prepareGenome(genomes)
     prepareGenomeFromDb()
-    
     if (params.dir == "") {
         // The input is from DB, the genomes CSV comes from the process:
         genCsvChan = prepareGenomeFromDb.out.input_genomes
@@ -682,42 +681,32 @@ workflow {
         // CSV file so the branch length calculations are executed:
         genCsvChan = Channel.of("/dummy/path")
     }
-    
     proc_genomes = prepareGenome.out.proc_genome.flatten().mix(prepareGenomeFromDb.out.proc_genome.flatten())
-    
     // Branch the genomes channel based on presence in the
     // annotation cache:
     proc_genomes.branch {
         annot: !annoInCache(it, params.anno_cache)
         link: annoInCache(it, params.anno_cache)
     }.set { genome_fork }
-    
     // Link annotations present in the cache:
     linkAnnoCache(genome_fork.link)
     // Annotate genomes not present in the cache:
     buscoAnnot(prepareBusco.out.busco_prots, genome_fork.annot)
-    
     // Merge the output of link and annotate steps:
     annots = buscoAnnot.out.busco_annot.mix(linkAnnoCache.out.busco_annot)
-    
     // Get cDNA from the genomes and annotations:
     runGffread(annots)
-    
     // Organise sequences per-gene:
     collateBusco(runGffread.out.collect(), prepareBusco.out.busco_genes)
-    
     // Align protein sequences:
     transAlign(collateBusco.out.cdnas.flatten())
     
     // Calculate trees from the protein alignments:
     calcProtTrees(transAlign.out.prot_aln)
-    
     trees = calcProtTrees.out.tree.collectFile(name: 'gene_trees.nwk', newLine: true)
-    
     // Run astral to calculate species tree from
     // the gene trees:
     runAstral(trees)
-    
     // Merge protein alignments:
     mergeProtAlns(transAlign.out.prot_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
 
@@ -726,16 +715,12 @@ workflow {
     
     // Merge codon alignments:
     mergeCodonAlns(transAlign.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
-    
     // Pick out every third site from the merged codon alignment:
     pickThirdCodonSite(mergeCodonAlns.out.merged_aln)
-    
     // Calculate branch lenghts from protein alignment:
     refineProtTree(trimMergedProtAln.out.trimmed_merged_aln, runAstral.out.tree, genCsvChan)
-    
     // Calculate branch lenghts based on the third codon sites:
     calcNeutralBranches(pickThirdCodonSite.out.third_aln, refineProtTree.out.newick_fullid, genCsvChan)
-    
     // Perform outgroup rooting for tree with neutral branch lengths:
     outgroupRootingNeutral(calcNeutralBranches.out.newick)
     // Perform outgroup rooting for tree with protein alignment based branch lengths:
