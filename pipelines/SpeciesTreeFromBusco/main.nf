@@ -339,7 +339,7 @@ process transAlign {
     """
     mkdir -p alignments
     set +e
-    ${params.pagan_exe} -s $cdnas --translate --threads 16 -o pagan_out
+    ${params.pagan_exe} -s $cdnas --translate --threads ${task.cpus} -o pagan_out
     exit_code=\$?
     set -e
 
