@@ -662,7 +662,6 @@ workflow {
 
     // Prepare busco protein set:
     prepareBusco(params.busco_proteins)
-    
     // Prepare input genomes:
     if (params.dir != "") {
         // Get a channel of input genomes if directory is specified:
