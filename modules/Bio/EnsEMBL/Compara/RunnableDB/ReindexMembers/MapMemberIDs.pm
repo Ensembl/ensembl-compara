@@ -39,6 +39,16 @@ use JSON qw(decode_json);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    my $self = shift @_;
+    return {
+        %{$self->SUPER::param_defaults},
+
+        'do_genome_reindexing' => 0,
+    }
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 
