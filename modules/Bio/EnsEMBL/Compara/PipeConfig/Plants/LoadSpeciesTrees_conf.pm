@@ -45,9 +45,9 @@ sub default_options {
 
         'division'              => 'plants',
         'compara_alias_name'    => 'compara_curr',
-        'species_tree'          => $self->o('config_dir') . '/species_tree.branch_len.nw',
+        'species_tree'          => $self->o('config_dir') . '/species_tree.topology.nw',
 
-        'binary'    => 1,  # The tree shared by Plants is expected to be binary
+        'binary'    => 0,  # The tree shared by Plants is not binary
         'n_missing_species_in_tree' => 0,
     };
 }
