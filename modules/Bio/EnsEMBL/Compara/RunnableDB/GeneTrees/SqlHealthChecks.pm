@@ -409,9 +409,26 @@ our $config = {
                 query => 'SELECT COUNT(*), gtra1.gene_count, SUM(gtra2.gene_count) FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr gtra1 USING (root_id))  JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_attr gtra2 ON gtra2.root_id=gtn2.root_id WHERE gtn1.root_id = #gene_tree_id# HAVING gtra1.gene_count != SUM(gtra2.gene_count)',
             },
             {
+                description => 'Tree must be a supertree',
+                query => 'SELECT * FROM gene_tree_root WHERE tree_type = "supertree" AND root_id = #gene_tree_id#',
+                expected_size => '== 1',
+            },
+            {
+                description => 'All super-tree nodes must have at least one child',
+                query => 'SELECT gtn1.node_id FROM gene_tree_node gtn1 LEFT JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id WHERE gtn1.root_id = #gene_tree_id# AND gtn2.node_id IS NULL',
+            },
+            {
+                description => 'Super-tree root and internal nodes cannot have one child',
+                query => 'SELECT gtn1.node_id, COUNT(*) AS child_count FROM gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id WHERE gtn2.root_id = gtn1.root_id AND gtn1.root_id = #gene_tree_id# GROUP BY gtn1.node_id HAVING child_count = 1',
+            },
+            {
+                description => 'Super-tree buds must have exactly one child representing a subtree root',
+                query => 'SELECT gtn1.node_id, COUNT(*) AS subtree_root_count FROM gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id WHERE gtn2.root_id != gtn1.root_id AND gtn1.root_id = #gene_tree_id# GROUP BY gtn1.node_id HAVING subtree_root_count != 1',
+            },
+            {
                 description => 'The super-tree must have subtree children',
                 query => 'SELECT gtn1.root_id FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr USING (root_id)) JOIN gene_tree_node gtn2 ON gtn1.parent_id = gtn2.node_id WHERE gtn1.root_id != gtn2.root_id AND gtn2.root_id = #gene_tree_id#',
-                expected_size => '> 0',
+                expected_size => '>= 2',
             },
         ],
     },
