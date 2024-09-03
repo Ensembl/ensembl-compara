@@ -184,7 +184,7 @@
     <!-- Primates -->
     <multiple_alignment method="EPO">
       <species_set name="primates">
-        <!-- <genome name="callithrix_jacchus" assembly="mCalJac1.pat.X"/> -->
+        <genome name="callithrix_jacchus" assembly="mCalJac1.pat.X"/>
         <genome name="chlorocebus_sabaeus" assembly="ChlSab1.1"/>
         <genome name="gorilla_gorilla" assembly="gorGor4"/>
         <genome name="homo_sapiens"/>
@@ -194,7 +194,7 @@
         <genome name="nomascus_leucogenys"/>
         <genome name="pan_paniscus" assembly="panpan1.1"/>
         <genome name="pan_troglodytes"/>
-        <!-- <genome name="papio_anubis" assembly="Panubis1.0"/> -->
+        <genome name="papio_anubis" assembly="Panubis1.0"/>
         <genome name="pongo_abelii"/>
       </species_set>
     </multiple_alignment>
