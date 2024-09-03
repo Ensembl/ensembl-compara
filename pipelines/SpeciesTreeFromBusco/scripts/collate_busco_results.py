@@ -108,6 +108,8 @@ if __name__ == '__main__':
 
     # Dump per-gene cDNAs:
     for g, s in per_gene.items():
+        # Filter out sequences with lengths not divisible by 3:
+        s = [x for x in s if len(x.seq) % 3 == 0]
         # Filter out gene if we don't have enough taxa:
         if len(s) / len(taxa) < args.m:
             continue

@@ -93,24 +93,20 @@ process dumpVersions {
     perl -v | grep "This is" >> $out
     echo "gffread:" >> $out
     ${params.gffread_exe} --version >> $out
-    echo "mafft:" >> $out
-    (${params.mafft_exe} --version 2>&1) >> $out
     echo "iqtree:" >> $out
     ${params.iqtree_exe} --version | grep "version" >> $out
     echo "trimal:" >> $out
     ${params.trimal_exe} --version | grep "build" >> $out
     echo "seqkit:" >> $out
     ${params.seqkit_exe} version >> $out
-    echo "gotree:" >> $out
-    ${params.gotree_exe} version >> $out
-    echo "pal2nal:" >> $out
-    (${params.pal2nal_exe} 2>&1| grep "(v") >> $out
     echo "astral:" >> $out
     (java -jar $params.astral_jar 2>&1| grep "This is") >> $out
-    echo "macse:" >> $out
-    (java -jar $params.macse_jar -help 2>&1| grep "This is") >> $out
     echo "miniprot:" >> $out
     ${params.miniprot_exe} --version >> $out
+    echo "prank" >> $out
+    ${params.prank_exe} -version | grep PRANK >> $out
+    echo "pagan" >> $out
+    ${params.pagan_exe} -v | grep "PAGAN" >> $out
     """
 
 }
@@ -318,7 +314,6 @@ process collateBusco {
     python ${params.collate_busco_results_exe} -s busco_stats.tsv \
     -i cdnas_fofn.txt -l $genes_tsv -o ./ \
     -t taxa.tsv -m ${params.min_taxa}
-
     """
 
 }
@@ -328,110 +323,41 @@ process collateBusco {
 *@output path to aligned protein fasta
 *@output path to cDNA fasta
 */
-process alignProt {
-    label 'retry_with_8gb_mem_c1'
+process transAlign {
+    label 'retry_with_e64gb_mem_c16'
+
+    publishDir "${params.results_dir}/", pattern: "alignments/*_aln_*.fas", mode: "copy",  overwrite: true
 
     input:
-        val protFas
         path cdnas
     output:
         path "alignments/prot_aln_*.fas", emit: prot_aln
-        path cdnas, emit: cdnas
+        path "alignments/codon_aln_*.fas", emit: codon_aln
    
     script:
-    id = (protFas =~ /.*prot_(.*)\.fas$/)[0][1]
+    id = (cdnas =~ /.*cdna_(.*)\.fas$/)[0][1]
     """
     mkdir -p alignments
-    ${params.mafft_exe} --anysymbol --auto $protFas > alignments/prot_aln_${id}.fas
-    """
-}
+    set +e
+    ${params.pagan_exe} -s $cdnas --translate --threads ${task.cpus} -o pagan_out
+    exit_code=\$?
+    set -e
 
-/**
-*@input path to protein alignment fasta
-*@output path to cDNA sequences fasta
-*@output path to codon alignment fasta
-*/
-process protAlnToCodon {
-    label 'rc_1Gb'
-
-    input:
-        path prot_aln
-        val cdna
-    output:
-        path "alignments/codon_aln_*.fas", emit: codon_aln
-
-    script:
-    id = (prot_aln =~ /.*prot_aln_(.*)\.fas$/)[0][1]
-    """
-    mkdir -p alignments
-
-    # Filter out from the cDNA sequences which did not pass protein
-    # level filtering:
-    ${params.seqkit_exe} -j 5 fx2tab -n $prot_aln > prot.ids
-    ${params.seqkit_exe} grep -j 5 -n -f prot.ids $cdna > filtered_cdna.fas
-    # Convert AA to codon alignment:
-    (perl ${params.run_pal2nal_exe} ${params.pal2nal_exe} $prot_aln filtered_cdna.fas -output fasta) > alignments/codon_aln_${id}.fas
-    if [ -s alignments/codon_aln_${id}.fas ];
-    then
-        true;
+    # Check if pagan succeeded
+    if [ \$exit_code -eq 0 ]; then
+        mv pagan_out.fas alignments/prot_aln_${id}.fas
+        mv pagan_out.codon.fas alignments/codon_aln_${id}.fas
+    # Check if it failed with a segmentation fault (exit code 139) or ABRT (exit code 134)
+    elif [ \$exit_code -eq 139 ] || [ \$exit_code -eq 134 ]; then
+        echo "PAGAN failed due to segmentation fault or ABRT, continuing with prank..."
+        ${params.prank_exe} -d=$cdnas -o=prank_out -translate +F -once -uselogs
+        mv prank_out.best.pep.fas alignments/prot_aln_${id}.fas
+        mv prank_out.best.nuc.fas alignments/codon_aln_${id}.fas
     else
-        echo "Codon alignment is empty!"
-    fi
+        echo "PAGAN failed due to an error other than segmentation fault or ABRT: \$exit_code, exiting."
+        exit \$exit_code
+    fi 
     """
-}
-
-/**
-*@input path to codon alignment fasta
-*@output path to codon alignment fasta with stop codons removed
-*/
-process removeStopCodons {
-    label 'rc_1Gb'
-
-    publishDir "${params.results_dir}/", pattern: "alignments/codon_aln_*.fas", mode: "copy",  overwrite: true
-
-    input:
-        path codon_aln
-    output:
-        path "alignments/codon_aln_*.fas", emit: codon_aln
-
-    script:
-    id = (codon_aln =~ /.*codon_aln_(.*)\.fas$/)[0][1]
-    """
-    mkdir -p alignments
-    if [ -s $codon_aln ];
-    then
-    java -jar ${params.macse_jar} -prog exportAlignment \
-    -align $codon_aln \
-    -codonForFinalStop --- \
-    -codonForInternalStop NNN \
-    -out_NT alignments/codon_aln_${id}.fas
-    else
-    touch alignments/codon_aln_${id}.fas
-    fi
-    """
-}
-
-/**
-*@input path to protein alignment fasta
-*@output path to trimmed protein alignment
-*/
-process trimAlignments {
-    label 'rc_2Gb'
-
-    publishDir "${params.results_dir}/", pattern: "trimmed_alignments/trim_aln_*.fas", mode: "copy",  overwrite: true
-
-    input:
-        path full_aln
-    output:
-        path "trimmed_alignments/trim_aln_*.fas", emit: trim_aln
-
-    script:
-    id = (full_aln =~ /.*prot_(.*)\.fas$/)[0][1]
-    """
-    mkdir -p trimmed_alignments
-    trimal -keepseqs -in $full_aln -out trimmed_alignments/trim_${id}.fas
-    """
-
 }
 
 
@@ -466,6 +392,26 @@ process mergeProtAlns {
     """
     mv ${workDir}/alns_fofn.txt .
     python ${params.alignments_to_partitions_exe} -i alns_fofn.txt -o merged_protein_alns.fas -p partitions.tsv -t $taxa
+    """
+}
+
+/**
+*@input merged protein alignment fasta
+*@output trimmed merged protein alignment fasta
+*/
+process trimMergedProtAln {
+    label 'retry_with_16gb_mem_c1'
+
+    publishDir "${params.results_dir}/", pattern: "trimmed_merged_protein_alns.fas", mode: "copy",  overwrite: true
+
+    input:
+        path merged_aln
+
+    output:
+        path "trimmed_merged_protein_alns.fas", emit: trimmed_merged_aln
+    script:
+    """
+    ${params.trimal_exe} -in ${merged_aln} -out trimmed_merged_protein_alns.fas -automated1 -keepheader
     """
 }
 
@@ -584,7 +530,6 @@ process refineProtTree {
 
     input:
         path aln
-        path partitions
         path input_tree
         val genomes_csv
 
@@ -701,7 +646,6 @@ process outgroupRootingProt {
     """
 }
 
-
 // Function to check if a genome is present in
 // the annotation cache.
 def annoInCache(genome, anno_cache) {
@@ -719,7 +663,6 @@ workflow {
 
     // Prepare busco protein set:
     prepareBusco(params.busco_proteins)
-
     // Prepare input genomes:
     if (params.dir != "") {
         // Get a channel of input genomes if directory is specified:
@@ -730,7 +673,6 @@ workflow {
     }
     prepareGenome(genomes)
     prepareGenomeFromDb()
-
     if (params.dir == "") {
         // The input is from DB, the genomes CSV comes from the process:
         genCsvChan = prepareGenomeFromDb.out.input_genomes
@@ -739,66 +681,46 @@ workflow {
         // CSV file so the branch length calculations are executed:
         genCsvChan = Channel.of("/dummy/path")
     }
-
     proc_genomes = prepareGenome.out.proc_genome.flatten().mix(prepareGenomeFromDb.out.proc_genome.flatten())
-
     // Branch the genomes channel based on presence in the
     // annotation cache:
     proc_genomes.branch {
         annot: !annoInCache(it, params.anno_cache)
         link: annoInCache(it, params.anno_cache)
     }.set { genome_fork }
-
     // Link annotations present in the cache:
     linkAnnoCache(genome_fork.link)
     // Annotate genomes not present in the cache:
     buscoAnnot(prepareBusco.out.busco_prots, genome_fork.annot)
-
     // Merge the output of link and annotate steps:
     annots = buscoAnnot.out.busco_annot.mix(linkAnnoCache.out.busco_annot)
-
     // Get cDNA from the genomes and annotations:
     runGffread(annots)
-
     // Organise sequences per-gene:
     collateBusco(runGffread.out.collect(), prepareBusco.out.busco_genes)
-
     // Align protein sequences:
-    alignProt(collateBusco.out.prot_seq.flatten(), collateBusco.out.cdnas.flatten())
-
-    // Trim protein alignments (removed):
-    // trimAlignments(alignProt.out.prot_aln)
-
-    // Convert protein alignments to codon alignment:
-    protAlnToCodon(alignProt.out.prot_aln, alignProt.out.cdnas)
-
-    // Remove stop codons from codon alignment:
-    removeStopCodons(protAlnToCodon.out.codon_aln)
-
+    transAlign(collateBusco.out.cdnas.flatten())
+    
     // Calculate trees from the protein alignments:
-    calcProtTrees(alignProt.out.prot_aln)
-
+    calcProtTrees(transAlign.out.prot_aln)
     trees = calcProtTrees.out.tree.collectFile(name: 'gene_trees.nwk', newLine: true)
-
     // Run astral to calculate species tree from
     // the gene trees:
     runAstral(trees)
-
     // Merge protein alignments:
-    mergeProtAlns(alignProt.out.prot_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
+    mergeProtAlns(transAlign.out.prot_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
 
+    // Trim merged protein alignment:
+    trimMergedProtAln(mergeProtAlns.out.merged_aln)
+    
     // Merge codon alignments:
-    mergeCodonAlns(removeStopCodons.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
-
+    mergeCodonAlns(transAlign.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
     // Pick out every third site from the merged codon alignment:
     pickThirdCodonSite(mergeCodonAlns.out.merged_aln)
-
     // Calculate branch lenghts from protein alignment:
-    refineProtTree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree, genCsvChan)
-
+    refineProtTree(trimMergedProtAln.out.trimmed_merged_aln, runAstral.out.tree, genCsvChan)
     // Calculate branch lenghts based on the third codon sites:
     calcNeutralBranches(pickThirdCodonSite.out.third_aln, refineProtTree.out.newick_fullid, genCsvChan)
-
     // Perform outgroup rooting for tree with neutral branch lengths:
     outgroupRootingNeutral(calcNeutralBranches.out.newick)
     // Perform outgroup rooting for tree with protein alignment based branch lengths:
