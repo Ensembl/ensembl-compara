@@ -76,8 +76,22 @@ sub fetch_input {
 sub _fetch_members {
     my ($self, $dbc, $genome_db_id) = @_;
 
-    my $sql = 'SELECT gene_member_id, gene_member.stable_id AS gene_member_stable_id, seq_member_id, seq_member.stable_id AS seq_member_stable_id, md5sum
-               FROM gene_member JOIN seq_member USING (gene_member_id) JOIN sequence USING (sequence_id) WHERE gene_member.genome_db_id = ?';
+    my $sql = q/
+        SELECT
+            gene_member.gene_member_id,
+            gene_member.stable_id AS gene_member_stable_id,
+            seq_member_id,
+            seq_member.stable_id AS seq_member_stable_id,
+            md5sum
+        FROM
+            gene_member
+        JOIN
+            seq_member ON seq_member_id = canonical_member_id
+        JOIN
+            sequence USING (sequence_id)
+        WHERE
+            gene_member.genome_db_id = ?
+    /;
 
     my $sth = $dbc->prepare($sql);
     $sth->execute($genome_db_id);
