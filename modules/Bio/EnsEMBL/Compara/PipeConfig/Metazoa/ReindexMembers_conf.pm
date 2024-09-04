@@ -63,7 +63,6 @@ sub tweak_analyses {
     $analyses_by_name->{'all_trees_factory'}->{'-rc_name'} = '2Gb_24_hour_job';
     $analyses_by_name->{'copy_table_from_prev_db'}->{'-rc_name'} = '1Gb_24_hour_job';
 
-    $analyses_by_name->{'map_member_ids'}->{'-parameters'}->{'require_full_match'} = 1;
     $analyses_by_name->{'hc_members_per_genome'}->{'-parameters'}->{'allow_ambiguity_codes'} = 1;
 }
 

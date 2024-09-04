@@ -45,7 +45,6 @@ sub param_defaults {
         %{$self->SUPER::param_defaults},
 
         'do_genome_reindexing' => 0,
-        'require_full_match' => 0,
     }
 }
 
@@ -140,7 +139,7 @@ sub run {
                 }
             } else {
                 # Transcript changed
-                if ($prev_data->{'md5sum'} eq $curr_data->{'md5sum'} && !$self->param('require_full_match')) {
+                if ($prev_data->{'md5sum'} eq $curr_data->{'md5sum'}) {
                     # Same sequence
                     push @to_rename, { 'prev' => $prev_data, 'curr' => $curr_data };
                 } else {
@@ -157,9 +156,7 @@ sub run {
 
     # Now we compare the lost and gained sequences, and hope to find further renames
     while (my ($md5sum, $lost_gene_member_stable_ids) = each %lost_seq) {
-        if ($self->param('require_full_match')) {
-            push @to_delete, map {$previous_members->{$_}} @$lost_gene_member_stable_ids;
-        } elsif (my $gained_gene_member_stable_ids = $gained_seq{$md5sum}) {
+        if (my $gained_gene_member_stable_ids = $gained_seq{$md5sum}) {
             # Sequence found in both databases
             if ((scalar(@$lost_gene_member_stable_ids) == 1) and (scalar(@$gained_gene_member_stable_ids) == 1)) {
                 # Only 1 representative in each database
