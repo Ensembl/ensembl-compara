@@ -126,10 +126,11 @@ sub run {
     }
 
     if (scalar(@unresolved_job_ids) > 0) {
+        my @example_unresolved_job_ids = scalar(@unresolved_job_ids) > 3 ? @unresolved_job_ids[0 .. 2] : @unresolved_job_ids;
         $self->die_no_retry(
             sprintf(
-                "apparent semaphore failure - %d unresolved fan jobs: (e.g. %s)",
-                scalar(@unresolved_job_ids), join(', ', @unresolved_job_ids[0 .. 2])
+                "apparent semaphore failure due to %d unresolved fan jobs: (e.g. %s); please wait until all fan jobs have completed before retrying",
+                scalar(@unresolved_job_ids), join(', ', @example_unresolved_job_ids)
             )
         );
     }
