@@ -96,10 +96,10 @@ my $compara_dbs = {
     'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-9', 'thiagogenez_pangenome_drosophila_metazoa_protein_trees_112' ],
 
     # prev homology dbs required for ReindexMembers
-    #'compara_ptrees_prev'     => [ 'mysql-ens-compara-prod-X', '' ],
-    #'protostomes_ptrees_prev' => [ 'mysql-ens-compara-prod-X', '' ],
-    #'insects_ptrees_prev'     => [ 'mysql-ens-compara-prod-X', '' ],
-    #'drosophila_ptrees_prev'  => [ 'mysql-ens-compara-prod-X', '' ],
+    #'default_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
+    #'protostomes_ptrees_prev'           => [ 'mysql-ens-compara-prod-X', '' ],
+    #'insects_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
+    #'pangenome_drosophila_ptrees_prev'  => [ 'mysql-ens-compara-prod-X', '' ],
 
     'drosophila_cactus'  => [ 'mysql-ens-compara-prod-6', 'twalsh_pangenome_drosophila_metazoa_load_cactus_113' ],
 };
