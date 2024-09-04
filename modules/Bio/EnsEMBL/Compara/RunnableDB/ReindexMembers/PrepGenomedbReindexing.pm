@@ -49,7 +49,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub run {
     my $self = shift;
 
-    my $genome_dumps_dir = $self->param_required('genome_dumps_dir');
     my $prev_mlss_id = $self->param_required('prev_mlss_id');
     my $curr_mlss_id = $self->param_required('mlss_id');
 
@@ -92,7 +91,9 @@ sub run {
 
     my @mappable_gdb_names = $gdb_name_comparison->get_union();
 
-    $curr_compara_dba->get_GenomeDBAdaptor->dump_dir_location($genome_dumps_dir);
+    if ($self->param_is_defined('genome_dumps_dir')) {
+        $curr_compara_dba->get_GenomeDBAdaptor->dump_dir_location($self->param('genome_dumps_dir'));
+    }
 
     my %gdb_reindexing_map;
     foreach my $gdb_name (@mappable_gdb_names) {
