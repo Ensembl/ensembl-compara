@@ -35,6 +35,7 @@ use warnings;
 
 use File::Spec::Functions qw(catfile);
 use JSON qw(decode_json);
+use List::Util qw(sum);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -80,8 +81,10 @@ sub _fetch_members {
         SELECT
             gene_member.gene_member_id,
             gene_member.stable_id AS gene_member_stable_id,
+            gene_member.version AS gene_member_version,
             seq_member_id,
             seq_member.stable_id AS seq_member_stable_id,
+            seq_member.version AS seq_member_version,
             md5sum
         FROM
             gene_member
@@ -151,6 +154,18 @@ sub run {
         } else {
             # Gene gone
             push @{ $lost_seq{$prev_data->{'md5sum'}} }, $gene_member_stable_id;
+        }
+    }
+
+    my $num_versioned_gene_stable_ids = sum(
+        map { ($_->{'gene_member_version'} > 0 || $_->{'seq_member_version'} > 0) ? 1 : 0 } (values %$previous_members, values %$current_members)
+    );
+
+    if ($num_versioned_gene_stable_ids == 0) {
+        while (my ($gene_member_stable_id, $curr_data) = each %$current_members) {
+            unless ($previous_members->{$gene_member_stable_id}) {
+                push @{ $gained_seq{$curr_data->{'md5sum'}} }, $gene_member_stable_id;
+            }
         }
     }
 
