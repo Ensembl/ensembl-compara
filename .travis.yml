@@ -24,7 +24,7 @@ before_install:
     # yamllint disable-line rule:indentation
     - cpanm -nq local::lib
     - eval "$(perl -Mlocal::lib=${HOME}/deps)"
-    - export ENSEMBL_BRANCH='main'
+    - export ENSEMBL_BRANCH='release/114'
     - export SECONDARY_BRANCH='main'
     # yamllint disable rule:line-length
     - git clone --depth 1 https://github.com/Ensembl/ensembl-git-tools.git
