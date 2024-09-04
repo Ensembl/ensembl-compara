@@ -13,19 +13,16 @@
       <genome name="helobdella_robusta"/>
       <genome name="owenia_fusiformis_gca903813345v1"/>
       <!-- Included species from Arthropoda -->
-      <genome name="acyrthosiphon_pisum_gca005508785v2rs"/>
       <genome name="amphibalanus_amphitrite_gca019059575v1"/>
-      <genome name="anopheles_gambiae"/>
-      <genome name="apis_mellifera"/>
-      <genome name="bombus_terrestris"/>
-      <genome name="bombus_terrestris_gca910591885v2"/>
-      <genome name="bombyx_mori"/>
-      <genome name="cimex_lectularius"/>
+      <genome name="anopheles_darlingi_gca943734745v1rs"/>
+      <genome name="apis_dorsata_gca000469605v1rs"/>
+      <genome name="cydia_pomonella_gca033807575v1rs"/>
       <genome name="daphnia_magna_gca020631705v2"/>
       <genome name="daphnia_pulex_gca021134715v1rs"/>
       <genome name="daphnia_pulicaria_gca021234035v2rs"/>
       <genome name="drosophila_melanogaster"/>
       <genome name="eurytemora_affinis_gca000591075v2"/>
+      <genome name="halyomorpha_halys_gca000696795v2rs"/>
       <genome name="homarus_americanus_gca018991925v1"/>
       <genome name="homarus_gammarus_gca958450375v1"/>
       <genome name="hyalella_azteca_gca000764305v2"/>
@@ -39,11 +36,10 @@
       <genome name="pollicipes_pollicipes_gca011947565v2"/>
       <genome name="portunus_trituberculatus_gca017591435v1"/>
       <genome name="procambarus_clarkii_gca020424385v2"/>
-      <genome name="schistocerca_americana_gca021461395v2rs"/>
+      <genome name="spodoptera_frugiperda_gca023101765v3rs"/>
       <genome name="strigamia_maritima"/>
       <genome name="tigriopus_californicus_gca007210705"/>
-      <genome name="tribolium_castaneum"/>
-      <genome name="zootermopsis_nevadensis"/>
+      <genome name="tribolium_madens_gca015345945v1rs"/>
       <!-- Included species from Brachiopoda -->
       <genome name="lingula_anatina_gca001039355v2"/>
       <!-- Included species from Chordata -->
@@ -71,17 +67,21 @@
       <!-- Included species from Hemichordata -->
       <genome name="saccoglossus_kowalevskii_gca000003605v1"/>
       <!-- Included species from Mollusca -->
-      <genome name="biomphalaria_glabrata"/>
-      <genome name="crassostrea_gigas"/>
+      <genome name="biomphalaria_glabrata_gca947242115v1rs"/>
       <genome name="gigantopelta_aegis_gca016097555v1"/>
       <genome name="haliotis_rubra_gca003918875v1rs"/>
       <genome name="haliotis_rufescens_gca023055435v1rs"/>
       <genome name="lottia_gigantea"/>
+      <genome name="magallana_gigas_gca963853765v1rs"/>
       <genome name="mizuhopecten_yessoensis_gca002113885v2"/>
       <genome name="octopus_bimaculoides_gca001194135v2rs"/>
       <!-- Included species from Nematoda -->
       <genome name="caenorhabditis_elegans"/>
       <genome name="loa_loa"/>
+      <!-- Included species from Nematomorpha -->
+      <genome name="gordionus_sp_gca954871325v1rs"/>
+      <!-- Included species from Nemertea -->
+      <genome name="lineus_longissimus_gca910592395v2"/>
       <!-- Included species from Placozoa -->
       <genome name="trichoplax_adhaerens"/>
       <!-- Included species from Platyhelminthes -->
@@ -89,6 +89,7 @@
       <genome name="schistosoma_mansoni"/>
       <!-- Included species from Porifera -->
       <genome name="amphimedon_queenslandica_gca000090795v2rs"/>
+      <genome name="halichondria_panicea_gca963675165v1rs"/>
       <!-- Included species from Priapulida -->
       <genome name="priapulus_caudatus_gca000485595v2"/>
       <!-- Included species from Rotifera -->
@@ -110,38 +111,41 @@
       <genome name="dimorphilus_gyrociliatus_gca904063045v1"/>
       <genome name="helobdella_robusta"/>
       <genome name="owenia_fusiformis_gca903813345v1"/>
+      <genome name="platynereis_dumerilii_gca026936325v1cm"/>
       <!-- Included species from Arthropoda -->
-      <genome name="acyrthosiphon_pisum_gca005508785v2rs"/>
-      <genome name="anopheles_gambiae"/>
-      <genome name="apis_mellifera"/>
-      <genome name="bombyx_mori"/>
+      <genome name="anopheles_darlingi_gca943734745v1rs"/>
+      <genome name="apis_dorsata_gca000469605v1rs"/>
+      <genome name="argiope_bruennichi_gca947563725v1rs"/>
       <genome name="centruroides_sculpturatus_gca000671375v2"/>
+      <genome name="cydia_pomonella_gca033807575v1rs"/>
       <genome name="dermacentor_andersoni_gca023375885v2rs"/>
       <genome name="dermatophagoides_pteronyssinus_gca001901225v2"/>
-      <genome name="diabrotica_virgifera_gca917563875v2rs"/>
       <genome name="drosophila_melanogaster"/>
+      <genome name="eurytemora_carolleeae_gca000591075v1rs"/>
       <genome name="haemaphysalis_longicornis_gca013339765v1"/>
+      <genome name="halyomorpha_halys_gca000696795v2rs"/>
       <genome name="ixodes_scapularis_gca016920785v2"/>
+      <genome name="macrobrachium_nipponense_gca015104395v2rs"/>
       <genome name="parasteatoda_tepidariorum_gca000365465v3"/>
       <genome name="rhipicephalus_sanguineus_gca013339695v2rs"/>
-      <genome name="schistocerca_americana_gca021461395v2rs"/>
+      <genome name="spodoptera_frugiperda_gca023101765v3rs"/>
       <genome name="stegodyphus_dumicola_gca010614865v2rs"/>
       <genome name="stegodyphus_mimosarum"/>
       <genome name="strigamia_maritima"/>
       <genome name="tetranychus_urticae"/>
-      <genome name="tribolium_castaneum"/>
-      <genome name="zootermopsis_nevadensis"/>
+      <genome name="tribolium_madens_gca015345945v1rs"/>
       <!-- Included species from Brachiopoda -->
       <genome name="lingula_anatina_gca001039355v2"/>
       <!-- Included species from Mollusca -->
       <genome name="aplysia_californica_gca000002075v2"/>
-      <genome name="biomphalaria_glabrata"/>
-      <genome name="crassostrea_gigas"/>
+      <genome name="biomphalaria_glabrata_gca947242115v1rs"/>
       <genome name="crassostrea_virginica_gca002022765v4"/>
       <genome name="gigantopelta_aegis_gca016097555v1"/>
       <genome name="haliotis_rubra_gca003918875v1rs"/>
       <genome name="haliotis_rufescens_gca023055435v1rs"/>
+      <genome name="liolophura_japonica_gca032854445v1rs"/>
       <genome name="lottia_gigantea"/>
+      <genome name="magallana_gigas_gca963853765v1rs"/>
       <genome name="mercenaria_mercenaria_gca014805675v2"/>
       <genome name="mizuhopecten_yessoensis_gca002113885v2"/>
       <genome name="octopus_bimaculoides_gca001194135v2rs"/>
@@ -163,10 +167,12 @@
       <genome name="strongyloides_ratti"/>
       <genome name="trichinella_spiralis"/>
       <genome name="trichuris_muris"/>
+      <!-- Included species from Nemertea -->
+      <genome name="lineus_longissimus_gca910592395v2"/>
       <!-- Included species from Platyhelminthes -->
       <genome name="echinococcus_granulosus_gca000524195v1rs"/>
       <genome name="hymenolepis_microstoma"/>
-      <genome name="schistosoma_haematobium_gca000699445v2rs"/>
+      <genome name="schistosoma_haematobium_gca000699445v3rs"/>
       <genome name="schistosoma_mansoni"/>
       <!-- Included species from Priapulida -->
       <genome name="priapulus_caudatus_gca000485595v2"/>
@@ -197,7 +203,6 @@
       <genome name="anoplophora_glabripennis"/>
       <genome name="anthonomus_grandis_gca022605725v3rs"/>
       <genome name="aphidius_gifuensis_gca014905175v1"/>
-      <genome name="apis_dorsata_gca000469605v1rs"/>
       <genome name="apis_florea_gca000184785v2rs"/>
       <genome name="apis_mellifera"/>
       <genome name="athalia_rosae_gca917208135v1"/>
@@ -218,16 +223,18 @@
       <genome name="bombus_terrestris_gca910591885v2"/>
       <genome name="bombus_vancouverensis_gca011952275v1rs"/>
       <genome name="bombyx_mandarina_gca003987935v1rs"/>
-      <genome name="bombyx_mori"/>
+      <genome name="bombyx_mori_gca030269925v1rs"/>
       <genome name="camponotus_floridanus_gca003227725v1rs"/>
       <genome name="cataglyphis_hispanica_gca021464435v1rs"/>
       <genome name="ceratitis_capitata_gca000347755v4"/>
       <genome name="chelonus_insularis_gca013357705v1rs"/>
+      <genome name="chrysoperla_carnea_gca905475395v1rs"/>
       <genome name="cimex_lectularius"/>
       <genome name="copidosoma_floridanum_gca000648655v2"/>
       <genome name="cotesia_glomerata_gca020080835v1"/>
       <genome name="cryptotermes_secundus_gca002891405v2rs"/>
       <genome name="culex_quinquefasciatus_gca015732765v1vb"/>
+      <genome name="culicoides_brevitarsis_gca036172545v1rs"/>
       <genome name="culicoides_sonorensis"/>
       <genome name="daktulosphaira_vitifoliae_gca025091365v1rs"/>
       <genome name="danaus_plexippus"/>
@@ -249,6 +256,7 @@
       <genome name="hermetia_illucens_gca905115235v1"/>
       <genome name="homalodisca_vitripennis_gca021130785v2rs"/>
       <genome name="ichneumon_xanthorius_gca917499995v1"/>
+      <genome name="ischnura_elegans_gca921293095v1rs"/>
       <genome name="leguminivora_glycinivorella_gca023078275v1rs"/>
       <genome name="leptinotarsa_decemlineata_gca000500325v2"/>
       <genome name="limnephilus_lunatus_gca917563855v2"/>
