@@ -44,7 +44,7 @@ classifiers = [
 ]
 dependencies = [
     "ensembl-py>=2.1.0",
-    "ensembl-utils>=0.4.3"
+    "ensembl-utils>=0.4.3",
     "biopython>=1.76",
     "ete3>=3.1.1",
     "lxml>=4.9.2",
