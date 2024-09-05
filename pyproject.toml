@@ -43,7 +43,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@1.2.3a1#egg=ensembl-py",
+    "ensembl-py>=2.1.0",
     "biopython>=1.76",
     "ete3>=3.1.1",
     "lxml>=4.9.2",
