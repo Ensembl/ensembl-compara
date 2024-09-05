@@ -1,6 +1,6 @@
 # Ensembl Compara API
 
-[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=main)](https://travis-ci.org/Ensembl/ensembl-compara)
+[![Build Status](https://travis-ci.org/Ensembl/ensembl-compara.svg?branch=release/114)](https://travis-ci.org/Ensembl/ensembl-compara)
 [![Codecov Status](https://codecov.io/gh/ensembl/ensembl-compara/branch/release/114/graph/badge.svg)](https://codecov.io/github/Ensembl/ensembl-compara)
 
 The Ensembl Compara API (Application Programme Interface) serves as a
