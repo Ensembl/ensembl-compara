@@ -32,7 +32,7 @@ from _pytest.fixtures import FixtureRequest
 from ensembl.compara.filesys import DirCmp, PathLike
 
 
-pytest_plugins = ("ensembl.plugins.pytest_unittest",)
+pytest_plugins = ("ensembl.utils.plugin",)
 
 
 def pytest_configure() -> None:
