@@ -27,7 +27,7 @@ from typing import ContextManager, Dict, List, Set
 
 import pytest
 
-from ensembl.database import DBConnection, UnitTestDB
+from ensembl.utils.database import DBConnection, UnitTestDB
 
 
 @pytest.mark.parametrize("db", [{'src': 'pan'}], indirect=True)
