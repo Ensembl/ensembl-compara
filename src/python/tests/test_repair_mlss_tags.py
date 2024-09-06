@@ -30,7 +30,7 @@ import pytest
 from ensembl.utils.database import DBConnection, UnitTestDB
 
 
-@pytest.mark.parametrize("test_dbs", [{'src': 'pan'}], indirect=True)
+@pytest.mark.parametrize("test_dbs", [[{'src': 'pan'}]], indirect=True)
 class TestRepairMLSSTags:
     """Tests `repair_mlss_tags.py` script.
 
