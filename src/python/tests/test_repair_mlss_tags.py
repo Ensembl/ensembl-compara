@@ -30,7 +30,7 @@ import pytest
 from ensembl.utils.database import DBConnection, UnitTestDB
 
 
-@pytest.mark.parametrize("db", [{'src': 'pan'}], indirect=True)
+@pytest.mark.parametrize("test_dbs", [{'src': 'pan'}], indirect=True)
 class TestRepairMLSSTags:
     """Tests `repair_mlss_tags.py` script.
 
@@ -44,16 +44,16 @@ class TestRepairMLSSTags:
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
     @pytest.fixture(scope='class', autouse=True)
-    def setup(self, db: UnitTestDB) -> None:
+    def setup(self, test_dbs: UnitTestDB) -> None:
         """Loads the required fixtures and values as class attributes.
 
         Args:
-            db: Unit test database (fixture).
+            test_dbs: Unit test database (fixture).
 
         """
         # Use type(self) instead of self as a workaround to @classmethod decorator (unsupported by pytest and
         # required when scope is set to "class" <https://github.com/pytest-dev/pytest/issues/3778>)
-        type(self).dbc = db.dbc
+        type(self).dbc = test_dbs.dbc
 
     @pytest.mark.parametrize(
         "mlss_tag, alt_queries, exp_stdout, exp_tag_value, expectation",
