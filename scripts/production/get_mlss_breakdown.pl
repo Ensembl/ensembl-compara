@@ -106,7 +106,7 @@ foreach my $url (@urls) {
         throw("Ensembl release ($release) is below the minimum supported release ($min_release)");
     }
 
-    my @rel_gdbs = grep { $_ ne 'ancestral_sequences' } @{$genome_dba->fetch_all()};
+    my @rel_gdbs = grep { $_->name ne 'ancestral_sequences' && !defined $_->genome_component } @{$genome_dba->fetch_all()};
 
     if (exists $div_to_guest_genomes{$division}) {
         my %guest_genome_set = map { $_ => 1 } @{$div_to_guest_genomes{$division}};
