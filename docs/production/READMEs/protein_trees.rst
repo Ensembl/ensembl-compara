@@ -75,7 +75,7 @@ If the NCBI taxonomy cannot be used (too many unresolved nodes), you can skip th
 General structure of the pipeline
 ---------------------------------
 
-You can refer to docs/pipeline_diagrams/ProteinTrees.png for a visual description of the pipeline.
+You can refer to docs/production/diagrams/ProteinTrees.gv for an eHive pipeline graph.
 
 The main structure is given by some backbone analysis. Each one of them will dump the current state of the database (for a backup) and 
 fire the next step of the pipeline. The backups can be used to restore the database if things go very wrong (let's hope they don't :) ).
