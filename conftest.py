@@ -47,6 +47,7 @@ def pytest_configure() -> None:
     pytest.files_dir = test_data_dir / 'flatfiles'  # type: ignore[attr-defined]
 
 
+@pytest.fixture(scope="function")
 def dir_cmp(request: FixtureRequest, tmp_path: PathLike) -> DirCmp:
     """Returns a directory tree comparison (:class:`DirCmp`) object.
 
