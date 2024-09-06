@@ -115,7 +115,8 @@ foreach my $url (@urls) {
 
     foreach my $gdb (@rel_gdbs) {
         my @gdb_mlsses = @{$mlss_dba->fetch_all_by_GenomeDB($gdb)};
-        @gdb_mlsses = grep { $_->is_in_release($release) } @gdb_mlsses;
+        @gdb_mlsses = grep { $_->is_in_release($release) && $_->name } @gdb_mlsses;
+        next if scalar(@gdb_mlsses) == 0;
 
         my %rec = (
             'division' => $division,
