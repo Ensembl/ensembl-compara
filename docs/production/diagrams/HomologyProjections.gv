@@ -1,0 +1,25 @@
+digraph test {
+	ratio="compress"; concentrate = "true"; name = "AnalysisWorkflow"; pad = "1.0";
+	analysis_altallegroup_factory [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>altallegroup_factory (3)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">234d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_altallele_species_factory [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>altallele_species_factory (2)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">1d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_import_altalleles_as_homologies [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>import_altalleles_as_homologies (4)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">3989d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_import_altalleles_as_homologies_himem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>import_altalleles_as_homologies_himem (5)</td></tr><tr><td> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_offset_tables [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>offset_tables (1)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">1d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_altallegroup_factory -> analysis_import_altalleles_as_homologies [color="blue", fontcolor="blue", fontname="Helvetica", label="#2\n"];
+	analysis_altallele_species_factory -> analysis_altallegroup_factory [color="blue", fontcolor="blue", fontname="Helvetica", label="#2\n"];
+	analysis_import_altalleles_as_homologies -> analysis_import_altalleles_as_homologies_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-1\n"];
+	analysis_offset_tables -> analysis_altallele_species_factory [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
+
+subgraph "cluster_vertebrates_alt_allele_import_113" {
+	label="vertebrates_alt_allele_import_113";
+	style="bold,filled";
+	colorscheme="pastel19";
+	fillcolor="3";
+	color="";
+	analysis_altallegroup_factory;
+	analysis_altallele_species_factory;
+	analysis_import_altalleles_as_homologies;
+	analysis_import_altalleles_as_homologies_himem;
+	analysis_offset_tables;
+}
+}
