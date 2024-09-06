@@ -65,10 +65,10 @@ class TestDirCmp(BaseTestFilesys):
     """Tests :class:`DirCmp` class."""
 
     @pytest.mark.dependency(name='test_init', scope='class')
-    def test_init(self, tmp_dir: Path) -> None:
+    def test_init(self, tmp_path: Path) -> None:
         """Tests that the object :class:`DirCmp` is initialised correctly."""
-        assert tmp_dir / 'citest_reference' == self.dir_cmp.ref_path, "Unexpected reference root path"
-        assert tmp_dir / 'citest_target' == self.dir_cmp.target_path, "Unexpected target root path"
+        assert tmp_path / 'citest_reference' == self.dir_cmp.ref_path, "Unexpected reference root path"
+        assert tmp_path / 'citest_target' == self.dir_cmp.target_path, "Unexpected target root path"
         # Check the files at the root
         assert self.dir_cmp.common_files == set(), "Found unexpected files at the root of both trees"
         assert self.dir_cmp.ref_only == {'3/a.txt'}, "Expected '3/a.txt' at reference tree's root"
