@@ -48,7 +48,7 @@ def pytest_configure() -> None:
 
 
 @pytest.fixture(scope='session')
-def dir_cmp(request: FixtureRequest, tmp_dir: PathLike) -> DirCmp:
+def dir_cmp(request: FixtureRequest, tmp_path: PathLike) -> DirCmp:
     """Returns a directory tree comparison (:class:`DirCmp`) object.
 
     Requires a dictionary with the following keys:
@@ -66,16 +66,16 @@ def dir_cmp(request: FixtureRequest, tmp_dir: PathLike) -> DirCmp:
 
     Args:
         request: Access to the requesting test context.
-        tmp_dir: Temporary directory path.
+        tmp_path: Temporary directory path.
 
     """
     # Get the source and temporary absolute paths for reference and target root directories
     ref = Path(request.param['ref'])  # type: ignore[attr-defined]
     ref_src = ref if ref.is_absolute() else pytest.files_dir / ref  # type: ignore
-    ref_tmp = Path(tmp_dir) / str(ref).replace(os.path.sep, '_')
+    ref_tmp = Path(tmp_path) / str(ref).replace(os.path.sep, '_')
     target = Path(request.param['target'])  # type: ignore[attr-defined]
     target_src = target if target.is_absolute() else pytest.files_dir / target  # type: ignore
-    target_tmp = Path(tmp_dir) / str(target).replace(os.path.sep, '_')
+    target_tmp = Path(tmp_path) / str(target).replace(os.path.sep, '_')
     # Copy directory trees (if they have not been copied already) ignoring file metadata
     if not ref_tmp.exists():
         shutil.copytree(ref_src, ref_tmp, copy_function=shutil.copy)
