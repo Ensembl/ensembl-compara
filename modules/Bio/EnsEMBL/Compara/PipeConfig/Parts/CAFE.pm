@@ -131,10 +131,11 @@ sub pipeline_analyses_cafe {
                              'cafe_shell'           => $self->o('cafe_shell'),
                              'num_threads'          => 8,   
                             },
-             -rc_name => '1Gb_8c_168_hour_job',
+             -rc_name => '1Gb_8c_24_hour_job',
              -hive_capacity => $self->o('cafe_capacity'),
              -flow_into => {
                  -1 => 'CAFE_analysis_himem',
+                 -2 => 'CAFE_analysis_himem',
                  2 => 'CAFE_json',
              },
             },

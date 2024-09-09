@@ -276,7 +276,7 @@ sub pipeline_analyses {
         {
             -logic_name => 'generate_pairwise_coverage_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halCoverageStats',
-            -rc_name    => '4Gb_job',
+            -rc_name    => '4Gb_24_hour_job',
         },
 
         {   -logic_name => 'per_genome_coverage_factory',
@@ -289,7 +289,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'hal_seq_chunk_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halSeqChunkFactory',
-            -rc_name    => '4Gb_job',
+            -rc_name    => '4Gb_24_hour_job',
             -parameters => {
                 'hal_stats_exe' => $self->o('halStats_exe'),
             },

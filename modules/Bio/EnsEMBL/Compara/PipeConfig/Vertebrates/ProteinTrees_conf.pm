@@ -108,7 +108,7 @@ sub tweak_analyses {
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
         'CAFE_table'                => '24Gb_24_hour_job',
-        'hcluster_run'              => '1Gb_job',
+        'hcluster_run'              => '1Gb_24_hour_job',
         'hcluster_parse_output'     => '4Gb_job',
         'split_genes'               => 'default',   # This is 250Mb
         'CAFE_species_tree'         => '24Gb_job',

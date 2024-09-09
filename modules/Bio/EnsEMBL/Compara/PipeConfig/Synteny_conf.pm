@@ -233,7 +233,7 @@ sub pipeline_analyses {
                                '1' => [ 'build_synteny' ],
                               },
               -analysis_capacity => $self->o('dumpgff_capacity'), #database intensive
-              -rc_name => '2Gb_job',
+              -rc_name => '2Gb_24_hour_job',
             },
             #Build synteny regions
             { -logic_name => 'build_synteny',

@@ -299,6 +299,7 @@ sub pipeline_analyses_epo_ext_alignment {
             -analysis_capacity  => 700,
             -flow_into => {
                 -1 => [ 'gerp_himem'], #retry with more memory
+                -2 => [ 'gerp_himem'], #retry with more time
             },
             -rc_name => '2Gb_job',
         },
@@ -309,7 +310,7 @@ sub pipeline_analyses_epo_ext_alignment {
                 'gerp_exe_dir' => $self->o('gerp_exe_dir'),
             },
             -analysis_capacity  => 700,
-            -rc_name => '4Gb_job',
+            -rc_name => '4Gb_24_hour_job',
         },
     ];
 }
@@ -324,7 +325,7 @@ sub pipeline_analyses_db_complete {
             -flow_into => {
                 1 => [ 'set_internal_ids_again' ],
             },
-            -rc_name => '2Gb_job',
+            -rc_name => '2Gb_24_hour_job',
         },
 
         # ----------------------------------------[In case the mlss_ids are not in the right order]----------------------------------------------

@@ -924,7 +924,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],
             },
-            -rc_name => '32Gb_job',
+            -rc_name => '32Gb_24_hour_job',
         },
 
         {   -logic_name => 'hcluster_parse_output',
