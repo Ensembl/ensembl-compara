@@ -896,6 +896,7 @@ sub core_pipeline_analyses {
                                   },
                 -flow_into     => {
                                   -1 => [ 'infernal_himem' ],
+                                  -2 => [ 'infernal_himem' ],
                                    1 => [ 'pre_secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                                   },
                 -rc_name       => '1Gb_24_hour_job',
@@ -909,7 +910,7 @@ sub core_pipeline_analyses {
                                    'cmalign_exe' => $self->o('cmalign_exe'),
                                   },
                 -flow_into     => [ 'pre_secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
-                -rc_name       => '16Gb_job',
+                -rc_name       => '2Gb_24_hour_job',
             },
 
             {   -logic_name => 'pre_secondary_structure_decision',
@@ -971,6 +972,7 @@ sub core_pipeline_analyses {
                             },
              -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_2_cores' ], # This analysis also has more memory
+                           -2 => [ 'pre_sec_struct_tree_2_cores' ], # This analysis also has a higher runlimit
                             2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_2_cores' ], #After trying to restart RAxML we should escalate the capacity.
                            },
@@ -988,10 +990,11 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_4_cores' ], # This analysis also has more memory
+                           -2 => [ 'pre_sec_struct_tree_4_cores' ],
                             2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_4_cores' ],
                           },
-            -rc_name => '1Gb_2c_24_hour_job',
+            -rc_name => '1Gb_2c_168_hour_job',
         },
 
         {   -logic_name    => 'pre_sec_struct_tree_4_cores', ## pre_sec_struct_tree
@@ -1005,6 +1008,7 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_8_cores' ], # This analysis also has more memory
+                           -2 => [ 'pre_sec_struct_tree_8_cores' ],
                             2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_8_cores' ],
                            },
@@ -1051,6 +1055,7 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_2_cores' ],   # This analysis has more cores *and* more memory
+                           -2 => [ 'sec_struct_model_tree_2_cores' ],
                             3 => [ 'sec_struct_model_tree_2_cores' ],
                           },
             -rc_name => '1Gb_24_hour_job',
@@ -1067,6 +1072,7 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_4_cores' ],   # This analysis has more cores *and* more memory
+                           -2 => [ 'sec_struct_model_tree_4_cores' ],
                             3 => [ 'sec_struct_model_tree_4_cores' ],
                        },
             -rc_name => '1Gb_2c_24_hour_job',
@@ -1083,6 +1089,7 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_8_cores' ],   # This analysis has more cores *and* more memory
+                           -2 => [ 'sec_struct_model_tree_8_cores' ],
                             3 => [ 'sec_struct_model_tree_8_cores' ],
                        },
             -rc_name => '1Gb_4c_24_hour_job',

@@ -146,6 +146,7 @@ sub pipeline_analyses_high_confidence {
             -max_retry_count => 0,
             -flow_into       => {
                 -1 => [ 'import_homology_table_himem' ],
+                -2 => [ 'import_homology_table_himem' ],
             }
         },
 
