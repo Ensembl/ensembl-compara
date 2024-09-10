@@ -33,6 +33,8 @@ Examples::
 
 from argparse import ArgumentParser
 
+from sqlalchemy import text
+
 from ensembl.utils.database import DBConnection
 
 
@@ -89,29 +91,35 @@ def repair_mlss_tag(dbc: DBConnection, mlss_tag: str) -> None:
     """
     with dbc.connect() as connection:
         # Get the MLSS tags in method_link_species_set_tag table
-        mlss_tag_values = connection.execute(f"SELECT method_link_species_set_id AS mlss_id, value "
-                                             f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}'")
+        mlss_tag_values = connection.execute(text(
+            f"SELECT method_link_species_set_id AS mlss_id, value "
+            f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}'"
+        ))
         mlss_tags = {row.mlss_id: row.value for row in mlss_tag_values.fetchall()}
         # Extract the expected tag value based on the source data
-        expected_values = connection.execute(EXPECTED_VALUES_SQL[mlss_tag])
+        expected_values = connection.execute(text(EXPECTED_VALUES_SQL[mlss_tag]))
         # Check that each tag has the correct value, fixing those that do not, and add any missing tags
         for row in expected_values:
             if row.mlss_id in mlss_tags:
                 # NOTE: due to internal conversions, we need to ensure both sides have the same time
                 if str(mlss_tags[row.mlss_id]) != str(row.value):
-                    connection.execute(f'UPDATE method_link_species_set_tag SET value = {row.value} '
-                                       f'WHERE method_link_species_set_id = {row.mlss_id} '
-                                       f'    AND tag = "{mlss_tag}"')
+                    connection.execute(text(
+                        f'UPDATE method_link_species_set_tag SET value = {row.value} '
+                        f'WHERE method_link_species_set_id = {row.mlss_id} AND tag = "{mlss_tag}"'
+                    ))
                     print(f"Repaired MLSS tag '{mlss_tag}' for MLSS id '{row.mlss_id}'")
                 del mlss_tags[row.mlss_id]
             else:
-                connection.execute(f'INSERT INTO method_link_species_set_tag '
-                                   f'VALUES ({row.mlss_id}, "{mlss_tag}", {row.value})')
+                connection.execute(text(
+                    f'INSERT INTO method_link_species_set_tag '
+                    f'VALUES ({row.mlss_id}, "{mlss_tag}", {row.value})'
+                ))
                 print(f"Added missing MLSS tag '{mlss_tag}' for MLSS id '{row.mlss_id}'")
         # Delete those MLSS tags that do not match any MLSS in method_link_species_set table
         for mlss_id in mlss_tags.keys():
-            connection.execute(f'DELETE FROM method_link_species_set_tag '
-                               f'WHERE method_link_species_set_id = {mlss_id}')
+            connection.execute(text(
+                f'DELETE FROM method_link_species_set_tag WHERE method_link_species_set_id = {mlss_id}'
+            ))
             print(f"Deleted unexpected MLSS tag '{mlss_tag}' for MLSS id '{mlss_id}'")
 
 
