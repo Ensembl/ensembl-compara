@@ -26,6 +26,7 @@ import subprocess
 from typing import ContextManager, Dict, List, Set
 
 import pytest
+from sqlalchemy import text
 
 from ensembl.utils.database import DBConnection, UnitTestDB
 
@@ -39,7 +40,7 @@ class TestRepairMLSSTags:
 
     """
 
-    dbc = None  # type: DBConnection
+    dbc: DBConnection | None = None
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
@@ -53,7 +54,7 @@ class TestRepairMLSSTags:
         """
         # Use type(self) instead of self as a workaround to @classmethod decorator (unsupported by pytest and
         # required when scope is set to "class" <https://github.com/pytest-dev/pytest/issues/3778>)
-        type(self).dbc = test_dbs.dbc
+        type(self).dbc = test_dbs["pan"].dbc
 
     @pytest.mark.parametrize(
         "mlss_tag, alt_queries, exp_stdout, exp_tag_value, expectation",
@@ -116,10 +117,10 @@ class TestRepairMLSSTags:
         """
         # Alter the MLSS tags table so there is something to repair
         with self.dbc.connect() as connection:
-            connection.execute("SET FOREIGN_KEY_CHECKS = 0")
+            connection.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
             for sql in alt_queries:
-                connection.execute(sql)
-            connection.execute("SET FOREIGN_KEY_CHECKS = 1")
+                connection.execute(text(sql))
+            connection.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
         # Run the repair_mlss_tags.py command
         cmd = [str(Path(__file__).parents[3] / 'scripts' / 'production' / 'repair_mlss_tags.py'),
                '--url', self.dbc.url]
@@ -132,7 +133,9 @@ class TestRepairMLSSTags:
             if exp_tag_value:
                 # Check the database has the expected information
                 with self.dbc.connect() as connection:
-                    result = connection.execute(f"SELECT method_link_species_set_id AS mlss_id, value "
-                                                f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}'")
+                    result = connection.execute(text(
+                        f"SELECT method_link_species_set_id AS mlss_id, value "
+                        f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}'"
+                    ))
                     curr_tag_value = {row.mlss_id: int(row.value) for row in result.fetchall()}
                     assert curr_tag_value == exp_tag_value
