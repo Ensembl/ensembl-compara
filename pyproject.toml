@@ -66,6 +66,8 @@ test = [
     "mock",
     "mypy",
     "pylint",
+    "pytest",
+    "pytest-dependency",
     "pytest-cov",
     "types-PyYAML>=6.0.12.20240311",
     "yamllint",
