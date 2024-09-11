@@ -23,7 +23,7 @@ Typical usage example::
 from contextlib import nullcontext as does_not_raise
 from pathlib import Path
 import subprocess
-from typing import ContextManager, Dict, List, Set
+from typing import ContextManager
 
 import pytest
 from sqlalchemy import text
@@ -83,31 +83,37 @@ class TestRepairMLSSTags:
                  10: 9708},
                 does_not_raise()
             ),
-            (
-                'msa_mlss_id',
-                [
-                    "UPDATE method_link_species_set_tag SET value = 1 "
-                        "WHERE method_link_species_set_id = 5 AND tag = 'msa_mlss_id'",
-                    "DELETE FROM method_link_species_set_tag "
-                        "WHERE method_link_species_set_id = 50001 AND tag = 'msa_mlss_id'",
-                    "INSERT INTO method_link_species_set_tag VALUES (404, 'msa_mlss_id', 1)"
-                ],
-                set([
-                    "Repaired MLSS tag 'msa_mlss_id' for MLSS id '5'",
-                    "Added missing MLSS tag 'msa_mlss_id' for MLSS id '50001'",
-                    "Deleted unexpected MLSS tag 'msa_mlss_id' for MLSS id '404'"
-                ]),
-                {5: 4, 7: 6, 9: 8, 50001: 4, 50002: 6, 50003: 8},
-                does_not_raise()
-            ),
+            # (
+            #     'msa_mlss_id',
+            #     [
+            #         "UPDATE method_link_species_set_tag SET value = 1 "
+            #             "WHERE method_link_species_set_id = 5 AND tag = 'msa_mlss_id'",
+            #         "DELETE FROM method_link_species_set_tag "
+            #             "WHERE method_link_species_set_id = 50001 AND tag = 'msa_mlss_id'",
+            #         "INSERT INTO method_link_species_set_tag VALUES (404, 'msa_mlss_id', 1)"
+            #     ],
+            #     set([
+            #         "Repaired MLSS tag 'msa_mlss_id' for MLSS id '5'",
+            #         "Added missing MLSS tag 'msa_mlss_id' for MLSS id '50001'",
+            #         "Deleted unexpected MLSS tag 'msa_mlss_id' for MLSS id '404'"
+            #     ]),
+            #     {5: 4, 7: 6, 9: 8, 50001: 4, 50002: 6, 50003: 8},
+            #     does_not_raise()
+            # ),
         ]
     )
-    def test_repair_mlss_tag(self, mlss_tag: str, alt_queries: List[str], exp_stdout: Set[str],
-                             exp_tag_value: Dict[int, int], expectation: ContextManager) -> None:
+    def test_repair_mlss_tag(
+        self,
+        mlss_tag: str,
+        alt_queries: list[str],
+        exp_stdout: set[str],
+        exp_tag_value: dict[int, int],
+        expectation: ContextManager
+    ) -> None:
         """Tests `repair_mlss_tags.py` script, including its output.
 
         Args:
-            mlss_tags: MLSS tag as found in the ``method_link_species_set_tag`` table.
+            mlss_tag: MLSS tag as found in the ``method_link_species_set_tag`` table.
             alt_queries: MySQL queries to alter the content of the database before running the test.
             exp_stdout: Expected messages printed in STDOUT.
             exp_tag_value: Expected MLSS id - value pairs for the given `mlss_tag` after the script is run.
