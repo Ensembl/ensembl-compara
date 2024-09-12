@@ -93,6 +93,11 @@ Default: not set
 Retire the MethodLinkSpeciesSets that are not defined by the XML file.
 Default: not set
 
+=item B<[--retire_unmatched_of_type method_type]>
+
+Retire MLSSes of the specified type that are not defined by the XML file.
+Default: not set
+
 =item B<[--dry-run]>
 
 When given, the script will not store / update anything in the database.
@@ -123,6 +128,7 @@ my $reg_conf;
 my $compara = 'compara_master';
 my $release;
 my $retire_unmatched;
+my @retire_unmatched_types;
 my $xml_config;
 my $xml_schema;
 my $verbose;
@@ -139,6 +145,7 @@ GetOptions(
     'verbose|debug' => \$verbose,
     'output_file=s' => \$output_file,
     'retire_unmatched'          => \$retire_unmatched,
+    'retire_unmatched_of_type=s' => \@retire_unmatched_types,
     'dryrun|dry_run|dry-run'    => \$dry_run,
 );
 
@@ -160,6 +167,9 @@ if ($compara =~ /mysql:\/\//) {
 }
 if (!$compara_dba) {
   die "Cannot connect to compara database <$compara>.";
+}
+if ($retire_unmatched && @retire_unmatched_types) {
+    die "Cannot specify both --retire_unmatched and --retire_unmatched_of_type options; please choose at most one";
 }
 my $genome_dba = $compara_dba->get_GenomeDBAdaptor;
 
@@ -505,6 +515,22 @@ my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 my %mlss_ids_to_find = map {$_->dbID => $_} @{$mlss_adaptor->fetch_all_current};
 my @genome_db_without_comp = grep {!$_->genome_component} @{$division_genome_dbs};
 
+my %known_method_type_set = map { $_->type => 1 } @{$method_adaptor->fetch_all()};
+my %retire_unmatched_type_set;
+if (@retire_unmatched_types) {
+
+    foreach my $method_type (@retire_unmatched_types) {
+        if (defined $known_method_type_set{$method_type}) {
+            $retire_unmatched_type_set{$method_type} = 1;
+        } else {
+            throw("Cannot retire MLSSes of unknown method type: $method_type");
+        }
+    }
+
+} elsif ($retire_unmatched) {
+    %retire_unmatched_type_set = %known_method_type_set;
+}
+
 my @mlsss_created;
 my @mlsss_existing;
 my @mlsss_retired;
@@ -612,9 +638,10 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             }
         }
 
-        if ($retire_unmatched) {
+        if (%retire_unmatched_type_set) {
             print "\n";
             foreach my $mlss (sort {$a->dbID <=> $b->dbID} values %mlss_ids_to_find) {
+                next unless exists $retire_unmatched_type_set{$mlss->method->type};
                 push @mlsss_retired, $mlss;
                 unless ($dry_run) {
                     $mlss_adaptor->retire_object($mlss);
