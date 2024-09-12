@@ -66,7 +66,7 @@ class TestDirCmp(BaseTestFilesys):
     """Tests :class:`DirCmp` class."""
 
     @pytest.mark.dependency(name='test_init', scope='class')
-    def test_init(self, tmp_path: Path) -> None:
+    def test_init(self) -> None:
         """Tests that the object :class:`DirCmp` is initialised correctly."""
         assert "citest_reference" == self.dir_cmp.ref_path.name, "Unexpected reference root path"
         assert "citest_target" == self.dir_cmp.target_path.name, "Unexpected target root path"

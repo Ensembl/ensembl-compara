@@ -40,7 +40,7 @@ class TestRepairMLSSTags:
 
     """
 
-    dbc: DBConnection | None = None
+    dbc: DBConnection = None
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
@@ -83,23 +83,23 @@ class TestRepairMLSSTags:
                  10: 9708},
                 does_not_raise()
             ),
-            # (
-            #     'msa_mlss_id',
-            #     [
-            #         "UPDATE method_link_species_set_tag SET value = 1 "
-            #             "WHERE method_link_species_set_id = 5 AND tag = 'msa_mlss_id'",
-            #         "DELETE FROM method_link_species_set_tag "
-            #             "WHERE method_link_species_set_id = 50001 AND tag = 'msa_mlss_id'",
-            #         "INSERT INTO method_link_species_set_tag VALUES (404, 'msa_mlss_id', 1)"
-            #     ],
-            #     set([
-            #         "Repaired MLSS tag 'msa_mlss_id' for MLSS id '5'",
-            #         "Added missing MLSS tag 'msa_mlss_id' for MLSS id '50001'",
-            #         "Deleted unexpected MLSS tag 'msa_mlss_id' for MLSS id '404'"
-            #     ]),
-            #     {5: 4, 7: 6, 9: 8, 50001: 4, 50002: 6, 50003: 8},
-            #     does_not_raise()
-            # ),
+             (
+                 'msa_mlss_id',
+                 [
+                     "UPDATE method_link_species_set_tag SET value = 1 "
+                         "WHERE method_link_species_set_id = 5 AND tag = 'msa_mlss_id'",
+                     "DELETE FROM method_link_species_set_tag "
+                         "WHERE method_link_species_set_id = 50001 AND tag = 'msa_mlss_id'",
+                     "INSERT INTO method_link_species_set_tag VALUES (404, 'msa_mlss_id', 1)"
+                 ],
+                 set([
+                     "Repaired MLSS tag 'msa_mlss_id' for MLSS id '5'",
+                     "Added missing MLSS tag 'msa_mlss_id' for MLSS id '50001'",
+                     "Deleted unexpected MLSS tag 'msa_mlss_id' for MLSS id '404'"
+                 ]),
+                 {5: 4, 7: 6, 9: 8, 50001: 4, 50002: 6, 50003: 8},
+                 does_not_raise()
+             ),
         ]
     )
     def test_repair_mlss_tag(
