@@ -32,7 +32,8 @@ from typing import ContextManager, Dict, Set
 import pytest
 from pytest import raises
 
-from ensembl.compara.filesys import DirCmp, file_cmp, PathLike
+from ensembl.compara.filesys import DirCmp, file_cmp
+from ensembl.utils import StrPath
 
 
 class BaseTestFilesys:
@@ -43,7 +44,7 @@ class BaseTestFilesys:
 
     """
 
-    dir_cmp = None  # type: DirCmp
+    dir_cmp: DirCmp = None
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
@@ -65,10 +66,10 @@ class TestDirCmp(BaseTestFilesys):
     """Tests :class:`DirCmp` class."""
 
     @pytest.mark.dependency(name='test_init', scope='class')
-    def test_init(self, tmp_dir: Path) -> None:
+    def test_init(self) -> None:
         """Tests that the object :class:`DirCmp` is initialised correctly."""
-        assert tmp_dir / 'citest_reference' == self.dir_cmp.ref_path, "Unexpected reference root path"
-        assert tmp_dir / 'citest_target' == self.dir_cmp.target_path, "Unexpected target root path"
+        assert "citest_reference" == self.dir_cmp.ref_path.name, "Unexpected reference root path"
+        assert "citest_target" == self.dir_cmp.target_path.name, "Unexpected target root path"
         # Check the files at the root
         assert self.dir_cmp.common_files == set(), "Found unexpected files at the root of both trees"
         assert self.dir_cmp.ref_only == {'3/a.txt'}, "Expected '3/a.txt' at reference tree's root"
@@ -203,7 +204,7 @@ class TestFileCmp(BaseTestFilesys):
             (Path('2', 'b.nwk'), False),
         ],
     )
-    def test_file_cmp(self, filepath: PathLike, output: bool) -> None:
+    def test_file_cmp(self, filepath: StrPath, output: bool) -> None:
         """Tests :meth:`filecmp.file_cmp()` method.
 
         Args:
