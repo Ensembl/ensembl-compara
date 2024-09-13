@@ -343,6 +343,10 @@ sub run_low_coverage_best_in_alignment {
    my $gdb_name = $genome_db->name;
    print STDERR "working on $gdb_name\n" if $self->debug;
    my $leaves = $members_per_genome_db_id{$gdb_id};
+   if (defined $leaves && scalar(@$leaves) == 1) {
+       print STDERR sprintf("%s is the only member of this tree in %s -> will be kept\n", $leaves->[0]->stable_id, $gdb_name) if $self->debug;
+       next;
+   }
    my $core_db_adaptor = $genome_db->db_adaptor;
    $core_db_adaptor->dbc->prevent_disconnect( sub {
    foreach my $leaf (@$leaves) {
