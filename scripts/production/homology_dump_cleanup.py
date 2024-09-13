@@ -63,7 +63,7 @@ def mysql_query(
     try:
         engine = create_engine(db_url)
         with engine.connect() as conn:
-            info = conn.execute(query, **params)
+            info = conn.execute(text(query), **params)
             return [tuple(x) for x in info]
     except SQLAlchemyError:
         logging.exception("MySQL Error")
@@ -85,7 +85,7 @@ def get_collections(db_url: str, before_release: int) -> UniqueCollections:
     Returns:
         A sorted list of unique collection names.
     """
-    collections_query = text(
+    collections_query = (
         "SELECT DISTINCT ssh.name "
         "FROM method_link_species_set mlss "
         "JOIN method_link ml USING(method_link_id) "
