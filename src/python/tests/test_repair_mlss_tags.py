@@ -40,7 +40,7 @@ class TestRepairMLSSTags:
 
     """
 
-    dbc: DBConnection = None
+    dbc: DBConnection = None  # type: ignore
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization

@@ -150,7 +150,7 @@ def _get_original_url(connection: sqlalchemy.engine.Connection, mlss_id: int) ->
         """
     )
 
-    return connection.execute(mlss_url_query, {"mlss_id": mlss_id}).scalar()
+    return connection.execute(mlss_url_query, {"mlss_id": mlss_id}).scalar_one()
 
 
 def _link_cactus_pairwise_mlsses(
