@@ -50,8 +50,9 @@ sub test_division {
         %allowed_species = %{$allowed_species_info->{$division}{'allowed_species'}};
     }
 
+    # See https://github.com/Ensembl/ensembl-datacheck/blob/6b3d185/lib/Bio/EnsEMBL/DataCheck/Checks/MetaKeyFormat.pm#L59
     foreach my $name (keys %allowed_species) {
-        unlike($name, qr/\s/, "'$name' does not contain a space");
+        like($name, qr/_?[a-z0-9]+_[a-z0-9_]+/, "Value for production name has correct format");
     }
 
     # Load the MLSS XML file if it exists
