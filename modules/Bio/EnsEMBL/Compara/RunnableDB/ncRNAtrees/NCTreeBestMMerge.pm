@@ -79,6 +79,7 @@ use warnings;
 use Bio::EnsEMBL::Compara::AlignedMember;
 use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
+use Bio::EnsEMBL::Compara::Utils::Cigars qw(cigar_from_alignment_string);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::TreeBest');
 
@@ -196,23 +197,53 @@ sub write_output {
                 && $gene_tree->has_tag('genomic_alignment_gene_align_id')) {
             my $genomic_alignment_gene_align_id = $gene_tree->get_value_for_tag('genomic_alignment_gene_align_id');
             if ($gene_tree->gene_align_id == $genomic_alignment_gene_align_id) {
+                my $gene_align_adaptor = $self->compara_dba->get_GeneAlignAdaptor();
 
-                my @tree_leaves = @{$gene_tree->get_all_leaves()};
-                my $num_members = scalar(@tree_leaves);
-                my %tree_seq_id_set = map { $_->sequence_id => 1 } @tree_leaves;
-                my $num_distinct_sequences = scalar keys %tree_seq_id_set;
-                if ($num_distinct_sequences == 1) {
+                if ($gene_tree->has_tag('unflanked_alignment_gene_align_id')) {
+                    # If a flanked genomic alignment is the primary alignment of
+                    # this tree, replace it with an unflanked genomic alignment.
 
-                    my $trivial_aln = $self->generate_trivial_alignment($gene_tree);
-                    $trivial_aln->dbID( $gene_tree->get_value_for_tag('trivial_alignment_gene_align_id') );
-                    $self->compara_dba->get_GeneAlignAdaptor->store($trivial_aln);
+                    my %tag_mapping = (
+                        'unflanked_alignment_percent_identity' => 'aln_percent_identity',
+                        'unflanked_alignment_num_residues' => 'aln_num_residues',
+                        'unflanked_alignment_length' => 'aln_length',
+                    );
 
-                    $gene_tree->store_tag('trivial_alignment_gene_align_id', $trivial_aln->dbID);
-                    $gene_tree->store_tag('aln_num_residues', $trivial_aln->aln_length * $num_members);
-                    $gene_tree->store_tag('aln_length', $trivial_aln->aln_length);
-                    $gene_tree->store_tag('aln_percent_identity', 100.0);
+                    while (my ($old_tag, $new_tag) = each %tag_mapping) {
+                        if ($gene_tree->has_tag($old_tag)) {
+                            my $value = $gene_tree->get_value_for_tag($old_tag);
+                            $gene_tree->store_tag($new_tag, $value);
+                            $gene_tree->delete_tag($old_tag);
+                        }
+                    }
 
-                    $gene_tree->alignment($trivial_aln);
+                    # Leave the gene-tree alignment as the one identified by 'genomic_alignment_gene_align_id'
+                    # until the last possible moment. That way, errors do not prevent us from trying again.
+                    $gene_tree->gene_align_id( $gene_tree->get_value_for_tag('unflanked_alignment_gene_align_id') );
+
+                } else {
+                    # If an unflanked genomic alignment is unavailable for
+                    # any reason, try a trivial alignment if appropriate.
+                    my @tree_leaves = @{$gene_tree->get_all_leaves()};
+                    my $num_members = scalar(@tree_leaves);
+                    my %tree_seq_id_set = map { $_->sequence_id => 1 } @tree_leaves;
+                    my $num_distinct_sequences = scalar keys %tree_seq_id_set;
+                    if ($num_distinct_sequences == 1) {
+
+                        my $trivial_aln = $self->generate_trivial_alignment($gene_tree);
+                        $trivial_aln->dbID( $gene_tree->get_value_for_tag('trivial_alignment_gene_align_id') );
+                        $gene_align_adaptor->store($trivial_aln);
+
+                        $gene_tree->store_tag('trivial_alignment_gene_align_id', $trivial_aln->dbID);
+                        $gene_tree->store_tag('aln_num_residues', $trivial_aln->aln_length * $num_members);
+                        $gene_tree->store_tag('aln_length', $trivial_aln->aln_length);
+                        $gene_tree->store_tag('aln_percent_identity', 100.0);
+
+
+                        # Leave the gene-tree alignment as the one identified by 'genomic_alignment_gene_align_id'
+                        # until the last possible moment. That way, errors do not prevent us from trying again.
+                        $gene_tree->alignment($trivial_aln);
+                    }
                 }
             }
         }
