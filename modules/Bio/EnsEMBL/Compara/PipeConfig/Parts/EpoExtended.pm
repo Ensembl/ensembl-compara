@@ -156,9 +156,14 @@ sub pipeline_analyses_db_prepare{
             },
             -flow_into => {
                 '2->A' => [ 'extended_genome_alignment' ],
-                'A->1' => [ 'delete_alignment' ],
+                'A->1' => [ 'alignment_funnel_check' ],
             },
             -rc_name => '4Gb_job',
+        },
+
+        {   -logic_name => 'alignment_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => { 1 => { 'delete_alignment' => INPUT_PLUS() } },
         },
 
         # -------------------------------------------------------------[Load species tree]--------------------------------------------------------
