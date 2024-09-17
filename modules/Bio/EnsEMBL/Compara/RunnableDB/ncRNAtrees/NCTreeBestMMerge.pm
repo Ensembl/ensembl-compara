@@ -196,7 +196,8 @@ sub write_output {
         if ($gene_tree->gene_align_id
                 && $gene_tree->has_tag('genomic_alignment_gene_align_id')) {
             my $genomic_alignment_gene_align_id = $gene_tree->get_value_for_tag('genomic_alignment_gene_align_id');
-            if ($gene_tree->gene_align_id == $genomic_alignment_gene_align_id) {
+            if ($gene_tree->gene_align_id == $genomic_alignment_gene_align_id
+                    && $gene_tree->seq_type eq 'seq_with_flanking') {
                 my $gene_align_adaptor = $self->compara_dba->get_GeneAlignAdaptor();
 
                 if ($gene_tree->has_tag('unflanked_alignment_gene_align_id')) {
