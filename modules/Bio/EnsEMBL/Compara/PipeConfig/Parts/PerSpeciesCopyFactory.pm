@@ -75,7 +75,8 @@ sub pipeline_analyses_create_and_copy_per_species_db {
             -hive_capacity => 1,
             -flow_into => {
                 1 => [{'record_species_set' => INPUT_PLUS()}, {'production_species_factory'=> INPUT_PLUS()}],
-            }
+            },
+            -rc_name => "1Gb_24_hour_job",
         },
 
         {   -logic_name => 'production_species_factory',
@@ -123,7 +124,7 @@ sub pipeline_analyses_create_and_copy_per_species_db {
             -flow_into => {
                 '2' => [{'CompressHomologyTSV'=> INPUT_PLUS()}],
             },
-            -rc_name       => "4Gb_job",
+            -rc_name       => "4Gb_24_hour_job",
         },
 
         {   -logic_name => 'CompressHomologyTSV',

@@ -271,7 +271,7 @@ sub core_pipeline_analyses {
                 'ref_reg_conf'         => catfile($self->o('ensembl_root_dir'), 'ensembl-compara', 'conf', 'references', 'production_reg_conf.pl'),
                 'step'  => $self->o('num_sequences_per_blast_job'),
             },
-            -rc_name       => '1Gb_job',
+            -rc_name       => '1Gb_24_hour_job',
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into     => {
                 '2->A' => [ 'diamond_blastp' ],
@@ -282,7 +282,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_mlss_and_batch_members',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::CreateSuperficialMLSS',
-            -rc_name    => '8Gb_job',
+            -rc_name    => '8Gb_24_hour_job',
             -flow_into  => {
                 2 => { 'parse_paf_for_rbbh' => { 'member_id_list' => '#member_id_list#', 'target_genome_db_id' => '#ref_genome_db_id#', 'genome_db_id' => '#genome_db_id#' } },
             }
@@ -290,7 +290,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'parse_paf_for_rbbh',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HomologyAnnotation::ParsePAFforBHs',
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -hive_capacity => 100,
         },
 
