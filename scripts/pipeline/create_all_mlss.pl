@@ -556,6 +556,17 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 my $exist_method = $method_adaptor->fetch_by_type($mlss->method->type);
                 $mlss->method($exist_method) if $exist_method;
                 my $exist_ss = $ss_adaptor->fetch_by_GenomeDBs($mlss->species_set->genome_dbs);
+
+                # If all genomes in a division are included in the default gene-tree collection, the
+                # default collection will most likely have been given the name of the division. If so,
+                # we need to set it to 'collection-default' so that the gene-tree pipelines can find it.
+                if ($exist_ss
+                        && $exist_ss->name =~ /^(collection-)?\Q$division_name\E$/
+                        && $mlss->species_set->name =~ /^(collection-)?default$/
+                        && $mlss->method->type =~ /^(PROTEIN_TREES|NC_TREES)$/) {
+                    $exist_ss->name('collection-default');
+                }
+
                 $mlss->species_set($exist_ss) if $exist_ss;
             }
             if ($exist_mlss and !$dry_run) {
