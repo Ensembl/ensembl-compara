@@ -130,8 +130,14 @@ return
         -flow_into => {
                 '2->A' => [ 'find_dnafrag_region_strand' ],
                 '3->A' => [ 'ortheus' ],
-		'A->1' => [ 'create_neighbour_nodes_jobs_alignment' ],
+        'A->1' => [ 'alignment_funnel_check' ],
 	},
+},
+
+{
+    -logic_name => 'alignment_funnel_check',
+    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+    -flow_into  => { 1 => [ 'create_neighbour_nodes_jobs_alignment' ] },
 },
 # find the most likely strand orientation for genomic regions which enredo was unable to determine the
 # orientation (when the strand is set to '0' in the enredo output file)  

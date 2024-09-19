@@ -485,9 +485,14 @@ sub pipeline_analyses {
                     "(#total_residues_count# > 60000000) && (#dnafrag_count# > 10)"      => "pecan_mem3",
                     ),
 
-                 "A->1" => [ "update_max_alignment_length" ],
+                 "A->1" => [ "alignment_funnel_check" ],
              },
          },
+
+        {   -logic_name => 'alignment_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ "update_max_alignment_length" ],
+        },
 
 # ---------------------------------------------[pecan]---------------------------------------------------------------------
 
