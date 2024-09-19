@@ -96,7 +96,7 @@ sub pipeline_analyses_copy_ncbi_and_core_genome_db {
                 'skip_dna'                    => $self->o('skip_dna'),
             },
             -hive_capacity => 10,
-            -rc_name       => '4Gb_job',
+            -rc_name       => '4Gb_24_hour_job',
             -flow_into     => ['hc_members_per_genome'],
         },
     #--------------------Healthcheck members------------------#

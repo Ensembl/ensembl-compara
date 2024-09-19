@@ -73,7 +73,7 @@ sub pipeline_analyses_diamond_against_query {
             -parameters    => {
                 %blastp_parameters,
             },
-            -rc_name       => '500Mb_4c_job',
+            -rc_name       => '1Gb_4c_24_hour_job',
             -flow_into     => {
                -1 => [ 'diamond_blastp_ref_to_query_himem' ],  # MEMLIMIT
             },
@@ -85,7 +85,7 @@ sub pipeline_analyses_diamond_against_query {
             -parameters    => {
                 %blastp_parameters,
             },
-            -rc_name       => '2Gb_4c_job',
+            -rc_name       => '2Gb_4c_24_hour_job',
             -priority      => 20,
             -hive_capacity => $self->o('blastpu_capacity'),
         },
