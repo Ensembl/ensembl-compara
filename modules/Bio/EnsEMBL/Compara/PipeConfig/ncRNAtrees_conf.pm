@@ -338,8 +338,13 @@ sub core_pipeline_analyses {
                 -input_ids  => [ {} ],
                 -flow_into  => {
                                 '1->A'  => [ 'copy_tables_factory' ],
-                                'A->1'  => [ 'backbone_fire_classify_genes' ],
+                                'A->1'  => [ 'genome_loading_funnel_check' ],
                                },
+            },
+
+            {   -logic_name => 'genome_loading_funnel_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => [ 'backbone_fire_classify_genes' ],
             },
 
             {   -logic_name => 'backbone_fire_classify_genes',
@@ -349,8 +354,13 @@ sub core_pipeline_analyses {
                                 },
                 -flow_into  => {
                                '1->A'   => [ 'load_rfam_models' ],
-                               'A->1'   => [ 'backbone_fire_tree_building' ],
+                               'A->1'   => [ 'classify_genes_funnel_check' ],
                               },
+            },
+
+            {   -logic_name => 'classify_genes_funnel_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => [ 'backbone_fire_tree_building' ],
             },
 
             {   -logic_name => 'backbone_fire_tree_building',
@@ -376,7 +386,7 @@ sub core_pipeline_analyses {
             },
 
             {   -logic_name => 'backbone_fire_posttree',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
                 -flow_into  => [ { 'posttree_semaphore_check' => \%semaphore_check_params } ],
             },
 
@@ -398,12 +408,34 @@ sub core_pipeline_analyses {
             },
 
             {   -logic_name => 'backbone_pipeline_finished',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => {
+                    '1->A' => [ 'fire_final_analyses' ],
+                    'A->1' => [ 'fire_final_datachecks' ],
+                },
+            },
+
+            {   -logic_name => 'fire_final_analyses',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -flow_into  => [ 
-                    'notify_pipeline_completed',
-                    'wga_expected_dumps',                    
-                    WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ), 
+                -flow_into  => [
+                    'wga_expected_dumps',
+                    WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
                 ],
+            },
+
+            {   -logic_name => 'fire_final_datachecks',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into => {
+                    '1->A' => {
+                        'datacheck_factory' => {
+                            'datacheck_groups' => $self->o('datacheck_groups'),
+                            'db_type' => $self->o('db_type'),
+                            'compara_db' => $self->pipeline_url(),
+                            'registry_file' => undef
+                        },
+                    },
+                    'A->1' => [ 'notify_pipeline_completed' ],
+                },
             },
 
             {   -logic_name => 'notify_pipeline_completed',
@@ -424,7 +456,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'copy_table'  ],
-                'A->1' => [ 'offset_tables' ],
+                'A->1' => [ 'copy_table_funnel_check' ],
             },
         },
 
@@ -435,6 +467,11 @@ sub core_pipeline_analyses {
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
+        },
+
+        {   -logic_name => 'copy_table_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'offset_tables' ],
         },
 
         {   -logic_name => 'offset_tables',
@@ -488,13 +525,18 @@ sub core_pipeline_analyses {
                                },
                 -flow_into => {
                                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, }, # fan
-                               'A->1' => [ 'create_mlss_ss' ],
+                               'A->1' => [ 'load_genomedb_funnel_check' ],
                               },
             },
 
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -analysis_capacity => 10,
+        },
+
+        {   -logic_name => 'load_genomedb_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'create_mlss_ss' ],
         },
 
         {   -logic_name => 'create_mlss_ss',
@@ -526,7 +568,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
                 '2->A' => 'genome_member_copy',
-                'A->1' => [ 'hc_members_globally' ],
+                'A->1' => [ 'load_members_funnel_check' ],
             },
         },
 
@@ -538,6 +580,11 @@ sub core_pipeline_analyses {
             },
             -analysis_capacity => 10,
             -flow_into         => [ 'hc_members_per_genome' ],
+        },
+
+        {   -logic_name => 'load_members_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'hc_members_globally' ],
         },
 
         {   -logic_name         => 'hc_members_globally',
@@ -629,12 +676,17 @@ sub core_pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -flow_into  => {
                     '2->A' => [ 'per_genome_qc' ],
-                    'A->1' => [ 'clusterset_backup' ],
+                    'A->1' => [ 'cluster_qc_funnel_check' ],
                 },
             },
 
             {   -logic_name => 'per_genome_qc',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
+            },
+
+            {   -logic_name => 'cluster_qc_funnel_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => [ 'clusterset_backup' ],
             },
 
         {   -logic_name => 'ortholog_cluster',
@@ -947,8 +999,13 @@ sub core_pipeline_analyses {
                                   },
                 -flow_into => {
                                '1->A' => [ 'genomic_alignment', WHEN('#tree_model_id#' => 'infernal') ],
-                               'A->1' => [ 'treebest_mmerge' ],
+                               'A->1' => [ 'tree_funnel_check' ],
                               },
+            },
+
+            {   -logic_name => 'tree_funnel_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => { 1 => { 'treebest_mmerge' => INPUT_PLUS() } },
             },
 
             {   -logic_name    => 'create_ss_picts',
@@ -1383,7 +1440,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_homology_dumps',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => {
                 '1->A' => [ 'homology_dumps_mlss_id_factory', 'gene_dumps_genome_db_factory' ],
                 'A->1' => 'rib_fire_homology_processing',
@@ -1394,8 +1451,13 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => 'gene_count_factory',
-                'A->1' => 'write_stn_tags',
+                'A->1' => 'gene_count_funnel_check',
             },
+        },
+
+        {   -logic_name => 'gene_count_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'write_stn_tags' ],
         },
 
         {   -logic_name => 'gene_count_factory',
@@ -1418,7 +1480,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_homology_processing',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => [ 'rib_fire_orth_wga_and_high_conf', 'rename_labels' ],
         },
 
@@ -1451,7 +1513,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_high_confidence_orths',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => [ 'mlss_id_for_high_confidence_factory', 'paralogue_for_import_factory' ],
         },
 
@@ -1484,9 +1546,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpWGAExpectedTags',
             -parameters => {
                 'wga_expected_file'  => '#dump_dir#/wga_expected.mlss_tags.tsv',
-            },
-            -flow_into => {
-                1 => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef }},
             },
         },        
 

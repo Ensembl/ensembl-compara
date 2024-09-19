@@ -41,6 +41,8 @@ Questions may also be sent to the Ensembl help desk at
 
 package Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC;
 
+use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # For WHEN and INPUT_PLUS
 
 use strict;
 use warnings;
@@ -53,7 +55,7 @@ sub pipeline_analyses_GeneSetQC {
         #    -parameters =>  {'compara_db'   => $self->o('compara_db')},
             -flow_into  =>  {
                 '2->A'       => ['get_split_genes'],
-                'A->2'   =>  ['store_tags'],
+                'A->2'   =>  ['gene_qc_funnel_check'],
             },
             -hive_capacity  => $self->o('genesetQC_capacity'),
             -rc_name => '2Gb_job',
@@ -128,6 +130,11 @@ sub pipeline_analyses_GeneSetQC {
                 2   => ['?table_name=gene_member_qc'],
             },
             -analysis_capacity  => 50,
+        },
+
+        {   -logic_name => 'gene_qc_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => { 2 => { 'store_tags' => INPUT_PLUS() } },
         },
 
         {

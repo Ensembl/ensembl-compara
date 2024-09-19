@@ -99,13 +99,18 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => [ 'cleanup_strains_clusters' ],
-                'A->1' => [ 'hc_clusters' ],
+                'A->1' => [ 'cluster_cleanup_funnel_check' ],
             },
             -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'cleanup_strains_clusters',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
+        },
+
+        {   -logic_name => 'cluster_cleanup_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'hc_clusters' ],
         },
 
         {   -logic_name => 'remove_overlapping_homologies',
