@@ -253,6 +253,9 @@
               <optional>
                 <attribute name="url" blockly:blockName="URL field for CACTUS_HAL"/>
               </optional>
+              <optional>
+                <attribute name="ref_genome" blockly:blockName="Reference genome"/>
+              </optional>
             </element>
           </oneOrMore>
         </element>

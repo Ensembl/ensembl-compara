@@ -280,7 +280,7 @@ sub make_species_set_from_XML_node {
             my $genome_component = $child->getAttribute('genome_component');
             my $component_description;
             if ($genome_component) {
-                $some_genome_dbs = [grep {$_->genome_component eq $genome_component} @$some_genome_dbs];
+                $some_genome_dbs = [grep {defined $_->genome_component && $_->genome_component eq $genome_component} @$some_genome_dbs];
                 $component_description = "component GenomeDB $genome_component";
             } else {
                 # If the genome_component attribute is an empty string,
@@ -466,7 +466,25 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
     }
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type($xml_msa->getAttribute('method'));
     my $species_set = make_named_species_set_from_XML_node($xml_msa, $method, $division_genome_dbs);
-    push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method, $species_set, ($xml_msa->getAttribute('gerp') // 0), $no_release, undef, $xml_msa->getAttribute('url')) };
+
+    my $multiple_wga_mlsss = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss(
+        $compara_dba,
+        $method,
+        $species_set,
+        ($xml_msa->getAttribute('gerp') // 0),
+        $no_release,
+        undef,
+        $xml_msa->getAttribute('url')
+    );
+
+    if ($method->type eq 'CACTUS_DB') {
+        my $ref_gdb = find_genome_from_xml_node_attribute($xml_msa, 'ref_genome');
+        foreach my $mlss (@{$multiple_wga_mlsss}) {
+            $mlss->add_tag('reference_species', $ref_gdb->name);
+        }
+    }
+
+    push @mlsss, @{$multiple_wga_mlsss};
 }
 
 foreach my $xml_self_aln (@{$division_node->findnodes('self_alignments/genome')}) {
