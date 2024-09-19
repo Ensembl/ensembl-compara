@@ -419,8 +419,17 @@ sub core_pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into  => [
                     'wga_expected_dumps',
+                    WHEN( '#gene_tree_stats_shared_dir#' => 'generate_tree_stats_report' ),
                     WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
                 ],
+            },
+
+            {   -logic_name => 'generate_tree_stats_report',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StatsReport',
+                -parameters => {
+                    'stats_exe'                  => $self->o('gene_tree_stats_report_exe'),
+                    'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
+                },
             },
 
             {   -logic_name => 'fire_final_datachecks',
@@ -772,15 +781,6 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters     => {
                 'input_file'    => $self->o('tree_stats_sql'),
-            },
-            -flow_into      => [ 'generate_tree_stats_report' ],
-        },
-
-        {   -logic_name => 'generate_tree_stats_report',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StatsReport',
-            -parameters => {
-                'stats_exe'                  => $self->o('gene_tree_stats_report_exe'),
-                'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
             },
         },
 
