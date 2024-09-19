@@ -43,7 +43,7 @@ Phylogenetic tree
 
 =head1 SYNOPSIS
 
-The properties of a GeneTreeNode are:
+The main properties of a GeneTreeNode are:
  - species_tree_node()
  - taxonomy_level() (alias to species_tree_node()->node_name())
  - node_type()
@@ -297,8 +297,7 @@ sub root {
 =head2 is_leaf
 
   Example     : print "I'm a leaf" if $node->is_leaf();
-  Description : Detects and reports if a node is a leaf node. Includes
-                handling of supertree leaves (which have a single child)
+  Description : Detects and reports if a node is a leaf node.
   Returntype  : Boolean
   Exceptions  :
   Caller      : general
@@ -308,13 +307,7 @@ sub root {
 
 sub is_leaf {
     my $self = shift;
-    my $child_count = $self->get_child_count;
-    return 1 if ($child_count == 0);
-    if ( $self->is_supertree and $child_count == 1 ) {
-        my $child = $self->children->[0];
-        return 1 if ($child->node_id != $child->root->node_id);
-    }
-    return 0;
+    return $self->get_child_count == 0 ? 1 : 0;
 }
 
 =head2 is_supertree
@@ -334,6 +327,37 @@ sub is_supertree {
         }
     }
     return 0;
+}
+
+
+=head2 is_supertree_bud
+
+  Example     : print "I'm a supertree bud" if $node->is_supertree_bud();
+  Description : Detects and reports if a node is a supertree bud. In an unexpanded
+                supertree, bud nodes are the leaves of the supertree. In an expanded
+                supertree, each bud node is the parent of a subtree root. Nodes in
+                a regular tree or clusterset cannot be supertree buds.
+  Returntype  : Boolean
+
+=cut
+
+sub is_supertree_bud {
+    my $self = shift;
+
+    my $status = 0;
+    if ($self->is_supertree) {
+        my $child_count = $self->get_child_count;
+        if ($child_count == 0) {
+            $status = 1;
+        } elsif ($child_count == 1) {
+            $status = $self->children->[0]->tree->root_id != $self->tree->root_id
+                    ? 1
+                    : 0
+                    ;
+        }
+    }
+
+    return $status;
 }
 
 
@@ -669,5 +693,22 @@ sub binarize_flat_tree_with_species_tree {
         $self->parent()->add_child($castedMrca, $self->distance_to_parent);
         $self->release_tree();
 }
+
+
+# internal method called by GeneTree::get_all_supertree_buds
+sub _recursive_get_all_supertree_buds {
+    my $self = shift;
+    my $buds = shift;
+
+    if ($self->is_supertree_bud) {
+        push @$buds, $self;
+    } else {
+        foreach my $child (@{$self->children}) {
+            no warnings 'recursion';
+            $child->_recursive_get_all_supertree_buds($buds);
+        }
+    }
+}
+
 
 1;
