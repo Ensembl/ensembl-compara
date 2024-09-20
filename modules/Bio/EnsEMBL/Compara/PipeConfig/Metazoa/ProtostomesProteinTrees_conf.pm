@@ -56,7 +56,7 @@ sub default_options {
 
         'threshold_levels' => [
             {
-		        'taxa'          => [ 'Caenorhabditis', 'Crassostrea', 'Cyclophyllidea', 'Haliotis', 'Octopus', 'Rhipicephalinae', 'Schistosoma', 'Spirurina' ],
+		        'taxa'          => [ 'Caenorhabditis', 'Crassostrea', 'Cyclophyllidea', 'Ditrysia', 'Haliotis', 'Octopus', 'Rhipicephalinae', 'Schistosoma', 'Spirurina' ],
                 'thresholds'    => [ 50, 50, 25 ],
             },
             {
