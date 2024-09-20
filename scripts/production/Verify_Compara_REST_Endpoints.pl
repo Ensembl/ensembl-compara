@@ -35,7 +35,7 @@ use Getopt::Long;
 my $browser = HTTP::Tiny->new('timeout' => 300);
 my $server = 'https://test.rest.ensembl.org';
 my $division;
-my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_homology, $skip_cactus );
+my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_homology, $skip_cactus_hal, $skip_cactus_db );
 
 GetOptions( 
     "server=s"        => \$server, 
@@ -45,7 +45,8 @@ GetOptions(
     'skip_alignments' => \$skip_alignments,
     'skip_epo'        => \$skip_epo,
     'skip_lastz'      => \$skip_lastz,
-    'skip_cactus'     => \$skip_cactus,
+    'skip_cactus_hal' => \$skip_cactus_hal,
+    'skip_cactus_db'  => \$skip_cactus_db,
     'skip_homology'   => \$skip_homology,
 );
 
@@ -59,7 +60,8 @@ die "Server unavailable - please check your URL\n" unless $responseIDGet->{statu
 my ($gene_member_id, $gene_tree_id, $alignment_region, $lastz_alignment_region);
 my ($member_species, $species_1, $species_2, $species_3, $taxon_1, $taxon_2, $taxon_3);
 my ($gene_symbol, $species_set_group, $homology_type, $homology_method_link);
-my ($cactus_species, $cactus_region, $cactus_species_set);
+my ($cactus_hal_species, $cactus_hal_region, $cactus_hal_species_set);
+my ($cactus_db_species, $cactus_db_region, $cactus_db_species_set);
 my $extra_params;
 
 # RULES
@@ -89,11 +91,13 @@ if ($division eq "vertebrates"){
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
-    $cactus_species           = 'gallus_gallus';
-    $cactus_region            = '5:38111022-38265293';
-    $cactus_species_set       = 'collection-fowl';
+    $cactus_hal_species       = 'gallus_gallus';
+    $cactus_hal_region        = '5:38111022-38265293';
+    $cactus_hal_species_set   = 'collection-fowl';
 
-    $skip_cactus              = 0;
+    $cactus_db_species        = 'homo_sapiens';
+    $cactus_db_region         = '17:63992802-64038237';
+    $cactus_db_species_set    = 'collection-primates';
 }
 elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
@@ -117,12 +121,15 @@ elsif($division eq "plants"){
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
     # rice
-    $cactus_species           = 'oryza_sativa';
-    $cactus_region            = '5:20683551-20684336';
-    $cactus_species_set       = 'collection-rice_cultivars';
+    $cactus_hal_species       = 'oryza_sativa';
+    $cactus_hal_region        = '5:20683551-20684336';
+    $cactus_hal_species_set   = 'collection-rice_cultivars';
+
+    $cactus_db_species        = 'triticum_aestivum';
+    $cactus_db_region         = '3D:2585940-2634711';
+    $cactus_db_species_set    = 'collection-wheat';
 
     $extra_params             = 'compara=plants';
-    $skip_cactus              = 0;
 }
 elsif($division eq "metazoa"){
     $gene_member_id           = "LOC726692";
@@ -144,9 +151,13 @@ elsif($division eq "metazoa"){
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
-    $cactus_species           = 'caenorhabditis_elegans';
-    $cactus_region            = 'X:937766-957832:1';
-    $cactus_species_set       = 'wormbase-ws269';
+    $cactus_hal_species       = 'caenorhabditis_elegans';
+    $cactus_hal_region        = 'X:937766-957832:1';
+    $cactus_hal_species_set   = 'wormbase-ws269';
+
+    $cactus_db_species        = 'drosophila_melanogaster';
+    $cactus_db_region         = '2L:5055058-5056149';
+    $cactus_db_species_set    = 'collection-pangenome_drosophila';
 
     $extra_params             = 'compara=metazoa';
     $skip_epo                 = 1;
@@ -172,7 +183,8 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
     $extra_params             = 'compara=pan_homology';
     $skip_cafe                = 1;
     $skip_alignments          = 1;
-    $skip_cactus              = 1;
+    $skip_cactus_hal          = 1;
+    $skip_cactus_db           = 1;
 }
 elsif ( $division eq 'grch37' ) {
     $lastz_alignment_region = "17:64155265-64255266:1";
@@ -188,7 +200,8 @@ elsif ( $division eq 'grch37' ) {
 
     $skip_epo       = 1;
     $skip_genetrees = 1;
-    $skip_cactus    = 1;
+    $skip_cactus_hal = 1;
+    $skip_cactus_db  = 1;
 }
 elsif ($division eq 'protists' ) {
     $gene_member_id           = 'LMJF_27_0290';
@@ -210,7 +223,8 @@ elsif ($division eq 'protists' ) {
     $extra_params             = 'compara=protists';
     $skip_cafe                = 1;
     $skip_alignments          = 1;
-    $skip_cactus              = 1;
+    $skip_cactus_hal          = 1;
+    $skip_cactus_db           = 1;
 }
 elsif ($division eq 'fungi' ) {
     $lastz_alignment_region   = 'I:529814-541420:1';
@@ -233,7 +247,8 @@ elsif ($division eq 'fungi' ) {
     $extra_params             = 'compara=fungi';
     $skip_cafe                = 1;
     $skip_epo                 = 1;
-    $skip_cactus              = 1;
+    $skip_cactus_hal          = 1;
+    $skip_cactus_db           = 1;
 }
 else {
     die "Division '$division' is not understood\n";
@@ -551,16 +566,30 @@ try{
         ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option validity");
     }
     
-    unless ( $skip_alignments || $skip_cactus ) {
-        print "\nTesting GET alignment region\/\:species\/\:region on HAL file\n\n";
+    unless ( $skip_alignments || $skip_cactus_hal ) {
+        print "\nTesting GET Cactus alignment region\/\:species\/\:region via HAL file\n\n";
     
-        my $ext = "/alignment/region/$cactus_species/$cactus_region?method=CACTUS_HAL;species_set_group=$cactus_species_set".($extra_params ? ";$extra_params" : '');
+        my $ext = "/alignment/region/$cactus_hal_species/$cactus_hal_region?method=CACTUS_HAL;species_set_group=$cactus_hal_species_set".($extra_params ? ";$extra_params" : '');
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
         ok($responseIDGet->{success}, "Check json validity");
     
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
         ok($responseIDGet->{success}, "Check phyloXml validity");
     
+        $responseIDGet = $browser->get($server.$ext.';aligned=0', { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+        ok($responseIDGet->{success}, "Check phyloXml validity with unaligned sequences");
+    }
+
+    unless ( $skip_alignments || $skip_cactus_db ) {
+        print "\nTesting GET Cactus alignment region\/\:species\/\:region via database\n\n";
+
+        my $ext = "/alignment/region/$cactus_db_species/$cactus_db_region?method=CACTUS_DB;species_set_group=$cactus_db_species_set".($extra_params ? ";$extra_params" : '');
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+        ok($responseIDGet->{success}, "Check json validity");
+
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+        ok($responseIDGet->{success}, "Check phyloXml validity");
+
         $responseIDGet = $browser->get($server.$ext.';aligned=0', { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
         ok($responseIDGet->{success}, "Check phyloXml validity with unaligned sequences");
     }
