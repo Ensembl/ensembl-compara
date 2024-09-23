@@ -122,7 +122,7 @@ sub fetch_input {
         #                           unannotated.fasta.01.pog
         my $fastafile = $self->param('blast_db');
 
-        foreach my $ext (qw(pdb phr pin pjs pog pos pot psq ptf pto)) {
+        foreach my $ext (qw(phr pin pog psd psi psq)) {
             my @files = glob("$fastafile*.$ext");
             #Check if we have at least one file per each extension type
             die "Cound no find blast_db: $ext" unless @files;
