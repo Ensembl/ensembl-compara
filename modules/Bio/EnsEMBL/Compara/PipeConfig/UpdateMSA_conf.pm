@@ -129,6 +129,7 @@ sub pipeline_wide_parameters {
         'curr_release'      => $self->o('ensembl_release'),
 
         'genome_dumps_dir'  => $self->o('genome_dumps_dir'),
+        'msa_stats_shared_dir' => $self->o('msa_stats_shared_dir'),
 
         'lastz_complete'             => $self->o('lastz_complete'),
         'run_gerp'                   => $self->o('run_gerp'),
