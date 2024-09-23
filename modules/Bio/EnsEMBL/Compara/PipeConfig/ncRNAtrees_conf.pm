@@ -345,6 +345,7 @@ sub core_pipeline_analyses {
             {   -logic_name => 'genome_loading_funnel_check',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
                 -flow_into  => [ 'backbone_fire_classify_genes' ],
+                %hc_params,
             },
 
             {   -logic_name => 'backbone_fire_classify_genes',
@@ -361,6 +362,7 @@ sub core_pipeline_analyses {
             {   -logic_name => 'classify_genes_funnel_check',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
                 -flow_into  => [ 'backbone_fire_tree_building' ],
+                %hc_params,
             },
 
             {   -logic_name => 'backbone_fire_tree_building',
@@ -481,6 +483,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'copy_table_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => [ 'offset_tables' ],
+            %hc_params,
         },
 
         {   -logic_name => 'offset_tables',
@@ -546,6 +549,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'load_genomedb_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => [ 'create_mlss_ss' ],
+            %hc_params,
         },
 
         {   -logic_name => 'create_mlss_ss',
@@ -594,6 +598,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'load_members_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => [ 'hc_members_globally' ],
+            %hc_params,
         },
 
         {   -logic_name         => 'hc_members_globally',
@@ -696,6 +701,7 @@ sub core_pipeline_analyses {
             {   -logic_name => 'cluster_qc_funnel_check',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
                 -flow_into  => [ 'clusterset_backup' ],
+                %hc_params,
             },
 
         {   -logic_name => 'ortholog_cluster',
@@ -1006,6 +1012,7 @@ sub core_pipeline_analyses {
             {   -logic_name => 'tree_funnel_check',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
                 -flow_into  => { 1 => { 'treebest_mmerge' => INPUT_PLUS() } },
+                %hc_params,
             },
 
             {   -logic_name    => 'create_ss_picts',
@@ -1458,6 +1465,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'gene_count_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => [ 'write_stn_tags' ],
+            %hc_params,
         },
 
         {   -logic_name => 'gene_count_factory',

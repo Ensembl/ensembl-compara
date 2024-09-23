@@ -135,6 +135,7 @@ sub pipeline_analyses_GeneSetQC {
         {   -logic_name => 'gene_qc_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => { 2 => { 'store_tags' => INPUT_PLUS() } },
+            -analysis_capacity  => 10,
         },
 
         {
