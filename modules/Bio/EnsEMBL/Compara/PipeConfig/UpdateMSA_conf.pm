@@ -186,7 +186,7 @@ sub core_pipeline_analyses {
                 'filter_by_mlss'    => 1,
                 'skip_gerp'         => 1,
             },
-            -rc_name    => '1Gb_job',
+            -rc_name    => '1Gb_24_hour_job',
         },
         # Update the MSA-related information in this and the ancestral core databases
         {   -logic_name => 'msa_update_factory',

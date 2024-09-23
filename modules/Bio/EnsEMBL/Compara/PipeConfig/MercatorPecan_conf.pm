@@ -155,7 +155,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'set_mlss_tag' ],
 			     },
-		-rc_name => '1Gb_job',
+		-rc_name => '1Gb_24_hour_job',
 	    },
 
 # -------------------------------------------[Set conservation score method_link_species_set_tag ]------------------------------------------

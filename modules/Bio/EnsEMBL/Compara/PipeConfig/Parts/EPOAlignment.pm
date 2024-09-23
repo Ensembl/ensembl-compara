@@ -293,6 +293,7 @@ sub pipeline_analyses_gerp {
             -failed_job_tolerance => 1,
             -flow_into => {
                 -1 => [ 'gerp_high_mem' ],
+                -2 => [ 'gerp_high_mem' ],
             },
         },
         {   -logic_name => 'gerp_high_mem',
