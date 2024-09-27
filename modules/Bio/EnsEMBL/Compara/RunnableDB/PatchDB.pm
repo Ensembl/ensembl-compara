@@ -59,7 +59,7 @@ sub run {
 	my $patch_run = $self->run_command($cmd);
 
     my $err = $patch_run->err;
-    $err =~ s/Warning: Using a password on the command line interface can be insecure.\s+//gi; # account for expected err
+    $err =~ s/\[Warning\] Using a password on the command line interface can be insecure.\s+//gi; # account for expected err
 	if ( $err ne '' ) {
 		if ( $self->param('ignore_failure') ) {
 			$self->warning("STDERR: " . $patch_run->err);
