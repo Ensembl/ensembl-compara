@@ -149,6 +149,7 @@ foreach my $division (@divisions) {
     my %info_by_db;
 
     my %div_host_to_db_names;
+    my %species_by_assembly_dyad;
     foreach my $species_name (@species_names) {
 
         if (exists $known_overlap_species{$species_name}) {
@@ -196,6 +197,11 @@ foreach my $division (@divisions) {
                 'taxonomy_id' => $meta_taxon_id,
                 'species_taxonomy_id' => $meta_species_taxon_id,
             };
+
+            my $meta_assembly_accession = $meta_container->single_value_by_key('assembly.accession') // '';
+            my $meta_assembly_default = $meta_container->single_value_by_key('assembly.default');
+            my $assembly_dyad = $meta_assembly_accession . ':' . $meta_assembly_default;
+            $species_by_assembly_dyad{$assembly_dyad}{$species_name} += 1;
         }
     }
 
@@ -345,6 +351,18 @@ foreach my $division (@divisions) {
         done_testing();
 
     };
+
+    subtest "Check for assembly dyad clashes ($division)", sub {
+
+        foreach my $assembly_dyad (sort keys %species_by_assembly_dyad) {
+            my ($assembly_accession, $assembly_default) = split(/:/, $assembly_dyad);
+            my @dyad_species_names = sort keys %{$species_by_assembly_dyad{$assembly_dyad}};
+            is(scalar(@dyad_species_names), 1, "assembly dyad ('$assembly_accession', '$assembly_default') found for one species")
+                || diag explain [sort @dyad_species_names];
+        }
+
+        done_testing();
+    }
 }
 
 done_testing();
