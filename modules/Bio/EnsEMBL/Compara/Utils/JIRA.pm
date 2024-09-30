@@ -800,8 +800,8 @@ sub _generate_jira_tickets {
     my ($self, $json_ticket_list, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link) = @_;
 
     # Set default values for optional arguments
-    my $default_issue_type ||= 'Task';
-    my $default_priority   ||= 'Major';
+    $default_issue_type ||= 'Task';
+    $default_priority   ||= 'Major';
 
     my $jira_tickets = ();
     foreach my $json_ticket ( @$json_ticket_list ) {
