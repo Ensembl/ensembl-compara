@@ -121,7 +121,7 @@ my $compara_dbs = {
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-6', 'thiagogenez_wheat_cultivars_plants_protein_trees_113' ],
 
     # LASTZ dbs
-    #'lastz_batch_1'  => [ 'mysql-ens-compara-prod-X', '' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch1_114' ],
 
     # other alignments
     #'wheat_cactus'   => [ 'mysql-ens-compara-prod-X', '' ],
