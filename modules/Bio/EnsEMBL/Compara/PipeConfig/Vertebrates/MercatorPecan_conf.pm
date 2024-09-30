@@ -35,7 +35,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::MercatorPecan_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::MercatorPecan_conf');
 

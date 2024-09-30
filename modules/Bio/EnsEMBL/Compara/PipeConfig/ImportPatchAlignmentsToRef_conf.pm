@@ -39,7 +39,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::ImportPatchAlignmentsToRef_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.3;
+use Bio::EnsEMBL::Hive::Version v2.4;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
