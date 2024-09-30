@@ -31,7 +31,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN
  
 sub pipeline_analyses_multiple_aligner_stats {

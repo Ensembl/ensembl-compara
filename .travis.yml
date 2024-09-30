@@ -37,7 +37,7 @@ before_install:
     - git-ensembl --clone --branch $ENSEMBL_BRANCH --secondary_branch $SECONDARY_BRANCH --depth 1 ensembl
     - git-ensembl --clone --branch $ENSEMBL_BRANCH --secondary_branch $SECONDARY_BRANCH --depth 1 ensembl-datacheck
     # yamllint enable rule:line-length
-    - git-ensembl --clone --branch main --depth 1 ensembl-hive
+    - git-ensembl --clone --branch version/2.7.0 --depth 1 ensembl-hive
     - git-ensembl --clone --branch main --depth 1 ensembl-taxonomy
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
