@@ -288,12 +288,14 @@ foreach my $division (@divisions) {
 
                 my $taxon_node = $ncbi_taxa_node_dba->fetch_by_taxon_id($reg_entry_info->{'taxonomy_id'});
                 ok(defined $taxon_node && $taxon_node->isa('Bio::EnsEMBL::Taxonomy::TaxonomyNode'),
-                   "core meta entry 'species.taxonomy_id' is current for '$registry_name' ($db_name)");
+                   "core meta entry 'species.taxonomy_id' is current for '$registry_name' ($db_name)")
+                   || diag sprintf("species.taxonomy_id: %s", $reg_entry_info->{'taxonomy_id'});
 
                 if (defined($reg_entry_info->{'species_taxonomy_id'})) {
                     my $species_taxon_node = $ncbi_taxa_node_dba->fetch_by_taxon_id($reg_entry_info->{'species_taxonomy_id'});
                     ok(defined $species_taxon_node && $species_taxon_node->isa('Bio::EnsEMBL::Taxonomy::TaxonomyNode'),
-                       "core meta entry 'species.species_taxonomy_id' is current for $registry_name");
+                       "core meta entry 'species.species_taxonomy_id' is current for $registry_name")
+                       || diag sprintf("species.species_taxonomy_id: %s", $reg_entry_info->{'species_taxonomy_id'});
                 }
             }
         }
@@ -345,7 +347,8 @@ foreach my $division (@divisions) {
         foreach my $core_key (keys %div_cores_by_key) {
             my $db_name = $div_cores_by_key{$core_key}[0];
             my @clashing_db_names = grep { $_ ne $db_name } keys %{$all_cores_by_key{$core_key}};
-            is_deeply(\@clashing_db_names, [], "$db_name has no database name clashes");
+            is(scalar(@clashing_db_names), 0, "$db_name has no database name clashes")
+                || diag explain [sort @clashing_db_names];
         }
 
         done_testing();
