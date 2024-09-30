@@ -149,6 +149,7 @@ foreach my $division (@divisions) {
     my %info_by_db;
 
     my %div_host_to_db_names;
+    my %species_by_assembly_dyad;
     foreach my $species_name (@species_names) {
 
         if (exists $known_overlap_species{$species_name}) {
@@ -196,6 +197,11 @@ foreach my $division (@divisions) {
                 'taxonomy_id' => $meta_taxon_id,
                 'species_taxonomy_id' => $meta_species_taxon_id,
             };
+
+            my $meta_assembly_accession = $meta_container->single_value_by_key('assembly.accession') // '';
+            my $meta_assembly_default = $meta_container->single_value_by_key('assembly.default');
+            my $assembly_dyad = $meta_assembly_accession . ':' . $meta_assembly_default;
+            $species_by_assembly_dyad{$assembly_dyad}{$species_name} += 1;
         }
     }
 
@@ -282,12 +288,14 @@ foreach my $division (@divisions) {
 
                 my $taxon_node = $ncbi_taxa_node_dba->fetch_by_taxon_id($reg_entry_info->{'taxonomy_id'});
                 ok(defined $taxon_node && $taxon_node->isa('Bio::EnsEMBL::Taxonomy::TaxonomyNode'),
-                   "core meta entry 'species.taxonomy_id' is current for '$registry_name' ($db_name)");
+                   "core meta entry 'species.taxonomy_id' is current for '$registry_name' ($db_name)")
+                   || diag sprintf("species.taxonomy_id: %s", $reg_entry_info->{'taxonomy_id'});
 
                 if (defined($reg_entry_info->{'species_taxonomy_id'})) {
                     my $species_taxon_node = $ncbi_taxa_node_dba->fetch_by_taxon_id($reg_entry_info->{'species_taxonomy_id'});
                     ok(defined $species_taxon_node && $species_taxon_node->isa('Bio::EnsEMBL::Taxonomy::TaxonomyNode'),
-                       "core meta entry 'species.species_taxonomy_id' is current for $registry_name");
+                       "core meta entry 'species.species_taxonomy_id' is current for $registry_name")
+                       || diag sprintf("species.species_taxonomy_id: %s", $reg_entry_info->{'species_taxonomy_id'});
                 }
             }
         }
@@ -339,12 +347,25 @@ foreach my $division (@divisions) {
         foreach my $core_key (keys %div_cores_by_key) {
             my $db_name = $div_cores_by_key{$core_key}[0];
             my @clashing_db_names = grep { $_ ne $db_name } keys %{$all_cores_by_key{$core_key}};
-            is_deeply(\@clashing_db_names, [], "$db_name has no database name clashes");
+            is(scalar(@clashing_db_names), 0, "$db_name has no database name clashes")
+                || diag explain [sort @clashing_db_names];
         }
 
         done_testing();
 
     };
+
+    subtest "Check for assembly dyad clashes ($division)", sub {
+
+        foreach my $assembly_dyad (sort keys %species_by_assembly_dyad) {
+            my ($assembly_accession, $assembly_default) = split(/:/, $assembly_dyad);
+            my @dyad_species_names = sort keys %{$species_by_assembly_dyad{$assembly_dyad}};
+            is(scalar(@dyad_species_names), 1, "assembly dyad ('$assembly_accession', '$assembly_default') found for one species")
+                || diag explain [sort @dyad_species_names];
+        }
+
+        done_testing();
+    }
 }
 
 done_testing();
