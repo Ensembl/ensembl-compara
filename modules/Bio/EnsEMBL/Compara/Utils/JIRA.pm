@@ -272,6 +272,8 @@ sub create_tickets {
                        are added.
   Arg[-EPIC_LINK]    : (optional) string - a JIRA Epic ticket key to link the
                        JIRA tickets to
+  Arg[-PARENT_LINK]  : (optional) string - a JIRA parent ticket key to link the
+                       JIRA tickets to
   Arg[-DRY_RUN]      : (optional) boolean - in dry-run mode, JIRA tickets will
                        not be written to CSV. By default, dry-run mode is off.
   Example     : $jira_adaptor->create_tickets_csv(
@@ -291,8 +293,8 @@ sub create_tickets {
 
 sub create_ticket_csv {
     my $self = shift;
-    my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link, $dry_run, $csv_file ) =
-        rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_CATEGORIES EXTRA_LABELS EPIC_LINK DRY_RUN CSV_FILE)], @_);
+    my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link, $dry_run, $csv_file, $parent_link ) =
+        rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_CATEGORIES EXTRA_LABELS EPIC_LINK DRY_RUN CSV_FILE PARENT_LINK)], @_);
     # Set default values for optional arguments
     $dry_run ||= 0;
 
@@ -318,10 +320,16 @@ sub create_ticket_csv {
     # Create the ticket records
     my @ticket_records;
     foreach my $ticket ( @$jira_tickets ) {
+        if (defined $parent_link) {
+            $ticket->{'fields'}->{'parent'} = { 'key' => $parent_link };
+        }
         my $task_record = $self->_create_ticket_record($ticket);
         push(@ticket_records, $task_record);
 
         if ($ticket->{subtasks}) {
+            if (defined $parent_link) {
+                throw(sprintf("ticket '%s' cannot have both a parent and a subtask", $ticket->{'fields'}{'summary'}));
+            }
             # All task record fields are stored in an array, even if they only have one value.
             my $task_issue_id = $task_record->{'Issue Id'}[0];
 
