@@ -41,7 +41,7 @@ Questions may also be sent to the Ensembl help desk at
 
 package Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneSetQC;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # For WHEN and INPUT_PLUS
 
 use strict;

@@ -44,7 +44,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 sub pipeline_analyses_cafe_with_full_species_tree {
