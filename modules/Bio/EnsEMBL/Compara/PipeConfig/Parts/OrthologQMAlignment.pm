@@ -48,7 +48,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::PairCollection',
             -flow_into  => {
                 '2->B' => [ 'select_mlss' ],
-                'B->1' => [ 'ortholog_mlss_factory' ],
+                'B->1' => [ 'mlss_selection_funnel_check' ],
                 '3'    => [ 'reset_mlss' ],
             },
         },
@@ -73,6 +73,11 @@ sub pipeline_analyses_ortholog_qm_alignment {
             -analysis_capacity => 50,
         },
 
+        {   -logic_name => 'mlss_selection_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => { 1 => { 'ortholog_mlss_factory' => INPUT_PLUS() } },
+        },
+
         {   -logic_name => 'ortholog_mlss_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::OrthologMLSSFactory',
             -parameters => {
@@ -80,7 +85,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
             },
             -flow_into  => {
                 '2->A' => { 'calculate_wga_coverage' => INPUT_PLUS() },
-                'A->1' => [ 'check_file_copy' ],
+                'A->1' => [ 'wga_coverage_funnel_check' ],
             }
         },
 
@@ -101,8 +106,13 @@ sub pipeline_analyses_ortholog_qm_alignment {
             -rc_name => '2Gb_24_hour_job',
         },
 
+        {   -logic_name => 'wga_coverage_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => { 1 => { 'check_file_copy' => INPUT_PLUS() } },
+        },
+
         {   -logic_name  => 'check_file_copy',
-            -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module      => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into   => {
                 1 => [
                     WHEN( '#homology_dumps_shared_dir#' => 'copy_files_to_shared_loc' ),

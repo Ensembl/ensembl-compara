@@ -44,6 +44,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version v2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
+
 sub pipeline_analyses_cafe_with_full_species_tree {
     my ($self) = @_;
     return [
@@ -117,7 +120,7 @@ sub pipeline_analyses_cafe {
              -rc_name => '4Gb_24_hour_job',
              -flow_into => {
                  '2->A' => [ 'CAFE_analysis' ],
-                 'A->1' => [ 'hc_cafe_results' ],
+                 'A->1' => [ 'CAFE_funnel_check' ],
              },
             },
 
@@ -172,6 +175,11 @@ sub pipeline_analyses_cafe {
             -hive_capacity => $self->o('cafe_capacity'),
             -batch_size    => 20,
             -rc_name       => '2Gb_job',
+        },
+
+        {   -logic_name => 'CAFE_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => { 1 => { 'hc_cafe_results' => INPUT_PLUS() } },
         },
 
         {   -logic_name         => 'hc_cafe_results',
