@@ -31,7 +31,7 @@ sub main {
     # ----------------------------
     # read command line parameters
     # ----------------------------
-    my ( $user, $relco, $release, $help, $tickets_json, $division, $dry_run );
+    my ( $user, $relco, $release, $help, $tickets_json, $division, $dry_run, $csv );
     # Set default values
     $division = '';
     $dry_run = 0;
@@ -42,6 +42,7 @@ sub main {
         'division|d=s' => \$division,
         'tickets=s'  => \$tickets_json,
         'dry_run|dry-run!' => \$dry_run,
+        'csv=s'      => \$csv,
         'help|h'     => \$help,
     );
 
@@ -57,7 +58,8 @@ sub main {
     my $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(
         -RELCO    => $relco,
         -DIVISION => $division,
-        -RELEASE  => $release
+        -RELEASE  => $release,
+        -CSV      => $csv,
     );
     # If no division is given, set it to 'relco'
     $division = $division ? lc $division : 'relco';
@@ -79,13 +81,26 @@ sub main {
     die 'Aborted by user. Please rerun with correct parameters.' if ( $response ne 'y' );
 
     # Create JIRA tickets
-    my $subtask_keys = $jira_adaptor->create_tickets(
-        -JSON_FILE        => $tickets_json,
-        -DEFAULT_PRIORITY => 'Blocker',
-        -EPIC_LINK        => EPIC_TICKET_ID(),
-        -DRY_RUN          => $dry_run,
-    );
-    printf("Created %d top-level tickets.\n", scalar(@$subtask_keys));
+    my $num_tickets;
+    if ($csv) {
+        my $issue_ids = $jira_adaptor->create_ticket_csv(
+            -JSON_FILE        => $tickets_json,
+            -DEFAULT_PRIORITY => 'Blocker',
+            -EPIC_LINK        => EPIC_TICKET_ID(),
+            -DRY_RUN          => $dry_run,
+            -CSV_FILE         => $csv,
+        );
+        $num_tickets = scalar(@$issue_ids);
+    } else {
+        my $subtask_keys= $jira_adaptor->create_tickets(
+            -JSON_FILE        => $tickets_json,
+            -DEFAULT_PRIORITY => 'Blocker',
+            -EPIC_LINK        => EPIC_TICKET_ID(),
+            -DRY_RUN          => $dry_run,
+        );
+        $num_tickets = scalar(@$subtask_keys);
+    }
+    printf("Created %d top-level tickets.\n", $num_tickets);
 }
 
 
@@ -104,6 +119,7 @@ create_compara_release_JIRA_tickets.pl -relco <string> -release <integer> -divis
                      if not supplied (assuming \$ENSEMBL_ROOT_DIR is set).
 -dry_run | -dry-run  In dry-run mode, the JIRA tickets will not be submitted to the JIRA server. Optional,
                      dry-run mode is off by default.
+-csv                 Instead of creating JIRA tickets, output their data to a CSV file which can be imported to JIRA.
 -help | -h           Prints this help text.
 
 Reads the -tickets input file and creates JIRA tickets
