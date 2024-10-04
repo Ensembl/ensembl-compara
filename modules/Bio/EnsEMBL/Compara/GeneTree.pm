@@ -970,36 +970,6 @@ sub get_all_sorted_leaves {
 }
 
 
-=head2 get_all_supertree_buds
-
- Example     : my @buds = @{$supertree->get_all_supertree_buds};
- Description : Returns a list of all the buds of this supertree
- ReturnType  : Reference to list of GeneTreeNode objects representing the buds of
-               this supertree. In an unexpanded supertree, bud nodes are leaves.
-               In an expanded supertree, each bud node is the parent of a subtree root.
- Exceptions  : Throws if GeneTree object is not of tree type 'supertree'.
-
-=cut
-
-sub get_all_supertree_buds {
-    my $self = shift;
-
-    if ($self->tree_type ne 'supertree') {
-        throw(
-            sprintf(
-                "GeneTree has tree type '%s', but method get_all_supertree_buds only supports trees of type 'supertree'",
-                $self->tree_type,
-            )
-        );
-    }
-
-    my $buds = [];
-    $self->root->_recursive_get_all_supertree_buds($buds);
-    my @bud_list = sort {$a->node_id <=> $b->node_id} @{$buds};
-    return \@bud_list;
-}
-
-
 =head2 get_leaf_by_Member
 
   Arg [1]     : Member: the member to search in the tree

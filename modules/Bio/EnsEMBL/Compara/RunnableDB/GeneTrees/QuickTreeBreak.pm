@@ -317,11 +317,8 @@ sub rec_update_tags {
 
         $cluster->adaptor->_store_all_tags($cluster);
 
-    } else {
-        if (!$node->is_supertree_bud) {
-            $node->store_tag('tree_support', 'quicktree');
-        }
-
+    } elsif (!$node->is_leaf) {
+        $node->store_tag('tree_support', 'quicktree');
         foreach my $child (@{$node->children}) {
             $self->rec_update_tags($child);
         }

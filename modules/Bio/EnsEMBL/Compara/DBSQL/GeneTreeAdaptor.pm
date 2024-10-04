@@ -648,28 +648,29 @@ sub _clean_supertree {
 
     my $gtn_adaptor = $self->db->get_GeneTreeNodeAdaptor;
 
-    my $subtree_parent_node = $subtree_root->parent;
-    my $supertree_root = $subtree_parent_node->root;
+    my $supertree_leaf = $subtree_root->parent;
+    my $supertree_root = $supertree_leaf->root;
     my $supertree_gene_align_id = $supertree_root->tree->gene_align_id;
 
-    my @supertree_buds = @{$supertree_root->tree->get_all_supertree_buds};
-    if ( scalar(@supertree_buds) < 3 ) {
+    my @supertree_leaves = @{$supertree_root->tree->get_all_leaves};
+    my @supertree_leaf_ids = map {$_->node_id} @supertree_leaves;
+    if ( scalar(@supertree_leaves) < 3 ) {
         # removing a node from this supertree results in a single-leaf tree
         # delete the whole supertree, leaving the other subtree intact
-        foreach my $supertree_bud ( @supertree_buds ) {
+        foreach my $supertree_leaf ( @supertree_leaves ) {
             # link the subtree to the supertree's parent
             # this is usually a clusterset, but may be another supertree
             # (there is no easy way to do this using API calls in place of raw SQL)
             my $unlink_subtree_sql = "UPDATE gene_tree_node SET parent_id = ? WHERE parent_id = ?";
             my $sth = $self->prepare($unlink_subtree_sql);
-            $sth->execute($supertree_root->parent->node_id, $supertree_bud->node_id);
+            $sth->execute($supertree_root->parent->node_id, $supertree_leaf->node_id);
         }
 
         $self->delete_tree($supertree_root->tree);
     } else {
         # remove the deleted subtree's parent node and minimize the supertree
         # (i.e. clean up single-child nodes)
-        $gtn_adaptor->delete_node($subtree_parent_node);
+        $gtn_adaptor->delete_node($supertree_leaf);
         my $pruned_supertree = $supertree_root->tree;
         my @orig_child_nodes = map {$_->node_id} @{$pruned_supertree->root->get_all_nodes()};
 
