@@ -581,7 +581,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 40,
-	     -rc_name => '32Gb_720_hour_job',
+	     -rc_name => '64Gb_720_hour_job',
              -flow_into => {
                  1 => [ 'gerp' ],
                  -1 => [ 'pecan_mem4'],
