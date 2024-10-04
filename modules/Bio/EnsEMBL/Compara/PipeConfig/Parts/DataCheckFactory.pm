@@ -46,13 +46,8 @@ sub pipeline_analyses_datacheck_factory {
             -max_retry_count   => 0,
             -flow_into         => {
                 '2->A' => { 'datacheck_fan' => INPUT_PLUS() },
-                'A->1' => [ 'dc_funnel_check' ],
+                'A->1' => [ 'datacheck_funnel' ],
             },
-        },
-
-        {   -logic_name => 'dc_funnel_check',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-            -flow_into  => { 1 => { 'datacheck_funnel' => INPUT_PLUS() } },
         },
 
         {

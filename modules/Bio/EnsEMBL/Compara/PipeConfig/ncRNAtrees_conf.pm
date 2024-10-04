@@ -1005,14 +1005,8 @@ sub core_pipeline_analyses {
                                   },
                 -flow_into => {
                                '1->A' => [ 'genomic_alignment', WHEN('#tree_model_id#' => 'infernal') ],
-                               'A->1' => [ 'tree_funnel_check' ],
+                               'A->1' => [ 'treebest_mmerge' ],
                               },
-            },
-
-            {   -logic_name => 'tree_funnel_check',
-                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-                -flow_into  => { 1 => { 'treebest_mmerge' => INPUT_PLUS() } },
-                %hc_params,
             },
 
             {   -logic_name    => 'create_ss_picts',
