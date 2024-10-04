@@ -409,6 +409,10 @@ our $config = {
                 query => 'SELECT COUNT(*), gtra1.gene_count, SUM(gtra2.gene_count) FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr gtra1 USING (root_id))  JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_attr gtra2 ON gtra2.root_id=gtn2.root_id WHERE gtn1.root_id = #gene_tree_id# HAVING gtra1.gene_count != SUM(gtra2.gene_count)',
             },
             {
+                description => 'All subtrees must have at least 2 genes',
+                query => 'SELECT MIN(gtra2.gene_count) FROM (gene_tree_node gtn1 JOIN gene_tree_root_attr gtra1 USING (root_id)) JOIN gene_tree_node gtn2 ON gtn2.parent_id = gtn1.node_id AND gtn2.root_id != gtn1.root_id JOIN gene_tree_root_attr gtra2 ON gtra2.root_id=gtn2.root_id WHERE gtn1.root_id = #gene_tree_id# HAVING MIN(gtra2.gene_count) < 2',
+            },
+            {
                 description => 'Tree must be a supertree',
                 query => 'SELECT * FROM gene_tree_root WHERE tree_type = "supertree" AND root_id = #gene_tree_id#',
                 expected_size => '== 1',
