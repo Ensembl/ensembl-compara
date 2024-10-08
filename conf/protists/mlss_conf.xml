@@ -33,7 +33,7 @@
         <genome name="bigelowiella_natans"/>
         <genome name="emiliania_huxleyi"/>
         <genome name="entamoeba_histolytica"/>
-        <genome name="giardia_lamblia"/>
+        <genome name="giardia_intestinalis_gca000002435v2"/>
         <genome name="guillardia_theta"/>
         <genome name="hyaloperonospora_arabidopsidis"/>
         <genome name="paramecium_tetraurelia"/>
