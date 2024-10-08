@@ -561,9 +561,7 @@
         <genome name="zalophus_californianus"/>
       </species_set>
     </multiple_alignment>
-    -->
 
-    <!--
     <multiple_alignment method="CACTUS_HAL" url="#base_dir#/multi/hal_files/Aves-59-way_20230814.hal">
       <species_set name="aves">
         <genome name="amazona_collaria"/>
@@ -627,8 +625,8 @@
         <genome name="zonotrichia_albicollis"/>
       </species_set>
     </multiple_alignment>
+    -->
   </multiple_alignments>
-  -->
 
   <self_alignments>
     <genome name="homo_sapiens"/>
