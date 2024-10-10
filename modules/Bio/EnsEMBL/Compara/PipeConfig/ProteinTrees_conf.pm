@@ -1039,14 +1039,8 @@ sub core_pipeline_analyses {
             -rc_name => '4Gb_job',
             -flow_into => {
                 '2->A' => [ 'genome_member_copy' ],
-                'A->1' => [ 'member_copy_funnel_check' ],
+                'A->1' => [ 'create_mlss_ss' ],
             },
-        },
-
-        {   -logic_name => 'member_copy_funnel_check',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-            -flow_into  => { 1 => { 'create_mlss_ss' => INPUT_PLUS() } },
-            %hc_analysis_params,
         },
 
         {   -logic_name => 'genome_member_copy',
@@ -1357,7 +1351,7 @@ sub core_pipeline_analyses {
             -hive_capacity => $self->o('blast_factory_capacity'),
             -flow_into => {
                 '2->A' => [ 'blastp_unannotated' ],
-                'A->1' => [ 'blastp_unannotated_funnel_check' ]
+                'A->1' => [ 'hcluster_dump_input_all_pafs' ]
             },
         },
 
@@ -1419,12 +1413,6 @@ sub core_pipeline_analyses {
             -flow_into  => {
                 2 => 'blastp_unannotated_no_runlimit',
             }
-        },
-
-        {   -logic_name => 'blastp_unannotated_funnel_check',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-            -flow_into  => { 1 => { 'hcluster_dump_input_all_pafs' => INPUT_PLUS() } },
-            %hc_analysis_params,
         },
 
         {   -logic_name => 'hcluster_dump_input_all_pafs',
@@ -1836,18 +1824,12 @@ sub core_pipeline_analyses {
                     '(#tree_gene_count# >= #mafft_gene_count#         and #tree_gene_count# < #mafft_himem_gene_count#)     or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft',
                     '(#tree_gene_count# >= #mafft_himem_gene_count#)                                                        or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft_himem',
                 ),
-                'A->1' => [ 'alignment_funnel_check' ],
+                'A->1' => WHEN(
+                    '#is_already_supertree#' => 'panther_paralogs',
+                    ELSE 'exon_boundaries_prep',
+                ),
             },
             %decision_analysis_params,
-        },
-
-        {   -logic_name => 'alignment_funnel_check',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-            -flow_into  => WHEN(
-                '#is_already_supertree#' => { 'panther_paralogs' => INPUT_PLUS() },
-                ELSE { 'exon_boundaries_prep' => INPUT_PLUS() },
-            ),
-            %hc_analysis_params,
         },
 
         {   -logic_name => 'global_tree_processing',
@@ -2101,7 +2083,7 @@ sub core_pipeline_analyses {
             -batch_size     => 20,
             -flow_into      => {
                 '2->A' => 'split_genes_per_species',
-                'A->1' => 'split_genes_funnel_check',
+                'A->1' => 'tree_building_entry_point',
                 -1  => 'split_genes_himem',
             },
         },
@@ -2118,12 +2100,6 @@ sub core_pipeline_analyses {
             -flow_into      => [ 'tree_building_entry_point' ],
         },
 
-        {   -logic_name => 'split_genes_funnel_check',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-            -flow_into  => { 1 => { 'tree_building_entry_point' => INPUT_PLUS() } },
-            %hc_analysis_params,
-        },
-
         {   -logic_name => 'tree_building_entry_point',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
@@ -2131,19 +2107,13 @@ sub core_pipeline_analyses {
                     '#use_raxml#' => 'filter_decision',
                     ELSE 'treebest_decision',
                 ),
-                'A->1' => [ 'tree_building_funnel_check' ],
+                'A->1' => WHEN(
+                    '#use_notung#'      => 'notung_decision',
+                    '#use_treerecs#'    => 'treerecs',
+                    ELSE 'hc_post_tree',
+                ),
             },
             %decision_analysis_params,
-        },
-
-        {   -logic_name => 'tree_building_funnel_check',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-            -flow_into  => WHEN(
-                '#use_notung#'      => { 'notung_decision' => INPUT_PLUS() },
-                '#use_treerecs#'    => { 'treerecs' => INPUT_PLUS() },
-                ELSE { 'hc_post_tree' => INPUT_PLUS() },
-            ),
-            %hc_analysis_params,
         },
 
 
