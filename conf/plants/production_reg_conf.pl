@@ -127,7 +127,7 @@ my $compara_dbs = {
     #'wheat_cactus'   => [ 'mysql-ens-compara-prod-X', '' ],
 
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_synteny_114' ],
 
     # EPO dbs
     ## rice
