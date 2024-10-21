@@ -106,7 +106,7 @@ my $compara_dbs = {
     'lastz_batch_1'    => [ 'mysql-ens-compara-prod-3', 'sbotond_vertebrates_lastz_batch1_114' ],
     'lastz_batch_2'    => [ 'mysql-ens-compara-prod-4', 'sbotond_vertebrates_lastz_batch2_114' ],
     'lastz_batch_3'    => [ 'mysql-ens-compara-prod-7', 'sbotond_vertebrates_lastz_batch3_114' ],
-    'lastz_batch_4'    => [ 'mysql-ens-compara-prod-4', 'sbotond_vertebrates_lastz_batch4_114' ],
+    'lastz_batch_4'    => [ 'mysql-ens-compara-prod-8', 'sbotond_vertebrates_lastz_batch4_114' ],
     'lastz_batch_5'    => [ 'mysql-ens-compara-prod-9', 'sbotond_vertebrates_lastz_batch5_114' ],
     'lastz_batch_6'    => [ 'mysql-ens-compara-prod-3', 'sbotond_vertebrates_lastz_batch6_114' ],
     'lastz_batch_7'    => [ 'mysql-ens-compara-prod-4', 'sbotond_vertebrates_lastz_batch7_114' ],
@@ -115,7 +115,7 @@ my $compara_dbs = {
 
     # EPO dbs
     ## mammals
-    #'mammals_epo_w_ext'    => [ 'mysql-ens-compara-prod-', '' ],
+    'mammals_epo_w_ext'    => [ 'mysql-ens-compara-prod-3', 'sbotond_mammals_epo_with_ext_114 ' ],
     'mammals_epo_prev'     => [ 'mysql-ens-compara-prod-3', 'twalsh_mammals_epo_with_ext_111' ],
     'mammals_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
@@ -136,7 +136,7 @@ my $compara_dbs = {
 
     ## pig strains
     #'pig_breeds_epo_w_ext'     => [ 'mysql-ens-compara-prod-', '' ],
-    #'pig_breeds_epo_prev'      => [ 'mysql-ens-compara-prod-', '<CURRENT MAMMALS EPO>' ],  # Pig breeds are reused from mammals of the *same release* (same anchors and subset of species) - not needed.
+    'pig_breeds_epo_prev'      => [ 'mysql-ens-compara-prod-3', 'sbotond_mammals_epo_with_ext_114' ],  # Pig breeds are reused from mammals of the *same release* (same anchors and subset of species) - not needed.
     'pig_breeds_epo_anchors'   => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## murinae
@@ -145,7 +145,7 @@ my $compara_dbs = {
     'murinae_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     # other alignments
-    #'amniotes_pecan'      => [ 'mysql-ens-compara-prod-', '' ],
+    'amniotes_pecan'      => [ 'mysql-ens-compara-prod-2', 'sbotond_amniotes_pecan_update_114 ' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-1', 'twalsh_amniotes_pecan_update_111' ],
 
     #'compara_syntenies'   => [ 'mysql-ens-compara-prod-', '' ],
@@ -167,7 +167,7 @@ my $ancestral_dbs = {
     'ancestral_prev' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$prev_release" ],
     'ancestral_curr' => [ 'mysql-ens-compara-prod-1', "ensembl_ancestral_$curr_release" ],
 
-    #'mammals_ancestral'    => [ 'mysql-ens-compara-prod-3', '<UPDATE AFTER EPO>' ],
+    'mammals_ancestral'    => [ 'mysql-ens-compara-prod-3', 'sbotond_mammals_ancestral_core_114' ],
     'primates_ancestral'   => [ 'mysql-ens-compara-prod-2', 'twalsh_primates_ancestral_core_106' ],
     'sauropsids_ancestral' => [ 'mysql-ens-compara-prod-10', 'jalvarez_sauropsids_ancestral_core_107' ],
     'fish_ancestral'       => [ 'mysql-ens-compara-prod-4', 'twalsh_fish_ancestral_core_112' ],
