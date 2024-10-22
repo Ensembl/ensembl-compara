@@ -54,11 +54,10 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -parameters => {
                 'ncbi_taxa_hosts' => 'mysql-ens-sta-1,mysql-ens-sta-1-b,mysql-ens-sta-3,mysql-ens-sta-3-b,mysql-ens-sta-4',
-                'table'           => 'ncbi_taxa_node',
                 'cmd'             => join(' ', (
                     $self->o('check_ncbi_taxa_exe'),
                     '--release',
-                    '#ensembl_release#',
+                    $self->o('ensembl_release'),
                     '--hosts',
                     '#ncbi_taxa_hosts#',
                 )),
