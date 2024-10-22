@@ -20,7 +20,6 @@
       <genome name="castor_canadensis" exclude="1"/>
       <genome name="cavia_aperea" exclude="1"/>
       <genome name="colobus_angolensis_palliatus" exclude="1"/>
-      <genome name="cricetulus_griseus_picr" exclude="1"/>
       <genome name="fukomys_damarensis" exclude="1"/>
       <genome name="lynx_canadensis" exclude="1"/>
       <genome name="meriones_unguiculatus" exclude="1"/>
@@ -70,6 +69,7 @@
     <!-- Default gene-tree collection -->
     <collection name="default">
       <base_collection name="vertebrate_species"/>
+      <genome name="cricetulus_griseus_chok1gshd" exclude="1"/>
       <genome name="sinocyclocheilus_grahami" exclude="1"/>
     </collection>
 
