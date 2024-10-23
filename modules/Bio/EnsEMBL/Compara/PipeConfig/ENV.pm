@@ -117,6 +117,7 @@ sub executable_locations {
         'ancestral_dump_program'            => $self->check_exe_in_ensembl('ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl'),
         'ancestral_stats_program'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/ancestral_sequences/get_stats.pl'),
         'BuildSynteny_exe'                  => $self->check_file_in_ensembl('ensembl-compara/scripts/synteny/BuildSynteny.jar'),
+        'check_ncbi_taxa_exe'               => $self->check_exe_in_ensembl('ensembl-compara/scripts/taxonomy/check_ncbi_taxa_consistency.py'),
         'compare_beds_exe'                  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/compare_beds.pl'),
         'count_genes_in_tree_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/count_genes_in_tree.pl'),
         'create_pair_aligner_page_exe'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/report/create_pair_aligner_page.pl'),
