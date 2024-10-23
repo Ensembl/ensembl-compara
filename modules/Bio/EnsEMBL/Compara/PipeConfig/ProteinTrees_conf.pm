@@ -1362,6 +1362,7 @@ sub core_pipeline_analyses {
                 %blastp_parameters,
             },
             -rc_name       => '1Gb_6_hour_job',
+            -max_retry_count => 0,
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem' ],  # MEMLIMIT
                -2 => 'break_batch_unannotated',
@@ -1376,6 +1377,7 @@ sub core_pipeline_analyses {
                 %blastp_parameters,
             },
             -rc_name       => '2Gb_6_hour_job',
+            -max_retry_count => 0,
             -flow_into => {
                -2 => 'break_batch_unannotated',
             },
