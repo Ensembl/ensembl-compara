@@ -45,6 +45,7 @@ sub run {
         die "Switch param 'dna_alns_complete' is off ('0').\n"
             . " If all DNA alignments required for WGA coverage are ready, set 'dna_alns_complete' to on ('1') to do WGA coverage analyses.\n"
             . " If any alignments required for WGA coverage are not yet ready, wait until they are ready before setting 'dna_alns_complete' to '1'.\n"
+            . " DNA alignments are considered ready for WGA coverage if they are in any of the databases specified by the 'alt_aln_dbs' parameter.\n"
             . " If you are not planning to calculate WGA coverage, forgive this job to skip WGA coverage analyses.\n";
     }
 }
