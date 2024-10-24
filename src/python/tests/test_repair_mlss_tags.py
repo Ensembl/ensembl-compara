@@ -45,11 +45,11 @@ class TestRepairMLSSTags:
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
     @pytest.fixture(scope='class', autouse=True)
-    def setup(self, test_dbs: UnitTestDB) -> None:
+    def setup(self, test_dbs: dict[str, UnitTestDB]) -> None:
         """Loads the required fixtures and values as class attributes.
 
         Args:
-            test_dbs: Unit test database (fixture).
+            test_dbs: Unit test databases (fixture).
 
         """
         # Use type(self) instead of self as a workaround to @classmethod decorator (unsupported by pytest and
@@ -122,7 +122,7 @@ class TestRepairMLSSTags:
 
         """
         # Alter the MLSS tags table so there is something to repair
-        with self.dbc.connect() as connection:
+        with self.dbc.begin() as connection:
             connection.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
             for sql in alt_queries:
                 connection.execute(text(sql))
@@ -138,7 +138,7 @@ class TestRepairMLSSTags:
             assert set(output.decode().strip().split("\n")) == exp_stdout
             if exp_tag_value:
                 # Check the database has the expected information
-                with self.dbc.connect() as connection:
+                with self.dbc.begin() as connection:
                     result = connection.execute(text(
                         f"SELECT method_link_species_set_id AS mlss_id, value "
                         f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}'"
