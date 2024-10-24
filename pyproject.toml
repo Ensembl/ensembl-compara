@@ -86,8 +86,15 @@ readme = {file = ["README.md"]}
 version = {file = ["PIP_VERSION"]}
 
 [tool.pytest.ini_options]
-# CITest project is on hold and it needs to be updated before resuming its unit tests
-addopts = "-v --tb=native --server=mysql://ensadmin:$ENSADMIN_PSW@mysql-ens-compara-prod-1:4485/ --ignore=src/python/tests/test_citest.py"
+addopts = [
+    "-v",
+    "--tb=native",
+    "--server=mysql://ensadmin:${ENSADMIN_PSW}@mysql-ens-compara-prod-1:4485/",
+    # CITest project is on hold and it needs to be updated before resuming its unit tests
+    "--ignore=src/python/tests/test_citest.py",
+    # Ignoring MLSS tag repair script unit test pending approval of ensembl-utils PR 29
+    "--ignore=src/python/tests/test_repair_mlss_tags.py",
+]
 testpaths = ["src/python/tests"]
 
 [tool.coverage.run]
