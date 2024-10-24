@@ -279,7 +279,7 @@ sub core_pipeline_analyses {
                 'species_set_record'     => $self->o('species_set_record'),
                 'queries_to_update_file' => $self->o('queries_to_update_file'),
             },
-            -rc_name       => '500Mb_job',
+            -rc_name       => '1Gb_job',
         },
 
         {   -logic_name    => 'update_reference_genome',
@@ -288,7 +288,7 @@ sub core_pipeline_analyses {
                 'compara_db' => '#ref_db#',
             },
             -hive_capacity => 10,
-            -rc_name       => '500Mb_job',
+            -rc_name       => '1Gb_job',
             -flow_into     => ['load_members'],
         },
 
@@ -307,7 +307,7 @@ sub core_pipeline_analyses {
                 'offset_ids'                  => $self->o('offset_ids'),
             },
             -hive_capacity => 10,
-            -rc_name => '4Gb_job',
+            -rc_name => '4Gb_24_hour_job',
             -flow_into  => ['hc_members_per_genome'],
         },
 
@@ -436,7 +436,7 @@ sub core_pipeline_analyses {
                 'get_nearest_taxonomy_exe' => $self->o('get_nearest_taxonomy_exe'),
             },
             -flow_into  => [ 'email_queries_to_update' ],
-            -rc_name    => '500Mb_job',
+            -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'email_queries_to_update',
