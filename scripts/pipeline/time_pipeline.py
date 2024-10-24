@@ -20,7 +20,7 @@
 import sys
 import re
 import argparse
-from typing import Dict, Any, Union
+from typing import Any, Union
 from datetime import datetime, timedelta
 
 from sqlalchemy import create_engine, text
