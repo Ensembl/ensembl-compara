@@ -35,7 +35,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::ncRNAtrees_conf ;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN and INPUT_PLUS
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::CAFE;
