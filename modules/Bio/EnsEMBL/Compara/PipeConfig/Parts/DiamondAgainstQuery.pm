@@ -34,7 +34,7 @@ use warnings;
 
 use File::Spec::Functions;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # For WHEN and INPUT_PLUS
 
 sub pipeline_analyses_diamond_against_query {

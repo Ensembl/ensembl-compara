@@ -31,7 +31,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::PerSpeciesCopyFactory;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.5;
+use Bio::EnsEMBL::Hive::Version v2.5;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # For WHEN and INPUT_PLUS
 
 sub pipeline_analyses_create_and_copy_per_species_db {
