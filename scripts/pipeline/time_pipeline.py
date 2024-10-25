@@ -108,7 +108,8 @@ def main(opts: argparse.Namespace) -> None:
     now = datetime.now()
     pipeline_start = '' # type: Union[Any, datetime]
     pipeline_total_runtime = timedelta()
-    for role in result.mappings():
+    for result_mapping in result.mappings():
+        role = dict(result_mapping)
 
         # Initalize start/finish times
         if pipeline_start == '':
