@@ -40,7 +40,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::LoadSpeciesTrees_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.3;
+use Bio::EnsEMBL::Hive::Version v2.3;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 

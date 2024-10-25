@@ -33,7 +33,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 sub pipeline_analyses_dump_species_trees {

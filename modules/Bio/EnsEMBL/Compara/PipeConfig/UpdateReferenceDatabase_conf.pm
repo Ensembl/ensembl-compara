@@ -36,7 +36,7 @@ use warnings;
 
 use File::Spec::Functions;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpFastaDatabases;

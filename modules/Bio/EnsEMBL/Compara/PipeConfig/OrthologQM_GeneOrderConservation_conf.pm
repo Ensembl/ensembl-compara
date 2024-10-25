@@ -42,7 +42,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::GOC;
