@@ -15,37 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthologClusters
 
-=head1 DESCRIPTION
+=head1 DEPRECATION NOTICE
 
-This is the RunnableDB makes clusters consisting of given species list  orthologues(connected components, not necessarily complete graphs).
-
-example:
-
-standaloneJob.pl Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthologClusters
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+This runnable is deprecated, and may be removed in a future release.
 
 =cut
 
@@ -80,6 +56,8 @@ sub param_defaults {
 sub fetch_input {
 
 	my $self = shift;
+
+    $self->warning("RunnableDB::ProteinTrees::OrthologClusters is deprecated, and may be removed in a future release");
 
 	$self->param('previous_dba' , $self->get_cached_compara_dba('ref_ortholog_db') );
 	$self->param('prev_homolog_adaptor', $self->param('previous_dba')->get_HomologyAdaptor);

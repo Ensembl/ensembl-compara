@@ -21,15 +21,9 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB
 
-=head1 DESCRIPTION
+=head1 DEPRECATION NOTICE
 
-1) Used to copy all the trees from a previous database.
-
-2) It identifies the genes in compara_dba that have been updated, deleted or added
-when compared to the reuse_compara_dba.
-
-3) It disavows all the genes that were flagged by FlagUpdateClusters.pm and stored
-in gene_tree_root_tag as "updated_genes_list", "added_genes_list" and "deleted_genes_list"
+This runnable is deprecated, and may be removed in a future release.
 
 =cut
 
@@ -43,6 +37,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 sub fetch_input {
     my $self = shift @_;
+
+        $self->warning("RunnableDB::GeneTrees::CopyTreesFromDB is deprecated, and may be removed in a future release");
 
         #get compara_dba adaptor
         $self->param( 'compara_dba', $self->compara_dba );

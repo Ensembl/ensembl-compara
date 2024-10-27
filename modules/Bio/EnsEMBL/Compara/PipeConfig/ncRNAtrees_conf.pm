@@ -64,8 +64,7 @@ sub default_options {
 
             # How will the pipeline create clusters (families) ?
             # Possible values: 'rfam' (default) or 'ortholog'
-            #   'blastp' means that the pipeline will clusters genes according to their RFAM accession
-            #   'ortholog' means that the pipeline will use previously inferred orthologs to perform a cluster projection
+            #   'rfam' means that the pipeline will clusters genes according to their RFAM accession
             'clustering_mode'           => 'rfam',
 
         'master_db'   => 'compara_master',
@@ -653,10 +652,7 @@ sub core_pipeline_analyses {
                                'type'              => 'infernal',
                                'skip_consensus'    => 1,
                               },
-            -flow_into     => WHEN(
-                                   '#clustering_mode# eq "ortholog"' => 'ortholog_cluster',
-                                   ELSE 'rfam_classify',
-                               ),
+            -flow_into     => [ 'rfam_classify' ],
         },
 
 # ---------------------------------------------[run RFAM classification]--------------------------------------------------------------
@@ -703,16 +699,6 @@ sub core_pipeline_analyses {
                 -flow_into  => [ 'clusterset_backup' ],
                 %hc_params,
             },
-
-        {   -logic_name => 'ortholog_cluster',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthologClusters',
-            -parameters => {
-                'sort_clusters'         => 1,
-                'add_model_id'          => 1,
-            },
-            -rc_name    => '2Gb_job',
-            -flow_into  => 'expand_clusters_with_projections',
-        },
 
         {   -logic_name         => 'expand_clusters_with_projections',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections',
