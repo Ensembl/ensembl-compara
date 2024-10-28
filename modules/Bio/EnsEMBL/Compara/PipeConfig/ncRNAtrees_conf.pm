@@ -968,7 +968,7 @@ sub core_pipeline_analyses {
                                    'cmalign_exe' => $self->o('cmalign_exe'),
                                   },
                 -flow_into     => [ 'pre_secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
-                -rc_name       => '2Gb_24_hour_job',
+                -rc_name       => '16Gb_24_hour_job',
             },
 
             {   -logic_name => 'pre_secondary_structure_decision',
