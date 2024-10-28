@@ -47,7 +47,22 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'cmd' => [$self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#master_db#', '--fix', '--oldest', '#oldest_patch_release#', '--nointeractive'],
                 'oldest_patch_release' => $self->o('rel_with_suffix'),
             },
-            -flow_into  => ['load_ncbi_node'],
+            -flow_into  => ['check_ncbi_taxa_consistency'],
+        },
+
+        {   -logic_name => 'check_ncbi_taxa_consistency',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'ncbi_taxa_hosts' => 'mysql-ens-sta-1,mysql-ens-sta-1-b,mysql-ens-sta-3,mysql-ens-sta-3-b,mysql-ens-sta-4',
+                'cmd'             => join(' ', (
+                    $self->o('check_ncbi_taxa_exe'),
+                    '--release',
+                    $self->o('ensembl_release'),
+                    '--hosts',
+                    '#ncbi_taxa_hosts#',
+                )),
+            },
+            -flow_into  => ['load_ncbi_node']
         },
 
         {   -logic_name => 'load_ncbi_node',
