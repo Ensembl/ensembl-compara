@@ -55,7 +55,7 @@ sub pipeline_analyses_dump_fasta_dbs {
             -parameters => {
                 'num_parts' => $self->o('num_fasta_parts'),
             },
-            -rc_name    => '500Mb_job',
+            -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'make_diamond_db',
@@ -66,7 +66,7 @@ sub pipeline_analyses_dump_fasta_dbs {
                 # db_name should be #fasta_name# with .fasta removed from the end - hive can do that
                 'db_name'     => '#expr( ($_ = #fasta_name#) and $_ =~ s/\.fasta$// and $_)expr#',
             },
-            -rc_name    => '500Mb_job',
+            -rc_name    => '1Gb_job',
         },
     ];
 }
