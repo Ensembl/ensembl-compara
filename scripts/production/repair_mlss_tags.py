@@ -89,7 +89,7 @@ def repair_mlss_tag(dbc: DBConnection, mlss_tag: str) -> None:
         mlss_tag: MLSS tag as found in the ``method_link_species_set_tag`` table.
 
     """
-    with dbc.connect() as connection:
+    with dbc.begin() as connection:
         # Get the MLSS tags in method_link_species_set_tag table
         mlss_tag_values = connection.execute(text(
             f"SELECT method_link_species_set_id AS mlss_id, value "
