@@ -105,7 +105,7 @@ sub test_division {
     # Load biomart_species.json if it exists
     my $biomart_species_file = File::Spec->catfile($division_dir, 'biomart_species.json');
     if (-e $biomart_species_file and %allowed_species) {
-        my $metaconfig_file = File::Spec->catfile($division_dir, 'metaconfig.yml');
+        my $metaconfig_file = File::Spec->catfile($division_dir, 'metaconfig.json');
         my $metaconfig = decode_json(slurp($metaconfig_file));
         my $biomart_species_cap = $metaconfig->{'biomart'}{'species_cap'};
         # 5. All species listed in biomart_species.json exist in allowed_species.json
