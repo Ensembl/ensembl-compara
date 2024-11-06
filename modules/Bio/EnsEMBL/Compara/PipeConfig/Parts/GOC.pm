@@ -92,6 +92,7 @@ sub pipeline_analyses_goc {
             },
             -flow_into => {
                -1 => 'compute_goc_himem',
+               -2 => 'compute_goc_himem',
            },
            -rc_name => '1Gb_24_hour_job',
            -hive_capacity  =>  $self->o('goc_capacity'),
@@ -105,7 +106,7 @@ sub pipeline_analyses_goc {
                 'homology_flatfile' => '#flatfile_basename#.homologies.tsv',
                 'output_file'       => '#flatfile_basename#.goc.tsv',
             },
-           -rc_name => '4Gb_job',
+           -rc_name => '4Gb_24_hour_job',
            -hive_capacity  =>  $self->o('goc_capacity'),
         },
     ];

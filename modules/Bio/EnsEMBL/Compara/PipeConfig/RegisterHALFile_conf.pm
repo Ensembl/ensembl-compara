@@ -53,7 +53,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::RegisterHALFile_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
@@ -276,7 +276,7 @@ sub pipeline_analyses {
         {
             -logic_name => 'generate_pairwise_coverage_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halCoverageStats',
-            -rc_name    => '4Gb_job',
+            -rc_name    => '4Gb_24_hour_job',
         },
 
         {   -logic_name => 'per_genome_coverage_factory',
@@ -289,7 +289,7 @@ sub pipeline_analyses {
 
         {   -logic_name => 'hal_seq_chunk_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halSeqChunkFactory',
-            -rc_name    => '4Gb_job',
+            -rc_name    => '4Gb_24_hour_job',
             -parameters => {
                 'hal_stats_exe' => $self->o('halStats_exe'),
             },

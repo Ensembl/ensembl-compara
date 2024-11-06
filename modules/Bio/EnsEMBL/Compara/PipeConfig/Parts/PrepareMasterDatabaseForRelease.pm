@@ -34,7 +34,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForReleas
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
@@ -47,7 +47,22 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'cmd' => [$self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#master_db#', '--fix', '--oldest', '#oldest_patch_release#', '--nointeractive'],
                 'oldest_patch_release' => $self->o('rel_with_suffix'),
             },
-            -flow_into  => ['load_ncbi_node'],
+            -flow_into  => ['check_ncbi_taxa_consistency'],
+        },
+
+        {   -logic_name => 'check_ncbi_taxa_consistency',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'ncbi_taxa_hosts' => 'mysql-ens-sta-1,mysql-ens-sta-1-b,mysql-ens-sta-3,mysql-ens-sta-3-b,mysql-ens-sta-4',
+                'cmd'             => join(' ', (
+                    $self->o('check_ncbi_taxa_exe'),
+                    '--release',
+                    $self->o('ensembl_release'),
+                    '--hosts',
+                    '#ncbi_taxa_hosts#',
+                )),
+            },
+            -flow_into  => ['load_ncbi_node']
         },
 
         {   -logic_name => 'load_ncbi_node',
@@ -209,7 +224,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'reg_conf'            => $self->o('reg_conf'),
                 'xml_file'            => $self->o('xml_file'),
                 'report_file'         => $self->o('report_file'),
-                'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose',
+                'cmd'                 => 'perl #create_all_mlss_exe# --reg_conf #reg_conf# --compara #master_db# -xml #xml_file# --release --output_file #report_file# --verbose --retire_unmatched_of_type ENSEMBL_ORTHOLOGUES',
             },
             -flow_into  => [ 'tag_alignments_being_patched' ],
         },
@@ -246,7 +261,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DbCmd',
             -parameters => {
                 'db_conn'     => '#master_db#',
-                'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl" AND method_link_id != 22 AND method_link_id != 23',
+                'input_query' => 'UPDATE method_link_species_set SET url = "" WHERE source = "ensembl" AND method_link_id NOT IN (22, 23, 26)',
             },
             -flow_into  => [ 'dc_master' ],
         },

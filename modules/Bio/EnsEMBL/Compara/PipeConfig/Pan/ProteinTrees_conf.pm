@@ -115,7 +115,7 @@ sub tweak_analyses {
     ## Extend this section to redefine the resource names of some analysis
     my %overriden_rc_names = (
         'HMMer_classifyPantherScore'    => '2Gb_24_hour_job',
-        'hcluster_run'                  => '1Gb_job',
+        'hcluster_run'                  => '1Gb_24_hour_job',
         'hcluster_parse_output'         => '2Gb_job',
         # Many decision-type analyses take more memory for Pan. Because of the fatter Registry ?
     );

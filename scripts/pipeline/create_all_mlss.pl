@@ -93,6 +93,11 @@ Default: not set
 Retire the MethodLinkSpeciesSets that are not defined by the XML file.
 Default: not set
 
+=item B<[--retire_unmatched_of_type method_type]>
+
+Retire MLSSes of the specified type that are not defined by the XML file.
+Default: not set
+
 =item B<[--dry-run]>
 
 When given, the script will not store / update anything in the database.
@@ -123,6 +128,7 @@ my $reg_conf;
 my $compara = 'compara_master';
 my $release;
 my $retire_unmatched;
+my @retire_unmatched_types;
 my $xml_config;
 my $xml_schema;
 my $verbose;
@@ -139,6 +145,7 @@ GetOptions(
     'verbose|debug' => \$verbose,
     'output_file=s' => \$output_file,
     'retire_unmatched'          => \$retire_unmatched,
+    'retire_unmatched_of_type=s' => \@retire_unmatched_types,
     'dryrun|dry_run|dry-run'    => \$dry_run,
 );
 
@@ -160,6 +167,9 @@ if ($compara =~ /mysql:\/\//) {
 }
 if (!$compara_dba) {
   die "Cannot connect to compara database <$compara>.";
+}
+if ($retire_unmatched && @retire_unmatched_types) {
+    die "Cannot specify both --retire_unmatched and --retire_unmatched_of_type options; please choose at most one";
 }
 my $genome_dba = $compara_dba->get_GenomeDBAdaptor;
 
@@ -280,7 +290,7 @@ sub make_species_set_from_XML_node {
             my $genome_component = $child->getAttribute('genome_component');
             my $component_description;
             if ($genome_component) {
-                $some_genome_dbs = [grep {$_->genome_component eq $genome_component} @$some_genome_dbs];
+                $some_genome_dbs = [grep {defined $_->genome_component && $_->genome_component eq $genome_component} @$some_genome_dbs];
                 $component_description = "component GenomeDB $genome_component";
             } else {
                 # If the genome_component attribute is an empty string,
@@ -466,7 +476,25 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
     }
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type($xml_msa->getAttribute('method'));
     my $species_set = make_named_species_set_from_XML_node($xml_msa, $method, $division_genome_dbs);
-    push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss($compara_dba, $method, $species_set, ($xml_msa->getAttribute('gerp') // 0), $no_release, undef, $xml_msa->getAttribute('url')) };
+
+    my $multiple_wga_mlsss = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss(
+        $compara_dba,
+        $method,
+        $species_set,
+        ($xml_msa->getAttribute('gerp') // 0),
+        $no_release,
+        undef,
+        $xml_msa->getAttribute('url')
+    );
+
+    if ($method->type eq 'CACTUS_DB') {
+        my $ref_gdb = find_genome_from_xml_node_attribute($xml_msa, 'ref_genome');
+        foreach my $mlss (@{$multiple_wga_mlsss}) {
+            $mlss->add_tag('reference_species', $ref_gdb->name);
+        }
+    }
+
+    push @mlsss, @{$multiple_wga_mlsss};
 }
 
 foreach my $xml_self_aln (@{$division_node->findnodes('self_alignments/genome')}) {
@@ -504,6 +532,22 @@ my $method_adaptor = $compara_dba->get_MethodAdaptor;
 my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor;
 my %mlss_ids_to_find = map {$_->dbID => $_} @{$mlss_adaptor->fetch_all_current};
 my @genome_db_without_comp = grep {!$_->genome_component} @{$division_genome_dbs};
+
+my %known_method_type_set = map { $_->type => 1 } @{$method_adaptor->fetch_all()};
+my %retire_unmatched_type_set;
+if (@retire_unmatched_types) {
+
+    foreach my $method_type (@retire_unmatched_types) {
+        if (defined $known_method_type_set{$method_type}) {
+            $retire_unmatched_type_set{$method_type} = 1;
+        } else {
+            throw("Cannot retire MLSSes of unknown method type: $method_type");
+        }
+    }
+
+} elsif ($retire_unmatched) {
+    %retire_unmatched_type_set = %known_method_type_set;
+}
 
 my @mlsss_created;
 my @mlsss_existing;
@@ -556,6 +600,17 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                 my $exist_method = $method_adaptor->fetch_by_type($mlss->method->type);
                 $mlss->method($exist_method) if $exist_method;
                 my $exist_ss = $ss_adaptor->fetch_by_GenomeDBs($mlss->species_set->genome_dbs);
+
+                # If all genomes in a division are included in the default gene-tree collection, the
+                # default collection will most likely have been given the name of the division. If so,
+                # we need to set it to 'collection-default' so that the gene-tree pipelines can find it.
+                if ($exist_ss
+                        && $exist_ss->name =~ /^(collection-)?\Q$division_name\E$/
+                        && $mlss->species_set->name =~ /^(collection-)?default$/
+                        && $mlss->method->type =~ /^(PROTEIN_TREES|NC_TREES)$/) {
+                    $exist_ss->name('collection-default');
+                }
+
                 $mlss->species_set($exist_ss) if $exist_ss;
             }
             if ($exist_mlss and !$dry_run) {
@@ -612,9 +667,10 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             }
         }
 
-        if ($retire_unmatched) {
+        if (%retire_unmatched_type_set) {
             print "\n";
             foreach my $mlss (sort {$a->dbID <=> $b->dbID} values %mlss_ids_to_find) {
+                next unless exists $retire_unmatched_type_set{$mlss->method->type};
                 push @mlsss_retired, $mlss;
                 unless ($dry_run) {
                     $mlss_adaptor->retire_object($mlss);

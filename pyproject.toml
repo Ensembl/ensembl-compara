@@ -43,7 +43,8 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "ensembl-py@git+https://github.com/Ensembl/ensembl-py.git@1.2.3a1#egg=ensembl-py",
+    "ensembl-py>=2.1.0",
+    "ensembl-utils>=0.4.4",
     "biopython>=1.76",
     "ete3>=3.1.1",
     "lxml>=4.9.2",
@@ -65,9 +66,12 @@ test = [
     "mock",
     "mypy",
     "pylint",
+    "pytest",
+    "pytest-dependency",
     "pytest-cov",
     "types-PyYAML>=6.0.12.20240311",
     "yamllint",
+    "mysqlclient",
 ]
 
 [project.urls]
@@ -82,8 +86,13 @@ readme = {file = ["README.md"]}
 version = {file = ["PIP_VERSION"]}
 
 [tool.pytest.ini_options]
-# CITest project is on hold and it needs to be updated before resuming its unit tests
-addopts = "-v --tb=native --server=mysql://ensadmin:$ENSADMIN_PSW@mysql-ens-compara-prod-1:4485/ --ignore=src/python/tests/test_citest.py"
+addopts = [
+    "-v",
+    "--tb=native",
+    "--server=mysql://ensadmin:${ENSADMIN_PSW}@mysql-ens-compara-prod-1:4485/",
+    # CITest project is on hold and it needs to be updated before resuming its unit tests
+    "--ignore=src/python/tests/test_citest.py",
+]
 testpaths = ["src/python/tests"]
 
 [tool.coverage.run]
@@ -102,6 +111,7 @@ disable = [
     "too-few-public-methods",
     "too-many-arguments",
     "too-many-locals",
+    "too-many-positional-arguments",
     "too-many-statements",
     "unspecified-encoding",
     "wildcard-import"

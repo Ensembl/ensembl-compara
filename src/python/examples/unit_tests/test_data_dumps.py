@@ -117,10 +117,10 @@ class TestDumpGenomes:
 
     """
 
-    core_dbs = {}  # type: Dict
-    host = None  # type: str
-    port = None  # type: int
-    username = None  # type: str
+    core_dbs: dict = {}
+    host: str | None = None
+    port: int | None = None
+    username: str | None = None
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class'
     # to execute it only once per class parametrization
@@ -153,38 +153,38 @@ class TestDumpGenomes:
         ]
     )
     def test_dump_genomes(self, core_list: List[str], species_set_name: str,
-                          tmp_dir: Path, id_type: str, expectation: ContextManager) -> None:
+                          tmp_path: Path, id_type: str, expectation: ContextManager) -> None:
         """Tests :func:`data_dumps.dump_genomes()` when server connection can be established.
 
         Args:
             core_list: A list of core db names.
             species_set_name: Species set (collection) name.
-            tmp_dir: Unit test temp directory (fixture).
+            tmp_path: Unit test temp directory (fixture).
             id_type: Type of identifier to use in the dumps.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
         """
         with expectation:
-            data_dumps.dump_genomes(core_list, species_set_name, self.host, self.port, tmp_dir,
+            data_dumps.dump_genomes(core_list, species_set_name, self.host, self.port, tmp_path,
                                              id_type)
 
-            out_files = tmp_dir / species_set_name
+            out_files = tmp_path / species_set_name
             # pylint: disable-next=no-member
             exp_out = pytest.files_dir / "dump_genomes"  # type: ignore[attr-defined,operator]
             for db_name, unittest_db in self.core_dbs.items():
                 assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fasta", exp_out / f"{db_name}.fasta")
 
-    def test_dump_genomes_fake_connection(self, tmp_dir: Path) -> None:
+    def test_dump_genomes_fake_connection(self, tmp_path: Path) -> None:
         """Tests :func:`data_dumps.dump_genomes()` with fake server details.
 
         Args:
-            tmp_dir: Unit test temp directory (fixture).
+            tmp_path: Unit test temp directory (fixture).
 
         """
         with pytest.raises(RuntimeError):
             data_dumps.dump_genomes(["mus_musculus", "naja_naja"], "fake",
-                                             "fake-host", 65536, tmp_dir, "protein")
+                                             "fake-host", 65536, tmp_path, "protein")
 
     def test_dump_genomes_fake_output_path(self) -> None:
         """Tests :func:`data_dumps.dump_genomes()` with fake output path."""

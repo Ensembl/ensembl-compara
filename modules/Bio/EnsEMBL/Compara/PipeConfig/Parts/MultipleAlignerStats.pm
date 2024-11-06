@@ -31,7 +31,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN
  
 sub pipeline_analyses_multiple_aligner_stats {
@@ -41,7 +41,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
                 '2->A' => { 'multiplealigner_stats' => INPUT_PLUS() },
-                'A->1' => [ 'block_size_distribution' ],
+                'A->1' => [ 'msa_stats_funnel_check' ],
                     1  => [ 'gab_factory' ],
             },
         },
@@ -59,10 +59,18 @@ sub pipeline_analyses_multiple_aligner_stats {
             -hive_capacity  => 100,
         },
 
+
+        {   -logic_name => 'msa_stats_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => { 1 => { 'block_size_distribution' => INPUT_PLUS() } },
+        },
+
         {   -logic_name => 'block_size_distribution',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
             -rc_name => '1Gb_24_hour_job',
-            -flow_into  => [ 'generate_msa_stats_report' ],
+            -flow_into  => [
+                WHEN( '#msa_stats_shared_dir#' => 'generate_msa_stats_report' ),
+            ],
         },
 
         {   -logic_name => 'generate_msa_stats_report',
@@ -84,7 +92,7 @@ sub pipeline_analyses_multiple_aligner_stats {
             -flow_into  => {
                 '2->A' => { 'per_block_stats' => { 'genomic_align_block_ids' => '#_range_list#' } },
                 '1->A' => ['genome_db_factory'],
-                'A->1' => ['block_stats_aggregator']
+                'A->1' => ['block_stats_funnel_check']
                 },
         },
 
@@ -126,6 +134,11 @@ sub pipeline_analyses_multiple_aligner_stats {
                 ],
             },
             -hive_capacity  => 1000,
+        },
+
+        {   -logic_name => 'block_stats_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => { 1 => { 'block_stats_aggregator' => INPUT_PLUS() } },
         },
 
         {   -logic_name => 'block_stats_aggregator',

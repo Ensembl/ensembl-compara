@@ -40,7 +40,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::LoadSpeciesTrees_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.3;
+use Bio::EnsEMBL::Hive::Version v2.3;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -63,6 +63,7 @@ sub default_options {
         ],
         'reference_genomes' => [
             # Which genome_dbs are used references for which clades
+            # This is used in the species-tree view at www.ensembl.org/info/about/speciestree.html
             # [ '10090', 'mus_musculus' ],
         ],
 

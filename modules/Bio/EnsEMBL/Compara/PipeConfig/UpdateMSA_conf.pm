@@ -57,6 +57,7 @@ sub default_options {
         'work_dir'      => $self->o('pipeline_dir'),
         'output_dir'    => $self->o('work_dir') . '/feature_dumps/',
         'bed_dir'       => $self->o('work_dir') . '/bed_dir/',
+        'output_dir_path' => $self->o('work_dir') . '/' . 'datachecks',
 
         'master_db'         => 'compara_master',
         'prev_db'           => $self->o('species_set_name') . '_' . $self->o('method_type') . '_prev',
@@ -107,7 +108,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # inherit creation of DB, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir', 'bed_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir', 'output_dir_path', 'bed_dir']),
         $self->pipeline_create_commands_rm_mkdir(['msa_stats_shared_dir'], undef, 'do not rm'),
     ];
 }
@@ -129,6 +130,8 @@ sub pipeline_wide_parameters {
         'curr_release'      => $self->o('ensembl_release'),
 
         'genome_dumps_dir'  => $self->o('genome_dumps_dir'),
+        'output_dir_path'   => $self->o('output_dir_path'),
+        'msa_stats_shared_dir' => $self->o('msa_stats_shared_dir'),
 
         'lastz_complete'             => $self->o('lastz_complete'),
         'run_gerp'                   => $self->o('run_gerp'),
@@ -183,7 +186,7 @@ sub core_pipeline_analyses {
                 'filter_by_mlss'    => 1,
                 'skip_gerp'         => 1,
             },
-            -rc_name    => '1Gb_job',
+            -rc_name    => '1Gb_24_hour_job',
         },
         # Update the MSA-related information in this and the ancestral core databases
         {   -logic_name => 'msa_update_factory',

@@ -46,7 +46,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
@@ -233,7 +233,7 @@ sub pipeline_analyses {
                                '1' => [ 'build_synteny' ],
                               },
               -analysis_capacity => $self->o('dumpgff_capacity'), #database intensive
-              -rc_name => '2Gb_job',
+              -rc_name => '2Gb_24_hour_job',
             },
             #Build synteny regions
             { -logic_name => 'build_synteny',

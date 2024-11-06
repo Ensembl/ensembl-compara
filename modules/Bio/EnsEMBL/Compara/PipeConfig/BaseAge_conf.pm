@@ -46,7 +46,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::BaseAge_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
@@ -126,7 +126,7 @@ sub pipeline_analyses {
                               },
                -flow_into => {
                               '2->A' => { 'base_age' => { 'seq_region' => '#name#', }, },
-                              'A->1' => [ 'big_bed' ],
+                              'A->1' => [ 'base_age_funnel_check' ],
                              },
             },
             
@@ -159,6 +159,11 @@ sub pipeline_analyses {
                 -flow_into  => {
                     1 => '?accu_name=bed_files&accu_address={seq_region}&accu_input_variable=sorted_bed_file',
                 },
+            },
+
+            {   -logic_name => 'base_age_funnel_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => { 1 => { 'big_bed' => INPUT_PLUS() } },
             },
 
              { -logic_name => 'big_bed',

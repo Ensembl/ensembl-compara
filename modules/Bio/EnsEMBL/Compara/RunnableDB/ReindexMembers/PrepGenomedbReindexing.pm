@@ -132,7 +132,7 @@ sub run {
             my $curr_dnafrag = $curr_dnafrags_by_name{$dnafrag_name};
             my $curr_locus = $curr_dnafrag->as_locus();
 
-            if ($curr_locus->get_sequence() ne $prev_locus->get_sequence()) {
+            if (uc($curr_locus->get_sequence()) ne uc($prev_locus->get_sequence())) {
                 $self->die_no_retry(
                     sprintf(
                         "cannot reindex genome %s: sequence mismatch found in dnafrag %s",

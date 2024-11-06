@@ -38,7 +38,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOMapAnchors;
@@ -217,7 +217,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'setup_extended_alignment',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => ['dump_mappings_to_file', 'check_for_lastz'],
         },
 
@@ -301,8 +301,9 @@ sub tweak_analyses {
     $analyses_by_name->{'extended_genome_alignment'}->{'-wait_for'} = 'create_default_pairwise_mlss';
     $analyses_by_name->{'gerp'}->{'-wait_for'} = 'set_gerp_neutral_rate';
 
-    # add "set_internal_ids_epo_ext" to "load_dnafrag_region"
-    $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'}->{'A->1'} = { 'set_internal_ids_epo_ext' => {} };
+    # link "set_internal_ids_epo_ext" indirectly to "load_dnafrag_region"
+    $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'}->{'A->1'} = { 'alignment_funnel_check' => {} };
+    $analyses_by_name->{'alignment_funnel_check'}->{'-flow_into'}->{1} = 'set_internal_ids_epo_ext';
 
     # ensure mlss_ids are flowed with their root_ids
     $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# as mlss_id FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';

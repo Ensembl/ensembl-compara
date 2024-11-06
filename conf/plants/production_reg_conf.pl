@@ -66,7 +66,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 # Ensure we're using the correct cores for species that overlap with other divisions
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 my $overlap_cores = {
-    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_release}_10" ],
+    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_release}_11" ],
     'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_release}_282" ],
     'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_${curr_release}_4" ],
 };
@@ -115,25 +115,19 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_load_members_113'],
-    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'twalsh_default_plants_protein_trees_113' ],
+    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_load_members_114'],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'twalsh_default_plants_protein_trees_take2_114' ],
     'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', 'twalsh_rice_cultivars_plants_protein_trees_lsf_112' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-6', 'thiagogenez_wheat_cultivars_plants_protein_trees_113' ],
 
     # LASTZ dbs
-    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-8', 'twalsh_plants_lastz_batch1_113' ],
-    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch2_113' ],
-    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_lastz_batch3_113' ],
-    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-4', 'twalsh_plants_lastz_batch4_113' ],
-    'lastz_batch_5'  => [ 'mysql-ens-compara-prod-3', 'twalsh_plants_lastz_batch5_113' ],
-    'lastz_batch_6'  => [ 'mysql-ens-compara-prod-4', 'twalsh_plants_lastz_batch6_113' ],
-    'lastz_batch_7'  => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_lastz_batch7_113' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch1_114' ],
 
     # other alignments
-    'wheat_cactus'   => [ 'mysql-ens-compara-prod-8', 'twalsh_wheat_plants_load_cactus_take2_113' ],
+    #'wheat_cactus'   => [ 'mysql-ens-compara-prod-X', '' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_synteny_113' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_synteny_114' ],
 
     # EPO dbs
     ## rice

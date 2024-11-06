@@ -66,7 +66,7 @@ Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertann
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 my $overlap_cores = {
     'caenorhabditis_elegans'   => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_282" ],
-    'drosophila_melanogaster'  => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_eg_release}_${curr_release}_10" ],
+    'drosophila_melanogaster'  => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_eg_release}_${curr_release}_11" ],
     'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_${curr_eg_release}_${curr_release}_4" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
@@ -141,8 +141,8 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'twalsh_pan_load_members_113' ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'twalsh_default_pan_protein_trees_113' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'twalsh_pan_load_members_take2_114' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'twalsh_default_pan_protein_trees_take2_114' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

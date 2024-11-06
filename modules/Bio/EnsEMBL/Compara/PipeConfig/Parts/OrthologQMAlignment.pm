@@ -102,7 +102,7 @@ sub pipeline_analyses_ortholog_qm_alignment {
         },
 
         {   -logic_name  => 'check_file_copy',
-            -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module      => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into   => {
                 1 => [
                     WHEN( '#homology_dumps_shared_dir#' => 'copy_files_to_shared_loc' ),

@@ -25,12 +25,15 @@ use warnings;
 use Data::Dumper;
 use HTTP::Request;
 use JSON;
+use List::Util qw(max);
 use LWP::UserAgent;
 use Term::ReadKey;
+use Text::CSV;
 
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::IO qw (slurp);
 use Bio::EnsEMBL::Utils::Logger;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 # JIRA identifiers of the custom field used in Compara (ENSCOMPARASW)
 use constant DIVISION_CUSTOM_FIELD_ID => 'customfield_11130';
@@ -69,8 +72,8 @@ my %component_to_category = (
 sub new {
     my $caller = shift;
     my $class = ref($caller) || $caller;
-    my ( $user, $relco, $division, $release, $project, $loglevel ) = rearrange(
-        [qw(USER RELCO DIVISION RELEASE PROJECT LOGLEVEL)], @_);
+    my ( $user, $relco, $division, $release, $project, $csv, $loglevel ) = rearrange(
+        [qw(USER RELCO DIVISION RELEASE PROJECT CSV LOGLEVEL)], @_);
     my $self = {};
     bless $self, $class;
     # Initialize logger
@@ -80,7 +83,10 @@ sub new {
     $self->{_relco} = $relco || $self->{_user};
     $self->{_project} = $project || 'ENSCOMPARASW';
 
-    if ( $ENV{'JIRA_AUTH_TOKEN'} ) {
+    if ( $csv ) {
+        $self->{_csv_issue_id} = 1;
+        $self->{_csv_max_col_counts} = {};
+    } elsif ( $ENV{'JIRA_AUTH_TOKEN'} ) {
         # this token should be your 'user:pass' string encoded to base64
         # export JIRA_AUTH_TOKEN=$(echo -n 'user:pass' | openssl base64)
         # https://developer.atlassian.com/server/jira/platform/basic-authentication/
@@ -156,36 +162,25 @@ sub create_tickets {
     my $self = shift;
     my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link, $update, $dry_run ) =
         rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_CATEGORIES EXTRA_LABELS EPIC_LINK UPDATE DRY_RUN)], @_);
-    # Read tickets from either a JSON formated string or a JSON file path
-    my $json_ticket_list;
-    if ($json_str) {
-        $json_ticket_list = decode_json($json_str);
-    } elsif ($json_file) {
-        $json_ticket_list = decode_json(slurp($json_file)) or die "Could not open file '$json_file' $!";
-    } elsif ($json_obj) {
-        $json_ticket_list = $json_obj;
-    } else {
-        die "Required one of these three arguments: JSON_STR, JSON_FILE or JSON_OBJ";
-    }
-    # Ensure $json_ticket_list is an arrayref
-    $json_ticket_list = [$json_ticket_list] if (ref $json_ticket_list eq 'HASH');
     # Set default values for optional arguments
-    $default_issue_type ||= 'Task';
-    $default_priority   ||= 'Major';
     $dry_run            ||= 0;
-    # Generate the list of JIRA tickets from each JSON hash
-    my $jira_tickets = ();
-    foreach my $json_ticket ( @$json_ticket_list ) {
-        push @$jira_tickets,
-             $self->_json_to_jira($json_ticket, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link);
-        if ($json_ticket->{subtasks}) {
-            foreach my $json_subtask ( @{$json_ticket->{subtasks}} ) {
-                # NOTE: Sub-task tickets inherit the epic link from their parent task
-                push @{$jira_tickets->[-1]->{subtasks}},
-                     $self->_json_to_jira($json_subtask, 'Sub-task', $default_priority, $extra_components, $extra_categories, $extra_labels);
-            }
-        }
-    }
+
+    my $json_ticket_list = $self->_load_ticket_json_list(
+        $json_str,
+        $json_file,
+        $json_obj,
+    );
+
+    my $jira_tickets = $self->_generate_jira_tickets(
+        $json_ticket_list,
+        $default_issue_type,
+        $default_priority,
+        $extra_components,
+        $extra_categories,
+        $extra_labels,
+        $epic_link,
+    );
+
     # Log all generated JIRA tickets
     $self->{_logger}->info(Dumper($jira_tickets) . "\n");
     # Get all the tickets on the JIRA server for the same project, release and
@@ -246,6 +241,145 @@ sub create_tickets {
         }
     }
     return $ticket_key_list;
+}
+
+=head2 create_ticket_csv
+
+  Arg[-JSON_STR]     : string - a string in JSON format with the JIRA ticket(s)
+  Arg[-JSON_FILE]    : string - a path to a JSON file where to find the JIRA
+                       ticket(s)
+  Arg[-JSON_OBJ]     : hashref or arrayref - a hash or array of hashes with the
+                       JIRA ticket(s)
+  Arg[-CSV_FILE]     : string - a path to a CSV file to which JIRA ticket
+                       record(s) will be written
+  Arg[-DEFAULT_ISSUE_TYPE]
+                     : (optional) string - a JIRA issue type to set if not issue
+                       type is provided for a ticket. By default, 'Task'.
+  Arg[-DEFAULT_PRIORITY]
+                     : (optional) string - a JIRA priority to set if no priority
+                       is provided for a ticket. By default, 'Major'.
+  Arg[-EXTRA_COMPONENTS]
+                     : (optional) arrayref of strings - a list of JIRA
+                       components to include the JIRA tickets. By default, no
+                       more components are added.
+  Arg[-EXTRA_CATEGORIES]
+                     : (optional) arrayref of strings - a list of JIRA
+                       categories to include the JIRA tickets. By default, the
+                       module will try to populate the categories from the
+                       components on tickets that have no categories.
+  Arg[-EXTRA_LABELS] : (optional) arrayref of strings - a list of JIRA labels to
+                       include in the JIRA tickets. By default, no more labels
+                       are added.
+  Arg[-EPIC_LINK]    : (optional) string - a JIRA Epic ticket key to link the
+                       JIRA tickets to
+  Arg[-PARENT_LINK]  : (optional) string - a JIRA parent ticket key to link the
+                       JIRA tickets to
+  Arg[-DRY_RUN]      : (optional) boolean - in dry-run mode, JIRA tickets will
+                       not be written to CSV. By default, dry-run mode is off.
+  Example     : $jira_adaptor->create_tickets_csv(
+                    -JSON_FILE => 'conf/vertebrates/jira_recurrent_tickets.json',
+                    -CSV_FILE => '/path/to/jira_recurrent_tickets.csv',
+                );
+  Description : Loads JIRA ticket configuration from the provided JSON, generates
+                ticket records and writes these to the specified CSV file.
+                Returns an arrayref of the internal issue IDs of each ticket;
+                these internal issue IDs are used to configure parent-child
+                relationships when importing the CSV into JIRA.
+  Return type : arrayref of integers (issue IDs internal to the CSV file)
+  Exceptions  : thrown on: invalid $json_str xor missing/invalid content in
+                $json_file xor missing $json_obj
+
+=cut
+
+sub create_ticket_csv {
+    my $self = shift;
+    my ( $json_str, $json_file, $json_obj, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link, $dry_run, $csv_file, $parent_link ) =
+        rearrange([qw(JSON_STR JSON_FILE JSON_OBJ DEFAULT_ISSUE_TYPE DEFAULT_PRIORITY EXTRA_COMPONENTS EXTRA_CATEGORIES EXTRA_LABELS EPIC_LINK DRY_RUN CSV_FILE PARENT_LINK)], @_);
+    # Set default values for optional arguments
+    $dry_run ||= 0;
+
+    my $json_ticket_list = $self->_load_ticket_json_list(
+        $json_str,
+        $json_file,
+        $json_obj,
+    );
+
+    my $jira_tickets = $self->_generate_jira_tickets(
+        $json_ticket_list,
+        $default_issue_type,
+        $default_priority,
+        $extra_components,
+        $extra_categories,
+        $extra_labels,
+        $epic_link,
+    );
+
+    # Log all generated JIRA tickets
+    $self->{_logger}->info(Dumper($jira_tickets) . "\n");
+
+    # Create the ticket records
+    my @ticket_records;
+    foreach my $ticket ( @$jira_tickets ) {
+        if (defined $parent_link) {
+            $ticket->{'fields'}->{'parent'} = { 'key' => $parent_link };
+        }
+        my $task_record = $self->_create_ticket_record($ticket);
+        push(@ticket_records, $task_record);
+
+        if ($ticket->{subtasks}) {
+            if (defined $parent_link) {
+                throw(sprintf("ticket '%s' cannot have both a parent and a subtask", $ticket->{'fields'}{'summary'}));
+            }
+            # All task record fields are stored in an array, even if they only have one value.
+            my $task_issue_id = $task_record->{'Issue Id'}[0];
+
+            foreach my $subtask ( @{$ticket->{subtasks}} ) {
+                # Link the subtask with its parent ticket
+                $subtask->{'fields'}->{'parent'} = { 'key' => $task_issue_id };
+                my $subtask_record = $self->_create_ticket_record($subtask);
+                push(@ticket_records, $subtask_record);
+            }
+        }
+    }
+
+    if (!$dry_run) {
+
+        my @field_names = (
+           'Summary',
+           'Issue Type',
+           'Issue Id',
+           'Parent Id',
+           'Assignee',
+           'Category',
+           'Component/s',
+           'Description',
+           'Division',
+           'Epic Link',
+           'Fix Version/s',
+           'Labels',
+           'Priority',
+        );
+
+        my @out_col_names = map { ($_) x $self->{_csv_max_col_counts}{$_} } @field_names;
+
+        my $csv = Text::CSV->new({ quote_char => '"', sep_char => ',', eol => "\n" });
+        open(my $fh, '>', $csv_file) or throw("Failed to open CSV file [$csv_file]");
+        $csv->say($fh, \@out_col_names);
+        foreach my $ticket_record (@ticket_records) {
+            my @row;
+            foreach my $field_name (@field_names) {
+                my @field_values = @{$ticket_record->{$field_name}};
+                while (scalar(@field_values) < $self->{_csv_max_col_counts}{$field_name}) {
+                    push(@field_values, '');
+                }
+                push(@row, @field_values);
+            }
+            $csv->say($fh, \@row);
+        }
+        close($fh) or throw("Failed to close CSV file [$csv_file]");
+    }
+
+    return [map { $_->{'Issue Id'}[0] } @ticket_records];
 }
 
 =head2 fetch_tickets
@@ -574,6 +708,144 @@ sub _create_new_ticket {
     }
     $self->{_logger}->info(sprintf("Done. Key assigned: %s\n", $ticket_key));
     return $ticket_key;
+}
+
+# Creates a JIRA ticket record for output to CSV
+sub _create_ticket_record {
+
+    my $self = shift;
+    my $ticket = shift;
+
+    my $csv_issue_id = $self->{_csv_issue_id};
+    $self->{_csv_issue_id} += 1;
+
+    my $parent_id;
+    my $issue_type = 'Task';
+    if (exists $ticket->{'fields'}{'parent'}) {
+        $parent_id = $ticket->{'fields'}{'parent'}{'key'};
+        $issue_type = 'Sub-task';
+    }
+
+    # Fields with multiple values must be provided in multiple (identically named)
+    # columns in the CSV file that is uploaded to JIRA. To keep things consistent,
+    # we store all fields in an array and output each array element to its own column.
+    my %rec = (
+        'Summary' => [$ticket->{'fields'}{'summary'}],
+        'Issue Type' => [$issue_type],
+        'Issue Id' => [$csv_issue_id],
+        'Parent Id' => [$parent_id],
+    );
+
+    if (exists $ticket->{'fields'}{'assignee'}) {
+        $rec{'Assignee'} = [$ticket->{'fields'}{'assignee'}{'name'}];
+    } else {
+        $rec{'Assignee'} = [];
+    }
+
+    if (exists $ticket->{'fields'}{'customfield_11333'}) {
+        my @categories = map { $_->{'value'} } @{$ticket->{'fields'}{'customfield_11333'}};
+        $rec{'Category'} = [sort @categories];
+    } else {
+        $rec{'Category'} = [];
+    }
+
+    if (exists $ticket->{'fields'}{'components'}) {
+        my @components = map { $_->{'name'} } @{$ticket->{'fields'}{'components'}};
+        $rec{'Component/s'} = [sort @components];
+    } else {
+        $rec{'Component/s'} = [];
+    }
+
+    if (exists $ticket->{'fields'}{'description'}) {
+        # Convert newlines to JIRA line break notation.
+        my $description = $ticket->{'fields'}{'description'} =~ s/\n/ \\\\ /gr;
+        $rec{'Description'} = [$description];
+    } else {
+        $rec{'Description'} = [];
+    }
+
+    if (exists $ticket->{'fields'}{'customfield_11130'}) {
+        $rec{'Division'} = [$ticket->{'fields'}{'customfield_11130'}{'value'}];
+    } else {
+        $rec{'Division'} = [];
+    }
+
+    if (exists $ticket->{'fields'}{'customfield_10236'}) {
+        $rec{'Epic Link'} = [$ticket->{'fields'}{'customfield_10236'}];
+    } else {
+        $rec{'Epic Link'} = [];
+    }
+
+    if (exists $ticket->{'fields'}{'fixVersions'}) {
+        my @fix_versions = map { $_->{'name'} } @{$ticket->{'fields'}{'fixVersions'}};
+        $rec{'Fix Version/s'} = [sort @fix_versions];
+    } else {
+        $rec{'Fix Version/s'} = [];
+    }
+
+    if (exists $ticket->{'fields'}{'labels'}) {
+        $rec{'Labels'} = [sort @{$ticket->{'fields'}{'labels'}}];
+    } else {
+        $rec{'Labels'} = [];
+    }
+
+    if (exists $ticket->{'fields'}{'priority'}) {
+        $rec{'Priority'} = [$ticket->{'fields'}{'priority'}{'name'}];
+    } else {
+        $rec{'Priority'} = [];
+    }
+
+    while (my ($field_name, $field_values) = each %rec) {
+        my $max_col_count = $self->{_csv_max_col_counts}{$field_name} // 0;
+        $self->{_csv_max_col_counts}{$field_name} = max(scalar(@{$field_values}), $max_col_count);
+    }
+
+    return \%rec;
+}
+
+# Generate the list of JIRA tickets from each JSON hash
+sub _generate_jira_tickets {
+    my ($self, $json_ticket_list, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link) = @_;
+
+    # Set default values for optional arguments
+    $default_issue_type ||= 'Task';
+    $default_priority   ||= 'Major';
+
+    my $jira_tickets = ();
+    foreach my $json_ticket ( @$json_ticket_list ) {
+        push @$jira_tickets,
+             $self->_json_to_jira($json_ticket, $default_issue_type, $default_priority, $extra_components, $extra_categories, $extra_labels, $epic_link);
+        if ($json_ticket->{subtasks}) {
+            foreach my $json_subtask ( @{$json_ticket->{subtasks}} ) {
+                # NOTE: Sub-task tickets inherit the epic link from their parent task
+                push @{$jira_tickets->[-1]->{subtasks}},
+                     $self->_json_to_jira($json_subtask, 'Sub-task', $default_priority, $extra_components, $extra_categories, $extra_labels);
+            }
+        }
+    }
+
+    return $jira_tickets;
+}
+
+# Read tickets from either a JSON formated string or a JSON file path
+sub _load_ticket_json_list {
+    my ($self, $json_str, $json_file, $json_obj) = @_;
+
+    my $json_ticket_list;
+    if ($json_str) {
+        $json_ticket_list = decode_json($json_str);
+    } elsif ($json_file) {
+        $json_ticket_list = decode_json(slurp($json_file)) or die "Could not open file '$json_file' $!";
+    } elsif ($json_obj) {
+        $json_ticket_list = $json_obj;
+    } else {
+        die "Required one of these three arguments: JSON_STR, JSON_FILE or JSON_OBJ";
+    }
+
+    # Ensure $json_ticket_list is an arrayref
+    $json_ticket_list = [$json_ticket_list] if (ref $json_ticket_list eq 'HASH');
+
+    return $json_ticket_list;
 }
 
 =head2 _update_ticket

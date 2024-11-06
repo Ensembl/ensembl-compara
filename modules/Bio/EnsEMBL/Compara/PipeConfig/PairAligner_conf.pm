@@ -60,7 +60,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::PairAligner_conf;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');  # All Hive databases configuration files should inherit from HiveGeneric, directly or indirectly
@@ -137,7 +137,7 @@ sub default_options {
         #'window_size' => 1000000,
         'window_size' => 10000,
 	'filter_duplicates_rc_name' => '1Gb_job',
-    'filter_duplicates_himem_rc_name' => '8Gb_job',
+    'filter_duplicates_himem_rc_name' => '8Gb_24_hour_job',
 
 	 #linear_gap=>medium for more closely related species, 'loose' for more distant
 	'linear_gap' => 'medium',
@@ -290,7 +290,7 @@ sub core_pipeline_analyses {
                                'only_cellular_component' => $self->o('only_cellular_component'),
                                'mix_cellular_components' => $self->o('mix_cellular_components'),
 			      },
-	       -rc_name => '2Gb_job',
+	       -rc_name => '2Gb_24_hour_job',
  	    },
 
         {   -logic_name    => 'create_pair_aligner_jobs',
@@ -314,6 +314,7 @@ sub core_pipeline_analyses {
             },
             -flow_into         => {
                 -1 => [ $self->o('pair_aligner_logic_name') . '_himem' ],  # MEMLIMIT
+                -2 => [ $self->o('pair_aligner_logic_name') . '_himem' ],  # RUNLIMIT
             },
             -analysis_capacity => $self->o('pair_aligner_analysis_capacity'),
             -batch_size        => $self->o('pair_aligner_batch_size'),
@@ -356,7 +357,7 @@ sub core_pipeline_analyses {
 	        -flow_into => {
 			       2 => { 'filter_duplicates' => INPUT_PLUS() },
 			     },
-	       -rc_name => '1Gb_job',
+	       -rc_name => '2Gb_24_hour_job',
  	    },
  	     {  -logic_name   => 'filter_duplicates',
  	       -module        => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::FilterDuplicates',
@@ -368,6 +369,7 @@ sub core_pipeline_analyses {
 	       -can_be_empty  => 1,
 	       -flow_into => {
 			       -1 => [ 'filter_duplicates_himem' ], # MEMLIMIT
+                   -2 => [ 'filter_duplicates_himem' ], # RUNLIMIT
 			     },
 	       -rc_name => $self->o('filter_duplicates_rc_name'),
  	    },
@@ -478,6 +480,7 @@ sub core_pipeline_analyses {
  	       -parameters => $self->o('net_parameters'),
 	       -flow_into => {
 			      -1 => [ 'alignment_nets_himem' ],  # MEMLIMIT
+			      -2 => [ 'alignment_nets_himem' ],  # RUNLIMIT
 			     },
 	       -rc_name => '1Gb_job',
  	    },
@@ -489,8 +492,9 @@ sub core_pipeline_analyses {
                -can_be_empty => 1,
                -flow_into => {
                    -1 => [ 'alignment_nets_hugemem' ],  # MEMLIMIT
+                   -2 => [ 'alignment_nets_hugemem' ],  # RUNLIMIT
                },
-	       -rc_name => '4Gb_job',
+	       -rc_name => '4Gb_24_hour_job',
  	    },
             {   -logic_name     => 'alignment_nets_hugemem',
                 -hive_capacity  => $self->o('net_hive_capacity'),
@@ -498,7 +502,7 @@ sub core_pipeline_analyses {
                 -module         => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets',
                 -parameters     => $self->o('net_parameters'),
                 -can_be_empty   => 1,
-                -rc_name        => '8Gb_job',
+                -rc_name        => '8Gb_24_hour_job',
             },
  	    {
 	       -logic_name => 'remove_inconsistencies_after_net',
@@ -529,6 +533,7 @@ sub core_pipeline_analyses {
               -batch_size    => $self->o('filter_duplicates_batch_size'),
               -flow_into => {
                               -1 => [ 'filter_duplicates_net_himem' ], # MEMLIMIT
+                              -2 => [ 'filter_duplicates_net_himem' ], # RUNLIMIT
                             },
               -can_be_empty  => 1,
               -rc_name => $self->o('filter_duplicates_rc_name'),

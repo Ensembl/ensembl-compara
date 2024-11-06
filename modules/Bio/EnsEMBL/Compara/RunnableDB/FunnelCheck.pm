@@ -70,7 +70,7 @@ sub run {
     my $factory_job_resolved = $helper->execute_single_result(-SQL => $factory_sql, -PARAMS => [$job_id]);
 
     if (!$factory_job_resolved) {
-        $self->die_no_retry("funnel check failure - unresolved factory job");
+        $self->throw("funnel check failure - unresolved factory job");
     }
 
     my $fan_sql = q/

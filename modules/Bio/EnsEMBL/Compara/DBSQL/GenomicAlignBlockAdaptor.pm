@@ -750,6 +750,14 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
             AND ga2.dnafrag_end >= $start
         };
   }
+  if ( $method_link_species_set->method->type eq 'CACTUS_DB' ) {  # hack for e113
+    my $dnafrag_start = defined($start) ? $start : $dnafrag->slice->start;
+    my $dnafrag_end = defined($end) ? $end : $dnafrag->slice->end;
+    my $min_gab_length = $self->_get_cactus_db_min_gab_length($dnafrag_start, $dnafrag_end);
+    $sql .= qq{
+            AND gab.length >= $min_gab_length
+        };
+  }
   my $sth = $self->prepare($sql);
 
   $sth->execute();
@@ -862,15 +870,27 @@ sub _fetch_all_by_MethodLinkSpeciesSet_DnaFrag_with_limit {
   my $dnafrag_id = $dnafrag->dbID;
   my $method_link_species_set_id = $method_link_species_set->dbID;
 
+  my $extra_join = '';
+  my $extra_condition = '';
+  if ($method_link_species_set->method->type eq 'CACTUS_DB') {  # hack for e113
+    my $block_start = defined $start ? $start : $dnafrag->slice->start;
+    my $block_end = defined $end ? $end : $dnafrag->slice->end;
+    my $min_gab_length = $self->_get_cactus_db_min_gab_length($block_start, $block_end);
+    $extra_join = qq{ JOIN genomic_align_block gab USING(genomic_align_block_id) };
+    $extra_condition = qq{ AND gab.length >= $min_gab_length };
+  }
+
   my $sql = qq{
           SELECT
               ga2.genomic_align_block_id,
               ga2.genomic_align_id
           FROM
               genomic_align ga2
+          $extra_join
           WHERE 
               ga2.method_link_species_set_id = $method_link_species_set_id
               AND ga2.dnafrag_id = $dnafrag_id
+          $extra_condition
       };
   if (defined($start) and defined($end)) {
     my $max_alignment_length = $method_link_species_set->max_alignment_length;
@@ -1132,6 +1152,15 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
              $dnafrag_id1, $dnafrag_start1, $dnafrag_end1, $dnafrag_strand1, $cigar_line1, $visible1,
              $genomic_align_id2, $genomic_align_block_id2, $method_link_species_set_id2,
              $dnafrag_id2, $dnafrag_start2, $dnafrag_end2, $dnafrag_strand2, $cigar_line2, $visible2) = $sth->fetchrow_array) {
+
+    if ( $method_link_species_set->method->type eq 'CACTUS_DB' ) {  # hack for e113
+        my $gab_length = Bio::EnsEMBL::Compara::Utils::Cigars::alignment_length_from_cigar($cigar_line1);
+        my $block_start = $start // $dnafrag1->slice->start;
+        my $block_end = $end // $dnafrag1->slice->end;
+        my $min_gab_length = $self->_get_cactus_db_min_gab_length($block_start, $block_end);
+        next unless $gab_length >= $min_gab_length;
+    }
+
     ## Skip if this genomic_align_block has been defined already
     next if (defined($all_genomic_align_blocks->{$genomic_align_block_id1}));
     $all_genomic_align_blocks->{$genomic_align_block_id1} = 1;
@@ -1790,6 +1819,12 @@ sub _parse_maf {
   push(@blocks, $curr_block) if (scalar(@$curr_block) > 1 && !$skipping_curr_block);
 
   return \@blocks;
+}
+
+sub _get_cactus_db_min_gab_length {
+    my ($self, $start, $end) = @_;
+    my $region_length = abs($end - $start) + 1;
+    return max(1, int($region_length * 0.01));
 }
 
 1;

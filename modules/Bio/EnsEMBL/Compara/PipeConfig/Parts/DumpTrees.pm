@@ -33,7 +33,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  # Allow this particular config to use conditional dataflow and INPUT_PLUS
 
 sub pipeline_analyses_dump_trees {

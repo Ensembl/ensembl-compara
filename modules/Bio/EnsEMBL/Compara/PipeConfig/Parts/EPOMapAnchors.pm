@@ -33,7 +33,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::EPOMapAnchors;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For INPUT_PLUS
 
 
@@ -221,6 +221,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 },
                 -flow_into => {
                     -1 => 'map_anchors_no_server_himem',
+                    -2 => 'map_anchors_no_server_himem',
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
@@ -237,7 +238,7 @@ sub pipeline_analyses_epo_anchor_mapping {
                 },
                 -batch_size => $self->o('map_anchors_batch_size'),
                 -hive_capacity => $self->o('map_anchors_capacity'),
-                -rc_name => '32Gb_job',
+                -rc_name => '32Gb_24_hour_job',
                 -max_retry_count => 1,
             },
 
