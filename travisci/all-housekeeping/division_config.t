@@ -97,7 +97,7 @@ sub test_division {
                     foreach my $name (@{$additional_species->{$other_div}}) {
                         ok(exists $other_div_allowed_species{$name}, "$name is allowed");
                     }
-                }
+                };
             }
         }
     }
@@ -113,12 +113,12 @@ sub test_division {
         my $biomart_species = decode_json(slurp($biomart_species_file));
         subtest "$biomart_species_file species cap" => sub {
             cmp_ok(scalar(@{$biomart_species}), '<=', $biomart_species_cap, "species count within limit");
-        }
+        };
         subtest "$biomart_species_file vs $allowed_species_file" => sub {
             foreach my $name (@{$biomart_species}) {
                 ok(exists $allowed_species{$name}, "$name is allowed");
             }
-        }
+        };
     }
 
     # Nothing to test but it's alright. Not all divisions have files to cross-check
