@@ -97,7 +97,7 @@ sub test_division {
                     foreach my $name (@{$additional_species->{$other_div}}) {
                         ok(exists $other_div_allowed_species{$name}, "$name is allowed");
                     }
-                }
+                };
             }
         }
     }
@@ -105,14 +105,20 @@ sub test_division {
     # Load biomart_species.json if it exists
     my $biomart_species_file = File::Spec->catfile($division_dir, 'biomart_species.json');
     if (-e $biomart_species_file and %allowed_species) {
+        my $metaconfig_file = File::Spec->catfile($division_dir, 'metaconfig.json');
+        my $metaconfig = decode_json(slurp($metaconfig_file));
+        my $biomart_species_cap = $metaconfig->{'biomart'}{'species_cap'};
         # 5. All species listed in biomart_species.json exist in allowed_species.json
         $has_files_to_test = 1;
         my $biomart_species = decode_json(slurp($biomart_species_file));
+        subtest "$biomart_species_file species cap" => sub {
+            cmp_ok(scalar(@{$biomart_species}), '<=', $biomart_species_cap, "species count within limit");
+        };
         subtest "$biomart_species_file vs $allowed_species_file" => sub {
             foreach my $name (@{$biomart_species}) {
                 ok(exists $allowed_species{$name}, "$name is allowed");
             }
-        }
+        };
     }
 
     # Nothing to test but it's alright. Not all divisions have files to cross-check
