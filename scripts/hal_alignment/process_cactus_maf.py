@@ -33,8 +33,51 @@ def trimming_maf_iterator(stream):
         gap_column = np.vstack(np.repeat(b"-", len(aln_block)))
         block_arr = np.array(aln_block, dtype=bytes)
         gap_col_mask = (block_arr == gap_column).all(axis=0)
-        if gap_col_mask.any():
-            for row_arr, aln_row in zip(block_arr[:, ~gap_col_mask], aln_block):
+        gap_cols_found = gap_col_mask.any()
+        if gap_cols_found:
+            block_arr = block_arr[:, ~gap_col_mask]
+
+        gap_mask = block_arr.transpose() == b"-"
+        gap_mask_first_col = gap_mask[0]
+        gap_mask_final_col = gap_mask[-1]
+
+        if len(aln_block) > 1 and len(gap_mask) > 1:
+            left_overhang_found = gap_mask_first_col.sum() == len(aln_block) - 1
+            right_overhang_found = gap_mask_final_col.sum() == len(aln_block) - 1
+        else:
+            left_overhang_found = right_overhang_found = False
+
+        if left_overhang_found or right_overhang_found:
+            overhang_col_mask = overhang_col_mask = np.zeros((len(gap_mask),), dtype=bool)
+            col_idxs = range(len(gap_mask))
+
+            if left_overhang_found:
+                for col_idx in col_idxs:
+                    if not np.array_equal(gap_mask[col_idx], gap_mask_first_col):
+                        first_non_overhang_col_idx = col_idx
+                        break
+                overhang_col_mask[:first_non_overhang_col_idx] = True
+                left_overhang_length = first_non_overhang_col_idx
+                left_overhang_row_idx = int(np.flatnonzero(~gap_mask_first_col)[0])
+                left_overhang_row = aln_block[left_overhang_row_idx]
+                left_overhang_row.annotations["size"] -= left_overhang_length
+                left_overhang_row.annotations["start"] += left_overhang_length
+
+            if right_overhang_found:
+                for col_idx in reversed(col_idxs):
+                    if not np.array_equal(gap_mask[col_idx], gap_mask_final_col):
+                        final_non_overhang_col_idx = col_idx
+                        break
+                overhang_col_mask[final_non_overhang_col_idx + 1:] = True
+                right_overhang_length = len(gap_mask) - (final_non_overhang_col_idx + 1)
+                right_overhang_row_idx = int(np.flatnonzero(~gap_mask_final_col)[0])
+                right_overhang_row = aln_block[right_overhang_row_idx]
+                right_overhang_row.annotations["size"] -= right_overhang_length
+
+            block_arr = block_arr[:, ~overhang_col_mask]
+
+        if gap_cols_found or left_overhang_found or right_overhang_found:
+            for row_arr, aln_row in zip(block_arr, aln_block):
                 aln_row.seq = Seq(row_arr.tobytes().decode("ascii"))
         yield aln_block
 
