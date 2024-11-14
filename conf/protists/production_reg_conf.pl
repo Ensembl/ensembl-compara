@@ -131,9 +131,7 @@ my $compara_dbs = {
     'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'twalsh_default_protists_protein_trees_114' ],
 
     # LastZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-8', 'sbhurji_protists_lastz_batch1_111' ],
-    'lastz_batch_2' => [ 'mysql-ens-compara-prod-8', 'twalsh_protists_lastz_batch2_111' ],
-    'lastz_batch_3' => [ 'mysql-ens-compara-prod-8', 'twalsh_protists_lastz_batch3_111' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-8', 'jitender_protists_lastz_batch1_114' ],
 
     # synteny
     'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'twalsh_protists_synteny_111' ],
