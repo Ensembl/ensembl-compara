@@ -150,8 +150,8 @@ my $compara_dbs = {
 
     'compara_syntenies'   => [ 'mysql-ens-compara-prod-3', 'sbotond_vertebrates_synteny_114' ],
 
-    'primates_cactus'      => [ 'mysql-ens-compara-prod-9', 'twalsh_rodents_vertebrates_load_cactus_114' ],
-    'rodents_cactus'       => [ 'mysql-ens-compara-prod-7', 'twalsh_primates_vertebrates_load_cactus_114' ],
+    'rodents_cactus'      => [ 'mysql-ens-compara-prod-9', 'twalsh_rodents_vertebrates_load_cactus_114' ],
+    'primates_cactus'       => [ 'mysql-ens-compara-prod-7', 'twalsh_primates_vertebrates_load_cactus_114' ],
     #'aves_cactus'         => [ 'mysql-ens-compara-prod-X', ''],
     #'mammals_cactus'      => [ 'mysql-ens-compara-prod-X', ''],
 
