@@ -127,7 +127,7 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'jitender_protists_load_members_114' ],
     'compara_ptrees'  => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # LastZ dbs
