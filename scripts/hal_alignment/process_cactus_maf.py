@@ -20,7 +20,7 @@ import json
 import os
 import shutil
 from tempfile import TemporaryDirectory
-from typing import TextIO
+from typing import Iterator, TextIO
 
 from Bio.Align import MultipleSeqAlignment
 from Bio.AlignIO.MafIO import MafIterator, MafWriter
@@ -89,7 +89,7 @@ def _make_overhang_column_mask(aln_block: MultipleSeqAlignment, block_arr: np.nd
     return overhang_mask
 
 
-def trimming_maf_iterator(stream: TextIO) -> MultipleSeqAlignment:
+def trimming_maf_iterator(stream: TextIO) -> Iterator[MultipleSeqAlignment]:
     """Yields a MAF block with gap-only and overhang columns trimmed out."""
     for aln_block in MafIterator(stream):
         gap_arrays =[np.array([b"-"]) for _ in range(len(aln_block))]
