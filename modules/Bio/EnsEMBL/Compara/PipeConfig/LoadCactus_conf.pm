@@ -383,6 +383,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'multiplealigner_stats_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+            },
             -flow_into  => {
                 '2->A' => { 'multiplealigner_stats' => INPUT_PLUS() },
                 'A->1' => [ 'block_size_distribution' ],
