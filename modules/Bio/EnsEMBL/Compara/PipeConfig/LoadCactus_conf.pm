@@ -21,6 +21,16 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::LoadCactus_conf
 
+=head1 DESCRIPTION
+
+This pipeline makes use of various software tools for processing alignments in HAL or MAF format,
+including Cactus ( Armstrong et al. 2020; https://doi.org/10.1038/s41586-020-2871-y ),
+hal2maf ( Hickey et al. 2013; https://doi.org/10.1093/bioinformatics/btt128 ),
+taffy ( https://github.com/ComparativeGenomicsToolkit/taffy ),
+mafDuplicateFilter ( Earl et al. 2014; https://doi.org/10.1101/gr.174920.114 ),
+Biopython ( Cock et al. 2009; https://doi.org/10.1093/bioinformatics/btp163 ),
+and NumPy ( Harris et al. 2020; https://doi.org/10.1038/s41586-020-2649-2 ).
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::LoadCactus_conf;

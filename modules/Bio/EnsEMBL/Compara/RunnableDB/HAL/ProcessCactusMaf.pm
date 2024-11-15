@@ -21,7 +21,8 @@ Bio::EnsEMBL::Compara::RunnableDB::HAL::ProcessCactusMaf
 
 =head1 DESCRIPTION
 
-Process raw Cactus MAF file.
+This runnable processes Cactus MAF files in a manner similar to the script cactus_hal2maf.py in the Cactus package
+( Armstrong et al. 2020; https://doi.org/10.1038/s41586-020-2871-y ).
 
 =cut
 
