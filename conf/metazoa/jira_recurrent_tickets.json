@@ -38,7 +38,8 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-6 -port 4616{code}",
-            "summary": "Prepare the master database"
+            "summary": "Prepare the master database",
+            "name_on_graph": "Prepare master DB"
          },
          {
             "assignee": "<RelCo>",
@@ -93,8 +94,7 @@
             "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "Review the gene-tree stats for each gene-tree pipeline, and address any issues.",
-            "summary": "Check gene-tree stats",
-            "name_on_graph": "Check gene-tree stats"
+            "summary": "Check gene-tree stats"
          },
          {
             "assignee": "<RelCo>",
@@ -135,8 +135,15 @@
             "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
-            "summary": "Register HAL alignment data",
-            "name_on_graph": "Register HAL alignment data"
+            "summary": "Process Cactus data",
+            "name_on_graph": "Process Cactus data"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "Mark as done when all CACTUS_DB alignments have been merged into the new release database.",
+            "summary": "Merge Cactus data",
+            "name_on_graph": "Merge Cactus data"
          },
          {
             "assignee": "<RelCo>",
@@ -157,28 +164,29 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+release+database",
-            "summary": "Create Release Database"
+            "summary": "Create Release Database",
+            "name_on_graph": "Create Release DB"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
             "summary": "Merge DNA data",
-            "name_on_graph": "Merge all alignments for WGA Orthology QC"
+            "name_on_graph": "Merge all for OrthWGA"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-Preliminaries",
             "summary": "Backup release database",
-            "name_on_graph": "Backup the release database before merging the homology data"
+            "name_on_graph": "Backup release DB"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
             "summary": "Merge the homology pipelines",
-            "name_on_graph": "Merge the homology pipelines"
+            "name_on_graph": "Merge homologies"
          },
          {
             "assignee": "<RelCo>",

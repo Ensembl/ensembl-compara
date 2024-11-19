@@ -38,7 +38,8 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-7 -port 4617{code}",
-            "summary": "Prepare the master database"
+            "summary": "Prepare the master database",
+            "name_on_graph": "Prepare master DB"
          },
          {
             "assignee": "<RelCo>",
@@ -65,8 +66,7 @@
             "assignee": "<RelCo>",
             "component": "Production tasks",
             "description": "Review the gene-tree stats for each gene-tree pipeline, and address any issues.",
-            "summary": "Check gene-tree stats",
-            "name_on_graph": "Check gene-tree stats"
+            "summary": "Check gene-tree stats"
          }
       ],
       "labels": ["Production_anchor"],
@@ -80,14 +80,15 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+release+database",
-            "summary": "Create Release Database"
+            "summary": "Create Release Database",
+            "name_on_graph": "Create Release DB"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
             "summary": "Merge the homology pipelines",
-            "name_on_graph": "Merge the homology pipelines"
+            "name_on_graph": "Merge homologies"
          },
          {
             "assignee": "<RelCo>",
