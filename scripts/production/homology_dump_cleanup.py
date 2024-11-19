@@ -118,7 +118,7 @@ def get_division_info(db_url: str) -> tuple[str, int]:
         "SELECT meta_key, meta_value FROM meta WHERE meta_key IN ('division', 'schema_version');"
     )
 
-    metadata: dict[str, int] = dict(mysql_query(div_rel_query, db_url))
+    metadata: dict[str, Any] = dict(mysql_query(div_rel_query, db_url))
     return metadata["division"], int(metadata["schema_version"])
 
 
