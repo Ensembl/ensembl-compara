@@ -303,7 +303,10 @@ def parse_args() -> argparse.Namespace:
         "--num_releases_to_keep",
         type=int,
         required=True,
-        help="Keep homology dumps only for this number of releases, and delete all homology dumps from releases prior to that.",
+        help=(
+            "Keep homology dumps only for this number of releases,"
+            " and delete all homology dumps from releases prior to that."
+        ),
     )
     parser.add_argument(
         "--dry_run",
