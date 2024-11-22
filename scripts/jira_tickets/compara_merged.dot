@@ -1,22 +1,24 @@
 digraph {
     rankdir=LR;  # Left-to-right graph instead of top-to-bottom
-    "Register HAL alignment data";
-    "Patches against their primary assembly";
+    "Process Cactus data" -> "Merge Cactus data";
 
     "Genome dumps" -> { "Species-tree", "LastZ" };
-    "Species-tree" -> { "EPOwithExt", "Protein-trees", "Update MSA", "Mercator Pecan" };
+    "Species-tree" -> { "EPOwithExt", "ncRNA-trees", "Mercator Pecan", "Protein-trees", "Update MSA" };
     "Merge all LastZ" -> "EPOwithExt";
     "Member loading" -> { "Protein-trees", "ncRNA-trees", "Gene-tree reindexing", "Alt-alleles import" };
-    { "EPOwithExt", "Update MSA" } -> "Check MSA stats";
-    { "Merge all LastZ", "Check MSA stats" } -> "Merge all alignments for WGA Orthology QC";
-    "Merge all alignments for WGA Orthology QC" -> "Protein-trees" [fontsize="8", label="Orthologues\nonly"];
-    "Merge all alignments for WGA Orthology QC" -> "ncRNA-trees" [fontsize="8", label="Orthologues\nonly"];
+    { "EPOwithExt", "Merge all LastZ", "Update MSA" } -> "Merge all for OrthWGA";
+    "Merge all for OrthWGA" -> { "Protein-trees", "ncRNA-trees" } [fontsize="8", label="Orthologues\nonly"];
+
+    "Prepare master DB" -> { "Create Release DB", "Genome dumps", "LastZ patches", "Member loading", "Process Cactus data" };
+    "Create Release DB" -> { "Merge all LastZ", "Merge Cactus data" };
+    "EPOwithExt" -> "Build ancestral DB";
+
     "LastZ" -> "Merge all LastZ" -> "Synteny";
 
-    { "Protein-trees", "ncRNA-trees" } -> "Check gene-tree stats";
-    { "Check gene-tree stats", "Gene-tree reindexing", "Alt-alleles import" } -> "Backup the release database before merging the homology data";
-    "Backup the release database before merging the homology data" -> "Merge the homology pipelines";
+    { "Alt-alleles import", "Gene-tree reindexing", "ncRNA-trees", "Protein-trees" } -> "Backup release DB";
+    "Backup release DB" -> "Merge homologies";
 
+    // Shows finer-grained relationships
     "Gene-tree reindexing" -> "ncRNA-trees" [style="dashed", dir=none, fontsize="8", label="XOR"];
     "Gene-tree reindexing" -> "Protein-trees" [style="dashed", dir=none, fontsize="8", label="XOR"];
     "EPOwithExt" -> "EPOwithExt" [style="dashed", fontsize="8", label="Anchor\nmapping\nonly", headport="Primates:e", tailport="Mammals:e"];
@@ -26,5 +28,7 @@ digraph {
     "Update MSA" -> "Mercator Pecan" [style="dashed", dir=none, fontsize="8", label="XOR"];
 
     // Helps laying out the graph
-    {rank = same; "Genome dumps"; "Member loading"; }
+    { rank = same; "Genome dumps"; "Member loading"; "Prepare master DB"; "Species-tree"; }
+    { rank = same; "Alt-alleles import"; "Gene-tree reindexing"; "ncRNA-trees"; "Protein-trees"; }
+    { rank = same; "EPOwithExt"; "Mercator Pecan"; "Update MSA"; }
 }
