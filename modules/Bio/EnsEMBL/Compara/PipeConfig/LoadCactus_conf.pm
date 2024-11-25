@@ -219,7 +219,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'species_name_mapping' => $self->o('species_name_mapping'),
             },
-            -rc_name    => '4Gb_job',
+            -rc_name    => '8Gb_job',
             -flow_into  => [ 'hc_hal_sequences', 'load_species_tree' ],
         },
 
