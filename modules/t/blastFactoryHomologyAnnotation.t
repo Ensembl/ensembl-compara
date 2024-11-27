@@ -120,13 +120,13 @@ standaloneJob(
     [
         [
             'DATAFLOW',
-            $exp_dataflow_0,
-            4
+            $exp_dataflow_1,
+            1
         ],
         [
             'DATAFLOW',
-            $exp_dataflow_1,
-            1
+            $exp_dataflow_0,
+            4
         ],
         [
             'DATAFLOW',
