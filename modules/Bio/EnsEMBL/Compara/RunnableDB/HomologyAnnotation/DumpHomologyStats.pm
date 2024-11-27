@@ -55,10 +55,9 @@ sub run {
     mkpath($out_dir, 1, oct("755"));
 
     # Connect to per-species compara database:
-    my $compara_dba   = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba(  $self->param_required('per_species_db') );
+    my $compara_dba   = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('per_species_db') );
     my $meta          = $compara_dba->get_MetaContainer;
-    $meta->is_multispecies(1);
-    $meta->species_id($self->param_required('genome_db_id'));
+    $meta->species_id(1);
     # Get the reference collection info from the accumulator:
     my $refcoll_info = $self->param_required('refcoll_info')->{$self->param_required('genome_db_id')};
     # Set meta keys for reference database and collection:

@@ -98,10 +98,9 @@ sub write_output {
     my $gdb_adaptor       = $self->compara_dba->get_GenomeDBAdaptor;
 
     # Connect to the reference database:
-    my $refdb_compara_dba   = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba(  $self->param_required('rr_ref_db') );
+    my $refdb_compara_dba   = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('rr_ref_db') );
     my $refdb_meta          = $refdb_compara_dba->get_MetaContainer;
-    $refdb_meta->is_multispecies(1);
-    $refdb_meta->species_id(1);
+    # refdb_version meta entry must have an integer species_id (which is set to 1 by default)
     # Get the reference database version from the meta table:
     my $refdb_version       = $refdb_meta->single_value_by_key('refdb_version');
     if (! defined $refdb_version || $refdb_version eq '') {
@@ -119,7 +118,7 @@ sub write_output {
         my $ref_dump_dir  = $self->param_required('ref_dump_dir');
         # Returns all the directories (fasta, split_fasta & diamond pre-indexed db) under all the references
         my $ref_dirs      = collect_species_set_dirs($self->param_required('rr_ref_db'), $ref_taxa, $ref_dump_dir);
-        my $query_gdb = $gdb_adaptor->fetch_by_dbID($genome_db_id);
+        my $query_gdb     = $gdb_adaptor->fetch_by_dbID($genome_db_id);
 
         $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
         my $refcoll_info = {

@@ -156,10 +156,11 @@ def get_meta_value(rr_dbc: Connection, key: str) -> str:
         query = text(
             f"""
                 SELECT meta_value FROM meta
-                WHERE meta_key='{key}';
+                WHERE meta_key=:meta_key;
                 """
         )
-        result = connection.execute(query).fetchone()
+        params = {"meta_key": key}
+        result = connection.execute(query, params).fetchone()
     return result["meta_value"]
 
 
@@ -188,10 +189,7 @@ def main() -> None:
         }
 
     if args.refcoll:
-        json_data["refcoll_info"] = {
-            "refdb_version": get_meta_value(rr_dbc, "refdb_version"),
-            "ref_coll": get_meta_value(rr_dbc, "ref_coll"),
-        }
+        json_data["refcoll_info"] = {k: get_meta_value(rr_dbc, k) for k in ["refdb_version", "ref_coll"]}
 
     with open(args.output, "w", encoding="utf-8") as outfile:
         json.dump(json_data, outfile)
