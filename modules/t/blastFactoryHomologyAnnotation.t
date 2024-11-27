@@ -50,6 +50,17 @@ my $blast_db_1 = "$ref_dump_dir/homo_sapiens.GRCh38.2019-06.dmnd";
 my $blast_db_2 = "$ref_dump_dir/rattus_norvegicus.RGSC3.4.2009-03-Ensembl.dmnd";
 
 # Expected dataflow output
+my $exp_dataflow_0 = {
+    'genome_db_id' => 135,
+    'refcoll_info' => {
+        'query_assembly' => 'CanFam3.1',
+        'query_genebuild' => '2011-11-Ensembl',
+        'query_prodname' => 'canis_lupus_familiaris',
+        'ref_coll' => 'collection-mammalia',
+        'refdb_version' => 'refdb-test'
+        }
+};
+
 my $exp_dataflow_1 = {
     'genome_db_id' => 135,
     'ref_taxa' => 'collection-mammalia'
@@ -107,6 +118,11 @@ standaloneJob(
     },
     # Output
     [
+        [
+            'DATAFLOW',
+            $exp_dataflow_0,
+            4
+        ],
         [
             'DATAFLOW',
             $exp_dataflow_1,
