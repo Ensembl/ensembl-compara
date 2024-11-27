@@ -54,11 +54,22 @@ sub run {
     my $filepath = $self->param_required('filepath');
     mkpath($out_dir, 1, oct("755"));
 
+    # Connect to per-species compara database:
+    my $compara_dba   = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba(  $self->param_required('per_species_db') );
+    my $meta          = $compara_dba->get_MetaContainer;
+    $meta->is_multispecies(1);
+    $meta->species_id($self->param_required('genome_db_id'));
+    # Get the reference collection info from the accumulator:
+    my $refcoll_info = $self->param_required('refcoll_info')->{$self->param_required('genome_db_id')};
+    # Set meta keys for reference database and collection:
+    $meta->store_key_value('refdb_version', $refcoll_info->{'refdb_version'});
+    $meta->store_key_value('ref_coll', $refcoll_info->{'ref_coll'});
+
     my $homology_stats_script = $self->param_required('homology_stats_script');
     my $db = $self->param_required('per_species_db');
     my $refdb = $self->param_required('ref_dbname');
 
-    my $cmd = "python $homology_stats_script -x -d '$db' -r $refdb -o '$filepath'";
+    my $cmd = "python $homology_stats_script -i -x -d '$db' -r $refdb -o '$filepath'";
     my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
 }
 

@@ -45,24 +45,19 @@ def parse_arguments() -> argparse.Namespace:
         description="Query gene and homology counts from an Ensembl compara rapid release database."
     )
     parser.add_argument("-d", "--database", required=True, help="Database URL")
-    parser.add_argument(
-        "-x", "--detailed", action="store_true", help="Enable detailed output."
-    )
+    parser.add_argument("-x", "--detailed", action="store_true", help="Enable detailed output.")
+    parser.add_argument("-i", "--refcoll", action="store_true", help="Save reference collection information.")
     parser.add_argument(
         "-r",
         "--ref_db",
         required=True,
         help="Reference database name. Must be on same server as target database.",
     )
-    parser.add_argument(
-        "-o", "--output", required=True, help="Output file in JSON format"
-    )
+    parser.add_argument("-o", "--output", required=True, help="Output file in JSON format")
     return parser.parse_args()
 
 
-def get_closest_ref(
-    rr_dbc: DBConnection, ref_db: str
-) -> Tuple[int, str, int, str, int]:
+def get_closest_ref(rr_dbc: DBConnection, ref_db: str) -> Tuple[int, str, int, str, int]:
     """
     Get the closest reference for the given rapid release database.
 
@@ -94,15 +89,11 @@ def get_closest_ref(
                 continue
             anc = Taxonomy.all_common_ancestors(session, query_taxid, taxid)
             res.append((gdb_id, name, taxid, len(anc)))
-    ref_gdb, ref_species, ref_taxid, _ = sorted(
-        res, key=lambda x: (x[3], x[2]), reverse=True
-    )[0]
+    ref_gdb, ref_species, ref_taxid, _ = sorted(res, key=lambda x: (x[3], x[2]), reverse=True)[0]
     return ref_gdb, ref_species, ref_taxid, query_species, query_taxid
 
 
-def query_rr_database(
-    rr_dbc: Connection, genome_db_id: int, ref_db: str
-) -> Tuple[int, int]:
+def query_rr_database(rr_dbc: Connection, genome_db_id: int, ref_db: str) -> Tuple[int, int]:
     """
     Query the database for the number of homologs and genes.
 
@@ -147,6 +138,31 @@ def query_rr_database(
     return nr_homologs, nr_genes
 
 
+def get_meta_value(rr_dbc: Connection, key: str) -> str:
+    """
+    Retrieves the value of a meta key from the meta table.
+
+    Args:
+        rr_dbc: The database connection object used to query the database.
+        key: The key whose corresponding value is to be retrieved.
+
+    Returns:
+        The value associated with the specified meta key.
+
+    Raises:
+        KeyError: If the key does not exist in the meta table.
+    """
+    with rr_dbc.connect() as connection:
+        query = text(
+            f"""
+                SELECT meta_value FROM meta
+                WHERE meta_key='{key}';
+                """
+        )
+        result = connection.execute(query).fetchone()
+    return result["meta_value"]
+
+
 def main() -> None:
     """
     Main function to run the script.
@@ -169,6 +185,12 @@ def main() -> None:
             "production_name": query_species,
             "homology_coverage": perc_homologs,
             "reference_species": ref_species,
+        }
+
+    if args.refcoll:
+        json_data["refcoll_info"] = {
+            "refdb_version": get_meta_value(rr_dbc, "refdb_version"),
+            "ref_coll": get_meta_value(rr_dbc, "ref_coll"),
         }
 
     with open(args.output, "w", encoding="utf-8") as outfile:

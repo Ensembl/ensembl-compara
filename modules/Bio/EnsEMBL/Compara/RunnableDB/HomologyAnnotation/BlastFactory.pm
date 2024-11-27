@@ -96,6 +96,18 @@ sub write_output {
     my $step              = $self->param('step');
     my @query_member_list = @{$self->param('query_members')};
     my $gdb_adaptor       = $self->compara_dba->get_GenomeDBAdaptor;
+
+    # Connect to the reference database:
+    my $refdb_compara_dba   = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba(  $self->param_required('rr_ref_db') );
+    my $refdb_meta          = $refdb_compara_dba->get_MetaContainer;
+    $refdb_meta->is_multispecies(1);
+    $refdb_meta->species_id(1);
+    # Get the reference database version from the meta table:
+    my $refdb_version       = $refdb_meta->single_value_by_key('refdb_version');
+    if (! defined $refdb_version || $refdb_version eq '') {
+        $self->die_no_retry("Refrence database version key (refdb_version) missing from meta table or empty!");
+    }
+
     my @funnel_output;
 
     foreach my $genome ( @query_member_list ) {
@@ -107,10 +119,19 @@ sub write_output {
         my $ref_dump_dir  = $self->param_required('ref_dump_dir');
         # Returns all the directories (fasta, split_fasta & diamond pre-indexed db) under all the references
         my $ref_dirs      = collect_species_set_dirs($self->param_required('rr_ref_db'), $ref_taxa, $ref_dump_dir);
+        my $query_gdb = $gdb_adaptor->fetch_by_dbID($genome_db_id);
 
         $self->dataflow_output_id( { 'genome_db_id' => $genome_db_id, 'ref_taxa' => $ref_taxa }, 1 );
+        my $refcoll_info = {
+                            'ref_coll' => $ref_taxa,
+                            'refdb_version' => $refdb_version,
+                            'query_prodname' => $query_gdb->name,
+                            'query_assembly' => $query_gdb->assembly,
+                            'query_genebuild' => $query_gdb->genebuild,
+                            };
 
-        my $query_gdb = $gdb_adaptor->fetch_by_dbID($genome_db_id);
+        $self->dataflow_output_id( { 'refcoll_info' => $refcoll_info, 'genome_db_id' => $genome_db_id }, 4 );
+
         foreach my $ref ( @$ref_dirs ) {
 
             my $reason_to_skip;
@@ -163,6 +184,8 @@ sub write_output {
             push @funnel_output, { 'ref_genome_db_id' => $target_genome_db_id, 'genome_db_id' => $genome_db_id };
         }
     }
+
+
     $self->dataflow_output_id( { 'genome_db_pairs' => \@funnel_output }, 3 );
 }
 
