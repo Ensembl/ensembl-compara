@@ -154,7 +154,7 @@ def get_meta_value(rr_dbc: Connection, key: str) -> str:
     """
     with rr_dbc.connect() as connection:
         query = text(
-            f"""
+            """
                 SELECT meta_value FROM meta
                 WHERE meta_key=:meta_key;
                 """
