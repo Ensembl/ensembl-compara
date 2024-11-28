@@ -87,9 +87,9 @@ sub new {
         $self->{_csv_issue_id} = 1;
         $self->{_csv_max_col_counts} = {};
     } elsif ( $ENV{'JIRA_AUTH_TOKEN'} ) {
-        # this token should be your 'user:pass' string encoded to base64
-        # export JIRA_AUTH_TOKEN=$(echo -n 'user:pass' | openssl base64)
-        # https://developer.atlassian.com/server/jira/platform/basic-authentication/
+        # this token should be a personal access token generated
+        # using the JIRA website.
+        # https://confluence.atlassian.com/enterprise/using-personal-access-tokens-1026032365.html
         $self->{_auth_token} = $ENV{'JIRA_AUTH_TOKEN'};
         print STDERR "Authenticating with token '" . $self->{_auth_token} . "'\n";
     } else {
@@ -965,7 +965,7 @@ sub _http_request {
     $self->{_logger}->debug("$method Request on $url\n");
     my $request;
     if ( $self->{_auth_token} ) {
-        my $header = ['Authorization' => "Basic " . $self->{_auth_token}, 'Content-Type' => 'application/json'];
+        my $header = ['Authorization' => "Bearer " . $self->{_auth_token}, 'Content-Type' => 'application/json'];
         $request = HTTP::Request->new($method, $url, $header);
     } else {
         my $header = ['Content-Type' => 'application/json'];
