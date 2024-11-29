@@ -277,6 +277,7 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'diamond_blastp' ],
                 '1->A' => [ 'make_query_blast_db' ],
                 'A->3' => [ 'create_mlss_and_batch_members' ],
+                4 => [ '?accu_name=refcoll_info&accu_address={genome_db_id}&accu_input_variable=refcoll_info' ],
             },
         },
 
@@ -298,7 +299,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A'  => { 'datacheck_factory' => { 'compara_db' => $self->o('compara_db'), %dc_parameters } },
-                'A->1'  => [ 'create_db_factory' ],
+                'A->1'  => [ {'create_db_factory' => INPUT_PLUS()}],
             }
         },
 
