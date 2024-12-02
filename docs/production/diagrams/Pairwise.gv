@@ -1,59 +1,62 @@
 digraph test {
 	ratio="compress"; concentrate = "true"; name = "AnalysisWorkflow"; pad = "1.0";
-	analysis_LastZ [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>LastZ (6)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">497988d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_LastZ_himem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>LastZ_himem (7)</td></tr><tr><td> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_alignment_chains [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>alignment_chains (16)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">212235d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_alignment_chains_himem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>alignment_chains_himem (17)</td></tr><tr><td> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_alignment_chains_hugemem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>alignment_chains_hugemem (18)</td></tr><tr><td> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_alignment_nets [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>alignment_nets (22)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">42921d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_alignment_nets_himem [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>alignment_nets_himem (23)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">3d</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
-	analysis_alignment_nets_hugemem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>alignment_nets_hugemem (24)</td></tr><tr><td> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
-	analysis_check_no_partial_gabs [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>check_no_partial_gabs (8)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_chunk_and_group_dna [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>chunk_and_group_dna (4)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">8d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_coding_exon_stats [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>coding_exon_stats (36)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">38450d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_coding_exon_stats_summary [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>coding_exon_stats_summary (37)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_create_alignment_chains_jobs [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>create_alignment_chains_jobs (15)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_create_alignment_nets_jobs [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>create_alignment_nets_jobs (21)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_create_filter_duplicates_jobs [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>create_filter_duplicates_jobs (10)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">14d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_create_filter_duplicates_net_jobs [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>create_filter_duplicates_net_jobs (26)</td></tr><tr><td> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
-	analysis_create_pair_aligner_jobs [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>create_pair_aligner_jobs (5)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_detect_component_mlsss [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>detect_component_mlsss (31)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">1d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_filter_duplicates [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>filter_duplicates (11)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">38450d</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
-	analysis_filter_duplicates_himem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>filter_duplicates_himem (12)</td></tr><tr><td> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
-	analysis_filter_duplicates_net [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>filter_duplicates_net (27)</td></tr><tr><td> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
-	analysis_filter_duplicates_net_himem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>filter_duplicates_net_himem (28)</td></tr><tr><td> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
-	analysis_get_species_list [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>get_species_list (1)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">1d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_healthcheck [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>healthcheck (34)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">14d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_lift_to_principal [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>lift_to_principal (32)</td></tr><tr><td> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_no_chunk_and_group_dna [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>no_chunk_and_group_dna (14)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">8d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_pairaligner_stats [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>pairaligner_stats (35)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_parse_pair_aligner_conf [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>parse_pair_aligner_conf (3)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">1d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_populate_new_database [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>populate_new_database (2)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">1d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_remove_inconsistencies_after_chain [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>remove_inconsistencies_after_chain (19)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_remove_inconsistencies_after_net [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>remove_inconsistencies_after_net (25)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_remove_inconsistencies_after_net_fd [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>remove_inconsistencies_after_net_fd (29)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_run_healthchecks [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>run_healthchecks (33)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_update_max_alignment_length_after_FD [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>update_max_alignment_length_after_FD (13)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_update_max_alignment_length_after_chain [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>update_max_alignment_length_after_chain (20)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_update_max_alignment_length_after_net [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>update_max_alignment_length_after_net (30)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	analysis_update_max_alignment_length_before_FD [fillcolor="#00bfff", fontname="Times-Roman", label=<<table border="0" cellspacing="0" cellpadding="1"><tr><td>update_max_alignment_length_before_FD (9)</td></tr><tr><td> </td></tr><tr><td bgcolor="#00bfff" width="100%">7d</td></tr></table>>, shape="Mrecord", style="filled"];
-	dfr_11_mp [fixedsize="1", label="dfr_11_mp", shape="point", width="0.01"];
-	dfr_12_mp [fixedsize="1", label="dfr_12_mp", shape="point", width="0.01"];
-	dfr_18_mp [fixedsize="1", label="dfr_18_mp", shape="point", width="0.01"];
-	dfr_19_mp [fixedsize="1", label="dfr_19_mp", shape="point", width="0.01"];
-	dfr_31_mp [fixedsize="1", label="dfr_31_mp", shape="point", width="0.01"];
-	dfr_32_mp [fixedsize="1", label="dfr_32_mp", shape="point", width="0.01"];
-	dfr_33_mp [fixedsize="1", label="dfr_33_mp", shape="point", width="0.01"];
-	dfr_34_mp [fixedsize="1", label="dfr_34_mp", shape="point", width="0.01"];
-	dfr_35_mp [fixedsize="1", label="dfr_35_mp", shape="point", width="0.01"];
-	dfr_36_mp [fixedsize="1", label="dfr_36_mp", shape="point", width="0.01"];
+	analysis_LastZ [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">LastZ (6)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">400021d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_LastZ_himem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">LastZ_himem (7)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_alignment_chains [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">alignment_chains (16)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">162204d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_alignment_chains_himem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">alignment_chains_himem (17)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_alignment_chains_hugemem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">alignment_chains_hugemem (18)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_alignment_nets [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">alignment_nets (22)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">28574d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_alignment_nets_himem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">alignment_nets_himem (23)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
+	analysis_alignment_nets_hugemem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">alignment_nets_hugemem (24)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
+	analysis_check_no_partial_gabs [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">check_no_partial_gabs (8)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_chunk_and_group_dna [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">chunk_and_group_dna (4)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">6d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_coding_exon_stats [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">coding_exon_stats (36)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">76424d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_coding_exon_stats_summary [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">coding_exon_stats_summary (37)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_create_alignment_chains_jobs [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">create_alignment_chains_jobs (15)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_create_alignment_nets_jobs [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">create_alignment_nets_jobs (21)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_create_filter_duplicates_jobs [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">create_filter_duplicates_jobs (10)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">10d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_create_filter_duplicates_net_jobs [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">create_filter_duplicates_net_jobs (26)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
+	analysis_create_pair_aligner_jobs [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">create_pair_aligner_jobs (5)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_detect_component_mlsss [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">detect_component_mlsss (31)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">1d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_filter_duplicates [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">filter_duplicates (11)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">76424d</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
+	analysis_filter_duplicates_himem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">filter_duplicates_himem (12)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
+	analysis_filter_duplicates_net [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">filter_duplicates_net (27)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
+	analysis_filter_duplicates_net_himem [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">filter_duplicates_net_himem (28)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="dashed, filled"];
+	analysis_get_species_list [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">get_species_list (1)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">1d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_healthcheck [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">healthcheck (34)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">10d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_lift_to_principal [fillcolor="white", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">lift_to_principal (32)</td></tr><tr><td colspan="1"> </td></tr><tr><td>=0</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_no_chunk_and_group_dna [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">no_chunk_and_group_dna (14)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">6d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_pairaligner_stats [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">pairaligner_stats (35)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_parse_pair_aligner_conf [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">parse_pair_aligner_conf (3)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">1d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_populate_new_database [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">populate_new_database (2)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">1d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_remove_inconsistencies_after_chain [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">remove_inconsistencies_after_chain (19)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_remove_inconsistencies_after_net [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">remove_inconsistencies_after_net (25)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_remove_inconsistencies_after_net_fd [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">remove_inconsistencies_after_net_fd (29)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_run_healthchecks [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">run_healthchecks (33)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_update_max_alignment_length_after_FD [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">update_max_alignment_length_after_FD (13)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_update_max_alignment_length_after_chain [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">update_max_alignment_length_after_chain (20)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_update_max_alignment_length_after_net [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">update_max_alignment_length_after_net (30)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	analysis_update_max_alignment_length_before_FD [fillcolor="DeepSkyBlue", fontname="Times-Roman", label=<<table border="0" cellborder="0" cellspacing="0" cellpadding="1"><tr><td colspan="1">update_max_alignment_length_before_FD (9)</td></tr><tr><td colspan="1"> </td></tr><tr><td bgcolor="DeepSkyBlue" width="100%">5d</td></tr></table>>, shape="Mrecord", style="filled"];
+	dfr_11_mp [fixedsize="1", height="0.01", label="dfr_11_mp", shape="point", width="0.01"];
+	dfr_12_mp [fixedsize="1", height="0.01", label="dfr_12_mp", shape="point", width="0.01"];
+	dfr_20_mp [fixedsize="1", height="0.01", label="dfr_20_mp", shape="point", width="0.01"];
+	dfr_21_mp [fixedsize="1", height="0.01", label="dfr_21_mp", shape="point", width="0.01"];
+	dfr_36_mp [fixedsize="1", height="0.01", label="dfr_36_mp", shape="point", width="0.01"];
+	dfr_37_mp [fixedsize="1", height="0.01", label="dfr_37_mp", shape="point", width="0.01"];
+	dfr_38_mp [fixedsize="1", height="0.01", label="dfr_38_mp", shape="point", width="0.01"];
+	dfr_39_mp [fixedsize="1", height="0.01", label="dfr_39_mp", shape="point", width="0.01"];
+	dfr_40_mp [fixedsize="1", height="0.01", label="dfr_40_mp", shape="point", width="0.01"];
+	dfr_41_mp [fixedsize="1", height="0.01", label="dfr_41_mp", shape="point", width="0.01"];
+	analysis_LastZ -> analysis_LastZ_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-2\n"];
 	analysis_LastZ -> analysis_LastZ_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-1\n"];
 	analysis_LastZ -> analysis_create_filter_duplicates_jobs [arrowhead="tee", color="red"];
 	analysis_alignment_chains -> analysis_alignment_chains_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-1\n"];
 	analysis_alignment_chains -> analysis_create_alignment_nets_jobs [arrowhead="tee", color="red"];
 	analysis_alignment_chains_himem -> analysis_alignment_chains_hugemem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-1\n"];
+	analysis_alignment_nets -> analysis_alignment_nets_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-2\n"];
 	analysis_alignment_nets -> analysis_alignment_nets_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-1\n"];
 	analysis_alignment_nets -> analysis_remove_inconsistencies_after_net [arrowhead="tee", color="red"];
+	analysis_alignment_nets_himem -> analysis_alignment_nets_hugemem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-2\n"];
 	analysis_alignment_nets_himem -> analysis_alignment_nets_hugemem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-1\n"];
 	analysis_alignment_nets_himem -> analysis_remove_inconsistencies_after_net [arrowhead="tee", color="red"];
 	analysis_alignment_nets_hugemem -> analysis_remove_inconsistencies_after_net [arrowhead="tee", color="red"];
@@ -61,8 +64,8 @@ digraph test {
 	analysis_check_no_partial_gabs -> analysis_update_max_alignment_length_before_FD [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
 	analysis_chunk_and_group_dna -> analysis_create_pair_aligner_jobs [arrowhead="tee", color="red"];
 	analysis_create_alignment_chains_jobs -> analysis_create_alignment_nets_jobs [arrowhead="tee", color="red"];
-	analysis_create_alignment_chains_jobs -> dfr_18_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
-	analysis_create_alignment_chains_jobs -> dfr_19_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
+	analysis_create_alignment_chains_jobs -> dfr_20_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
+	analysis_create_alignment_chains_jobs -> dfr_21_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
 	analysis_create_alignment_nets_jobs -> analysis_alignment_nets [color="blue", fontcolor="blue", fontname="Helvetica", label="#2\n"];
 	analysis_create_alignment_nets_jobs -> analysis_remove_inconsistencies_after_net [arrowhead="tee", color="red"];
 	analysis_create_alignment_nets_jobs -> analysis_remove_inconsistencies_after_net [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
@@ -73,18 +76,20 @@ digraph test {
 	analysis_create_pair_aligner_jobs -> analysis_create_filter_duplicates_jobs [arrowhead="tee", color="red"];
 	analysis_create_pair_aligner_jobs -> dfr_11_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
 	analysis_create_pair_aligner_jobs -> dfr_12_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
-	analysis_detect_component_mlsss -> dfr_31_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
-	analysis_detect_component_mlsss -> dfr_32_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#3"];
+	analysis_detect_component_mlsss -> dfr_36_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
+	analysis_detect_component_mlsss -> dfr_37_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#3"];
+	analysis_filter_duplicates -> analysis_filter_duplicates_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-2\n"];
 	analysis_filter_duplicates -> analysis_filter_duplicates_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-1\n"];
 	analysis_filter_duplicates -> analysis_update_max_alignment_length_after_FD [arrowhead="tee", color="red"];
 	analysis_filter_duplicates_himem -> analysis_update_max_alignment_length_after_FD [arrowhead="tee", color="red"];
+	analysis_filter_duplicates_net -> analysis_filter_duplicates_net_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-2\n"];
 	analysis_filter_duplicates_net -> analysis_filter_duplicates_net_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-1\n"];
 	analysis_filter_duplicates_net -> analysis_remove_inconsistencies_after_net_fd [arrowhead="tee", color="red"];
 	analysis_filter_duplicates_net_himem -> analysis_remove_inconsistencies_after_net_fd [arrowhead="tee", color="red"];
 	analysis_get_species_list -> analysis_populate_new_database [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
 	analysis_no_chunk_and_group_dna -> analysis_create_alignment_chains_jobs [arrowhead="tee", color="red"];
-	analysis_pairaligner_stats -> dfr_35_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
-	analysis_pairaligner_stats -> dfr_36_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
+	analysis_pairaligner_stats -> dfr_40_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
+	analysis_pairaligner_stats -> dfr_41_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
 	analysis_parse_pair_aligner_conf -> analysis_chunk_and_group_dna [color="blue", fontcolor="blue", fontname="Helvetica", label="#2\n"];
 	analysis_parse_pair_aligner_conf -> analysis_create_alignment_chains_jobs [color="blue", fontcolor="blue", fontname="Helvetica", label="#5\n"];
 	analysis_parse_pair_aligner_conf -> analysis_create_alignment_nets_jobs [color="blue", fontcolor="blue", fontname="Helvetica", label="#6\n"];
@@ -99,8 +104,8 @@ digraph test {
 	analysis_remove_inconsistencies_after_net -> analysis_create_filter_duplicates_net_jobs [arrowhead="tee", color="red"];
 	analysis_remove_inconsistencies_after_net -> analysis_remove_inconsistencies_after_net_fd [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
 	analysis_remove_inconsistencies_after_net_fd -> analysis_update_max_alignment_length_after_net [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
-	analysis_run_healthchecks -> dfr_33_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
-	analysis_run_healthchecks -> dfr_34_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
+	analysis_run_healthchecks -> dfr_38_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#1"];
+	analysis_run_healthchecks -> dfr_39_mp [arrowhead="none", color="black", fontcolor="black", fontname="Helvetica", headport="n", label="#2"];
 	analysis_update_max_alignment_length_after_FD -> analysis_no_chunk_and_group_dna [arrowhead="tee", color="red"];
 	analysis_update_max_alignment_length_after_chain -> analysis_create_alignment_nets_jobs [arrowhead="tee", color="red"];
 	analysis_update_max_alignment_length_after_net -> analysis_detect_component_mlsss [arrowhead="tee", color="red"];
@@ -109,21 +114,21 @@ digraph test {
 	dfr_11_mp -> analysis_check_no_partial_gabs [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
 	dfr_12_mp -> analysis_LastZ [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
 	dfr_12_mp -> dfr_11_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
-	dfr_18_mp -> analysis_remove_inconsistencies_after_chain [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
-	dfr_19_mp -> analysis_alignment_chains [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
-	dfr_19_mp -> dfr_18_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
-	dfr_31_mp -> analysis_run_healthchecks [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
-	dfr_32_mp -> analysis_lift_to_principal [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
-	dfr_32_mp -> dfr_31_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
-	dfr_33_mp -> analysis_pairaligner_stats [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
-	dfr_34_mp -> analysis_healthcheck [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
-	dfr_34_mp -> dfr_33_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
-	dfr_35_mp -> analysis_coding_exon_stats_summary [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
-	dfr_36_mp -> analysis_coding_exon_stats [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
-	dfr_36_mp -> dfr_35_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
+	dfr_20_mp -> analysis_remove_inconsistencies_after_chain [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_21_mp -> analysis_alignment_chains [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_21_mp -> dfr_20_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
+	dfr_36_mp -> analysis_run_healthchecks [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_37_mp -> analysis_lift_to_principal [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_37_mp -> dfr_36_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
+	dfr_38_mp -> analysis_pairaligner_stats [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_39_mp -> analysis_healthcheck [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_39_mp -> dfr_38_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
+	dfr_40_mp -> analysis_coding_exon_stats_summary [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_41_mp -> analysis_coding_exon_stats [color="blue", fontcolor="blue", fontname="Helvetica", label="\n", tailport="s"];
+	dfr_41_mp -> dfr_40_mp [arrowhead="tee", arrowtail="crow", color="red", dir="both", style="dashed"];
 
-subgraph "cluster_vertebrates_lastz_batch1_113" {
-	label="vertebrates_lastz_batch1_113";
+subgraph "cluster_vertebrates_lastz_batch1_114" {
+	label="vertebrates_lastz_batch1_114";
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
@@ -166,7 +171,7 @@ subgraph "cluster_vertebrates_lastz_batch1_113" {
 		analysis_LastZ;
 		analysis_LastZ_himem;
 	}
-	subgraph "cluster_cl_dfr_18_mp" {
+	subgraph "cluster_cl_dfr_20_mp" {
 		label="";
 		style="filled";
 		colorscheme="blues9";
@@ -176,7 +181,7 @@ subgraph "cluster_vertebrates_lastz_batch1_113" {
 		analysis_alignment_chains_himem;
 		analysis_alignment_chains_hugemem;
 	}
-	subgraph "cluster_cl_dfr_31_mp" {
+	subgraph "cluster_cl_dfr_36_mp" {
 		label="";
 		style="filled";
 		colorscheme="blues9";
@@ -184,7 +189,7 @@ subgraph "cluster_vertebrates_lastz_batch1_113" {
 		color="2";
 		analysis_lift_to_principal;
 	}
-	subgraph "cluster_cl_dfr_33_mp" {
+	subgraph "cluster_cl_dfr_38_mp" {
 		label="";
 		style="filled";
 		colorscheme="blues9";
@@ -192,7 +197,7 @@ subgraph "cluster_vertebrates_lastz_batch1_113" {
 		color="2";
 		analysis_healthcheck;
 	}
-	subgraph "cluster_cl_dfr_35_mp" {
+	subgraph "cluster_cl_dfr_40_mp" {
 		label="";
 		style="filled";
 		colorscheme="blues9";
@@ -202,13 +207,13 @@ subgraph "cluster_vertebrates_lastz_batch1_113" {
 	}
 	dfr_11_mp;
 	dfr_12_mp;
-	dfr_18_mp;
-	dfr_19_mp;
-	dfr_31_mp;
-	dfr_32_mp;
-	dfr_33_mp;
-	dfr_34_mp;
-	dfr_35_mp;
+	dfr_20_mp;
+	dfr_21_mp;
 	dfr_36_mp;
+	dfr_37_mp;
+	dfr_38_mp;
+	dfr_39_mp;
+	dfr_40_mp;
+	dfr_41_mp;
 }
 }
