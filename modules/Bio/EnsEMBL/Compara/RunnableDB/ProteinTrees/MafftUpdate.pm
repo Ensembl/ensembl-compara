@@ -15,17 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MafftUpdate
 
-=head1 DESCRIPTION
+=head1 DEPRECATION NOTICE
 
-This RunnableDB adds gene sequences to already existing alignments by
-retrieving genes from the gene_tree_root_tag 'updated_genes_list' which
-contains a comma separated string value of "stable_id genome_db_id"
+This runnable is deprecated, and may be removed in a future release.
 
 =cut
 
@@ -49,6 +45,8 @@ sub param_defaults {
 
 sub fetch_input {
     my ($self) = @_;
+
+    $self->warning("RunnableDB::ProteinTrees::MafftUpdate is deprecated, and may be removed in a future release");
 
     #get current tree adaptor
     $self->param( 'current_tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );

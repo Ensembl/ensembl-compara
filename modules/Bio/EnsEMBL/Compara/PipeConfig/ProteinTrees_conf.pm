@@ -140,7 +140,6 @@ sub default_options {
         'examl_ptiles'            => 16,
         'treebest_threshold_n_residues' => 10000,
         'treebest_threshold_n_genes'    => 400,
-        'update_threshold_trees'    => 0.2,
 
     # sequence type used on the phylogenetic inferences
     # It has to be set to 1 for the strains
@@ -236,10 +235,6 @@ sub default_options {
         'loadmembers_capacity'      =>  30,
         'HMMer_classifyPantherScore_capacity'   => 1000,
         'HMMer_search_capacity'     => 8000,
-        'copy_trees_capacity'       => 50,
-        'copy_alignments_capacity'  => 50,
-        'mafft_update_capacity'     => 50,
-        'raxml_update_capacity'     => 50,
         'ortho_stats_capacity'      => 10,
         'cafe_capacity'             => 50,
 
@@ -297,10 +292,8 @@ sub default_options {
         # How will the pipeline create clusters (families) ?
         # Possible values: 'blastp' (default), 'hmm', 'hybrid'
         #   'blastp' means that the pipeline will run a all-vs-all blastp comparison of the proteins and run hcluster to create clusters. This can take a *lot* of compute
-        #   'ortholog' means that the pipeline will use previously inferred orthologs to perform a cluster projection
         #   'hmm' means that the pipeline will run an HMM classification
         #   'hybrid' is like "hmm" except that the unclustered proteins go to a all-vs-all blastp + hcluster stage
-        #   'topup' means that the HMM classification is reused from prev_rel_db, and topped-up with the updated / new species  >> UNIMPLEMENTED <<
         'clustering_mode'           => 'hybrid',
 
         # List of species some genes have been projected from
@@ -393,11 +386,11 @@ sub pipeline_checks_pre_init {
 
     my %reuse_modes = (clusters => 1, members => 1);
     die "'reuse_level' must be set to one of: ".join(", ", keys %reuse_modes) unless $self->o('reuse_level') and $reuse_modes{$self->o('reuse_level')};
-    my %clustering_modes = (blastp => 1, ortholog => 1, hmm => 1, hybrid => 1, topup => 1);
+    my %clustering_modes = (blastp => 1, hmm => 1, hybrid => 1);
     die "'clustering_mode' must be set to one of: ".join(", ", keys %clustering_modes) unless $self->o('clustering_mode') and $clustering_modes{$self->o('clustering_mode')};
 
     # In HMM mode the library must exist
-    if (($self->o('clustering_mode') ne 'blastp') and ($self->o('clustering_mode') ne 'ortholog')) {
+    if (($self->o('clustering_mode') eq 'hmm') or ($self->o('clustering_mode') eq 'hybrid')) {
         my $lib = $self->o('hmm_library_basedir');
             if ($self->o('hmm_library_version') == 2){
                 die "'$lib' does not seem to be a valid HMM library (Panther-style)\n" unless ((-d $lib) && (-d "$lib/books") && (-d "$lib/globals") && (-s "$lib/globals/con.Fasta"));
@@ -596,15 +589,6 @@ sub core_pipeline_analyses {
         'treebest_exe'              => $self->o('treebest_exe'),
         'output_clusterset_id'      => $self->o('use_notung') ? 'raxml' : 'default',
         'input_clusterset_id'       => 'raxml_parsimony',
-    );
-    my %raxml_update_parameters = (
-        'raxml_pthread_exe_sse3'    => $self->o('raxml_pthread_exe_sse3'),
-        'raxml_pthread_exe_avx'     => $self->o('raxml_pthread_exe_avx'),
-        'raxml_exe_sse3'            => $self->o('raxml_exe_sse3'),
-        'raxml_exe_avx'             => $self->o('raxml_exe_avx'),
-        'treebest_exe'              => $self->o('treebest_exe'),
-		'input_clusterset_id'	    => 'copy',
-        'output_clusterset_id'      => 'raxml_update',
     );
 
     my %raxml_bl_parameters = (
@@ -999,35 +983,6 @@ sub core_pipeline_analyses {
             %hc_analysis_params,
         },
 
-        {   -logic_name => 'copy_trees_from_previous_release',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB',
-            -parameters => {
-                'input_clusterset_id'               => 'default',
-                'output_clusterset_id'              => 'copy',
-                'branch_for_new_tree'               => '3',
-                'branch_for_wiped_out_trees'        => '4',
-                'branch_for_update_threshold_trees' => '5',
-                'update_threshold_trees'            => $self->o('update_threshold_trees'),
-            },
-            -flow_into  => {
-                 1 => [ 'copy_alignments_from_previous_release' ],
-                 3 => [ 'alignment_entry_point' ],
-                 4 => [ 'alignment_entry_point' ],
-                 5 => [ 'alignment_entry_point' ],
-            },
-            -hive_capacity        => $self->o('copy_trees_capacity'),
-            -rc_name => '8Gb_job',
-        },
-
-        {   -logic_name => 'copy_alignments_from_previous_release',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CopyAlignmentsFromDB',
-            -parameters => {
-                'input_clusterset_id'   => 'default',
-            },
-            -flow_into  			=> [ 'mafft_update' ],
-            -hive_capacity          => $self->o('copy_alignments_capacity'),
-            -rc_name => '8Gb_job',
-        },
 # ---------------------------------------------[reuse members]-----------------------------------------------------------------------
 
         {   -logic_name => 'member_copy_factory',
@@ -1298,16 +1253,6 @@ sub core_pipeline_analyses {
                     ),
                 }
             },
-
-        {
-            -logic_name     => 'flag_update_clusters',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FlagUpdateClusters',
-			-parameters     => {
-                'update_threshold_trees' => $self->o('update_threshold_trees'),
-			},
-            -rc_name => '16Gb_job',
-        },
-
 
 # -------------------------------------------------[BuildHMMprofiles pipeline]-------------------------------------------------------
 
@@ -1595,8 +1540,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                 '1->A' => WHEN(
                     '#clustering_mode# eq "blastp"'     => 'prepare_blastdb',
-                    '#clustering_mode# eq "ortholog"'   => 'ortholog_cluster',
-                    ELSE                                   'load_InterproAnnotation',   # hmm, hybrid, topup
+                    ELSE                                   'load_InterproAnnotation',   # hmm, hybrid
                 ),
                 'A->1' => [ 'clustering_funnel_check' ],
             },
@@ -1611,15 +1555,6 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'hcluster_dump_input_per_genome' ],
                 'A->1' => [ 'hcluster_merge_factory' ],
             },
-        },
-
-        {   -logic_name => 'ortholog_cluster',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthologClusters',
-            -parameters => {
-                'sort_clusters'         => 1,
-            },
-            -rc_name    => '4Gb_job',
-            -hive_capacity => $self->o('reuse_capacity'),
         },
 
         {   -logic_name => 'hcluster_dump_input_per_genome',
@@ -1714,7 +1649,7 @@ sub core_pipeline_analyses {
         {   -logic_name         => 'create_additional_clustersets',
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung treerecs copy raxml_update )],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung treerecs)],
             },
         },
 
@@ -1766,9 +1701,6 @@ sub core_pipeline_analyses {
                 1 => [
                     'create_additional_clustersets',
                     'cluster_tagging_factory',
-                    WHEN(
-                        '#clustering_mode# eq "topup"' => 'flag_update_clusters',
-                    ),
                 ],
             },
         },
@@ -1793,10 +1725,7 @@ sub core_pipeline_analyses {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id, COUNT(seq_member_id) AS tree_num_genes FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" AND clusterset_id="default" GROUP BY root_id',
             },
             -flow_into  => {
-                '2->A'  => WHEN(
-                    '#clustering_mode# eq "topup"' => 'copy_trees_from_previous_release',
-                    ELSE 'alignment_entry_point',
-                ),
+                '2->A' => [ 'alignment_entry_point' ],
                 '1->A' => [ 'join_panther_subfam' ],
                 'A->1' => [ 'global_tree_processing' ],
             },
@@ -1965,16 +1894,6 @@ sub core_pipeline_analyses {
             },
         },
 
-        {   -logic_name => 'mafft_update',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MafftUpdate',
-            -parameters => {
-                'mafft_exe'                  => $self->o('mafft_exe'),
-            },
-            -hive_capacity        => $self->o('mafft_update_capacity'),
-            -rc_name    => '2Gb_job',
-            -flow_into      => [ 'raxml_update_decision' ],
-        },
-
         {   -logic_name => 'mcoffee_himem',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MCoffee',
             -parameters => {
@@ -2038,15 +1957,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'exon_boundaries_prep',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnExonBoundaries',
-            -parameters => {
-                'treebreak_gene_count'      => $self->o('treebreak_gene_count'),
-            },
             -flow_into      => {
                 -1 => 'exon_boundaries_prep_himem',
-                1 => WHEN(
-                    '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
-                    ELSE 'aln_tagging',
-                ),
+                1 => 'treebreak_decision',
             },
             -hive_capacity  => $self->o('split_genes_capacity'),
             -batch_size     => 20,
@@ -2054,16 +1967,22 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'exon_boundaries_prep_himem',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnExonBoundaries',
+            -flow_into      => [ 'treebreak_decision' ],
+            -rc_name        => '2Gb_job',
+            -hive_capacity  => $self->o('split_genes_capacity'),
+            -batch_size     => 20,
+        },
+
+        {   -logic_name => 'treebreak_decision',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -parameters => {
-                'treebreak_gene_count'      => $self->o('treebreak_gene_count'),
+                'treebreak_gene_count' => $self->o('treebreak_gene_count'),
             },
             -flow_into      => WHEN(
                 '#use_quick_tree_break# and (#tree_num_genes# > #treebreak_gene_count#)' => 'quick_tree_break',
                 ELSE 'aln_tagging',
             ),
-            -rc_name    => '2Gb_job',
-            -hive_capacity  => $self->o('split_genes_capacity'),
-            -batch_size     => 20,
+            %decision_analysis_params,
         },
 
         {   -logic_name     => 'aln_tagging',
@@ -2765,64 +2684,6 @@ sub core_pipeline_analyses {
                 -1 => [ 'raxml_8_cores_himem' ],
                 -2 => [ 'raxml_8_cores' ],
             }
-        },
-
-        {   -logic_name => 'raxml_update_decision',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
-            -parameters => {
-                'tags'  => {
-                    #The default value matches the default dataflow we want: _8_cores analysis.
-                    'gene_count'          => 0,
-                },
-            },
-            -flow_into  => {
-                1 => WHEN(
-                    '(#tree_gene_count# <= 500)'                                => 'raxml_update',
-                    '(#tree_gene_count# > 500)  && (#tree_gene_count# <= 1000)' => 'raxml_update_8',
-                    '(#tree_gene_count# > 1000) && (#tree_gene_count# <= 2000)' => 'raxml_update_16',
-                    '(#tree_gene_count# > 3000)'                                => 'raxml_update_32',
-                ),
-            },
-            %decision_analysis_params,
-        },
-
-        {   -logic_name => 'raxml_update',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update',
-            -parameters => {
-                %raxml_update_parameters,
-            },
-            -hive_capacity        => $self->o('raxml_update_capacity'),
-            -rc_name    => '8Gb_job',
-        },
-
-        {   -logic_name => 'raxml_update_8',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update',
-            -parameters => {
-                %raxml_update_parameters,
-                'raxml_number_of_cores'     => 8,
-            },
-            -hive_capacity        => $self->o('raxml_update_capacity'),
-            -rc_name 	=> '16Gb_8c_job',
-        },
-
-        {   -logic_name => 'raxml_update_16',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update',
-            -parameters => {
-                %raxml_update_parameters,
-                'raxml_number_of_cores'     => 16,
-            },
-            -hive_capacity        => $self->o('raxml_update_capacity'),
-            -rc_name    => '16Gb_16c_job',
-        },
-
-        {   -logic_name => 'raxml_update_32',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update',
-            -parameters => {
-                %raxml_update_parameters,
-                'raxml_number_of_cores'     => 32,
-            },
-            -hive_capacity        => $self->o('raxml_update_capacity'),
-            -rc_name    => '32Gb_32c_job',
         },
 
         {   -logic_name => 'treebest_small_families',

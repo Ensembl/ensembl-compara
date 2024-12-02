@@ -21,15 +21,9 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FlagUpdateClusters
 
-=head1 DESCRIPTION
+=head1 DEPRECATION NOTICE
 
-1) This module loops through all the genes from the current and previous databases.
-
-2) Identifies and flags the genes that have been updated, deleted or newly added and
-stores them as appropriate: "updated_genes_list", "added_genes_list" and "deleted_genes_list"
-
-3) Checks for all the flagged genes (%flagged) in the list of members from all the
-root_ids and updated the flag "needs_update" in the gene_tree_root_tag table.
+This runnable is deprecated, and may be removed in a future release.
 
 =cut
 
@@ -45,6 +39,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
+
+    $self->warning("RunnableDB::GeneTrees::FlagUpdateClusters is deprecated, and may be removed in a future release");
 
     #get reuse_compara_dba adaptor
     $self->param( 'reuse_compara_dba', $self->get_cached_compara_dba('reuse_db') );

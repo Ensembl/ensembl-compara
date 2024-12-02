@@ -115,7 +115,6 @@ sub default_options {
         'mafft_runtime'             => 7200,
         'treebest_threshold_n_residues' => 10000,
         'treebest_threshold_n_genes'    => 400,
-        'update_threshold_trees'    => 0.2,
 
     # alignment filtering options
         'threshold_n_genes'       => 20,
@@ -984,7 +983,7 @@ sub core_pipeline_analyses {
             -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CreateClustersets',
             -parameters         => {
                 member_type     => 'protein',
-                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung copy raxml_update filter_level_1 filter_level_2 filter_level_3 filter_level_4 fasttree )],
+                'additional_clustersets'    => [qw(treebest phyml-aa phyml-nt nj-dn nj-ds nj-mm raxml raxml_parsimony raxml_bl notung filter_level_1 filter_level_2 filter_level_3 filter_level_4 fasttree)],
             },
             -flow_into          => [ 'cluster_tagging_factory' ],
         },
