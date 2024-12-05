@@ -114,6 +114,7 @@ sub executable_locations {
         # -> now recorded separately for each meadow, cf meadow_options()
 
         # Internal dependencies (Compara scripts)
+        'add_hmm_lib_exe'                   => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/add_hmm_lib.py'),
         'ancestral_dump_program'            => $self->check_exe_in_ensembl('ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl'),
         'ancestral_stats_program'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/ancestral_sequences/get_stats.pl'),
         'BuildSynteny_exe'                  => $self->check_file_in_ensembl('ensembl-compara/scripts/synteny/BuildSynteny.jar'),

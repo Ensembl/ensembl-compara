@@ -77,7 +77,8 @@ sub default_options {
         'readme_dir'  => $self->check_dir_in_ensembl('ensembl-compara/docs/ftp'),                                      # where the template README files are
 
         'base_dir'    => $self->o('pipeline_dir'),                                                                      # where the final dumps will be stored
-        'hash_dir'    => '#base_dir#/dump_hash/#division#_#basename#',                                                  # where directory hash is created and maintained
+        'tree_hash_dir' => '#base_dir#/dump_hash/#division#_#basename#/trees',                                          # where directory hash is created and maintained
+        'mlss_hash_dir' => '#base_dir#/dump_hash/#division#_#basename#/mlsses',
         'target_dir'  => '#base_dir#/#division#',                                                                       # where the dumps are put (all within subdirectories)
         'xml_dir'     => '#target_dir#/xml/ensembl-compara/homologies/',                                                # where the XML dumps are put
         'emf_dir'     => '#target_dir#/emf/ensembl-compara/homologies/',                                                # where the EMF dumps are put
@@ -95,7 +96,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'base_dir'      => $self->o('base_dir'),
         'target_dir'    => $self->o('target_dir'),
-        'hash_dir'      => $self->o('hash_dir'),
+        'tree_hash_dir' => $self->o('tree_hash_dir'),
+        'mlss_hash_dir' => $self->o('mlss_hash_dir'),
         'xml_dir'       => $self->o('xml_dir'),
         'emf_dir'       => $self->o('emf_dir'),
         'tsv_dir'       => $self->o('tsv_dir'),
@@ -125,6 +127,14 @@ sub hive_meta_table {
 }
 
 
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},
+    };
+}
+
+
 =head2 pipeline_analyses
 
     Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
@@ -149,11 +159,16 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     my $pa = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees::pipeline_analyses_dump_trees($self);
+
+    # dump_trees_pipeline_start
     $pa->[0]->{'-input_ids'} = [{}];
-    $pa->[1]->{'-parameters'} = {
+
+    # collection_factory
+    $pa->[2]->{'-parameters'} = {
         'column_names'      => [ 'clusterset_id', 'member_type' ],
         'inputlist'         => [ [$self->o('clusterset_id'), $self->o('member_type')] ],
     };
+
     return $pa;
 }
 

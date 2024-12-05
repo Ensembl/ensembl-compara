@@ -15,21 +15,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib
 
-=head1 DESCRIPTION
+=head1 DEPRECATION NOTICE
 
-Will add a symlink to the HMM library to the FTP. The library is a
-compressed tar archive that will automatically be generated if missing or
-invalid.
-
-The reference tar archive is given in "ref_tar_path_templ" and the symlink
-will be put under the dir/name given in "tar_ftp_path". If needed, the
-archive will be generated from "hmm_library_basedir".
+This runnable is deprecated, and may be removed in a future release.
 
 =cut
 

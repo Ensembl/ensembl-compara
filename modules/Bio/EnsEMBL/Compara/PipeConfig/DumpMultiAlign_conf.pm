@@ -112,6 +112,13 @@ sub hive_meta_table {
     };
 }
 
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},
+    };
+}
+
 sub pipeline_wide_parameters {
     my ($self) = @_;
 

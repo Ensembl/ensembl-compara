@@ -176,6 +176,13 @@ sub pipeline_checks_pre_init {
     die "Pipeline parameter 'prev_ftp_pub_root' is undefined, but must be specified" unless $self->o('prev_ftp_pub_root');
 }
 
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},
+    };
+}
+
 sub pipeline_create_commands {
     my $self = shift;
 
@@ -228,7 +235,8 @@ sub pipeline_wide_parameters {
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
         'basename'            => '#member_type#_#clusterset_id#',
         'name_root'           => 'Compara.#curr_release#.#basename#',
-        'hash_dir'            => '#work_dir#/#basename#',
+        'mlss_hash_dir'       => '#work_dir#/#basename#/mlsses',
+        'tree_hash_dir'       => '#work_dir#/#basename#/trees',
         'target_dir'          => '#dump_dir#',
         'xml_dir'             => '#target_dir#/xml/ensembl-compara/homologies/',
         'emf_dir'             => '#target_dir#/emf/ensembl-compara/homologies/',
@@ -415,11 +423,29 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'add_hmm_lib',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib',
-            -rc_name    => '1Gb_job',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_24_hour_job',
             -parameters => {
+                'add_hmm_lib_exe' => $self->o('add_hmm_lib_exe'),
+                'cmd'             => join(' ', (
+                    '#add_hmm_lib_exe#',
+                    '--curr_ftp_dump_root',
+                    '#dump_dir#',
+                    '--prev_ftp_dump_root',
+                    '#prev_rel_ftp_root#',
+                    '--curr_ftp_pub_root',
+                    '#curr_ftp_pub_root#',
+                    '--prev_ftp_pub_root',
+                    '#prev_ftp_pub_root#',
+                    '--hmm_library_basedir',
+                    '#hmm_library_basedir#',
+                    '--ref_tar_path_templ',
+                    '#ref_tar_path_templ#',
+                    '--tar_dir_path',
+                    '#tar_dir_path#',
+                )),
                 'ref_tar_path_templ' => '#warehouse_dir#/hmms/treefam/multi_division_hmm_lib.%s.tar.gz',
-                'tar_ftp_path'       => '#dump_dir#/compara/multi_division_hmm_lib.tar.gz',
+                'tar_dir_path'       => 'compara',
             },
         },
 
@@ -448,7 +474,7 @@ sub core_pipeline_analyses {
             -flow_into =>  {
                 1 => WHEN(
                     '#division# eq "vertebrates"' => 'move_uniprot_file',
-                    ELSE 'remove_uniprot_file'
+                    ELSE 'clean_dump_hash'
                 ),
             },
         },
@@ -466,16 +492,6 @@ sub core_pipeline_analyses {
                 ))
             },
             -rc_name       => '1Gb_datamover_job',
-            -flow_into  => [ 'clean_dump_hash' ],
-        },
-
-        {   -logic_name     => 'remove_uniprot_file',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name        => '1Gb_job',
-            -parameters     => {
-                'clusterset_id' => 'default',
-                'cmd'           => 'rm #dump_root#/#division#.#uniprot_file#.gz',
-            },
             -flow_into  => [ 'clean_dump_hash' ],
         },
 
@@ -498,7 +514,7 @@ sub core_pipeline_analyses {
 
 	# add DumpTree analyses seperately in order to set the collection_factory parameters
     my $tree_pa = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees::pipeline_analyses_dump_trees($self);
-    $tree_pa->[1]->{'-parameters'} = {
+    $tree_pa->[2]->{'-parameters'} = {
         'inputquery'    => 'SELECT clusterset_id, member_type FROM gene_tree_root WHERE tree_type = "tree" AND ref_root_id IS NULL GROUP BY clusterset_id, member_type',
         'db_conn'       => '#rel_db#',
     };
@@ -510,7 +526,9 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    $analyses_by_name->{'dump_per_genome_homologies_tsv'}{'-parameters'}{'healthcheck_list'} = ['line_count', 'unexpected_nulls'];
+    $analyses_by_name->{'start_uniprot_dump'}{'-flow_into'} = [
+        WHEN('#division# eq "vertebrates" && #clusterset_id# eq "default" && #member_type# eq "protein"' => 'dump_for_uniprot'),
+    ],
 }
 
 1;
