@@ -169,7 +169,7 @@ if __name__ == "__main__":
     os.makedirs(curr_compara_dir_path, mode=0o775, exist_ok=True)
 
     if prev_hmm_tar_file_path and (
-        ref_tar_path.name == prev_hmm_tar_file_path.name
+        ref_tar_path.name == prev_hmm_tar_file_path.name  # pylint: disable=consider-using-in
         # HMM lib files will retain the library name from e114 onwards,
         # so from e115, it should be safe to delete the following line.
         or prev_hmm_tar_file_path.name == "multi_division_hmm_lib.tar.gz"
