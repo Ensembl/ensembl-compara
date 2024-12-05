@@ -104,10 +104,10 @@ if __name__ == "__main__":
         tar_file_confirmed_ok = False
         if ref_tar_path.is_file():
 
-            md5sum_check_cmds = ["md5sum", "--check", ref_tar_md5sum_path]
+            md5sum_check_cmd_args = ["md5sum", "--check", str(ref_tar_md5sum_path)]
             try:
                 output = subprocess.check_output(
-                    md5sum_check_cmds, cwd=ref_tar_md5sum_path.parent, encoding="utf-8", text=True
+                    md5sum_check_cmd_args, cwd=ref_tar_md5sum_path.parent, encoding="utf-8", text=True
                 )
             except subprocess.CalledProcessError:
                 pass
@@ -137,13 +137,13 @@ if __name__ == "__main__":
             ]
             subprocess.run(gzip_test_cmd_args, check=True)
 
-            md5sum_gen_cmds = [
+            md5sum_gen_cmd_args = [
                 "md5sum",
                 tmp_ref_tar_path.name,
             ]
             with open(tmp_ref_tar_md5sum_path, mode="w", encoding="utf-8") as out_file_obj:
                 subprocess.run(
-                    md5sum_gen_cmds, stdout=out_file_obj, cwd=tmp_dir_path, encoding="utf-8", check=True
+                    md5sum_gen_cmd_args, stdout=out_file_obj, cwd=tmp_dir_path, encoding="utf-8", check=True
                 )
 
             shutil.move(tmp_ref_tar_path, ref_tar_path)
