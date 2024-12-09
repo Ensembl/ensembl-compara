@@ -120,11 +120,7 @@ sub pipeline_analyses_dump_multi_align {
             },
             -max_retry_count    => 0,
             -flow_into => {
-              1 => WHEN(
-                '#run_emf2maf#' => [ 'emf2maf' ],
-                '!#run_emf2maf# && !#make_tar_archive#' => [ 'compress_aln' ],
-                # '!#make_tar_archive#' => [ 'compress_aln' ],
-              ),
+              1  => 'emf2maf_decision',
               -1 => 'dumpMultiAlign_himem',
             },
         },
@@ -136,10 +132,13 @@ sub pipeline_analyses_dump_multi_align {
                 'registry' => '#reg_conf#',
             },
             -max_retry_count    => 0,
+            -flow_into => 'emf2maf_decision',
+        },
+        {  -logic_name      => 'emf2maf_decision',
+            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into => [ WHEN(
                 '#run_emf2maf#' => [ 'emf2maf' ],
                 '!#run_emf2maf# && !#make_tar_archive#' => [ 'compress_aln' ],
-                # '!#make_tar_archive#' => [ 'compress_aln' ],
             ) ],
         },
         {   -logic_name     => 'emf2maf',
@@ -151,9 +150,9 @@ sub pipeline_analyses_dump_multi_align {
         },
         {   -logic_name     => 'compress_aln',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -rc_name        => '1Gb_job',
+            -rc_name        => '1Gb_4c_job',
             -parameters     => {
-                'cmd'           => 'gzip -f -9 #output_file#',
+                'cmd'           => 'pigz -p 4 --force --best #output_file#',
             },
         },
 
