@@ -55,7 +55,7 @@ sub fetch_input {
     if ($member_type eq 'protein') {
         $method_type = 'PROTEIN_TREES';
     } elsif ($member_type eq 'ncrna') {
-        $method_type = 'NCRNA_TREES';
+        $method_type = 'NC_TREES';
     } else {
         $self->die_no_retry("unknown member_type: $member_type");
     }
