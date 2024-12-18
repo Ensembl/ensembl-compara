@@ -148,6 +148,7 @@ sub pipeline_analyses_dump_trees {
                 'compara_db' => '#rel_db#',
             },
             -rc_name => '4Gb_168_hour_job',
+            -analysis_capacity => 1,
             -flow_into => {
                 '3->A' => [ 'homology_mlss_factory' ],
                 'A->2' => [ 'homology_dump_genome_funnel_check' ],
@@ -156,6 +157,7 @@ sub pipeline_analyses_dump_trees {
 
         {   -logic_name => 'homology_mlss_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -analysis_capacity => 150,
             -flow_into => {
                 '2->A' => [ 'dump_per_mlss_homologies_tsv' ],
                 'A->1' => [ 'homology_dump_mlss_funnel_check' ],
