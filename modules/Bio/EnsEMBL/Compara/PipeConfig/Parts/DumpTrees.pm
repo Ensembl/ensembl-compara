@@ -147,7 +147,7 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'compara_db' => '#rel_db#',
             },
-            -rc_name => '4Gb_24_hour_job',
+            -rc_name => '4Gb_168_hour_job',
             -flow_into => {
                 '3->A' => [ 'homology_mlss_factory' ],
                 'A->2' => [ 'homology_dump_genome_funnel_check' ],
