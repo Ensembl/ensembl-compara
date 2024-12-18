@@ -70,6 +70,7 @@ sub fetch_input {
     my $homology_methods = $method_dba->fetch_all_by_class_pattern('^Homology\.homology$');
     my @homology_method_types = map { $_->type } @{$homology_methods};
 
+    my %is_ortholog_mlss;
     my %gdb_to_hom_mlss_ids;
     foreach my $method_type (@homology_method_types) {
         foreach my $i ( 0 .. $#collection_gdb_ids ) {
@@ -86,6 +87,7 @@ sub fetch_input {
 
                 my $mlss = $mlss_dba->fetch_by_method_link_type_GenomeDBs($method_type, \@homology_mlss_gdb_ids);
                 next unless defined $mlss and $mlss->is_current;
+                $is_ortholog_mlss{$mlss->dbID} = $method_type eq 'ENSEMBL_ORTHOLOGUES';
                 foreach my $gdb_id (@homology_mlss_gdb_ids) {
                     push(@{$gdb_to_hom_mlss_ids{$gdb_id}}, $mlss->dbID);
                 }
@@ -148,7 +150,7 @@ sub fetch_input {
             $gdb_hom_counts{$gdb_id}{'expected_homology_count'} += $hom_count;
             $cset_hom_counts{'expected_homology_count'} += $hom_count;
 
-            if (defined $is_high_confidence) {
+            if ($is_ortholog_mlss{$hom_mlss_id}) {
                 $cset_hom_counts{'expected_strict_orthology_count'} += $hom_count * $is_high_confidence;
                 $cset_hom_counts{'expected_orthology_count'} += $hom_count;
             }
