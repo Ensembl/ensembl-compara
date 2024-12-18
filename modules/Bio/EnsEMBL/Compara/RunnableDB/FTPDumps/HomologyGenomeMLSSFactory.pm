@@ -121,14 +121,9 @@ sub fetch_input {
             JOIN (
                 homology_member hm1
                 JOIN gene_member gm1 USING (gene_member_id)
-                JOIN genome_db gdb1 USING (genome_db_id)
-                JOIN seq_member sm1 USING (seq_member_id)
             ) USING (homology_id)
             JOIN (
                 homology_member hm2
-                JOIN gene_member gm2 USING (gene_member_id)
-                JOIN genome_db gdb2 USING (genome_db_id)
-                JOIN seq_member sm2 USING (seq_member_id)
             ) USING (homology_id)
             WHERE
                 method_link_species_set_id IN $hom_mlss_id_placeholders
