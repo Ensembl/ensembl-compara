@@ -152,6 +152,8 @@ sub fetch_input {
         }
     }
 
+    $self->compara_dba->dbc->disconnect_if_idle;
+
     foreach my $gdb_id (sort keys %gdb_to_hom_mlss_ids) {
         my @hom_mlss_ids = @{$gdb_to_hom_mlss_ids{$gdb_id}};
 
