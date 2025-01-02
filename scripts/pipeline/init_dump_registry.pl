@@ -219,6 +219,7 @@ while (my ($division, $species_names) = each %{$additional_species}) {
 
 my $core_db_pattern = qr/^[a-z0-9_]+(?<collection_core_tag>_collection)?_core(?:_\d+)?_\d+_\w+$/;
 
+my %cores_by_species_name;
 my %core_adaptor_param_sets;
 foreach my $core_host (@{$dump_host_map{'core_dump_hosts'}}) {
     my $core_port = Bio::EnsEMBL::Compara::Utils::Registry::get_port($core_host);
@@ -267,6 +268,7 @@ foreach my $core_host (@{$dump_host_map{'core_dump_hosts'}}) {
 
         my $multispecies_db = $core_has_collection_tag{$core_db_name} || max(keys %meta_by_species_id) > 1 ? 1 : 0;
 
+        my $core_db_key = sprintf("%s:%d/%s", $core_host, $core_port, $core_db_name);
         while (my ($species_id, $species_meta) = each %meta_by_species_id) {
             my $species_name = $species_meta->{'species.production_name'};
             my $species_division = $species_meta->{'species.division'};
@@ -279,8 +281,8 @@ foreach my $core_host (@{$dump_host_map{'core_dump_hosts'}}) {
             if ($core_version == $release && exists $exp_sp_info{$species_division}{$species_name}) {
                 if (exists $core_adaptor_param_sets{$species_name}) {
                     my $existing = $core_adaptor_param_sets{$species_name};
-                    throw(sprintf("specified core hosts have multiple databases for species %s: %s:%d/%s vs %s:%d/%s", $species_name,
-                                  $core_host, $core_port, $core_db_name, $existing->{'host'}, $existing->{'port'}, $existing->{'dbname'}));
+                    throw(sprintf("specified core hosts have multiple databases for species %s: %s vs %s:%d/%s", $species_name,
+                                  $core_db_key, $existing->{'host'}, $existing->{'port'}, $existing->{'dbname'}));
                 }
 
                 $core_adaptor_param_sets{$species_name} = {
@@ -295,6 +297,8 @@ foreach my $core_host (@{$dump_host_map{'core_dump_hosts'}}) {
                     'user'            => 'ensro',
                 };
             }
+
+            push(@{$cores_by_species_name{$species_name}}, $core_db_key);
         }
     }
 
@@ -304,7 +308,11 @@ foreach my $core_host (@{$dump_host_map{'core_dump_hosts'}}) {
 while (my ($division, $species_name_set) = each %exp_sp_info) {
     foreach my $species_name (sort keys %{$species_name_set}) {
         if (!exists $core_adaptor_param_sets{$species_name}) {
-            throw("no core database found for $species_name");
+            my $msg = "no release-$release $division core database found for $species_name";
+            if (exists $cores_by_species_name{$species_name}) {
+                $msg .= ", though the following core database(s) may be a close match: " . join(", ", @{$cores_by_species_name{$species_name}});
+            }
+            throw($msg);
         }
     }
 }

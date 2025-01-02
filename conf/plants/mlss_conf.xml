@@ -72,23 +72,94 @@
       <genome name="brachypodium_distachyon"/>
     </collection>
 
-    <!-- Wheat CACTUS collection -->
-    <collection name="wheat" no_components="1">
+    <!-- Wheat A Cactus collection -->
+    <collection name="wheat_component_A">
       <genome name="aegilops_tauschii"/>
       <genome name="brachypodium_distachyon"/>
       <genome name="hordeum_vulgare"/>
       <genome name="secale_cereale"/>
-      <genome name="triticum_aestivum"/>
-      <genome name="triticum_aestivum_arinalrfor"/>
-      <genome name="triticum_aestivum_jagger"/>
-      <genome name="triticum_aestivum_julius"/>
-      <genome name="triticum_aestivum_lancer"/>
-      <genome name="triticum_aestivum_landmark"/>
-      <genome name="triticum_aestivum_mace"/>
-      <genome name="triticum_aestivum_mattis"/>
-      <genome name="triticum_aestivum_norin61"/>
-      <genome name="triticum_aestivum_stanley"/>
-      <genome name="triticum_dicoccoides"/>
+      <genome name="triticum_aestivum" genome_component=""/>
+      <genome name="triticum_aestivum" genome_component="A"/>
+      <genome name="triticum_aestivum_arinalrfor" genome_component=""/>
+      <genome name="triticum_aestivum_arinalrfor" genome_component="A"/>
+      <genome name="triticum_aestivum_jagger" genome_component=""/>
+      <genome name="triticum_aestivum_jagger" genome_component="A"/>
+      <genome name="triticum_aestivum_julius" genome_component=""/>
+      <genome name="triticum_aestivum_julius" genome_component="A"/>
+      <genome name="triticum_aestivum_lancer" genome_component=""/>
+      <genome name="triticum_aestivum_lancer" genome_component="A"/>
+      <genome name="triticum_aestivum_landmark" genome_component=""/>
+      <genome name="triticum_aestivum_landmark" genome_component="A"/>
+      <genome name="triticum_aestivum_mace" genome_component=""/>
+      <genome name="triticum_aestivum_mace" genome_component="A"/>
+      <genome name="triticum_aestivum_mattis" genome_component=""/>
+      <genome name="triticum_aestivum_mattis" genome_component="A"/>
+      <genome name="triticum_aestivum_norin61" genome_component=""/>
+      <genome name="triticum_aestivum_norin61" genome_component="A"/>
+      <genome name="triticum_aestivum_stanley" genome_component=""/>
+      <genome name="triticum_aestivum_stanley" genome_component="A"/>
+      <genome name="triticum_dicoccoides" genome_component=""/>
+      <genome name="triticum_dicoccoides" genome_component="A"/>
+      <genome name="triticum_urartu"/>
+    </collection>
+
+    <!-- Wheat B Cactus collection -->
+    <collection name="wheat_component_B">
+      <genome name="aegilops_tauschii"/>
+      <genome name="brachypodium_distachyon"/>
+      <genome name="hordeum_vulgare"/>
+      <genome name="secale_cereale"/>
+      <genome name="triticum_aestivum" genome_component=""/>
+      <genome name="triticum_aestivum" genome_component="B"/>
+      <genome name="triticum_aestivum_arinalrfor" genome_component=""/>
+      <genome name="triticum_aestivum_arinalrfor" genome_component="B"/>
+      <genome name="triticum_aestivum_jagger" genome_component=""/>
+      <genome name="triticum_aestivum_jagger" genome_component="B"/>
+      <genome name="triticum_aestivum_julius" genome_component=""/>
+      <genome name="triticum_aestivum_julius" genome_component="B"/>
+      <genome name="triticum_aestivum_lancer" genome_component=""/>
+      <genome name="triticum_aestivum_lancer" genome_component="B"/>
+      <genome name="triticum_aestivum_landmark" genome_component=""/>
+      <genome name="triticum_aestivum_landmark" genome_component="B"/>
+      <genome name="triticum_aestivum_mace" genome_component=""/>
+      <genome name="triticum_aestivum_mace" genome_component="B"/>
+      <genome name="triticum_aestivum_mattis" genome_component=""/>
+      <genome name="triticum_aestivum_mattis" genome_component="B"/>
+      <genome name="triticum_aestivum_norin61" genome_component=""/>
+      <genome name="triticum_aestivum_norin61" genome_component="B"/>
+      <genome name="triticum_aestivum_stanley" genome_component=""/>
+      <genome name="triticum_aestivum_stanley" genome_component="B"/>
+      <genome name="triticum_dicoccoides" genome_component=""/>
+      <genome name="triticum_dicoccoides" genome_component="B"/>
+      <genome name="triticum_urartu"/>
+    </collection>
+
+    <!-- Wheat D Cactus collection -->
+    <collection name="wheat_component_D">
+      <genome name="aegilops_tauschii"/>
+      <genome name="brachypodium_distachyon"/>
+      <genome name="hordeum_vulgare"/>
+      <genome name="secale_cereale"/>
+      <genome name="triticum_aestivum" genome_component=""/>
+      <genome name="triticum_aestivum" genome_component="D"/>
+      <genome name="triticum_aestivum_arinalrfor" genome_component=""/>
+      <genome name="triticum_aestivum_arinalrfor" genome_component="D"/>
+      <genome name="triticum_aestivum_jagger" genome_component=""/>
+      <genome name="triticum_aestivum_jagger" genome_component="D"/>
+      <genome name="triticum_aestivum_julius" genome_component=""/>
+      <genome name="triticum_aestivum_julius" genome_component="D"/>
+      <genome name="triticum_aestivum_lancer" genome_component=""/>
+      <genome name="triticum_aestivum_lancer" genome_component="D"/>
+      <genome name="triticum_aestivum_landmark" genome_component=""/>
+      <genome name="triticum_aestivum_landmark" genome_component="D"/>
+      <genome name="triticum_aestivum_mace" genome_component=""/>
+      <genome name="triticum_aestivum_mace" genome_component="D"/>
+      <genome name="triticum_aestivum_mattis" genome_component=""/>
+      <genome name="triticum_aestivum_mattis" genome_component="D"/>
+      <genome name="triticum_aestivum_norin61" genome_component=""/>
+      <genome name="triticum_aestivum_norin61" genome_component="D"/>
+      <genome name="triticum_aestivum_stanley" genome_component=""/>
+      <genome name="triticum_aestivum_stanley" genome_component="D"/>
       <genome name="triticum_urartu"/>
     </collection>
 
@@ -203,7 +274,9 @@
       </species_set>
     </multiple_alignment>
     <multiple_alignment method="CACTUS_HAL" collection="rice_cultivars" url="#base_dir#/multi/hal_files/Rice_27-way_202208.hal"/>
-    <multiple_alignment method="CACTUS_DB" collection="wheat" ref_genome="triticum_aestivum"/>
+    <multiple_alignment collection="wheat_component_A" method="CACTUS_DB" ref_genome="triticum_aestivum"/>
+    <multiple_alignment collection="wheat_component_B" method="CACTUS_DB" ref_genome="triticum_aestivum"/>
+    <multiple_alignment collection="wheat_component_D" method="CACTUS_DB" ref_genome="triticum_aestivum"/>
   </multiple_alignments>
 
   <!-- DFW work -->

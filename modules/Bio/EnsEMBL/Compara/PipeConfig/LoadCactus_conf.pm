@@ -21,6 +21,16 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::PipeConfig::LoadCactus_conf
 
+=head1 DESCRIPTION
+
+This pipeline makes use of various software tools for processing alignments in HAL or MAF format,
+including Cactus ( Armstrong et al. 2020; https://doi.org/10.1038/s41586-020-2871-y ),
+hal2maf ( Hickey et al. 2013; https://doi.org/10.1093/bioinformatics/btt128 ),
+taffy ( https://github.com/ComparativeGenomicsToolkit/taffy ),
+mafDuplicateFilter ( Earl et al. 2014; https://doi.org/10.1101/gr.174920.114 ),
+Biopython ( Cock et al. 2009; https://doi.org/10.1093/bioinformatics/btp163 ),
+and NumPy ( Harris et al. 2020; https://doi.org/10.1038/s41586-020-2649-2 ).
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::LoadCactus_conf;
@@ -54,7 +64,6 @@ sub default_options {
          # data directories:
         'work_dir'          => $self->o('pipeline_dir'),
         'dump_dir'          => $self->o('work_dir') . '/' . 'dumps',
-        'jobstore_root_dir' => $self->o('work_dir') . '/' . 'jobstores',
         'scratch_dir'       => $ENV{'SCRATCH_PROD'},
 
         # msa stats options
@@ -87,7 +96,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},
 
-        $self->pipeline_create_commands_rm_mkdir(['bed_dir', 'dump_dir', 'feature_dir', 'jobstore_root_dir', 'work_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['bed_dir', 'dump_dir', 'feature_dir', 'work_dir']),
         $self->pipeline_create_commands_rm_mkdir(['msa_stats_shared_dir'], undef, 'do not rm'),
     ];
 }
@@ -104,12 +113,14 @@ sub pipeline_wide_parameters {
         'do_alt_mlss'            => $self->o('do_alt_mlss'),
         'dump_dir'               => $self->o('dump_dir'),
         'feature_dir'            => $self->o('feature_dir'),
+        'hal2maf_exe'            => $self->o('hal2maf_exe'),
         'halStats_exe'           => $self->o('halStats_exe'),
-        'jobstore_root_dir'      => $self->o('jobstore_root_dir'),
+        'mafDuplicateFilter_exe' => $self->o('mafDuplicateFilter_exe'),
         'master_db'              => $self->o('master_db'),
         'msa_stats_shared_dir'   => $self->o('msa_stats_shared_dir'),
         'process_cactus_maf_exe' => $self->o('process_cactus_maf_exe'),
         'scratch_dir'            => $self->o('scratch_dir'),
+        'taffy_exe'              => $self->o('taffy_exe'),
     };
 }
 
@@ -120,8 +131,6 @@ sub core_pipeline_analyses {
     my %dump_maf_params = (
         'chunk_id'              => '#hal_sequence_index#_#chunk_offset#_#chunk_length#',
         'hashed_sequence_index' => '#expr(dir_revhash(#hal_sequence_index#))expr#',
-        'jobstore_parent_dir'   => '#jobstore_root_dir#/#hal_genome_name#/#hashed_sequence_index#',
-        'jobstore'              => '#jobstore_parent_dir#/#chunk_id#',
         'maf_parent_dir'        => '#dump_dir#/maf/#hal_genome_name#/#hashed_sequence_index#/#chunk_id#',
         'maf_file'              => '#maf_parent_dir#/#chunk_id#.dumped.maf',
     );
@@ -228,6 +237,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'hal_stats_exe' => $self->o('halStats_exe'),
             },
+            -rc_name    => '2Gb_job',
         },
 
         {   -logic_name => 'load_species_tree',
@@ -336,21 +346,13 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'process_maf',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::ProcessCactusMaf',
             -analysis_capacity => 700,
             -rc_name    => '1Gb_job',
             -parameters => {
-                'processed_maf_file' => '#maf_parent_dir#/processed.maf',
-                'dataflow_file'     => '#maf_parent_dir#/processed_maf_dataflow.json',
-                'cmd'   => join(' ', (
-                    '#process_cactus_maf_exe#',
-                    '#dumped_maf_file#',
-                    '#processed_maf_file#',
-                    '--expected-block-count',
-                    '#dumped_maf_block_count#',
-                    '--dataflow-file',
-                    '#dataflow_file#',
-                )),
+                'processed_maf_file'        => '#maf_parent_dir#/processed.maf',
+                'max_block_length_to_merge' => 8000,
+                'max_gap_length'            => 1200,
             },
             -flow_into  => {
                 2 => WHEN( '#maf_block_count# > 0' => 'load_maf' ),
@@ -391,6 +393,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'multiplealigner_stats_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -parameters => {
+                'component_genomes' => 0,
+            },
             -flow_into  => {
                 '2->A' => { 'multiplealigner_stats' => INPUT_PLUS() },
                 'A->1' => [ 'block_size_distribution' ],
@@ -400,7 +405,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'multiplealigner_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerStats',
             -parameters => { %msa_stats_params },
-            -rc_name => '8Gb_job',
+            -rc_name => '8Gb_24_hour_job',
             -hive_capacity  => 100,
         },
 

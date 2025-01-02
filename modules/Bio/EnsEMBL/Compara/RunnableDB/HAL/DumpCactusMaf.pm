@@ -44,11 +44,9 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub pre_cleanup {
     my $self = shift;
 
-    my $jobstore = $self->param_required('jobstore');
     my $maf_file = $self->param_required('maf_file');
 
     my @cmds = (
-        "rm -rf $jobstore",
         "rm -f $maf_file",
     );
 
@@ -73,20 +71,17 @@ sub fetch_input {
 sub run {
     my $self = shift;
 
-    my $jobstore_parent_dir = $self->param_required('jobstore_parent_dir');
+    my $hal2maf_exe = $self->require_executable('hal2maf_exe');
+
+    my $chunk_length = $self->param_required('chunk_length');
     my $maf_file = $self->param_required('maf_file');
 
     my $temp_maf_file = catfile($self->worker_temp_directory, basename($maf_file));
 
-    $self->run_command("mkdir -p $jobstore_parent_dir", { die_on_failure => 1 });
-
     my $cmd_args = [
-        $self->param_required('cactus_hal2maf_exe'),
-        $self->param_required('jobstore'),
+        $hal2maf_exe,
         $self->param('hal_file'),
         $temp_maf_file,
-        '--workDir',
-        $self->param_required('scratch_dir'),
         '--refGenome',
         $self->param_required('hal_genome_name'),
         '--refSequence',
@@ -94,15 +89,11 @@ sub run {
         '--start',
         $self->param_required('chunk_offset'),
         '--length',
-        $self->param_required('chunk_length'),
+        $chunk_length,
         '--targetGenomes',
         join(',', @{$self->param('target_genomes')}),
-        '--chunkSize',
-        $self->param_required('chunk_length'),
-        '--dupeMode', 'single',
-        '--fractionSharedRows', 0.5,
-        '--filterGapCausingDupes',
         '--noAncestors',
+        '--unique',
     ];
 
     $self->run_command($cmd_args, { die_on_failure => 1 });

@@ -475,8 +475,9 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
         next;
     }
     my $method = $compara_dba->get_MethodAdaptor->fetch_by_type($xml_msa->getAttribute('method'));
-    my $species_set = make_named_species_set_from_XML_node($xml_msa, $method, $division_genome_dbs);
+    my $allow_components = $method->type eq 'CACTUS_DB';
 
+    my $species_set = make_named_species_set_from_XML_node($xml_msa, $method, $division_genome_dbs, $allow_components);
     my $multiple_wga_mlsss = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_multiple_wga_mlsss(
         $compara_dba,
         $method,

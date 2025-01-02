@@ -63,14 +63,14 @@ def mysql_query(
     try:
         engine = create_engine(db_url)
         with engine.connect() as conn:
-            info = conn.execute(text(query), **params)
+            info = conn.execute(text(query), params)
             return [tuple(x) for x in info]
     except SQLAlchemyError:
         logging.exception("MySQL Error")
         raise
 
 
-def get_collections(db_url: str, before_release: int) -> UniqueCollections:
+def get_collections(db_url: str, current_release: int) -> UniqueCollections:
     """
     Retrieves unique collection names from a MySQL database before a specified Ensembl release.
 
@@ -80,7 +80,7 @@ def get_collections(db_url: str, before_release: int) -> UniqueCollections:
 
     Args:
         db_url: The database URL in the format 'mysql://user:password@host:port/database'.
-        before_release: The Ensembl release number to use as a cutoff for selecting collections.
+        current_release: The current Ensembl release.
 
     Returns:
         A sorted list of unique collection names.
@@ -92,35 +92,34 @@ def get_collections(db_url: str, before_release: int) -> UniqueCollections:
         "JOIN species_set_header ssh USING(species_set_id) "
         "WHERE ml.type IN ('PROTEIN_TREES', 'NC_TREES') "
         "AND mlss.first_release IS NOT NULL "
-        "AND mlss.first_release <= :before_release;"
+        "AND mlss.first_release <= :current_release;"
     )
 
-    params = {"before_release": before_release}
+    params = {"current_release": current_release}
     sql = mysql_query(collections_query, db_url, params)
     result = sorted(set(collection.removeprefix("collection-") for collection, in sql))
     return result
 
 
-def get_division_info(db_url: str) -> SQLResult:
+def get_division_info(db_url: str) -> tuple[str, int]:
     """
-    Retrieves division and schema version information from a MySQL database.
+    Retrieves division information from a MySQL database.
 
     This function connects to a MySQL database using the provided database URL and executes
     a query to retrieve values for the 'division' and 'schema_version' keys from the 'meta' table.
-    The retrieved values are then returned as a SQLResult.
 
     Args:
         db_url: The database URL in the format 'mysql://user:password@host:port/database'.
 
     Returns:
-        SQLResult: A tuple containing tuples of the retrieved meta values.
+        Tuple containing the division and release of the MySQL database.
     """
     div_rel_query = (
-        "SELECT meta_value FROM meta WHERE meta_key IN ('division', 'schema_version');"
+        "SELECT meta_key, meta_value FROM meta WHERE meta_key IN ('division', 'schema_version');"
     )
 
-    sql = mysql_query(div_rel_query, db_url)
-    return sql
+    metadata: dict[str, Any] = dict(mysql_query(div_rel_query, db_url))
+    return metadata["division"], int(metadata["schema_version"])
 
 
 def remove_directory(dir_path: str, dry_run: bool) -> None:
@@ -148,36 +147,46 @@ def remove_directory(dir_path: str, dry_run: bool) -> None:
 
 
 def process_collection_directory(
-    collection_path: str, before_release: int, dry_run: bool
+    collection_path: str, num_releases_to_keep: int, dry_run: bool
 ) -> bool:
     """
-    Processes a collection directory and removes subdirectories older than before_release.
+    Processes a collection directory and removes subdirectories.
 
     This function scans the specified collection directory for subdirectories with numeric names.
-    If the numeric value of the subdirectory name is less than the specified before_release value,
-    the subdirectory is removed, unless dry_run is True. In dry_run mode, the function logs the
-    actions it would take without actually performing any deletions.
+    If the numeric value of the subdirectory name is not in the set of releases to keep (as determined
+    by the num_releases_to_keep parameter), the subdirectory is removed, unless dry_run is True.
+    In dry_run mode, the function logs the actions it would take without
+    actually performing any deletions.
 
     Args:
         collection_path: Path to the collection directory to process.
-        before_release: Ensembl release cutoff; subdirectories with numeric names less than
-                            this value will be considered for removal.
+        num_releases_to_keep: Ensembl release cutoff indicating number of releases to keep;
+            subdirectories with numeric names less than this value will be considered for removal.
         dry_run: If True, performs a dry run without actually deleting directories.
 
     Returns:
         True if any directories were removed; False otherwise.
     """
     dirs_removed = False
+    rel_to_cleanup_path = {}
     with os.scandir(collection_path) as coll_path:
         for k in coll_path:
             try:
-                k_release = int(k.name)
+                release = int(k.name)
             except ValueError:
                 continue
-            if k.is_dir() and k_release < before_release:
-                dirs_to_remove = os.path.join(collection_path, k.name)
-                remove_directory(dirs_to_remove, dry_run)
-                dirs_removed = True
+            rel_to_cleanup_path[release] = k.path
+
+    releases = sorted(rel_to_cleanup_path.keys(), reverse=True)
+    releases_to_keep = releases[:num_releases_to_keep]
+
+    for release_to_keep in releases_to_keep:
+        del rel_to_cleanup_path[release_to_keep]
+
+    for cleanup_path in rel_to_cleanup_path.values():
+        if os.path.isdir(cleanup_path):
+            remove_directory(cleanup_path, dry_run)
+            dirs_removed = True
 
     if not dirs_removed and not dry_run:
         logging.info(
@@ -188,37 +197,38 @@ def process_collection_directory(
 
 
 def iterate_collection_dirs(
-    div_path: str, collections: UniqueCollections, before_release: int, dry_run: bool
+    div_path: str, collections: UniqueCollections, num_releases_to_keep: int, dry_run: bool
 ) -> None:
     """
     Iterates over collection directories within a division path and processes each collection.
 
     This function scans the specified division directory for subdirectories that match the names
     in the provided collections. For each matching collection directory, it calls
-    `process_collection_directory` to remove subdirectories older than before_release, unless
+    `process_collection_directory` to remove subdirectories according to specified parameters, unless
     dry_run is True. In dry_run mode, the function logs the actions it would take without
     actually performing any deletions.
 
     Args:
         div_path: Path to the division directory containing collection directories.
         collections: A list of collection names to look for within the division directory.
-        before_release: Ensembl release cutoff; subdirectories within each collection directory with
-                            numeric names less than this value will be considered for removal.
+        num_releases_to_keep: Ensembl release cutoff indicating number of releases to keep;
+            subdirectories within each collection directory with numeric names less than
+            this value will be considered for removal.
         dry_run: If True, performs a dry run without actually deleting directories.
     """
     with os.scandir(div_path) as div_dir:
         for j in div_dir:
             if j.is_dir() and j.name in collections:
                 collection_path = os.path.join(div_path, j.name)
-                process_collection_directory(collection_path, before_release, dry_run)
+                process_collection_directory(collection_path, num_releases_to_keep, dry_run)
 
 
 def cleanup_homology_dumps(
     homology_dumps_dir: str,
-    before_release: int,
+    num_releases_to_keep: int,
     dry_run: bool,
     collections: UniqueCollections,
-    div_info: SQLResult,
+    division: str,
     log_file: Optional[str] = None,
 ) -> None:
     """
@@ -228,21 +238,20 @@ def cleanup_homology_dumps(
     It iterates through collection directories within the specified `div_path`,
     processing each collection using `iterate_collection_dirs`. For each matching
     collection directory, it calls `process_collection_directory` to remove
-    subdirectories older than before_release, unless dry_run is True.
+    subdirectories representing a release prior to the releases being kept, unless dry_run is True.
     In dry run mode, the function logs the actions it would take without
     performing any deletions.
 
     Args:
         homology_dumps_dir : Path to the homology dumps directory.
-        before_release : Ensembl release cutoff;
+        num_releases_to_keep : Ensembl release cutoff indicating number of releases to keep;
         subdirectories within each collection directory with numeric names
         less than this value will be considered for removal.
         dry_run : If True, performs a dry run without actually deleting directories.
         log_file : Path to the log file.
         collections : A list of collection names to look for within each division directory.
                         Defaults to an empty list.
-        div_info : A list of tuples containing division information,
-        first tuple has the division name and the second tuple has the schema version
+        division : Division name.
     """
     logging_kwargs: dict = {
         "format": "%(asctime)s - %(message)s",
@@ -255,8 +264,8 @@ def cleanup_homology_dumps(
     logging.basicConfig(**logging_kwargs)
 
 
-    div_path = os.path.join(homology_dumps_dir, div_info[0][0])
-    iterate_collection_dirs(div_path, collections, before_release, dry_run)
+    div_path = os.path.join(homology_dumps_dir, division)
+    iterate_collection_dirs(div_path, collections, num_releases_to_keep, dry_run)
 
     if not dry_run:
         logging.info("Cleanup process completed.")
@@ -275,7 +284,7 @@ def parse_args() -> argparse.Namespace:
     >>> ./homology_dump_cleanup.py
     --homology_dumps_dir /hps/nobackup/flicek/ensembl/compara/sbhurji/scripts/homology_dumps
     --master_db_url mysql://ensro@mysql-ens-compara-prod-5:4615/ensembl_compara_master_plants
-    --before_release 110 --dry_run
+    --num_releases_to_keep 1 --dry_run
     --log /hps/nobackup/flicek/ensembl/compara/sbhurji/scripts/clean.log
     """
     )
@@ -291,10 +300,13 @@ def parse_args() -> argparse.Namespace:
         "--master_db_url", type=str, required=True, help="URL of the master database."
     )
     parser.add_argument(
-        "--before_release",
+        "--num_releases_to_keep",
         type=int,
         required=True,
-        help="Ensembl release cutoff for cleanup (non-inclusive).",
+        help=(
+            "Keep homology dumps only for this number of releases,"
+            " and delete all homology dumps from releases prior to that."
+        ),
     )
     parser.add_argument(
         "--dry_run",
@@ -315,25 +327,21 @@ def main() -> None:
     cleanup of homology dumps.
 
     Raises:
-        ValueError: If `before_release` is greater than the allowed limit specified in the
-                    division information.
+        ValueError: If `num_releases_to_keep` is not greater than zero.
     """
     args = parse_args()
-    collections = get_collections(args.master_db_url, args.before_release)
-    div_info = get_division_info(args.master_db_url)
+    division, release = get_division_info(args.master_db_url)
+    collections = get_collections(args.master_db_url, release)
 
-    if args.before_release > int(div_info[1][0]):
-        raise ValueError(
-            f"The value {args.before_release} is greater than the allowed before_release "
-            + f"limit of {div_info[1][0]}."
-        )
+    if args.num_releases_to_keep < 1:
+        raise ValueError("num_releases_to_keep must be greater than zero")
 
     cleanup_homology_dumps(
         args.homology_dumps_dir,
-        args.before_release,
+        args.num_releases_to_keep,
         args.dry_run,
         collections,
-        div_info,
+        division,
         args.log,
     )
 

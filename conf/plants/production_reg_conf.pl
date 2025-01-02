@@ -124,7 +124,9 @@ my $compara_dbs = {
     'lastz_batch_1'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch1_114' ],
 
     # other alignments
-    #'wheat_cactus'   => [ 'mysql-ens-compara-prod-X', '' ],
+    'wheat_a_cactus' => [ 'mysql-ens-compara-prod-5', 'twalsh_wheat_a_plants_load_cactus_114' ],
+    'wheat_b_cactus' => [ 'mysql-ens-compara-prod-7', 'twalsh_wheat_b_plants_load_cactus_114' ],
+    'wheat_d_cactus' => [ 'mysql-ens-compara-prod-9', 'twalsh_wheat_d_plants_load_cactus_114' ],
 
     # synteny
     'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_synteny_114' ],

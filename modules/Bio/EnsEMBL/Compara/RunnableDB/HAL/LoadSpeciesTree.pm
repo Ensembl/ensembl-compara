@@ -63,7 +63,18 @@ sub fetch_input {
     }
 
     my $species_tree_root  = Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick($newick_tree, $self->compara_dba);
-    
+
+    if ($mlss->has_tag('genome_component')) {
+        my $genome_component = $mlss->get_value_for_tag('genome_component');
+        foreach my $leaf (@{$species_tree_root->get_all_leaves()}) {
+            my $leaf_gdb = $gdb_adap->fetch_by_dbID($leaf->genome_db_id);
+            my $comp_gdb = $gdb_adap->fetch_by_name_assembly($leaf_gdb->name, $leaf_gdb->assembly, $genome_component);
+            if (defined $comp_gdb) {
+                $leaf->node_name($comp_gdb->display_name);
+            }
+        }
+    }
+
     $self->param('species_tree_root', $species_tree_root);
 }
 

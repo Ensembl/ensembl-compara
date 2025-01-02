@@ -41,7 +41,8 @@ sub run {
     initialise_id($self->compara_dba->dbc, $label, $first_id);
 
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    my %mlss_gdb_name_to_id = map { $_->name => $_->dbID } @{$mlss->species_set->genome_dbs};
+    my @mlss_gdbs = grep { !$_->genome_component } @{$mlss->species_set->genome_dbs};
+    my %mlss_gdb_name_to_id = map { $_->name => $_->dbID } @mlss_gdbs;
 
     my $ref_genome_name = $mlss->get_value_for_tag('reference_species');
 

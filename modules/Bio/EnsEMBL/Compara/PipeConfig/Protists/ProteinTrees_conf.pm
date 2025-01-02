@@ -58,7 +58,7 @@ sub default_options {
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
-                'taxa'          => [ 'Alveolata', 'Amoebozoa', 'Apusozoa', 'Choanoflagellida', 'Cryptophyta', 'Euglenozoa', 'Fornicata', 'Heterolobosea', 'Ichthyosporea', 'Nucleariidae', 'Fonticulagroup', 'Parabasalia', 'Rhizaria', 'Stramenopiles' ],
+                'taxa'          => [ 'Alveolata', 'Amoebozoa', 'Apusozoa', 'Choanoflagellida', 'Cryptophyta', 'Euglenozoa', 'Fornicata', 'Heterolobosea', 'Ichthyosporea', 'Nucleariidae', 'Fonticula', 'Parabasalia', 'Rhizaria', 'Stramenopiles' ],
                 'thresholds'    => [ 25, 25, 25 ],
             },
             {
