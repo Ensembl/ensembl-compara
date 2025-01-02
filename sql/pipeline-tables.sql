@@ -282,7 +282,7 @@ CREATE TABLE hmm_thresholding (
 
 -- ----------------------------------------------------------------------------------
 --
--- Table structure for table 'seq_member_id_current_reused_map'
+-- Table structure for table 'seq_member_id_current_reused_map' (DEPRECATED)
 --
 -- overview: Add new table to be used by copy_trees_from_previous_release in order to
 --           rename old seq_member_ids with the current ones.

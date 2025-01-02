@@ -16,15 +16,13 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
+=head1 NAME
 
-=head1 CONTACT
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update
 
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
+=head1 DEPRECATION NOTICE
 
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
+This runnable is deprecated, and may be removed in a future release.
 
 =cut
 
@@ -52,6 +50,14 @@ sub param_defaults {
             'output_clusterset_id'  => 'raxml_update',
             'check_split_genes' 	=> 0,
     };
+}
+
+sub fetch_input {
+    my $self = shift;
+
+    $self->warning("RunnableDB::ProteinTrees::RAxML_update is deprecated, and may be removed in a future release");
+
+    $self->SUPER::fetch_input();
 }
 
 1;
