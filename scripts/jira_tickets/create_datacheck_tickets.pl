@@ -57,6 +57,16 @@ By default, don't update them.
 In dry-run mode, the JIRA tickets will not be submitted to the JIRA 
 server. By default, dry-run mode is off.
 
+=item B<-csv> <PATH>
+
+Optional. Instead of creating JIRA tickets,
+output to a CSV file to be imported to JIRA.
+
+=item B<-merge_ticket_key> <STR>
+
+Optional. Merge ticket key. If specified, datacheck
+tickets will be created as subtasks of this ticket.
+
 =item B<-h[elp]>
 
 Print usage information.
@@ -77,7 +87,7 @@ use POSIX;
 
 use Bio::EnsEMBL::Compara::Utils::JIRA;
 
-my ( $release, $division, @labels, $update, $dry_run, $help );
+my ( $release, $division, @labels, $update, $dry_run, $csv, $merge_ticket_key, $help );
 $update  = 0;
 $dry_run = 0;
 $help    = 0;
@@ -87,6 +97,8 @@ GetOptions(
     "label=s"         => \@labels,
     "update"          => \$update,
     'dry_run|dry-run' => \$dry_run,
+    'csv=s'           => \$csv,
+    'merge_ticket_key=s' => \$merge_ticket_key,
     "h|help"          => \$help,
 );
 pod2usage(1) if $help;
@@ -97,15 +109,19 @@ die "Cannot find $dc_file - file does not exist" unless -e $dc_file;
 my $dc_abs_path = abs_path($dc_file);
 # Get a new Utils::JIRA object to create the tickets for the given division and
 # release
-my $jira_adaptor = Bio::EnsEMBL::Compara::Utils::JIRA->new(-DIVISION => $division, -RELEASE => $release);
+my $jira_adaptor = Bio::EnsEMBL::Compara::Utils::JIRA->new(-DIVISION => $division, -RELEASE => $release, -CSV => $csv);
 # Parse Datacheck information from input TAP file
 my $testcase_failures = parse_datachecks($dc_file);
 unless ( %$testcase_failures ) {
     print "No failed DCs found in $dc_file\n";
     exit;
 }
+
+if (!defined $merge_ticket_key) {
+    $merge_ticket_key = find_labeled_ticket($jira_adaptor, 'Merge_anchor');
+}
+
 # Create a task ticket for each datacheck subtest failure
-my $merge_ticket_key = find_labeled_ticket($jira_adaptor, 'Merge_anchor');
 my @json_subtasks;
 foreach my $testcase ( keys %$testcase_failures ) {
     my $failure_subtask_json = {
@@ -117,21 +133,36 @@ foreach my $testcase ( keys %$testcase_failures ) {
 }
 my $components = ['Datachecks', 'Production tasks'];
 my $categories = ['Bug::Internal', 'Production::Tasks'];
-# Create all JIRA tickets
-my $dc_task_keys = $jira_adaptor->create_tickets(
-    -JSON_OBJ           => \@json_subtasks,
-    -DEFAULT_ISSUE_TYPE => 'Sub-task',
-    -DEFAULT_PRIORITY   => 'Blocker',
-    -EXTRA_COMPONENTS   => $components,
-    -EXTRA_CATEGORIES   => $categories,
-    -EXTRA_LABELS       => \@labels,
-    -UPDATE             => $update,
-    -DRY_RUN            => $dry_run
-);
-# Create a blocker issue link between the newly created datacheck ticket and the
-# handover ticket if it doesn't already exist
-my $blocked_ticket_key = find_labeled_ticket($jira_adaptor, 'Handover_anchor');
-$jira_adaptor->link_tickets('Blocks', $dc_task_keys->[0], $blocked_ticket_key, $dry_run);
+
+if ($csv) {
+    $jira_adaptor->create_ticket_csv(
+        -JSON_OBJ           => \@json_subtasks,
+        -DEFAULT_ISSUE_TYPE => 'Sub-task',
+        -DEFAULT_PRIORITY   => 'Blocker',
+        -EXTRA_COMPONENTS   => $components,
+        -EXTRA_CATEGORIES   => $categories,
+        -EXTRA_LABELS       => \@labels,
+        -DRY_RUN            => $dry_run,
+        -CSV_FILE           => $csv,
+        -PARENT_LINK        => $merge_ticket_key,
+    );
+} else {
+    # Create all JIRA tickets
+    my $dc_task_keys = $jira_adaptor->create_tickets(
+        -JSON_OBJ           => \@json_subtasks,
+        -DEFAULT_ISSUE_TYPE => 'Sub-task',
+        -DEFAULT_PRIORITY   => 'Blocker',
+        -EXTRA_COMPONENTS   => $components,
+        -EXTRA_CATEGORIES   => $categories,
+        -EXTRA_LABELS       => \@labels,
+        -UPDATE             => $update,
+        -DRY_RUN            => $dry_run
+    );
+    # Create a blocker issue link between the newly created datacheck ticket and the
+    # handover ticket if it doesn't already exist
+    my $blocked_ticket_key = find_labeled_ticket($jira_adaptor, 'Handover_anchor');
+    $jira_adaptor->link_tickets('Blocks', $dc_task_keys->[0], $blocked_ticket_key, $dry_run);
+}
 
 sub parse_datachecks {
     my $dc_file = shift;
