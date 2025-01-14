@@ -180,6 +180,22 @@ sub remove_multi {
     }
 }
 
+=head2 suppress_overlap_species_warnings
+
+  Example     : Bio::EnsEMBL::Compara::Utils::Registry::suppress_overlap_species_warnings();
+  Description : Can be used to suppress registry warnings for species in multiple divisions
+  Returntype  : none
+  Exceptions  : none
+
+=cut
+
+sub suppress_overlap_species_warnings {
+    my $overlap_species_names = shift;
+    my $overlap_subpattern = '(' . join('|', @{$overlap_species_names}) . ')';
+    my $overlap_regex = qr/WARN: Species \(${overlap_subpattern}\) and group \(core\) same for two seperate databases/;
+    $SIG{'__WARN__'} = sub { warn $_[0] unless $_[0] =~ $overlap_regex; }
+}
+
 
 =head2 add_core_dbas
 
