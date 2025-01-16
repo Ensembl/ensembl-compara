@@ -33,6 +33,10 @@ use Bio::EnsEMBL::Compara::Utils::Registry;
 my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
 my $prev_release = $curr_release - 1;
 
+# Species found on both vertebrates and non-vertebrates servers
+my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster saccharomyces_cerevisiae);
+Bio::EnsEMBL::Compara::Utils::Registry::suppress_overlap_species_warnings(\@overlap_species);
+
 # ---------------------- DATABASE HOSTS -----------------------------------------
 
 my ($curr_vert_host, $curr_vert_port) = $curr_release % 2 == 0
@@ -50,7 +54,6 @@ my ($prev_vert_host, $prev_vert_port) = $prev_release % 2 == 0
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
 # Ensure we're using the correct cores for species that overlap with other divisions
-my @overlap_species = qw(drosophila_melanogaster caenorhabditis_elegans saccharomyces_cerevisiae);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 my $overlap_cores = {
     'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_" . $curr_release . "_11" ],

@@ -37,6 +37,7 @@ my $prev_eg_release = $curr_eg_release - 1;
 
 # Species found on both vertebrates and non-vertebrates servers
 my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenorhabditis_elegans);
+Bio::EnsEMBL::Compara::Utils::Registry::suppress_overlap_species_warnings(\@overlap_species);
 
 # ---------------------- DATABASE HOSTS -----------------------------------------
 
