@@ -504,7 +504,7 @@ sub pipeline_analyses_dump_trees {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -rc_name    => '1Gb_job',
             -parameters => {
-                'cmd' => q/cd #directory# ; find * \( -name '*.gz' -o -name '*.tar' \) -exec md5sum {} '+' > MD5SUM/,
+                'cmd' => q/cd #directory# ; find * -maxdepth 0 \( -name '*.gz' -o -name '*.tar' \) -exec md5sum {} '+' > MD5SUM/,
             },
         },
 
