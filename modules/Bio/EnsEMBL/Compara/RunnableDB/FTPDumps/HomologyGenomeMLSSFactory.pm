@@ -41,7 +41,7 @@ sub param_defaults {
 }
 
 
-sub fetch_input {
+sub run {
     my ($self) = @_;
 
     my $clusterset_id = $self->param_required('clusterset_id');
