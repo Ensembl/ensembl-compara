@@ -221,7 +221,7 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'concatenate_mlss_homologies_tsv',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateTSV',
             -parameters => {
-                'output_file' => '#tsv_dir#/#species_name#/#name_root#.homologies.tsv',
+                'output_file' => '#tsv_dir#/#species_path#/#name_root#.homologies.tsv',
                 'healthcheck_list' => ['line_count', 'unexpected_nulls'],
                 'exp_line_count' => '#genome_exp_line_count#',
             },
