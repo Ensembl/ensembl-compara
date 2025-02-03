@@ -421,7 +421,7 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'step'          => $self->o('max_files_per_tar'),
                 'contiguous'    => 0,
-                'inputcmd'      => 'find #hash_dir# -name "tree.*.#extension#" | sed "s:#hash_dir#/*::" | sort -t . -k2 -n',
+                'inputcmd'      => 'find #tree_hash_dir# -name "tree.*.#extension#" | sed "s:#tree_hash_dir#/*::" | sort -t . -k2 -n',
             },
             -flow_into => {
                 '2->A' => [ 'tar_dumps' ],
