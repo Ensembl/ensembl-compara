@@ -539,9 +539,9 @@ foreach my $data_type (sort keys %expectations) {
                 }
             }
 
-            opendir(DIR, $dset_data_path) or throw("can't opendir $dset_data_path: $!");
-            my @obs_file_names = grep { ! ( -d catdir($dset_data_path, $_) || $_ =~ /^\./ || $_ =~ /^CHECKSUMS$/ ) } readdir(DIR);
-            closedir(DIR);
+            opendir(my $dh, $dset_data_path) or throw("can't opendir [$dset_data_path]: $!");
+            my @obs_file_names = grep { ! ( -d catdir($dset_data_path, $_) || $_ =~ /^\./ || $_ =~ /^CHECKSUMS$/ ) } readdir($dh);
+            closedir($dh);
 
             my @missing_file_names = array_minus(@exp_file_names, @obs_file_names);
             my @surplus_file_names = array_minus(@obs_file_names, @exp_file_names);
@@ -672,9 +672,9 @@ foreach my $data_type (sort keys %expectations) {
                     }
 
                     my @exp_item_names = @{$exp_items_by_dir{$rel_dir_path}};
-                    opendir(DIR, $subdir_path) or throw("can't opendir $subdir_path: $!");
-                    my @obs_item_names = grep { ! ($_ =~ /^\./ || $_ =~ /^CHECKSUMS$/) } readdir(DIR);
-                    closedir(DIR);
+                    opendir(my $dh, $subdir_path) or throw("can't opendir [$subdir_path]: $!");
+                    my @obs_item_names = grep { ! ($_ =~ /^\./ || $_ =~ /^CHECKSUMS$/) } readdir($dh);
+                    closedir($dh);
 
                     my @missing_item_paths = map { catfile($subdir_path, $_) } array_minus(@exp_item_names, @obs_item_names);
                     my @surplus_item_paths = map { catfile($subdir_path, $_) } array_minus(@obs_item_names, @exp_item_names);
