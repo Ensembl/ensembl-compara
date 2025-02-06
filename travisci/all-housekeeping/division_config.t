@@ -50,9 +50,16 @@ sub test_division {
         %allowed_species = %{$allowed_species_info->{$division}{'allowed_species'}};
     }
 
+    # Validate production names using regexes based on the MetaKeyFormat datacheck.
+    # The regex used in non-Microbes divisions additionally requires that there are at most two interstitial underscores.
     # See https://github.com/Ensembl/ensembl-datacheck/blob/6b3d185/lib/Bio/EnsEMBL/DataCheck/Checks/MetaKeyFormat.pm#L59
+    my $prod_name_re = $division =~ /^(fungi|protists)$/
+                     ? qr/^_?[a-z0-9]+_[a-z0-9_]+$/
+                     : qr/^_?[a-z0-9]+_[a-z0-9]+(?:_[a-z0-9]+)?$/
+                     ;
+
     foreach my $name (keys %allowed_species) {
-        like($name, qr/_?[a-z0-9]+_[a-z0-9_]+/, "Value for production name has correct format");
+        like($name, $prod_name_re, "Production name has conventional format");
     }
 
     # Load the MLSS XML file if it exists
