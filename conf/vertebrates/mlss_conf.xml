@@ -239,7 +239,7 @@
         <genome name="mus_spretus" assembly="SPRET_EiJ_v1"/>
         <genome name="nomascus_leucogenys" assembly="Nleu_3.0"/>
         <genome name="oryctolagus_cuniculus" assembly="OryCun2.0"/>
-        <genome name="ovis_aries_rambouillet"/>
+        <genome name="ovis_aries"/>
         <genome name="pan_paniscus" assembly="panpan1.1"/>
         <genome name="pan_troglodytes" assembly="Pan_tro_3.0"/>
         <genome name="panthera_leo" assembly="PanLeo1.0"/>
