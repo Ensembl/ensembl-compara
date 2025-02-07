@@ -440,6 +440,97 @@
       <genome name="daphnia_pulex"/>
       <genome name="agrilus_planipennis_gca000699045v2rs"/>
     </collection>
+
+    <collection name="monocots">
+      <base_collection name="shared"/>
+      <!-- Outgroups -->
+      <genome name="chlamydomonas_reinhardtii"/>
+      <genome name="marchantia_polymorpha"/>
+      <genome name="solanum_lycopersicum"/>
+      <!-- Asparagales -->
+      <genome name="asparagus_officinalis"/>
+      <!-- Chlamydomonadales -->
+      <!-- Dioscoreales -->
+      <genome name="dioscorea_rotundata"/>
+      <!-- Poales -->
+      <genome name="aegilops_tauschii"/>
+      <genome name="ananas_comosus"/>
+      <genome name="avena_sativa_ot3098"/>
+      <genome name="brachypodium_distachyon"/>
+      <genome name="digitaria_exilis"/>
+      <genome name="eragrostis_curvula"/>
+      <genome name="eragrostis_tef"/>
+      <genome name="hordeum_vulgare"/>
+      <genome name="leersia_perrieri"/>
+      <genome name="lolium_perenne"/>
+      <genome name="oryza_indica"/>
+      <genome name="panicum_hallii"/>
+      <genome name="saccharum_spontaneum"/>
+      <genome name="secale_cereale"/>
+      <genome name="setaria_italica"/>
+      <genome name="setaria_viridis"/>
+      <genome name="sorghum_bicolor"/>
+      <genome name="triticum_aestivum"/>
+      <genome name="triticum_dicoccoides"/>
+      <genome name="triticum_spelta"/>
+      <genome name="triticum_timopheevii"/>
+      <genome name="triticum_turgidum"/>
+      <genome name="triticum_urartu"/>
+      <genome name="zea_mays"/>
+      <!-- Zingiberales -->
+      <genome name="musa_acuminata"/>
+    </collection>
+
+    <collection name="dicots">
+      <base_collection name="shared"/>
+      <!-- Outgroups -->
+      <genome name="chlamydomonas_reinhardtii"/>
+      <genome name="marchantia_polymorpha"/>
+      <!-- Apiales -->
+      <genome name="daucus_carota"/>
+      <!-- Asterales -->
+      <genome name="helianthus_annuus"/>
+      <!-- Brassicales -->
+      <genome name="brassica_napus"/>
+      <genome name="brassica_rapa_ro18"/>
+      <!-- Caryophyllales -->
+      <genome name="chenopodium_quinoa"/>
+      <!-- Cucurbitales -->
+      <genome name="cucumis_sativus"/>
+      <!-- Fabales -->
+      <genome name="arachis_hypogaea"/>
+      <genome name="glycine_max"/>
+      <genome name="medicago_truncatula"/>
+      <genome name="phaseolus_vulgaris"/>
+      <genome name="pisum_sativum"/>
+      <genome name="vicia_faba"/>
+      <genome name="vigna_angularis"/>
+      <!-- Fagales -->
+      <genome name="quercus_suber"/>
+      <!-- Gentianales -->
+      <genome name="coffea_canephora"/>
+      <!-- Lamiales -->
+      <genome name="olea_europaea"/>
+      <!-- Malpighiales -->
+      <genome name="manihot_esculenta"/>
+      <genome name="populus_trichocarpa"/>
+      <!-- Malvales -->
+      <genome name="theobroma_cacao"/>
+      <!-- Myrtales -->
+      <genome name="eucalyptus_grandis"/>
+      <!-- Rosales -->
+      <genome name="malus_domestica_golden"/>
+      <genome name="prunus_avium"/>
+      <!-- Sapindales -->
+      <genome name="pistacia_vera"/>
+      <!-- Solanales -->
+      <genome name="ipomoea_triloba"/>
+      <genome name="nicotiana_attenuata"/>
+      <genome name="solanum_lycopersicum"/>
+      <genome name="solanum_tuberosum"/>
+      <!-- Vitales -->
+      <genome name="vitis_vinifera"/>
+    </collection>
   </collections>
 
 </compara_db>
