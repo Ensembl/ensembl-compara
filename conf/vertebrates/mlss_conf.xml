@@ -83,7 +83,7 @@
       <taxonomic_group taxon_name="Sus"/>
       <genome name="bos_taurus"/>
       <genome name="equus_caballus"/>
-      <genome name="ovis_aries_rambouillet"/>
+      <genome name="ovis_aries"/>
     </collection>
 
   </collections>
@@ -239,7 +239,7 @@
         <genome name="mus_spretus" assembly="SPRET_EiJ_v1"/>
         <genome name="nomascus_leucogenys" assembly="Nleu_3.0"/>
         <genome name="oryctolagus_cuniculus" assembly="OryCun2.0"/>
-        <genome name="ovis_aries_rambouillet"/>
+        <genome name="ovis_aries"/>
         <genome name="pan_paniscus" assembly="panpan1.1"/>
         <genome name="pan_troglodytes" assembly="Pan_tro_3.0"/>
         <genome name="panthera_leo" assembly="PanLeo1.0"/>
@@ -348,7 +348,7 @@
       <species_set name="pig_breeds" display_name="pig breeds">
         <genome name="bos_taurus"/>
         <genome name="equus_caballus"/>
-        <genome name="ovis_aries_rambouillet"/>
+        <genome name="ovis_aries"/>
         <genome name="sus_scrofa"/>
         <genome name="sus_scrofa_usmarc"/>
       </species_set>
@@ -525,7 +525,7 @@
         <genome name="oryctolagus_cuniculus"/>
         <genome name="oryzias_latipes"/>
         <genome name="otolemur_garnettii"/>
-        <genome name="ovis_aries_rambouillet"/>
+        <genome name="ovis_aries"/>
         <genome name="pan_paniscus"/>
         <genome name="pan_troglodytes"/>
         <genome name="panthera_leo"/>
