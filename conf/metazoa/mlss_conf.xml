@@ -194,7 +194,7 @@
       <genome name="aethina_tumida_gca024364675v1rs"/>
       <genome name="agrilus_planipennis_gca000699045v2"/>
       <genome name="amblyteles_armatorius_gca933228735v1"/>
-      <genome name="amyelois_transitella_gca001186105v1rs"/>
+      <genome name="amyelois_transitella_gca032362555v1rs"/>
       <genome name="ancistrocerus_nigricornis_gca916049575v1"/>
       <genome name="anopheles_coluzzii_gca943734685v1rs"/>
       <genome name="anopheles_funestus_gca943734845v1rs"/>
@@ -207,7 +207,7 @@
       <genome name="apis_mellifera"/>
       <genome name="athalia_rosae_gca917208135v1"/>
       <genome name="atta_cephalotes"/>
-      <genome name="bactrocera_dorsalis_gca000789215v2"/>
+      <genome name="bactrocera_dorsalis_gca023373825v1rs"/>
       <genome name="bactrocera_latifrons_gca001853355v1"/>
       <genome name="bactrocera_tryoni_gca016617805v2"/>
       <genome name="belgica_antarctica"/>
@@ -217,13 +217,14 @@
       <genome name="bemisia_tabaci_ssa2nig"/>
       <genome name="bemisia_tabaci_ssa3nig"/>
       <genome name="bemisia_tabaci_uganda1"/>
-      <genome name="bicyclus_anynana_gca900239965v1rs"/>
+      <genome name="bicyclus_anynana_gca947172395v1"/>
       <genome name="bombus_huntii_gca024542735v1rs"/>
       <genome name="bombus_impatiens"/>
       <genome name="bombus_terrestris_gca910591885v2"/>
       <genome name="bombus_vancouverensis_gca011952275v1rs"/>
       <genome name="bombyx_mandarina_gca003987935v1rs"/>
       <genome name="bombyx_mori_gca030269925v1rs"/>
+      <genome name="bradysia_coprophila_gca014529535v1rs"/>
       <genome name="camponotus_floridanus_gca003227725v1rs"/>
       <genome name="cataglyphis_hispanica_gca021464435v1rs"/>
       <genome name="ceratitis_capitata_gca000347755v4"/>
@@ -237,13 +238,13 @@
       <genome name="culicoides_brevitarsis_gca036172545v1rs"/>
       <genome name="culicoides_sonorensis"/>
       <genome name="daktulosphaira_vitifoliae_gca025091365v1rs"/>
-      <genome name="danaus_plexippus"/>
-      <genome name="dendroctonus_ponderosae_gca000355655v1"/>
+      <genome name="danaus_plexippus_gca018135715v1"/>
+      <genome name="dendroctonus_ponderosae_gca020466585v1rs"/>
       <genome name="diabrotica_virgifera_gca917563875v2rs"/>
       <genome name="diuraphis_noxia_gca001186385v1"/>
       <genome name="drosophila_melanogaster"/>
       <genome name="dufourea_novaeangliae_gca001272555v1rs"/>
-      <genome name="eufriesea_mexicana_gca001483705v1rs"/>
+      <genome name="eufriesea_mexicana_gca001483705v2rs"/>
       <genome name="folsomia_candida"/>
       <genome name="glossina_fuscipes"/>
       <genome name="glossina_morsitans"/>
@@ -251,7 +252,7 @@
       <genome name="habropoda_laboriosa_gca001263275v1rs"/>
       <genome name="harpegnathos_saltator_gca003227715v2rs"/>
       <genome name="heliconius_melpomene"/>
-      <genome name="helicoverpa_armigera_gca023701775v1rs"/>
+      <genome name="helicoverpa_armigera_gca030705265v1rs"/>
       <genome name="helicoverpa_zea_gca022581195v1rs"/>
       <genome name="hermetia_illucens_gca905115235v1"/>
       <genome name="homalodisca_vitripennis_gca021130785v2rs"/>
@@ -262,7 +263,7 @@
       <genome name="limnephilus_lunatus_gca917563855v2"/>
       <genome name="limnephilus_marmoratus_gca917880885v1"/>
       <genome name="limnephilus_rhombicus_gca929108145v2"/>
-      <genome name="linepithema_humile_gca000217595v1rs"/>
+      <genome name="linepithema_humile_gca040581485v1rs"/>
       <genome name="lucilia_cuprina_gca022045245v1rs"/>
       <genome name="lutzomyia_longipalpis_gca024334085v1rs"/>
       <genome name="macrosteles_quadrilineatus_gca028750875v1rs"/>
@@ -272,7 +273,7 @@
       <genome name="megaselia_scalaris"/>
       <genome name="melitaea_cinxia_gca905220565v1"/>
       <genome name="monomorium_pharaonis_gca013373865v2"/>
-      <genome name="musca_domestica"/>
+      <genome name="musca_domestica_gca030504385v1rs"/>
       <genome name="nasonia_vitripennis"/>
       <genome name="neodiprion_lecontei_gca021901455v1rs"/>
       <genome name="neodiprion_pinetum_gca021155775v1rs"/>
@@ -301,11 +302,11 @@
       <genome name="sipha_flava_gca003268045v1"/>
       <genome name="sitophilus_oryzae_gca002938485v2rs"/>
       <genome name="solenopsis_invicta"/>
-      <genome name="stomoxys_calcitrans"/>
+      <genome name="stomoxys_calcitrans_gca963082655v1"/>
       <genome name="teleopsis_dalmanni"/>
       <genome name="thrips_palmi_gca012932325v1rs"/>
       <genome name="trialeurodes_vaporariorum_gca011764245"/>
-      <genome name="tribolium_castaneum"/>
+      <genome name="tribolium_castaneum_gca031307605v1rs"/>
       <genome name="trichogramma_pretiosum_gca000599845v3"/>
       <genome name="venturia_canescens_gca019457755v1rs"/>
       <genome name="zerene_cesonia_gca012273895v2rs"/>
@@ -320,21 +321,27 @@
       <genome name="drosophila_gunungcola_gca025200985v1rs"/>
       <genome name="drosophila_innubila_gca004354385v1rs"/>
       <genome name="drosophila_mojavensis_gca018153725v1rs"/>
+      <genome name="drosophila_montana_gca035044405v1rs"/>
+      <genome name="drosophila_nasuta_gca023558535v2rs"/>
+      <genome name="drosophila_novamexicana_gca003285875v3rs"/>
+      <genome name="drosophila_serrata_gca002093755v2rs"/>
+      <genome name="drosophila_sulfurigaster_gca023558435v2rs"/>
+      <genome name="drosophila_tropicalis_gca018151085v1rs"/>
       <genome name="drosophila_persimilis_gca003286085v2rs"/>
       <genome name="drosophila_sechellia_gca004382195v2rs"/>
-      <genome name="drosophila_virilis_gca003285735v2rs"/>
+      <genome name="drosophila_virilis_gca030788295v1rs"/>
       <genome name="drosophila_albomicans_gca009650485v2rs"/>
       <genome name="drosophila_ananassae_gca017639315v2rs"/>
       <genome name="drosophila_arizonae_gca001654025v1rs"/>
       <genome name="drosophila_biarmipes_gca025231255v1rs"/>
-      <genome name="drosophila_bipectinata_gca000236285v2rs"/>
+      <genome name="drosophila_bipectinata_gca030179905v1rs"/>
       <genome name="drosophila_busckii_gca011750605v1rs"/>
-      <genome name="drosophila_elegans_gca000224195v2rs"/>
+      <genome name="drosophila_elegans_gca018152505v1rs"/>
       <genome name="drosophila_eugracilis_gca018153835v1rs"/>
       <genome name="drosophila_ficusphila_gca018152265v1rs"/>
       <genome name="drosophila_guanche_gca900245975v1rs"/>
       <genome name="drosophila_hydei_gca003285905v2rs"/>
-      <genome name="drosophila_kikkawai_gca018152535v1rs"/>
+      <genome name="drosophila_kikkawai_gca030179895v1rs"/>
       <genome name="drosophila_mauritiana_gca004382145v1rs"/>
       <genome name="drosophila_miranda_gca003369915v2rs"/>
       <genome name="drosophila_navojoa_gca001654015v2rs"/>
@@ -345,8 +352,8 @@
       <genome name="drosophila_simulans_gca016746395v2rs"/>
       <genome name="drosophila_subobscura_gca008121235v1rs"/>
       <genome name="drosophila_subpulchrella_gca014743375v2rs"/>
-      <genome name="drosophila_suzukii_gca013340165v1rs"/>
-      <genome name="drosophila_takahashii_gca018152695v1rs"/>
+      <genome name="drosophila_suzukii_gca037355615v1rs"/>
+      <genome name="drosophila_takahashii_gca030179915v1rs"/>
       <genome name="drosophila_teissieri_gca016746235v2rs"/>
       <genome name="drosophila_willistoni_gca018902025v2rs"/>
       <genome name="drosophila_yakuba_gca016746365v2rs"/>
@@ -354,7 +361,7 @@
       <genome name="bactrocera_neohumeralis_gca024586455v2rs"/>
       <genome name="coremacera_marginata_gca914767935v1"/>
       <genome name="machimus_atricapillus_gca933228815v1"/>
-      <genome name="myopa_tessellatipennis_gca943737955v1"/>
+      <genome name="myopa_tessellatipennis_gca943737955v2"/>
     </collection>
 
   </collections>
