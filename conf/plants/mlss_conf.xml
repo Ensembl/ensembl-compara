@@ -349,10 +349,10 @@
       <genome name="hordeum_vulgare_wbdc349"/>
       <genome name="hordeum_vulgare_zdm01467"/>
       <genome name="hordeum_vulgare_zdm02064"/>
-      <!-- Outgroup -->
-      <genome name="triticum_aestivum"/>
+      <!-- Outgroups -->
+      <genome name="secale_cereale"/>
+      <genome name="triticum_aestivum_refseqv2"/>
     </collection>
-
   </collections>
 
   <pairwise_alignments>
