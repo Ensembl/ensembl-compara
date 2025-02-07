@@ -36,8 +36,8 @@
       <genome name="oryzias_latipes"/>
       <genome name="eptatretus_burgeri"/>
       <!-- Metazoas -->
-      <genome name="daphnia_pulex"/>
-      <genome name="amphimedon_queenslandica"/>
+      <genome name="daphnia_pulex_gca021134715v1rs"/>
+      <genome name="amphimedon_queenslandica_gca000090795v2rs"/>
       <genome name="clytia_hemisphaerica_gca902728285"/>
       <genome name="lottia_gigantea"/>
       <genome name="trichoplax_adhaerens"/>
@@ -265,17 +265,17 @@
       <genome name="zootermopsis_nevadensis"/>
       <!-- Hemiptera -->
       <genome name="bemisia_tabaci_asiaii5"/>
-      <genome name="acyrthosiphon_pisum"/>
+      <genome name="acyrthosiphon_pisum_gca005508785v2rs"/>
       <genome name="myzus_persicae_gca001856785v1rs"/>
       <genome name="rhodnius_prolixus"/>
       <genome name="trialeurodes_vaporariorum_gca011764245"/>
       <genome name="rhopalosiphum_maidis_gca003676215v3rs"/>
       <!-- Coleoptera -->
       <genome name="leptinotarsa_decemlineata_gca000500325v2rs"/>
-      <genome name="tribolium_castaneum"/>
+      <genome name="tribolium_castaneum_gcf031307605v1rs"/>
       <genome name="anoplophora_glabripennis"/>
       <genome name="agrilus_planipennis_gca000699045v2rs"/>
-      <genome name="dendroctonus_ponderosae_gca000355655v1rs"/>
+      <genome name="dendroctonus_ponderosae_gca020466585v1rs"/>
       <!-- Hymenoptera -->
       <genome name="aphidius_gifuensis_gca014905175v1rs"/>
       <genome name="solenopsis_invicta"/>
@@ -290,8 +290,8 @@
       <!-- Lepidoptera -->
       <genome name="chrysoteuchia_culmella_gca910589605v1"/>
       <genome name="noctua_janthe_gca910589295v1"/>
-      <genome name="danaus_plexippus"/>
-      <genome name="bombyx_mori"/>
+      <genome name="danaus_plexippus_gca018135715v1"/>
+      <genome name="bombyx_mori_gca030269925v1rs"/>
       <genome name="ennomos_quercinarius_gca910589525v1"/>
     </collection>
 
@@ -312,7 +312,7 @@
       <genome name="tetranychus_urticae"/>
       <genome name="centruroides_sculpturatus_gca000671375v2rs"/>
       <genome name="ixodes_scapularis_gca016920785v2rs"/>
-      <genome name="rhipicephalus_sanguineus_gca013339695v1rs"/>
+      <genome name="rhipicephalus_sanguineus_gca013339695v2rs"/>
       <!-- Myriapoda -->
       <genome name="strigamia_maritima"/>
       <!-- Crustacea -->
@@ -321,20 +321,20 @@
       <genome name="portunus_trituberculatus_gca017591435v1rs"/>
       <genome name="eurytemora_affinis_gca000591075v2rs"/>
       <genome name="hyalella_azteca_gca000764305v2rs"/>
-      <genome name="daphnia_pulex"/>
+      <genome name="daphnia_pulex_gca021134715v1rs"/>
       <!-- Hexapoda -->
       <genome name="sipha_flava_gca003268045v1rs"/>
       <genome name="cimex_lectularius_gca000648675v3rs"/>
       <genome name="atta_cephalotes"/>
-      <genome name="bombus_terrestris"/>
+      <genome name="bombus_terrestris_gca910591885v2"/>
       <genome name="anoplius_nigerrimus_gca914767735v1"/>
-      <genome name="melitaea_cinxia"/>
-      <genome name="bombyx_mori"/>
+      <genome name="melitaea_cinxia_gca905220565v1"/>
+      <genome name="bombyx_mori_gca030269925v1rs"/>
       <genome name="aedes_aegypti_lvpagwg"/>
       <genome name="glossina_fuscipes"/>
       <genome name="pediculus_humanus"/>
       <genome name="coccinella_septempunctata_gca907165205v1"/>
-      <genome name="tribolium_castaneum"/>
+      <genome name="tribolium_castaneum_gcf031307605v1rs"/>
       <genome name="orchesella_cincta"/>
     </collection>
 
@@ -355,7 +355,7 @@
       <genome name="lingula_anatina_gca001039355v2rs"/>
       <!-- Mollusca -->
       <genome name="crassostrea_virginica_gca002022765v4rs"/>
-      <genome name="mercenaria_mercenaria_gca014805675v2rs"/>
+      <genome name="mercenaria_mercenaria_gcf021730395v1rs"/>
       <genome name="patella_pellucida_gca917208275v1"/>
       <genome name="octopus_sinensis_gca006345805v1rs"/>
       <genome name="pomacea_canaliculata_gca003073045v1rs"/>
@@ -364,7 +364,7 @@
       <!-- Platyhelminthes -->
       <genome name="hymenolepis_microstoma"/>
       <genome name="clonorchis_sinensis_gca003604175v2wb"/>
-      <genome name="schmidtea_mediterranea_gca002600895v1wb"/>
+      <genome name="schmidtea_mediterranea_gca045838265v1cm"/>
       <genome name="schistosoma_mansoni"/>
       <genome name="echinococcus_multilocularis_gca000469725v3wb"/>
       <!-- Priapulida -->
@@ -382,9 +382,9 @@
       <genome name="haemonchus_contortus_gca000469685v2wb"/>
       <!-- Arthropoda -->
       <genome name="nasonia_vitripennis"/>
-      <genome name="rhipicephalus_sanguineus_gca013339695v1rs"/>
+      <genome name="rhipicephalus_sanguineus_gca013339695v2rs"/>
       <genome name="daphnia_magna_gca020631705v2rs"/>
-      <genome name="diabrotica_virgifera_gca003013835v2rs"/>
+      <genome name="diabrotica_virgifera_gca917563875v2rs"/>
     </collection>
 
     <collection name="metazoa">
@@ -394,7 +394,7 @@
       <genome name="salpingoeca_rosetta_gca_000188695"/>
       <genome name="capsaspora_owczarzaki_atcc_30864_gca_000151315"/>
       <!-- Porifera -->
-      <genome name="amphimedon_queenslandica"/>
+      <genome name="amphimedon_queenslandica_gca000090795v2rs"/>
       <!-- Xenacoelomorpha -->
       <genome name="hofstenia_miamia"/>
       <!-- Placozoa -->
@@ -418,14 +418,14 @@
       <genome name="lingula_anatina_gca001039355v2rs"/>
       <!-- Mollusca -->
       <genome name="crassostrea_virginica_gca002022765v4rs"/>
-      <genome name="mercenaria_mercenaria_gca014805675v2rs"/>
+      <genome name="mercenaria_mercenaria_gcf021730395v1rs"/>
       <genome name="patella_pellucida_gca917208275v1"/>
       <!-- Nemertea -->
       <genome name="lineus_longissimus_gca910592395v2"/>
       <!-- Platyhelminthes -->
       <genome name="hymenolepis_microstoma"/>
       <genome name="clonorchis_sinensis_gca003604175v2wb"/>
-      <genome name="schmidtea_mediterranea_gca002600895v1wb"/>
+      <genome name="schmidtea_mediterranea_gca045838265v1cm"/>
       <!-- Priapulida -->
       <genome name="priapulus_caudatus_gca000485595v2rs"/>
       <!-- Tardigrada -->
@@ -437,7 +437,7 @@
       <genome name="haemonchus_contortus_gca000469685v2wb"/>
       <!-- Arthropoda -->
       <genome name="ixodes_scapularis_gca016920785v2rs"/>
-      <genome name="daphnia_pulex"/>
+      <genome name="daphnia_pulex_gca021134715v1rs"/>
       <genome name="agrilus_planipennis_gca000699045v2rs"/>
     </collection>
 
