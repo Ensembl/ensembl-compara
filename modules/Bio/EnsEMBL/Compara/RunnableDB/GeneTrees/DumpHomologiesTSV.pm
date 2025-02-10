@@ -101,11 +101,8 @@ sub fetch_input {
 
     if (my $genome_db_id = $self->param('genome_db_id')) {
         my $genome_db   = $compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($genome_db_id);
-        my $name        = $genome_db->name;
+        my $name        = $genome_db->_get_ftp_dump_relative_path();
 
-        if ($genome_db->db_adaptor->is_multispecies()) {
-            $name = $1.'/'.$name if $genome_db->db_adaptor->dbc->dbname() =~ /(.+)\_core/;
-        }
         $self->param('species_name', $name);
         $self->param('extra_filter', 'AND gm1.genome_db_id = '.$genome_db_id);
     } elsif ( my $mlss_id = $self->param('mlss_id') ) {

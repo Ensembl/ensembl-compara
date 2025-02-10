@@ -47,7 +47,6 @@ sub run {
     my $self = shift;
 
     my $input_tsv_files = $self->param_required('tsv_files');
-    $self->warning('tsv_files: ' . JSON->new->pretty->encode($input_tsv_files));
 
     my ($first_input_tsv_file, @other_input_tsv_files) = grep { defined $_ } @{$input_tsv_files};
     my $cat_tsv_file_path = $self->param_required('output_file');

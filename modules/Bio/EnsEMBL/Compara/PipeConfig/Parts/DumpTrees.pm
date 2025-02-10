@@ -221,7 +221,7 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'concatenate_mlss_homologies_tsv',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateTSV',
             -parameters => {
-                'output_file' => '#tsv_dir#/#species_name#/#name_root#.homologies.tsv',
+                'output_file' => '#tsv_dir#/#species_path#/#name_root#.homologies.tsv',
                 'healthcheck_list' => ['line_count', 'unexpected_nulls'],
                 'exp_line_count' => '#genome_exp_line_count#',
             },
@@ -421,7 +421,7 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'step'          => $self->o('max_files_per_tar'),
                 'contiguous'    => 0,
-                'inputcmd'      => 'find #hash_dir# -name "tree.*.#extension#" | sed "s:#hash_dir#/*::" | sort -t . -k2 -n',
+                'inputcmd'      => 'find #tree_hash_dir# -name "tree.*.#extension#" | sed "s:#tree_hash_dir#/*::" | sort -t . -k2 -n',
             },
             -flow_into => {
                 '2->A' => [ 'tar_dumps' ],
@@ -504,7 +504,7 @@ sub pipeline_analyses_dump_trees {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
             -rc_name    => '1Gb_job',
             -parameters => {
-                'cmd' => 'cd #directory# ; md5sum *.gz >MD5SUM',
+                'cmd' => q/cd #directory# ; find * -maxdepth 0 \( -name '*.gz' -o -name '*.tar' \) -exec md5sum {} '+' > MD5SUM/,
             },
         },
 

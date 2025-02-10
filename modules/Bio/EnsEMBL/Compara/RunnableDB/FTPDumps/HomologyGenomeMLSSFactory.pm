@@ -41,7 +41,7 @@ sub param_defaults {
 }
 
 
-sub fetch_input {
+sub run {
     my ($self) = @_;
 
     my $clusterset_id = $self->param_required('clusterset_id');
@@ -64,8 +64,15 @@ sub fetch_input {
     my $collection = $mlss->species_set;
 
     my @collection_gdbs = grep { !$_->genome_component } @{$collection->genome_dbs};
-    my %gdb_id_to_name = map { $_->dbID => $_->name } @collection_gdbs;
-    my @collection_gdb_ids = sort { $a <=> $b } keys %gdb_id_to_name;
+
+    my %gdb_info;
+    foreach my $gdb (@collection_gdbs) {
+        $gdb_info{$gdb->dbID} = {
+            'species_name' => $gdb->name,
+            'species_path' => $gdb->_get_ftp_dump_relative_path(),
+        };
+    }
+    my @collection_gdb_ids = sort { $a <=> $b } keys %gdb_info;
 
     my $homology_methods = $method_dba->fetch_all_by_class_pattern('^Homology\.homology$');
     my @homology_method_types = map { $_->type } @{$homology_methods};
@@ -166,7 +173,8 @@ sub fetch_input {
         my $gdb_exp_line_count = $gdb_hom_counts{$gdb_id}{'expected_homology_count'} // 0;
         my %fan_output_id = (
             'genome_db_id' => $gdb_id,
-            'species_name' => $gdb_id_to_name{$gdb_id},
+            'species_name' => $gdb_info{$gdb_id}{'species_name'},
+            'species_path' => $gdb_info{$gdb_id}{'species_path'},
             'biotype_group_list' => $biotype_group_sql_list,
             'genome_exp_line_count' => $gdb_exp_line_count,
             'column_names' => ['hom_mlss_id', 'exp_line_count'],

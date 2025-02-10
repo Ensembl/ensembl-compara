@@ -217,7 +217,7 @@ while (my ($division, $species_names) = each %{$additional_species}) {
 }
 
 
-my $core_db_pattern = qr/^[a-z0-9_]+(?<collection_core_tag>_collection)?_core(?:_\d+)?_\d+_\w+$/;
+my $core_db_pattern = qr/^[a-z0-9_]+?(?<collection_core_tag>_collection)?_core(?:_\d+)?_\d+_\w+$/;
 
 my %cores_by_species_name;
 my %core_adaptor_param_sets;
