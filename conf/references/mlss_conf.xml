@@ -441,7 +441,7 @@
       <genome name="agrilus_planipennis_gca000699045v2rs"/>
     </collection>
 
-    <collection name="monocots">
+    <collection name="liliopsida">
       <base_collection name="shared"/>
       <!-- Outgroups -->
       <genome name="chlamydomonas_reinhardtii"/>
@@ -481,7 +481,7 @@
       <genome name="musa_acuminata"/>
     </collection>
 
-    <collection name="dicots">
+    <collection name="eudicotyledons">
       <base_collection name="shared"/>
       <!-- Outgroups -->
       <genome name="chlamydomonas_reinhardtii"/>
