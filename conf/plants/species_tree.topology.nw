@@ -1,21 +1,278 @@
 (
   (
     (
-      ostreococcus_lucimarinus,
-      chlamydomonas_reinhardtii
-    )"Chlorophyta",
+      chlamydomonas_reinhardtii,
+      ostreococcus_lucimarinus
+    )Chlorophyta,
     (
+      chara_braunii,
       (
+        marchantia_polymorpha,
+        physcomitrium_patens,
         (
           (
             (
+              amborella_trichopoda,
               (
+                (
+                  actinidia_chinensis,
+                  (
+                    (
+                      cynara_cardunculus,
+                      helianthus_annuus,
+                      lactuca_sativa
+                    )Asteraceae,
+                    daucus_carota
+                  )campanulids,
+                  (
+                    coffea_canephora,
+                    (
+                      (
+                        fraxinus_excelsior,
+                        olea_europaea
+                      )Oleeae,
+                      sesamum_indicum
+                    )Lamiales,
+                    (
+                      ipomoea_triloba,
+                      (
+                        (
+                          capsicum_annuum,
+                          nicotiana_attenuata,
+                          (
+                            solanum_lycopersicum,
+                            solanum_tuberosum
+                          )Solanum
+                        )Solanoideae
+                      )Solanaceae
+                    )Solanales
+                  )lamiids
+                )asterids,
+                (
+                  beta_vulgaris_gca026745355v1rs,
+                  chenopodium_quinoa
+                )Chenopodiaceae,
+                kalanchoe_fedtschenkoi,
                 (
                   (
                     (
+                      arabis_alpina,
+                      (
+                        brassica_juncea,
+                        brassica_napus,
+                        brassica_oleracea,
+                        brassica_rapa_ro18
+                      )Brassica,
                       (
                         (
+                          arabidopsis_halleri,
+                          arabidopsis_lyrata,
+                          arabidopsis_thaliana
+                        )Arabidopsis,
+                        camelina_sativa,
+                        (
+                          camelina_sativa_G1,
+                          camelina_sativa_G2,
+                          camelina_sativa_G3
+                        )
+                      )Camelineae,
+                      eutrema_salsugineum
+                    )Brassicaceae,
+                    (
+                      corymbia_citriodora,
+                      eucalyptus_grandis
+                    )Eucalypteae,
+                    (
+                      corchorus_capsularis,
+                      gossypium_raimondii,
+                      theobroma_cacao
+                    )Malvaceae,
+                    (
+                      citrus_clementina,
+                      pistacia_vera
+                    )Sapindales
+                  )malvids,
+                  (
+                    (
+                      corylus_avellana,
+                      juglans_regia,
+                      (
+                        quercus_lobata,
+                        quercus_suber
+                      )Quercus
+                    )Fagales,
+                    (
+                      manihot_esculenta,
+                      populus_trichocarpa
+                    )Malpighiales,
+                    (
+                      cannabis_sativa_gca029168945v1rs,
+                      ficus_carica,
+                      (
+                        (
+                          malus_domestica_golden,
                           (
+                            prunus_avium,
+                            prunus_dulcis,
+                            prunus_persica
+                          )Prunus
+                        )Amygdaloideae,
+                        rosa_chinensis
+                      )Rosaceae
+                    )Rosales,
+                    (
+                      citrullus_lanatus,
+                      (
+                        cucumis_melo,
+                        cucumis_sativus
+                      )Cucumis
+                    )Benincaseae,
+                    (
+                      arachis_hypogaea,
+                      lupinus_angustifolius,
+                      (
+                        (
+                          cajanus_cajan,
+                          (
+                            glycine_max,
+                            glycine_soja
+                          )Glycine_subgen._Soja,
+                          lablab_purpureus_gca030347555v1cm,
+                          phaseolus_vulgaris,
+                          sphenostylis_stenocarpa,
+                          (
+                            vigna_angularis,
+                            vigna_radiata,
+                            vigna_unguiculata
+                          )Vigna
+                        )Phaseoleae,
+                        (
+                          (
+                            medicago_truncatula,
+                            trifolium_pratense
+                          )Trifolieae,
+                          (
+                            lathyrus_sativus,
+                            (
+                              pisum_sativum,
+                              pisum_sativum_gca024323335v2gb,
+                              pisum_sativum_gca964186695v1gb
+                            )Pisum_sativum,
+                            vicia_faba
+                          )Fabeae
+                        )IRL_clade
+                      )NPAAA_clade
+                    )50_kb_inversion_clade
+                  )fabids,
+                  vitis_vinifera
+                )rosids
+              )Pentapetalae,
+              (
+                asparagus_officinalis,
+                (
+                  musa_acuminata,
+                  (
+                    ananas_comosus,
+                    (
+                      (
+                        (
+                          brachypodium_distachyon,
+                          (
+                            (
+                              avena_sativa_ot3098,
+                              avena_sativa_sang,
+                              (
+                                avena_sativa_sang_A,
+                                avena_sativa_sang_C,
+                                avena_sativa_sang_D,
+                                avena_sativa_sang_U
+                              )
+                            )Avena_sativa,
+                            lolium_perenne
+                          )Poeae,
+                          (
+                            (
+                              (
+                                hordeum_vulgare,
+                                hordeum_vulgare_10tj18,
+                                hordeum_vulgare_aizu6,
+                                hordeum_vulgare_akashinriki,
+                                hordeum_vulgare_barke,
+                                hordeum_vulgare_bonus,
+                                hordeum_vulgare_bowman,
+                                hordeum_vulgare_chikurinibaraki1,
+                                hordeum_vulgare_foma,
+                                hordeum_vulgare_ft11,
+                                hordeum_vulgare_ft144,
+                                hordeum_vulgare_ft262,
+                                hordeum_vulgare_ft286,
+                                hordeum_vulgare_ft333,
+                                hordeum_vulgare_ft628,
+                                hordeum_vulgare_ft67,
+                                hordeum_vulgare_ft880,
+                                hordeum_vulgare_goldenmelon,
+                                hordeum_vulgare_goldenpromise,
+                                hordeum_vulgare_hid055,
+                                hordeum_vulgare_hid101,
+                                hordeum_vulgare_hid249,
+                                hordeum_vulgare_hid357,
+                                hordeum_vulgare_hid380,
+                                hordeum_vulgare_hockett,
+                                hordeum_vulgare_hor10096,
+                                hordeum_vulgare_hor10350,
+                                hordeum_vulgare_hor10892,
+                                hordeum_vulgare_hor1168,
+                                hordeum_vulgare_hor12184,
+                                hordeum_vulgare_hor12541,
+                                hordeum_vulgare_hor13594,
+                                hordeum_vulgare_hor13663,
+                                hordeum_vulgare_hor13821,
+                                hordeum_vulgare_hor13942,
+                                hordeum_vulgare_hor14061,
+                                hordeum_vulgare_hor14121,
+                                hordeum_vulgare_hor14273,
+                                hordeum_vulgare_hor1702,
+                                hordeum_vulgare_hor18321,
+                                hordeum_vulgare_hor19184,
+                                hordeum_vulgare_hor21256,
+                                hordeum_vulgare_hor21322,
+                                hordeum_vulgare_hor21595,
+                                hordeum_vulgare_hor21599,
+                                hordeum_vulgare_hor2180,
+                                hordeum_vulgare_hor2779,
+                                hordeum_vulgare_hor2830,
+                                hordeum_vulgare_hor3081,
+                                hordeum_vulgare_hor3365,
+                                hordeum_vulgare_hor3474,
+                                hordeum_vulgare_hor4224,
+                                hordeum_vulgare_hor495,
+                                hordeum_vulgare_hor6220,
+                                hordeum_vulgare_hor7172,
+                                hordeum_vulgare_hor7385,
+                                hordeum_vulgare_hor7552,
+                                hordeum_vulgare_hor8117,
+                                hordeum_vulgare_hor8148,
+                                hordeum_vulgare_hor9043,
+                                hordeum_vulgare_hor9972,
+                                hordeum_vulgare_igri,
+                                hordeum_vulgare_maximus,
+                                hordeum_vulgare_oun333,
+                                hordeum_vulgare_rgtplanet,
+                                hordeum_vulgare_tritex,
+                                hordeum_vulgare_wbdc078,
+                                hordeum_vulgare_wbdc103,
+                                hordeum_vulgare_wbdc133,
+                                hordeum_vulgare_wbdc184,
+                                hordeum_vulgare_wbdc199,
+                                hordeum_vulgare_wbdc207,
+                                hordeum_vulgare_wbdc237,
+                                hordeum_vulgare_wbdc348,
+                                hordeum_vulgare_wbdc349,
+                                hordeum_vulgare_zdm01467,
+                                hordeum_vulgare_zdm02064
+                              )Hordeum_vulgare,
+                              secale_cereale
+                            )Hordeinae,
                             (
                               (
                                 aegilops_umbellulata,
@@ -39,7 +296,6 @@
                                 triticum_turgidum
                               ),
                               (
-                                triticum_urartu,
                                 (
                                   triticum_aestivum_A,
                                   triticum_aestivum_arinalrfor_A,
@@ -60,6 +316,7 @@
                                   triticum_timopheevii_A,
                                   triticum_turgidum_A
                                 ),
+                                triticum_urartu
                               ),
                               (
                                 triticum_aestivum_B,
@@ -111,154 +368,51 @@
                                 triticum_aestivum_refseqv2_U,
                                 triticum_aestivum_stanley_U,
                                 triticum_turgidum_U
-                              ),
-                            )"Triticinae",
-                            (
-                              (
-                                hordeum_vulgare_zdm02064,
-                                hordeum_vulgare_zdm01467,
-                                hordeum_vulgare_wbdc349,
-                                hordeum_vulgare_wbdc348,
-                                hordeum_vulgare_wbdc237,
-                                hordeum_vulgare_wbdc207,
-                                hordeum_vulgare_wbdc199,
-                                hordeum_vulgare_wbdc184,
-                                hordeum_vulgare_wbdc133,
-                                hordeum_vulgare_wbdc103,
-                                hordeum_vulgare_wbdc078,
-                                hordeum_vulgare_tritex,
-                                hordeum_vulgare_rgtplanet,
-                                hordeum_vulgare_oun333,
-                                hordeum_vulgare_maximus,
-                                hordeum_vulgare_igri,
-                                hordeum_vulgare_hor9972,
-                                hordeum_vulgare_hor9043,
-                                hordeum_vulgare_hor8148,
-                                hordeum_vulgare_hor8117,
-                                hordeum_vulgare_hor7552,
-                                hordeum_vulgare_hor7385,
-                                hordeum_vulgare_hor7172,
-                                hordeum_vulgare_hor6220,
-                                hordeum_vulgare_hor495,
-                                hordeum_vulgare_hor4224,
-                                hordeum_vulgare_hor3474,
-                                hordeum_vulgare_hor3365,
-                                hordeum_vulgare_hor3081,
-                                hordeum_vulgare_hor2830,
-                                hordeum_vulgare_hor2779,
-                                hordeum_vulgare_hor2180,
-                                hordeum_vulgare_hor21599,
-                                hordeum_vulgare_hor21595,
-                                hordeum_vulgare_hor21322,
-                                hordeum_vulgare_hor21256,
-                                hordeum_vulgare_hor19184,
-                                hordeum_vulgare_hor18321,
-                                hordeum_vulgare_hor1702,
-                                hordeum_vulgare_hor14273,
-                                hordeum_vulgare_hor14121,
-                                hordeum_vulgare_hor14061,
-                                hordeum_vulgare_hor13942,
-                                hordeum_vulgare_hor13821,
-                                hordeum_vulgare_hor13663,
-                                hordeum_vulgare_hor13594,
-                                hordeum_vulgare_hor12541,
-                                hordeum_vulgare_hor12184,
-                                hordeum_vulgare_hor1168,
-                                hordeum_vulgare_hor10892,
-                                hordeum_vulgare_hor10350,
-                                hordeum_vulgare_hor10096,
-                                hordeum_vulgare_hockett,
-                                hordeum_vulgare_hid380,
-                                hordeum_vulgare_hid357,
-                                hordeum_vulgare_hid249,
-                                hordeum_vulgare_hid101,
-                                hordeum_vulgare_hid055,
-                                hordeum_vulgare_goldenpromise,
-                                hordeum_vulgare_goldenmelon,
-                                hordeum_vulgare_ft880,
-                                hordeum_vulgare_ft67,
-                                hordeum_vulgare_ft628,
-                                hordeum_vulgare_ft333,
-                                hordeum_vulgare_ft286,
-                                hordeum_vulgare_ft262,
-                                hordeum_vulgare_ft144,
-                                hordeum_vulgare_ft11,
-                                hordeum_vulgare_foma,
-                                hordeum_vulgare_chikurinibaraki1,
-                                hordeum_vulgare_bowman,
-                                hordeum_vulgare_bonus,
-                                hordeum_vulgare_barke,
-                                hordeum_vulgare_akashinriki,
-                                hordeum_vulgare_aizu6,
-                                hordeum_vulgare_10tj18,
-                                hordeum_vulgare
-                              )"Hordeum vulgare",
-                              secale_cereale
-                            )"Hordeinae"
-                          )"Triticeae",
-                          (
-                            (
-                              avena_sativa_sang,
-                              (
-                                avena_sativa_sang_A,
-                                avena_sativa_sang_C,
-                                avena_sativa_sang_D,
-                                avena_sativa_sang_U
-                              ),
-                              avena_sativa_ot3098
-                            )"Avena sativa",
-                            lolium_perenne
-                          )"Poeae",
-                          brachypodium_distachyon
-                        )"Pooideae",
+                              )
+                            )Triticinae
+                          )Triticeae
+                        )Pooideae,
                         (
+                          leersia_perrieri,
                           (
-                            oryza_glumipatula,
-                            oryza_meridionalis,
-                            oryza_longistaminata,
-                            oryza_rufipogon,
-                            (
-                              oryza_sativa_zs97,
-                              oryza_sativa_pr106,
-                              oryza_sativa_natelboro,
-                              oryza_sativa_n22,
-                              oryza_sativa_mh63,
-                              oryza_sativa_liuxu,
-                              oryza_sativa_lima,
-                              oryza_sativa_larhamugad,
-                              oryza_sativa_khaoyaiguang,
-                              oryza_sativa_ketannangka,
-                              oryza_sativa_ir64,
-                              oryza_sativa_gobolsailbalam,
-                              oryza_sativa_chaomeo,
-                              oryza_sativa_azucena,
-                              oryza_sativa_arc,
-                              oryza_sativa,
-                              oryza_indica
-                            )"Oryza sativa",
+                            oryza_barthii,
                             oryza_brachyantha,
+                            oryza_glaberrima,
+                            oryza_glumipatula,
+                            oryza_longistaminata,
+                            oryza_meridionalis,
                             oryza_nivara,
                             oryza_punctata,
-                            oryza_glaberrima,
-                            oryza_barthii
-                          )"Oryza",
-                          leersia_perrieri
-                        )"Oryzinae"
-                      )"BOP clade",
+                            oryza_rufipogon,
+                            (
+                              oryza_indica,
+                              oryza_sativa,
+                              oryza_sativa_arc,
+                              oryza_sativa_azucena,
+                              oryza_sativa_chaomeo,
+                              oryza_sativa_gobolsailbalam,
+                              oryza_sativa_ir64,
+                              oryza_sativa_ketannangka,
+                              oryza_sativa_khaoyaiguang,
+                              oryza_sativa_larhamugad,
+                              oryza_sativa_lima,
+                              oryza_sativa_liuxu,
+                              oryza_sativa_mh63,
+                              oryza_sativa_n22,
+                              oryza_sativa_natelboro,
+                              oryza_sativa_pr106,
+                              oryza_sativa_zs97
+                            )Oryza_sativa
+                          )Oryza
+                        )Oryzinae
+                      )BOP_clade,
                       (
                         (
+                          eragrostis_curvula,
+                          eragrostis_tef
+                        )Eragrostis,
+                        (
                           (
-                            (
-                              setaria_italica,
-                              setaria_viridis
-                            )"Setaria",
-                            echinochloa_crusgalli,
-                            digitaria_exilis,
-                            panicum_hallii
-                          )"Paniceae",
-                          (
-                            sorghum_bicolor,
-                            zea_mays,
                             saccharum_spontaneum,
                             (
                               saccharum_spontaneum_A,
@@ -266,206 +420,52 @@
                               saccharum_spontaneum_C,
                               saccharum_spontaneum_D
                             ),
-                          )"Andropogoneae"
-                        )"Panicoideae",
-                        (
-                          eragrostis_curvula,
-                          eragrostis_tef
-                        )"Eragrostis"
-                      )"PACMAD clade"
-                    )"Poaceae",
-                    ananas_comosus
-                  )"Poales",
-                  musa_acuminata
-                )"commelinids",
-                asparagus_officinalis,
-                dioscorea_rotundata
-              )"Petrosaviidae",
-              (
-                (
-                  (
-                    (
-                      (
-                        (
+                            sorghum_bicolor,
+                            zea_mays
+                          )Andropogoneae,
                           (
-                            solanum_tuberosum,
-                            solanum_lycopersicum
-                          )"Solanum",
-                          capsicum_annuum
-                        )"Solanoideae",
-                        nicotiana_attenuata
-                      )"Solanaceae",
-                      ipomoea_triloba
-                    )"Solanales",
-                    (
-                      (
-                        olea_europaea,
-                        fraxinus_excelsior
-                      )"Oleeae",
-                      sesamum_indicum
-                    )"Lamiales",
-                    coffea_canephora
-                  )"lamiids",
-                  (
-                    (
-                      helianthus_annuus,
-                      lactuca_sativa,
-                      cynara_cardunculus
-                    )"Asteraceae",
-                    daucus_carota
-                  )"campanulids",
-                  actinidia_chinensis
-                )"asterids",
-                (
-                  (
-                    (
-                      pistacia_vera,
-                      citrus_clementina
-                    )"Sapindales",
-                    (
-                      gossypium_raimondii,
-                      theobroma_cacao,
-                      corchorus_capsularis
-                    )"Malvaceae",
-                    (
-                      (
-                        (
-                          arabidopsis_halleri,
-                          arabidopsis_thaliana,
-                          arabidopsis_lyrata
-                        )"Arabidopsis",
-                        camelina_sativa,
-                        (
-                          camelina_sativa_G1,
-                          camelina_sativa_G2,
-                          camelina_sativa_G3
-                        )
-                      )"Camelineae",
-                      (
-                        brassica_juncea,
-                        brassica_napus,
-                        brassica_rapa_ro18,
-                        brassica_oleracea
-                      )"Brassica",
-                      arabis_alpina,
-                      eutrema_salsugineum
-                    )"Brassicaceae",
-                    (
-                      corymbia_citriodora,
-                      eucalyptus_grandis
-                    )"Eucalypteae"
-                  )"malvids",
-                  (
-                    (
-                      (
-                        quercus_lobata,
-                        quercus_suber
-                      )"Quercus",
-                      juglans_regia,
-                      corylus_avellana
-                    )"Fagales",
-                    (
-                      populus_trichocarpa,
-                      manihot_esculenta
-                    )"Malpighiales",
-                    (
-                      (
-                        (
-                          (
-                            prunus_dulcis,
-                            prunus_persica,
-                            prunus_avium
-                          )"Prunus",
-                          malus_domestica_golden
-                        )"Amygdaloideae",
-                        rosa_chinensis
-                      )"Rosaceae",
-                      cannabis_sativa_gca029168945v1rs,
-                      ficus_carica
-                    )"Rosales",
-                    (
-                      (
-                        cucumis_melo,
-                        cucumis_sativus
-                      )"Cucumis",
-                      citrullus_lanatus
-                    )"Benincaseae",
-                    (
-                      (
-                        (
-                          (
-                            vigna_radiata,
-                            vigna_angularis,
-                            vigna_unguiculata
-                          )"Vigna",
-                          lablab_purpureus_gca030347555v1cm,
-                          cajanus_cajan,
-                          (
-                            glycine_max,
-                            glycine_soja
-                          )"Glycine subgen. Soja",
-                          phaseolus_vulgaris,
-                          sphenostylis_stenocarpa
-                        )"Phaseoleae",
-                        (
-                          (
-                            trifolium_pratense,
-                            medicago_truncatula
-                          )"Trifolieae",
-                          (
-                            lathyrus_sativus,
+                            digitaria_exilis,
+                            echinochloa_crusgalli,
+                            panicum_hallii,
                             (
-                              pisum_sativum,
-                              pisum_sativum_gca024323335v2gb,
-                              pisum_sativum_gca964186695v1gb
-                            )"Pisum sativum",
-                            vicia_faba
-                          )"Fabeae"
-                        )"IRL clade"
-                      )"NPAAA clade",
-                      arachis_hypogaea,
-                      lupinus_angustifolius
-                    )"50 kb inversion clade"
-                  )"fabids",
-                  vitis_vinifera
-                )"rosids",
-                (
-                  beta_vulgaris_gca026745355v1rs,
-                  chenopodium_quinoa
-                )"Chenopodiaceae",
-                kalanchoe_fedtschenkoi
-              )"Pentapetalae",
-              papaver_somniferum
-            )"Mesangiospermae",
-            amborella_trichopoda,
+                              setaria_italica,
+                              setaria_viridis
+                            )Setaria
+                          )Paniceae
+                        )Panicoideae
+                      )PACMAD_clade
+                    )Poaceae
+                  )Poales
+                )commelinids,
+                dioscorea_rotundata,
+                papaver_somniferum
+              )Petrosaviidae
+            )Mesangiospermae,
             nymphaea_colorata
-          )"Magnoliopsida",
+          )Magnoliopsida,
           selaginella_moellendorffii
-        )"Tracheophyta",
-        marchantia_polymorpha,
-        physcomitrium_patens
-      )"Embryophyta",
-      chara_braunii
-    )"Streptophytina"
-  )"Viridiplantae",
+        )Tracheophyta
+      )Embryophyta
+    )Streptophytina
+  )Viridiplantae,
   (
     (
-      galdieria_sulphuraria,
-      cyanidioschyzon_merolae
-    )"Bangiophyceae",
+      cyanidioschyzon_merolae,
+      galdieria_sulphuraria
+    )Bangiophyceae,
     chondrus_crispus
-  )"Rhodophyta",
+  )Rhodophyta,
   (
     (
       (
         caenorhabditis_elegans,
         drosophila_melanogaster
-      )"Ecdysozoa",
+      )Ecdysozoa,
       (
         ciona_savignyi,
         homo_sapiens
-      )"Chordata"
-    )"Bilateria",
+      )Chordata
+    )Bilateria,
     saccharomyces_cerevisiae
-  )"Opisthokonta"
+  )Opisthokonta
 );
