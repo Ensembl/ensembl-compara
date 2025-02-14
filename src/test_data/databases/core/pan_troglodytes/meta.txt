@@ -1,5 +1,5 @@
 1	\N	schema_type	core
-2	\N	schema_version	114
+2	\N	schema_version	115
 3	\N	patch	patch_61_62_a.sql|schema_version
 4	\N	patch	patch_61_62_b.sql|synonym_field_extension
 5	\N	patch	patch_61_62_c.sql|db_name_db_release_idx
@@ -222,3 +222,4 @@
 763	\N	patch	patch_112_113_a.sql|schema_version
 764	\N	patch	patch_112_113_b.sql|Ensure meta_value is not null
 765	\N	patch	patch_113_114_a.sql|schema_version
+766	\N	patch	patch_114_115_a.sql|schema_version
