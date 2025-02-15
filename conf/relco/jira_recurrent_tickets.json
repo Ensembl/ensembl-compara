@@ -51,6 +51,19 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Mid-production+tasks",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Mid-production+tasks#Midproductiontasks-Preliminarystaging-sitecheckcoordination",
+            "summary": "Preliminary staging-site check coordination"
+         }
+      ],
+      "summary": "Release <version> mid-production tasks"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division-agnostic+work",
       "subtasks": [{
             "assignee": "<RelCo>",
