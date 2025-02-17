@@ -24,6 +24,7 @@ use Test::More;
 use XML::LibXML;
 
 use Bio::EnsEMBL::Utils::IO qw(slurp);
+use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::Test;
 
 my $xml_parser = XML::LibXML->new(line_numbers => 1);
@@ -45,9 +46,13 @@ sub test_division {
     # Fetch allowed-species info if allowed_species.json exists for this division
     my %allowed_species;
     my $allowed_species_file;
+    my @all_species_files;
+    my %all_species;
     if (exists $allowed_species_info->{$division}) {
         $allowed_species_file = $allowed_species_info->{$division}{'allowed_species_file'};
         %allowed_species = %{$allowed_species_info->{$division}{'allowed_species'}};
+        push(@all_species_files, $allowed_species_file);
+        %all_species = %allowed_species;
     }
 
     # Validate production names using regexes based on the MetaKeyFormat datacheck.
@@ -78,7 +83,7 @@ sub test_division {
         }
 
         if (%allowed_species and scalar(@names_to_test) > 0) {
-            # 3. All species listed in mlss_conf.xml exist in allowed_species.json
+            # All species listed in mlss_conf.xml exist in allowed_species.json
             $has_files_to_test = 1;
             subtest "$mlss_file vs $allowed_species_file" => sub {
                 foreach my $a (@names_to_test) {
@@ -95,18 +100,37 @@ sub test_division {
         my $additional_species = decode_json(slurp($additional_species_file));
         my @divisions_to_test = grep { exists $allowed_species_info->{$_} } keys %$additional_species;
         if (scalar(@divisions_to_test) > 0) {
-            # 4. Each species in additional_species.json must be in relevant division allowed-species list
+            # Each species in additional_species.json must be in relevant division allowed-species list
             $has_files_to_test = 1;
+            push(@all_species_files, $additional_species_file);
             foreach my $other_div (@divisions_to_test) {
                 my $other_div_allowed_species_file = $allowed_species_info->{$other_div}{'allowed_species_file'};
                 subtest "$additional_species_file vs $other_div_allowed_species_file" => sub {
                     my %other_div_allowed_species = %{$allowed_species_info->{$other_div}{'allowed_species'}};
                     foreach my $name (@{$additional_species->{$other_div}}) {
                         ok(exists $other_div_allowed_species{$name}, "$name is allowed");
+                        $all_species{$name} = 1;
                     }
                 };
             }
         }
+    }
+
+    # Load the species topology if there is one
+    my %species_in_topology;
+    my $species_topology_file = File::Spec->catfile($division_dir, 'species_tree.topology.nw');
+    if (%allowed_species && -e $species_topology_file) {
+        my $content = slurp($species_topology_file);
+        my $topology = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($content);
+        %species_in_topology = map {$_->name => 1} grep {$_->name} @{$topology->get_all_leaves};
+        # All species in allowed_species.json and additional_species.json must be in the species topology
+        $has_files_to_test = 1;
+        my $all_species_file_str = join(':', @all_species_files);
+        subtest "$all_species_file_str vs $species_topology_file" => sub {
+            foreach my $name (keys %all_species) {
+                ok(exists $species_in_topology{$name}, "'$name' is in the species topology");
+            }
+        };
     }
 
     # Load biomart_species.json if it exists
@@ -115,7 +139,7 @@ sub test_division {
         my $metaconfig_file = File::Spec->catfile($division_dir, 'metaconfig.json');
         my $metaconfig = decode_json(slurp($metaconfig_file));
         my $biomart_species_cap = $metaconfig->{'biomart'}{'species_cap'};
-        # 5. All species listed in biomart_species.json exist in allowed_species.json
+        # All species listed in biomart_species.json exist in allowed_species.json
         $has_files_to_test = 1;
         my $biomart_species = decode_json(slurp($biomart_species_file));
         subtest "$biomart_species_file species cap" => sub {
