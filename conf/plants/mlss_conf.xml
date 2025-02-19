@@ -73,7 +73,7 @@
     </collection>
 
     <!-- Wheat A Cactus collection -->
-    <collection name="wheat_component_A">
+    <collection name="wheat_subgenome_A">
       <genome name="aegilops_tauschii"/>
       <genome name="brachypodium_distachyon"/>
       <genome name="hordeum_vulgare"/>
@@ -104,7 +104,7 @@
     </collection>
 
     <!-- Wheat B Cactus collection -->
-    <collection name="wheat_component_B">
+    <collection name="wheat_subgenome_B">
       <genome name="aegilops_tauschii"/>
       <genome name="brachypodium_distachyon"/>
       <genome name="hordeum_vulgare"/>
@@ -135,7 +135,7 @@
     </collection>
 
     <!-- Wheat D Cactus collection -->
-    <collection name="wheat_component_D">
+    <collection name="wheat_subgenome_D">
       <genome name="aegilops_tauschii"/>
       <genome name="brachypodium_distachyon"/>
       <genome name="hordeum_vulgare"/>
