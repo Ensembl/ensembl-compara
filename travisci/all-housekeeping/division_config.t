@@ -118,6 +118,7 @@ sub test_division {
 
     # Load the species topology if there is one
     my %species_in_topology;
+    my %genome_weights;
     my $species_topology_file = File::Spec->catfile($division_dir, 'species_tree.topology.nw');
     if (%allowed_species && -e $species_topology_file) {
         my $content = slurp($species_topology_file);
@@ -131,6 +132,18 @@ sub test_division {
                 ok(exists $species_in_topology{$name}, "'$name' is in the species topology");
             }
         };
+
+        # Check for polyploid subgenomes. These may be used later to
+        # calculate the effective genome count of polyploid genomes.
+        my $all_species_subpattern = join('|', keys %all_species);
+        my $subgenome_name_re = qr/^(?<principal>${all_species_subpattern})_(?<component>[^_]+)$/;
+        foreach my $name (keys %species_in_topology) {
+            if (!exists $all_species{$name} && $name =~ $subgenome_name_re) {
+                if ($+{'component'} ne 'U') {
+                    $genome_weights{$+{'principal'}} += 1;
+                }
+            }
+        }
     }
 
     # Load biomart_species.json if it exists
@@ -142,9 +155,17 @@ sub test_division {
         # All species listed in biomart_species.json exist in allowed_species.json
         $has_files_to_test = 1;
         my $biomart_species = decode_json(slurp($biomart_species_file));
+
+        my $effective_genome_count = 0;
+        foreach my $name (@{$biomart_species}) {
+            my $genome_weight = exists $genome_weights{$name} ? $genome_weights{$name} : 1;
+            $effective_genome_count += $genome_weight;
+        }
+
         subtest "$biomart_species_file species cap" => sub {
-            cmp_ok(scalar(@{$biomart_species}), '<=', $biomart_species_cap, "species count within limit");
+            cmp_ok($effective_genome_count, '<=', $biomart_species_cap, "biomart species count within limit");
         };
+
         subtest "$biomart_species_file vs $allowed_species_file" => sub {
             foreach my $name (@{$biomart_species}) {
                 ok(exists $allowed_species{$name}, "$name is allowed");
