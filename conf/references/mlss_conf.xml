@@ -307,7 +307,7 @@
       <genome name="onchocerca_volvulus"/>
 
       <!-- Chelicerata -->
-      <genome name="limulus_polyphemus_gca000517525v1rs"/>
+      <genome name="uloborus_diversus_gca026930045v1rs"/>
       <genome name="varroa_destructor_gca002443255"/>
       <genome name="tetranychus_urticae"/>
       <genome name="centruroides_sculpturatus_gca000671375v2rs"/>
