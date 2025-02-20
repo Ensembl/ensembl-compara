@@ -67,7 +67,7 @@ sub test_division {
                      ;
 
     foreach my $name (keys %allowed_species) {
-        like($name, $prod_name_re, "Production name has conventional format");
+        like($name, $prod_name_re, "Production name '$name' has conventional format");
     }
 
     # Load the MLSS XML file if it exists
