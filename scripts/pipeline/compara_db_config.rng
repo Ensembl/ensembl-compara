@@ -147,10 +147,14 @@
               </optional>
               <optional>
                 <attribute name="strain_type" blockly:blockName="Predominant strain type of this collection">
+                  <!-- This should be kept in sync with strain types in the StrainType datacheck. -->
                   <choice>
                     <value blockly:blockName="Strain">strain</value>
                     <value blockly:blockName="Breed">breed</value>
                     <value blockly:blockName="Cultivar">cultivar</value>
+                    <value blockly:blockName="Ecotype">ecotype</value>
+                    <value blockly:blockName="Haplotype">haplotype</value>
+                    <value blockly:blockName="Isolate">isolate</value>
                   </choice>
                 </attribute>
               </optional>
