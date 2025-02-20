@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<grammar xmlns="http://relaxng.org/ns/structure/1.0" xmlns:blockly="http://blockly.com/">
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns:blockly="http://blockly.com/">
   <define name="new_species_set">
     <oneOrMore>
       <choice>
@@ -304,14 +304,26 @@
                 <attribute name="collection" blockly:blockName="Collection name"/>
                 <optional>
                   <attribute name="prefer_for_genomes"
-                             blockly:blockName="If we must choose, this is the preferred strain collection for the given space-delimited list of genomes."/>
+                             blockly:blockName="If we must choose, this is the preferred strain collection for the given space-delimited list of genomes.">
+                    <list>
+                      <oneOrMore>
+                        <data type="string"/>
+                      </oneOrMore>
+                    </list>
+                  </attribute>
                 </optional>
               </element>
               <element name="nc_trees" blockly:blockName="ncRNA-trees">
                 <attribute name="collection" blockly:blockName="Collection name"/>
                 <optional>
                   <attribute name="prefer_for_genomes"
-                             blockly:blockName="If we must choose, this is the preferred strain collection for the given space-delimited list of genomes."/>
+                             blockly:blockName="If we must choose, this is the preferred strain collection for the given space-delimited list of genomes.">
+                    <list>
+                      <oneOrMore>
+                        <data type="string"/>
+                      </oneOrMore>
+                    </list>
+                  </attribute>
                 </optional>
               </element>
             </choice>
