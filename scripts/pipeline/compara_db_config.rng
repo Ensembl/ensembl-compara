@@ -302,9 +302,17 @@
             <choice>
               <element name="protein_trees" blockly:blockName="Protein-trees">
                 <attribute name="collection" blockly:blockName="Collection name"/>
+                <optional>
+                  <attribute name="prefer_for_genomes"
+                             blockly:blockName="If we must choose, this is the preferred strain collection for the given space-delimited list of genomes."/>
+                </optional>
               </element>
               <element name="nc_trees" blockly:blockName="ncRNA-trees">
                 <attribute name="collection" blockly:blockName="Collection name"/>
+                <optional>
+                  <attribute name="prefer_for_genomes"
+                             blockly:blockName="If we must choose, this is the preferred strain collection for the given space-delimited list of genomes."/>
+                </optional>
               </element>
             </choice>
           </oneOrMore>
