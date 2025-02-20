@@ -125,7 +125,7 @@ use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 
 use constant CONFIG_MLSS_TAGS => qw(prefer_for_genomes reference_species);
-use constant CONFIG_SS_TAGS => qw(strain_type);
+use constant CONFIG_SS_TAGS => qw(display_name strain_type);
 
 
 my $help;
