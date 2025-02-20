@@ -34,6 +34,9 @@ my %mlss_xml_genome_paths = (
     'pairwise_alignment' => ['ref_genome', 'target_genome'],
     'one_vs_all'         => ['ref_genome'],
     'all_vs_one'         => ['target_genome'],
+    'multiple_alignment' => ['ref_genome'],
+    'nc_trees'           => ['prefer_for_genomes'],
+    'protein_trees'      => ['prefer_for_genomes'],
 );
 
 
@@ -64,7 +67,7 @@ sub test_division {
                      ;
 
     foreach my $name (keys %allowed_species) {
-        like($name, $prod_name_re, "Production name has conventional format");
+        like($name, $prod_name_re, "Production name '$name' has conventional format");
     }
 
     # Load the MLSS XML file if it exists
@@ -72,23 +75,27 @@ sub test_division {
     if (-e $mlss_file) {
         my $xml_document = $xml_parser->parse_file($mlss_file);
         my $root_node    = $xml_document->documentElement();
-        my @names_to_test;
+        my @nodes_to_test;
         while (my ($node_name, $attr_names) = each %mlss_xml_genome_paths) {
             foreach my $genome_node (@{$root_node->findnodes("//$node_name")}) {
                 foreach my $attr_name (@$attr_names) {
-                    my $name = $genome_node->getAttribute($attr_name);
-                    push @names_to_test, [$name, "<$node_name $attr_name='$name'>"];
+                    next unless $genome_node->hasAttribute($attr_name);
+                    my $attr_value = $genome_node->getAttribute($attr_name);
+                    my @names = split(/ /, $attr_value);
+                    push @nodes_to_test, [\@names, qq/<$node_name $attr_name="$attr_value">/];
                 }
             }
         }
 
-        if (%allowed_species and scalar(@names_to_test) > 0) {
+        if (%allowed_species and scalar(@nodes_to_test) > 0) {
             # All species listed in mlss_conf.xml exist in allowed_species.json
             $has_files_to_test = 1;
             subtest "$mlss_file vs $allowed_species_file" => sub {
-                foreach my $a (@names_to_test) {
-                    my ($name, $node) = @$a;
-                    ok(exists $allowed_species{$name}, "$node is allowed");
+                foreach my $test_case (@nodes_to_test) {
+                    my ($names, $node) = @$test_case;
+                    foreach my $name (@$names) {
+                        ok(exists $allowed_species{$name}, "$name in MLSS conf node '$node' is allowed");
+                    }
                 }
             };
         }
