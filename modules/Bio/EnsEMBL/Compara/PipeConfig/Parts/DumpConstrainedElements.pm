@@ -34,7 +34,7 @@ use strict;
 use warnings;
 no warnings 'qw';
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 
 sub pipeline_analyses_dump_constrained_elems {
     my ($self) = @_;

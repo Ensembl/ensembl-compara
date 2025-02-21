@@ -30,7 +30,7 @@ package Bio::EnsEMBL::Compara::PipeConfig::Parts::DataCheckFan;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Version 2.4;
+use Bio::EnsEMBL::Hive::Version v2.4;
 use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # For WHEN and INPUT_PLUS
 
 sub pipeline_analyses_datacheck_fan {
@@ -42,6 +42,7 @@ sub pipeline_analyses_datacheck_fan {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -analysis_capacity => 100,
             -max_retry_count   => 0,
+            -rc_name           => '1Gb_24_hour_job',
             -flow_into         => {
                 '1'  => [ '?accu_name=results&accu_address=[]' ],
                 '-1' => [ 'datacheck_fan_high_mem' ],
@@ -56,7 +57,7 @@ sub pipeline_analyses_datacheck_fan {
             -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
             -analysis_capacity => 100,
             -max_retry_count   => 0,
-            -rc_name           => '8Gb_job',
+            -rc_name           => '8Gb_24_hour_job',
             -flow_into         => {
                 '1' => [ '?accu_name=results&accu_address=[]' ],
                 '2' => [

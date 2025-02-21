@@ -35,101 +35,40 @@ my $prev_release = $curr_release - 1;
 my $curr_eg_release = $curr_release - 53;
 my $prev_eg_release = $curr_eg_release - 1;
 
-# Species found on both vertebrates and non-vertebrates servers
-my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster saccharomyces_cerevisiae);
-
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
-# Load RR server first for priority
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-6:4695/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-5:4684/$curr_release");
 Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
-# Use the mirror servers
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-1:4240/$curr_release");
-# but remove the Vertebrates version of the shared species
-Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
-Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
-# before loading all Non-Vertebrates
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-mirror-3:4275/$curr_release");
 
-# Used for protist collection databases
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-mirror-3',
-    -port   => 4275,
+    -host   => 'mysql-ens-sta-5',
+    -port   => 4684,
+    -user   => 'ensro',
+    -pass   => '',
+    -dbname => "fungi_ascomycota2_collection_core_${curr_eg_release}_${curr_release}_1",
+);
+
+Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+    -host   => 'mysql-ens-sta-5',
+    -port   => 4684,
     -user   => 'ensro',
     -pass   => '',
     -dbname => "protists_choanoflagellida1_collection_core_${curr_eg_release}_${curr_release}_1",
 );
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-mirror-3',
-    -port   => 4275,
+    -host   => 'mysql-ens-sta-5',
+    -port   => 4684,
     -user   => 'ensro',
     -pass   => '',
     -dbname => "protists_ichthyosporea1_collection_core_${curr_eg_release}_${curr_release}_1",
 );
 
-Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-sta-6',
-    -port   => 4695,
-    -user   => 'ensro',
-    -pass   => '',
-    -dbname => "bacteria_0_collection_core_${curr_eg_release}_${curr_release}_1",
-);
-
-# ---------------------- PREVIOUS CORE DATABASES---------------------------------
-
-# previous release core databases will be required by PrepareMasterDatabaseForRelease, LoadMembers and MercatorPecan
-*Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
-    Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-mirror-1',
-        -port   => 4240,
-        -user   => 'ensro',
-        -pass   => '',
-        -db_version     => $prev_release,
-        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
-    );
-    Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
-    Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
-    Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-mirror-3',
-        -port   => 4275,
-        -user   => 'ensro',
-        -pass   => '',
-        -db_version     => $prev_release,
-        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
-    );
-};
-
-# Used for protist collection databases
-Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-mirror-3',
-    -port   => 4275,
-    -user   => 'ensro',
-    -pass   => '',
-    -dbname => "protists_choanoflagellida1_collection_core_${prev_eg_release}_${prev_release}_1",
-);
-Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-mirror-3',
-    -port   => 4275,
-    -user   => 'ensro',
-    -pass   => '',
-    -dbname => "protists_ichthyosporea1_collection_core_${prev_eg_release}_${prev_release}_1",
-);
-
-# Bacteria server: all species used in Pan happen to be in this database
-Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-        -host   => 'mysql-ens-mirror-4',
-        -port   => 4495,
-        -user   => 'ensro',
-        -pass   => '',
-        -dbname => "bacteria_0_collection_core_${prev_eg_release}_${prev_release}_1",
-        -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
-);
-
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
+my $homology_reference_host = $ENV{'homology_reference_host'} || 'mysql-ens-sta-6';
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
-    'compara_references' => [ 'mysql-ens-compara-prod-8', 'ensembl_compara_references_mvp' ],
+    'compara_references' => [ $homology_reference_host, 'ensembl_compara_references_mvp' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -138,7 +77,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-meta-prod-1', "ncbi_taxonomy" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-5', "ncbi_taxonomy" ],
 });
 
 # -------------------------------------------------------------------

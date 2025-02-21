@@ -37,7 +37,7 @@ before_install:
     - git-ensembl --clone --branch release/110 --secondary_branch main --depth 1 ensembl-production
     - git-ensembl --clone --branch release/110 --secondary_branch main --depth 1 ensembl-metadata
     # yamllint enable rule:line-length
-    - git-ensembl --clone --branch main --depth 1 ensembl-hive
+    - git-ensembl --clone --branch version/2.7.0 --depth 1 ensembl-hive
     - git-ensembl --clone --branch main --depth 1 ensembl-taxonomy
     - ln -s . ensembl-compara
     - git clone --branch v1.6.x --depth 1 https://github.com/bioperl/bioperl-live
@@ -125,18 +125,22 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      python: 3.8
+      python: "3.10"
+      dist: bionic
       name: "Python unit tests on the minimum version"
       install:
-        - pip install -r requirements.txt
+        - pip install --upgrade pip
+        - pip install -r requirements.txt -r requirements-test.txt
         - pip install .
       script:
         - pytest --server=mysql://travis@127.0.0.1:3306/
 
     - language: python
-      python: 3.9
+      dist: bionic
+      python: "3.11"
       name: "Python unit tests on the latest version, with code coverage"
       install:
+        - pip install --upgrade pip
         - pip install codecov
         - pip install -r requirements.txt -r requirements-test.txt
         - pip install .
@@ -148,7 +152,8 @@ jobs:
         - codecov
 
     - language: python
-      python: 3.9
+      dist: bionic
+      python: "3.10"
       name: "Python linter"
       install:
         - pip freeze | grep -v -f requirements.txt - | grep -v '^#' | xargs pip uninstall -y
