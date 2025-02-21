@@ -61,7 +61,7 @@
       <genome name="puccinia_graminis"/>
       <genome name="magnaporthe_oryzae"/>
       <genome name="zymoseptoria_tritici"/>
-      <genome name="erysiphe_necator_gca_000798715"/>
+      <!-- <genome name="erysiphe_necator_gca_000798715"/> -->
       <genome name="schizosaccharomyces_pombe"/>
     </collection>
 
