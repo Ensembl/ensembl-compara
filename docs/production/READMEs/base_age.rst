@@ -21,7 +21,7 @@ Necessary code API and executables
 - ensembl
 - ensembl-compara
 - ensembl-hive
-- bedToBigBed (download from http://genome.ucsc.edu/goldenPath/help/bigBed.html)
+- bedToBigBed (download from https://genome.ucsc.edu/goldenPath/help/bigBed.html)
 
 Code checkout:
 

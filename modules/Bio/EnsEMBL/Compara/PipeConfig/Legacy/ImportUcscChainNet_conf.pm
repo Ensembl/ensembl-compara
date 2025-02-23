@@ -29,16 +29,16 @@ Bio::EnsEMBL::Compara::PipeConfig::Legacy::ImportUcscChainNet_conf
 
     #3. Download the chain and net files from UCSC
         a) Goto the downloads directory:
-          http://hgdownload.cse.ucsc.edu/downloads.html
+          https://hgdownload.cse.ucsc.edu/downloads.html
         b) Select the reference species eg human
         c) Get the chain and net files by selecting the relevant Pairwise Alignments 
         Eg To import the human-human self alignments:
-        wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.all.chain.gz
-        wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.net.gz
+        wget https://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.all.chain.gz
+        wget https://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.net.gz
         d) Get the chromInfo file and the mapping file (if necessary):
           Eg human: Select "Annotation database" from the Human Genome page (step (b) above)
-          wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/chromInfo.txt.gz
-          wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/ctgPos.txt.gz
+          wget https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/chromInfo.txt.gz
+          wget https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/ctgPos.txt.gz
 
     #4. Make sure that all default_options are set correctly, especially:
         pipeline_db (-host)
@@ -46,7 +46,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Legacy::ImportUcscChainNet_conf
         ref_species (if not homo_sapiens)
 
     #5. Run init_pipeline.pl script: eg for human self alignments
-        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Legacy::ImportUcscChainNet_conf --dbname hsap_hsap_ucsc_test --password <your_password) -mlss_id 1 --ref_species homo_sapiens --non_ref_species homo_sapiens --chain_file hg19.hg19.all.chain --net_file hg19.hg19.net --ref_chromInfo_file hsap/chromInfo.txt --ref_ucsc_map ctgPos.txt --ucsc_url http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/
+        init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Legacy::ImportUcscChainNet_conf --dbname hsap_hsap_ucsc_test --password <your_password) -mlss_id 1 --ref_species homo_sapiens --non_ref_species homo_sapiens --chain_file hg19.hg19.all.chain --net_file hg19.hg19.net --ref_chromInfo_file hsap/chromInfo.txt --ref_ucsc_map ctgPos.txt --ucsc_url https://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/
 
     #5. Run the "beekeeper.pl ... -loop" command suggested by init_pipeline.pl
 
@@ -55,15 +55,6 @@ Bio::EnsEMBL::Compara::PipeConfig::Legacy::ImportUcscChainNet_conf
 
 This pipeline populates a compara database using the Chain (--chain_file) and Net files (--net_file) produced by UCSC. It uses the chromInfo file (--ref_chromInfo_file, --non_ref_chromInfo_file) to convert between UCSC and Ensembl chromosome names. It may additionally need a mapping file (--ref_ucsc_map, --non_ref_ucsc_map), such as ctgPos.txt to convert the supercontig names for human.
 It is recommended that you provide a meaningful database name (--dbname). The username is automatically prefixed to this, ie -dbname hsap_hsap_lastz_65 will become kb3_hsap_hsap_lastz_65. The URL of the downloads is defined using --ucsc_url.
-
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
 
 =cut
 

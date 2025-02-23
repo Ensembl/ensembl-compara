@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Utils::RunCommand
@@ -35,11 +24,6 @@ Bio::EnsEMBL::Compara::Utils::RunCommand
 This module is a wrapper around open3() that captures the standard output,
 the standard error, the error code, and the running time.
 It is used to run external commands in the Compara pipelines.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with a _
 
 =cut
 
@@ -253,7 +237,7 @@ sub _run_with_timeout {
     my $self = shift;
     my $timeout = shift;
 
-    ## Adapted from the TimeLimit pacakge: http://www.perlmonks.org/?node_id=74429
+    ## Adapted from the TimeLimit pacakge: https://www.perlmonks.org/?node_id=74429
     my $die_text = "_____RunCommandTimeLimit_____\n";
     my $old_alarm = alarm(0);        # turn alarm off and read old value
     {

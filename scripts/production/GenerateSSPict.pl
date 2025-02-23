@@ -151,7 +151,7 @@ sub getAlnFile {
     my ($aln_file) = @_;
 
     my $out_aln_file = $aln_file . ".cons";
-    # For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf
+    # For information about these options, check the manual file(s) at https://sourceforge.net/projects/weinberg-r2r/files/
     run_r2r_and_check("--GSC-weighted-consensus", $aln_file, $out_aln_file, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
 
     return $out_aln_file;
