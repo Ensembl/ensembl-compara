@@ -96,6 +96,9 @@ sub pipeline_analyses_dump_conservation_scores {
 
         {   -logic_name     => 'concatenate_bedgraph_files',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateBedGraphFiles',
+            -parameters     => {
+                'healthcheck_list' => ['line_count', 'unexpected_nulls'],
+            },
             -rc_name        => '1Gb_24_hour_job',
             -flow_into      => 'convert_to_bigwig',
         },
