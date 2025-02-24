@@ -1,5 +1,5 @@
 1	\N	schema_type	core
-2	\N	schema_version	110
+2	\N	schema_version	114
 3	\N	patch	patch_68_69_a.sql|schema_version
 4	1	species.taxonomy_id	4565
 6	1	species.alias	bread wheat
@@ -179,3 +179,10 @@
 261	\N	patch	patch_109_110_a.sql|schema_version
 262	\N	patch	patch_109_110_b.sql|Add IS_PAR relationship to link X- and Y-PAR genes
 263	\N	patch	patch_109_110_c.sql|Allow gene id to belong to multiple alt allele groups
+264	\N	patch	patch_110_111_a.sql|schema_version
+265	\N	patch	patch_111_112_a.sql|schema_version
+266	\N	patch	patch_111_112_b.sql|Allow meta_value to be null
+267	\N	patch	patch_111_112_c.sql|Extend meta_key length to 64
+268	\N	patch	patch_112_113_a.sql|schema_version
+269	\N	patch	patch_112_113_b.sql|Ensure meta_value is not null
+270	\N	patch	patch_113_114_a.sql|schema_version

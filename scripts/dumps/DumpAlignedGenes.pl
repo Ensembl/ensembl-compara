@@ -479,8 +479,8 @@ my $align_slice = $align_slice_adaptor->fetch_by_Slice_MethodLinkSpeciesSet(
 # Get all the genes from the source species and map them on the query genome
 
 die "no alignments available in $species chr$seq_region:$seq_region_start-$seq_region_end which contain sequences from $source_species" 
- unless $align_slice->{slices}->{$source_genome_db->name}->[0];
-my $mapped_genes = $align_slice->{slices}->{$source_genome_db->name}->[0]->get_all_Genes($logic_name, $dbtype, undef,
+ unless $align_slice->{slices}->{$source_genome_db->get_distinct_name}->[0];
+my $mapped_genes = $align_slice->{slices}->{$source_genome_db->get_distinct_name}->[0]->get_all_Genes($logic_name, $dbtype, undef,
         -MAX_REPETITION_LENGTH => 100,
         -MAX_GAP_LENGTH => 100,
         -MAX_INTRON_LENGTH => 100000,
@@ -529,7 +529,7 @@ foreach my $gene (sort {$a->stable_id cmp $b->stable_id} @$mapped_genes) {
         $seq = ("." x 50).$exon->seq->revcom->seq.("." x 50);
       }
 
-      my $aseq = $align_slice->{slices}->{$query_genome_db->name}->[0]->subseq($exon->start-50, $exon->end+50);
+      my $aseq = $align_slice->{slices}->{$query_genome_db->get_distinct_name}->[0]->subseq($exon->start-50, $exon->end+50);
       $seq =~ s/(.{80})/$1\n/g;
       $aseq =~ s/(.{80})/$1\n/g;
       $seq =~ s/(.{20})/$1 /g;

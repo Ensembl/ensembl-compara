@@ -1,0 +1,555 @@
+[
+    {
+        "production_name": "anopheles_gambiae",
+        "taxonomy_id": 7165,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7165_anopheles_gambiae.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7165_anopheles_gambiae.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "aquifex_aeolicus",
+        "taxonomy_id": 224324,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/224324_aquifex_aeolicus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/224324_aquifex_aeolicus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "arabidopsis_thaliana",
+        "taxonomy_id": 3702,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/3702_arabidopsis_thaliana.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/3702_arabidopsis_thaliana.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "aspergillus_fumigatus",
+        "taxonomy_id": 330879,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/330879_aspergillus_fumigatus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/330879_aspergillus_fumigatus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "bacillus_subtilis",
+        "taxonomy_id": 224308,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/224308_bacillus_subtilis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/224308_bacillus_subtilis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "bacteroides_thetaiotaomicron",
+        "taxonomy_id": 226186,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/226186_bacteroides_thetaiotaomicron.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/226186_bacteroides_thetaiotaomicron.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "batrachochytrium_dendrobatidis",
+        "taxonomy_id": 684364,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/684364_batrachochytrium_dendrobatidis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/684364_batrachochytrium_dendrobatidis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "bos_taurus",
+        "taxonomy_id": 9913,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9913_bos_taurus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9913_bos_taurus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "bradyrhizobium_diazoefficiens",
+        "taxonomy_id": 224911,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/224911_bradyrhizobium_diazoefficiens.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/224911_bradyrhizobium_diazoefficiens.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "branchiostoma_floridae",
+        "taxonomy_id": 7739,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7739_branchiostoma_floridae.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7739_branchiostoma_floridae.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "caenorhabditis_elegans",
+        "taxonomy_id": 6239,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/6239_caenorhabditis_elegans.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/6239_caenorhabditis_elegans.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "candida_albicans",
+        "taxonomy_id": 237561,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/237561_candida_albicans.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/237561_candida_albicans.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "canis_lupus_familiaris",
+        "taxonomy_id": 9615,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9615_canis_lupus_familiaris.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9615_canis_lupus_familiaris.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "chlamydia_trachomatis",
+        "taxonomy_id": 272561,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/272561_chlamydia_trachomatis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/272561_chlamydia_trachomatis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "chlamydomonas_reinhardtii",
+        "taxonomy_id": 3055,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/3055_chlamydomonas_reinhardtii.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/3055_chlamydomonas_reinhardtii.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "chloroflexus_aurantiacus",
+        "taxonomy_id": 324602,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/324602_chloroflexus_aurantiacus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/324602_chloroflexus_aurantiacus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "ciona_intestinalis",
+        "taxonomy_id": 7719,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7719_ciona_intestinalis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7719_ciona_intestinalis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "cryptococcus_neoformans_var_neoformans_serotype_d",
+        "taxonomy_id": 214684,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/214684_cryptococcus_neoformans_var_neoformans_serotype_d.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/214684_cryptococcus_neoformans_var_neoformans_serotype_d.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "danio_rerio",
+        "taxonomy_id": 7955,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7955_danio_rerio.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7955_danio_rerio.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "deinococcus_radiodurans",
+        "taxonomy_id": 243230,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243230_deinococcus_radiodurans.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243230_deinococcus_radiodurans.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "dictyoglomus_turgidum",
+        "taxonomy_id": 515635,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/515635_dictyoglomus_turgidum.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/515635_dictyoglomus_turgidum.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "dictyostelium_discoideum",
+        "taxonomy_id": 44689,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/44689_dictyostelium_discoideum.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/44689_dictyostelium_discoideum.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "drosophila_melanogaster",
+        "taxonomy_id": 7227,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7227_drosophila_melanogaster.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7227_drosophila_melanogaster.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "escherichia_coli",
+        "taxonomy_id": 83333,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/83333_escherichia_coli.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/83333_escherichia_coli.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "fusobacterium_nucleatum_subsp_nucleatum",
+        "taxonomy_id": 190304,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/190304_fusobacterium_nucleatum_subsp_nucleatum.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/190304_fusobacterium_nucleatum_subsp_nucleatum.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "gallus_gallus",
+        "taxonomy_id": 9031,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9031_gallus_gallus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9031_gallus_gallus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "geobacter_sulfurreducens",
+        "taxonomy_id": 243231,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243231_geobacter_sulfurreducens.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243231_geobacter_sulfurreducens.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "giardia_intestinalis",
+        "taxonomy_id": 184922,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/184922_giardia_intestinalis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/184922_giardia_intestinalis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "gloeobacter_violaceus",
+        "taxonomy_id": 251221,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/251221_gloeobacter_violaceus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/251221_gloeobacter_violaceus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "gorilla_gorilla_gorilla",
+        "taxonomy_id": 9595,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9595_gorilla_gorilla_gorilla.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9595_gorilla_gorilla_gorilla.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "halobacterium_salinarum",
+        "taxonomy_id": 64091,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/64091_halobacterium_salinarum.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/64091_halobacterium_salinarum.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "helicobacter_pylori",
+        "taxonomy_id": 85962,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/85962_helicobacter_pylori.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/85962_helicobacter_pylori.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "helobdella_robusta",
+        "taxonomy_id": 6412,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/6412_helobdella_robusta.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/6412_helobdella_robusta.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "homo_sapiens",
+        "taxonomy_id": 9606,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9606_homo_sapiens.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9606_homo_sapiens.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "ixodes_scapularis",
+        "taxonomy_id": 6945,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/6945_ixodes_scapularis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/6945_ixodes_scapularis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "korarchaeum_cryptofilum",
+        "taxonomy_id": 374847,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/374847_korarchaeum_cryptofilum.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/374847_korarchaeum_cryptofilum.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "leishmania_major",
+        "taxonomy_id": 5664,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/5664_leishmania_major.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/5664_leishmania_major.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "lepisosteus_oculatus",
+        "taxonomy_id": 7918,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7918_lepisosteus_oculatus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7918_lepisosteus_oculatus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "leptospira_interrogans_serogroup_icterohaemorrhagiae_serovar_lai",
+        "taxonomy_id": 189518,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/189518_leptospira_interrogans_serogroup_icterohaemorrhagiae_serovar_lai.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/189518_leptospira_interrogans_serogroup_icterohaemorrhagiae_serovar_lai.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "methanocaldococcus_jannaschii",
+        "taxonomy_id": 243232,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243232_methanocaldococcus_jannaschii.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243232_methanocaldococcus_jannaschii.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "methanosarcina_acetivorans",
+        "taxonomy_id": 188937,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/188937_methanosarcina_acetivorans.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/188937_methanosarcina_acetivorans.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "monodelphis_domestica",
+        "taxonomy_id": 13616,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/13616_monodelphis_domestica.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/13616_monodelphis_domestica.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "monosiga_brevicollis",
+        "taxonomy_id": 81824,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/81824_monosiga_brevicollis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/81824_monosiga_brevicollis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "mus_musculus",
+        "taxonomy_id": 10090,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/10090_mus_musculus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/10090_mus_musculus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "mycobacterium_tuberculosis",
+        "taxonomy_id": 83332,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/83332_mycobacterium_tuberculosis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/83332_mycobacterium_tuberculosis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "mycoplasma_genitalium",
+        "taxonomy_id": 243273,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243273_mycoplasma_genitalium.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243273_mycoplasma_genitalium.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "neisseria_meningitidis_serogroup_b",
+        "taxonomy_id": 122586,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/122586_neisseria_meningitidis_serogroup_b.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/122586_neisseria_meningitidis_serogroup_b.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "nematostella_vectensis",
+        "taxonomy_id": 45351,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/45351_nematostella_vectensis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/45351_nematostella_vectensis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "neurospora_crassa",
+        "taxonomy_id": 367110,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/367110_neurospora_crassa.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/367110_neurospora_crassa.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "nitrosopumilus_maritimus",
+        "taxonomy_id": 436308,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/436308_nitrosopumilus_maritimus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/436308_nitrosopumilus_maritimus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "oryza_sativa_subsp_japonica",
+        "taxonomy_id": 39947,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/39947_oryza_sativa_subsp_japonica.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/39947_oryza_sativa_subsp_japonica.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "oryzias_latipes",
+        "taxonomy_id": 8090,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/8090_oryzias_latipes.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/8090_oryzias_latipes.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "pan_troglodytes",
+        "taxonomy_id": 9598,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9598_pan_troglodytes.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/9598_pan_troglodytes.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "paramecium_tetraurelia",
+        "taxonomy_id": 5888,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/5888_paramecium_tetraurelia.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/5888_paramecium_tetraurelia.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "phaeosphaeria_nodorum",
+        "taxonomy_id": 321614,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/321614_phaeosphaeria_nodorum.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/321614_phaeosphaeria_nodorum.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "physcomitrium_patens",
+        "taxonomy_id": 3218,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/3218_physcomitrium_patens.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/3218_physcomitrium_patens.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "phytophthora_ramorum",
+        "taxonomy_id": 164328,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/164328_phytophthora_ramorum.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/164328_phytophthora_ramorum.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "plasmodium_falciparum",
+        "taxonomy_id": 36329,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/36329_plasmodium_falciparum.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/36329_plasmodium_falciparum.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "pseudomonas_aeruginosa",
+        "taxonomy_id": 208964,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/208964_pseudomonas_aeruginosa.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/208964_pseudomonas_aeruginosa.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "puccinia_graminis_f_sp_tritici",
+        "taxonomy_id": 418459,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/418459_puccinia_graminis_f_sp_tritici.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/418459_puccinia_graminis_f_sp_tritici.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "rattus_norvegicus",
+        "taxonomy_id": 10116,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/10116_rattus_norvegicus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/10116_rattus_norvegicus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "rhodopirellula_baltica",
+        "taxonomy_id": 243090,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243090_rhodopirellula_baltica.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243090_rhodopirellula_baltica.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "saccharolobus_solfataricus",
+        "taxonomy_id": 273057,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/273057_saccharolobus_solfataricus.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/273057_saccharolobus_solfataricus.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "saccharomyces_cerevisiae",
+        "taxonomy_id": 559292,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/559292_saccharomyces_cerevisiae.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/559292_saccharomyces_cerevisiae.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "schizosaccharomyces_pombe",
+        "taxonomy_id": 284812,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/284812_schizosaccharomyces_pombe.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/284812_schizosaccharomyces_pombe.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "sclerotinia_sclerotiorum",
+        "taxonomy_id": 665079,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/665079_sclerotinia_sclerotiorum.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/665079_sclerotinia_sclerotiorum.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "streptomyces_coelicolor",
+        "taxonomy_id": 100226,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/100226_streptomyces_coelicolor.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/100226_streptomyces_coelicolor.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "synechocystis_sp",
+        "taxonomy_id": 1111708,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/1111708_synechocystis_sp.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/1111708_synechocystis_sp.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "thalassiosira_pseudonana",
+        "taxonomy_id": 35128,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/35128_thalassiosira_pseudonana.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/35128_thalassiosira_pseudonana.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "thermococcus_kodakarensis",
+        "taxonomy_id": 69014,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/69014_thermococcus_kodakarensis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/69014_thermococcus_kodakarensis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "thermodesulfovibrio_yellowstonii",
+        "taxonomy_id": 289376,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/289376_thermodesulfovibrio_yellowstonii.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/289376_thermodesulfovibrio_yellowstonii.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "thermotoga_maritima",
+        "taxonomy_id": 243274,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243274_thermotoga_maritima.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/243274_thermotoga_maritima.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "tribolium_castaneum",
+        "taxonomy_id": 7070,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7070_tribolium_castaneum.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/7070_tribolium_castaneum.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "trichomonas_vaginalis",
+        "taxonomy_id": 412133,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/412133_trichomonas_vaginalis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/412133_trichomonas_vaginalis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "ustilago_maydis",
+        "taxonomy_id": 237631,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/237631_ustilago_maydis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/237631_ustilago_maydis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "xenopus_laevis",
+        "taxonomy_id": 8355,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/8355_xenopus_laevis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/8355_xenopus_laevis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "xenopus_tropicalis",
+        "taxonomy_id": 8364,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/8364_xenopus_tropicalis.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/8364_xenopus_tropicalis.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "yarrowia_lipolytica",
+        "taxonomy_id": 284591,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/284591_yarrowia_lipolytica.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/284591_yarrowia_lipolytica.prot.fasta",
+        "source": "uniprot"
+    },
+    {
+        "production_name": "zea_mays",
+        "taxonomy_id": 4577,
+        "cds_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/4577_zea_mays.cds.fasta",
+        "prot_fasta": "/hps/nobackup/flicek/ensembl/compara/twalsh/qfo/2023_03/sequences/4577_zea_mays.prot.fasta",
+        "source": "uniprot"
+    }
+]

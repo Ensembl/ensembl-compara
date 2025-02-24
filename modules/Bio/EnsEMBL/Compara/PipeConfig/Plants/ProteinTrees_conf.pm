@@ -106,30 +106,28 @@ sub tweak_analyses {
 
     ## Here we adjust the resource class of some analyses to the Plants division
     $analyses_by_name->{'mcoffee'}->{'-rc_name'} = '8Gb_job';
-    $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_job';
+    $analyses_by_name->{'mcoffee_himem'}->{'-rc_name'} = '32Gb_24_hour_job';
     $analyses_by_name->{'mafft'}->{'-rc_name'} = '8Gb_2c_job';
-    $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_4c_job';
-    $analyses_by_name->{'treebest'}->{'-rc_name'} = '4Gb_job';
+    $analyses_by_name->{'mafft_himem'}->{'-rc_name'} = '32Gb_4c_24_hour_job';
+    $analyses_by_name->{'treebest'}->{'-rc_name'} = '4Gb_24_hour_job';
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'members_against_nonreusedspecies_factory'}->{'-rc_name'} = '2Gb_job';
-    $analyses_by_name->{'hcluster_run'}->{'-rc_name'} = '1Gb_job';
+    $analyses_by_name->{'hcluster_run'}->{'-rc_name'} = '1Gb_24_hour_job';
     $analyses_by_name->{'hcluster_parse_output'}->{'-rc_name'} = '2Gb_job';
     $analyses_by_name->{'exon_boundaries_prep_himem'}->{'-rc_name'} = '8Gb_job';
     $analyses_by_name->{'homology_factory'}->{'-rc_name'}         = '1Gb_job';
     $analyses_by_name->{'copy_homology_dNdS'}->{'-rc_name'}       = '1Gb_job';
     $analyses_by_name->{'copy_homology_dNdS'}->{'-hive_capacity'} = '50';
     $analyses_by_name->{'threshold_on_dS'}->{'-rc_name'}          = '1Gb_job';
-    $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-rc_name'} = '2Gb_job';
+    $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-rc_name'} = '2Gb_24_hour_job';
     $analyses_by_name->{'HMMer_classifyPantherScore'}->{'-hive_capacity'} = '2000';
-    $analyses_by_name->{'blastp'}->{'-rc_name'} = '500Mb_6_hour_job';
+    $analyses_by_name->{'blastp'}->{'-rc_name'} = '1Gb_6_hour_job';
     $analyses_by_name->{'get_species_set'}->{'-parameters'}->{'polyploid_genomes'} = 0;
-    $analyses_by_name->{'quick_tree_break_himem'}->{'-rc_name'}   = '16Gb_job';
+    $analyses_by_name->{'quick_tree_break_himem'}->{'-rc_name'}   = '16Gb_24_hour_job';
     $analyses_by_name->{'quick_tree_break'}->{'-rc_name'}   = '4Gb_job';
     $analyses_by_name->{'hc_cafe_species_tree'}->{'-rc_name'}   = '2Gb_job';
     $analyses_by_name->{'get_split_genes'}->{'-rc_name'}   = '2Gb_job';
-    $analyses_by_name->{'CAFE_analysis_himem'}->{'-rc_name'}   = '4Gb_job';
-    $analyses_by_name->{'import_homology_table_himem'}->{'-rc_name'}   = '16Gb_job';
-    $analyses_by_name->{'import_homology_table'}->{'-rc_name'}   = '1Gb_job';
+    $analyses_by_name->{'import_homology_table'}->{'-rc_name'}   = '1Gb_24_hour_job';
     $analyses_by_name->{'check_file_copy'}->{'-rc_name'}   = '1Gb_job';
 
 

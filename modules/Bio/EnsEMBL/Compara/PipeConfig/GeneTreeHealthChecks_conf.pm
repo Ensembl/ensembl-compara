@@ -113,7 +113,7 @@ sub pipeline_analyses {
                 'inputquery'    => 'SELECT COUNT(*) AS species_count FROM genome_db',
             },
             -flow_into => {
-                1 => [ 'all_trees_factory', 'hc_members_globally', 'hc_global_tree_set', 'default_trees_factory' ],
+                1 => [ 'all_trees_factory', 'hc_members_globally', 'hc_global_tree_set', 'hc_supertree_factory', 'default_trees_factory' ],
                 2 => [ 'species_factory' ],
             },
         },
@@ -131,6 +131,21 @@ sub pipeline_analyses {
             -parameters         => {
                 mode            => 'global_tree_set',
             },
+            %hc_analysis_params,
+        },
+
+        {   -logic_name => 'hc_supertree_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "supertree"',
+            },
+            -flow_into  => {
+                2 => 'hc_supertree'
+            },
+        },
+
+        {   -logic_name => 'hc_supertree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneSupertree',
             %hc_analysis_params,
         },
 

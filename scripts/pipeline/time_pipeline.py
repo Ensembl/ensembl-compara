@@ -20,10 +20,10 @@
 import sys
 import re
 import argparse
-from typing import Dict, Any, Union
+from typing import Any, Union
 from datetime import datetime, timedelta
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 
 def die_with_help() -> None:
     """ print helptext and exit """
@@ -94,26 +94,27 @@ def main(opts: argparse.Namespace) -> None:
     condition = formulate_condition(opts.analyses_pattern, opts.analyses_list)
 
     # set up db connection and fetch role data
-    engine = create_engine(opts.database_url)
+    engine = create_engine(opts.database_url, future=True)
     connection = engine.connect()
     sql = "SELECT role_id, logic_name, when_started, when_finished FROM role"
     sql += " JOIN analysis_base USING(analysis_id)"
     sql += condition + " ORDER BY role_id"
-    role_list = connection.execute(sql)
+    result = connection.execute(text(sql))
 
     # loop through roles and find runtime gaps
     runtime_gaps = []
     mins15 = timedelta(minutes=15)
-    prev_role = {} # type: Dict[str, Any]
+    prev_role = {}
     now = datetime.now()
     pipeline_start = '' # type: Union[Any, datetime]
     pipeline_total_runtime = timedelta()
-    for role in role_list:
+    for result_mapping in result.mappings():
+        role = dict(result_mapping)
 
         # Initalize start/finish times
         if pipeline_start == '':
             pipeline_start = role['when_started']
-            prev_role = dict(role)
+            prev_role = role
 
         # Skip this if the pipeline is stil running
         elif prev_role['when_finished'] is not None:

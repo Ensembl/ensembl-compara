@@ -203,7 +203,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
-                'all_current'       => 1,
+                'all_in_current_gene_trees' => 1,
                 'extra_parameters'  => [ 'locator' ],
             },
             -rc_name => '2Gb_job',
@@ -262,6 +262,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_reuse_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
+            -rc_name    => '2Gb_job',
             -flow_into  => [ 'compare_non_reused_genome_list' ],
         },
 
@@ -487,7 +488,7 @@ sub core_pipeline_analyses {
                 'store_others'                  => $self->o('store_others'),
             },
             -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name => '4Gb_job',
+            -rc_name => '4Gb_24_hour_job',
             -flow_into => [ 'hc_members_per_genome' ],
         },
 
@@ -516,12 +517,13 @@ sub core_pipeline_analyses {
         {   -logic_name      => 'datachecks',
             -module          => 'Bio::EnsEMBL::Compara::RunnableDB::RunDataChecks',
             -parameters      => {
-                'datacheck_names'  => ['BlankEnums', 'CheckSequenceTable'],
+                'datacheck_names'  => ['BlankEnums', 'CanonicalMemberCore', 'CheckSequenceTable', 'MemberStableIDClash'],
                 'work_dir'         => $self->o('work_dir'),
                 'history_file'     => '#work_dir#/datacheck.compara_load_members.history.json',
                 'output_file'      => '#work_dir#/datacheck.compara_load_members.tap.txt',
                 'failures_fatal'   => 1,
                 'pdbname'          => $self->o('pipeline_name'),
+                'registry_file'    => $self->o('reg_conf'),
                 'dbtype'           => 'compara',
             },
             -max_retry_count => 0,

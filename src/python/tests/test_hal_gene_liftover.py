@@ -143,7 +143,7 @@ class TestHalGeneLiftover:
     )
     def test_make_src_region_file(self, regions: Iterable[SimpleRegion],
                                   chr_sizes: Mapping[str, int], bed_file: str, flank_length: int,
-                                  expectation: ContextManager, tmp_dir: Path) -> None:
+                                  expectation: ContextManager, tmp_path: Path) -> None:
         """Tests :func:`hal_gene_liftover.make_src_region_file()` function.
 
         Args:
@@ -153,11 +153,11 @@ class TestHalGeneLiftover:
             flank_length: Length of upstream/downstream flanking regions to request.
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
-            tmp_dir: Unit test temp directory (fixture).
+            tmp_path: Unit test temp directory (fixture).
 
         """
         with expectation:
-            out_file_path = tmp_dir / bed_file
+            out_file_path = tmp_path / bed_file
             hal_gene_liftover.make_src_region_file(regions, chr_sizes, out_file_path, flank_length)
             ref_file_path = self.ref_file_dir / bed_file
             assert filecmp.cmp(out_file_path, ref_file_path)

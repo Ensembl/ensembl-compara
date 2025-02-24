@@ -122,9 +122,11 @@ sub executable_locations {
         # -> now recorded separately for each meadow, cf meadow_options()
 
         # Internal dependencies (Compara scripts)
+        'add_hmm_lib_exe'                   => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/add_hmm_lib.py'),
         'ancestral_dump_program'            => $self->check_exe_in_ensembl('ensembl-compara/scripts/ancestral_sequences/get_ancestral_sequence.pl'),
         'ancestral_stats_program'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/ancestral_sequences/get_stats.pl'),
         'BuildSynteny_exe'                  => $self->check_file_in_ensembl('ensembl-compara/scripts/synteny/BuildSynteny.jar'),
+        'check_ncbi_taxa_exe'               => $self->check_exe_in_ensembl('ensembl-compara/scripts/taxonomy/check_ncbi_taxa_consistency.py'),
         'compare_beds_exe'                  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/compare_beds.pl'),
         'create_mlss_exe'                   => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/create_mlss.pl'),
         'create_pair_aligner_page_exe'      => $self->check_exe_in_ensembl('ensembl-compara/scripts/report/create_pair_aligner_page.pl'),

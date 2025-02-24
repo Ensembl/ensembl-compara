@@ -20,9 +20,11 @@ use warnings;
 use Bio::AlignIO;
 use File::Spec;
 use Getopt::Long;
+use JSON qw (encode_json);
+use Scalar::Util qw(looks_like_number);
 use Bio::EnsEMBL::ApiVersion;
 use Bio::EnsEMBL::Registry;
-use Bio::EnsEMBL::Utils::IO qw (slurp);
+use Bio::EnsEMBL::Utils::IO qw (slurp spurt);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter;
 use Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter;
@@ -31,6 +33,7 @@ use Bio::EnsEMBL::Compara::Utils::Preloader;
 
 my $tree_id_file;
 my $one_tree_id;
+my $dataflow_file;
 my $url;
 my $help = 0;
 my $aln_out;
@@ -50,7 +53,8 @@ $| = 1;
 
 GetOptions('help'           => \$help,
            'tree_id_file|infile=s' => \$tree_id_file,
-           'tree_id=i'      => \$one_tree_id,
+           'tree_id=s'      => \$one_tree_id,
+           'dataflow_file=s' => \$dataflow_file,
 
            'reg_conf=s'     => \$reg_conf,
            'reg_alias=s'    => \$reg_alias,
@@ -72,8 +76,9 @@ if ($help) {
   print "
 $0 [--tree_id id | --tree_id_file file.txt] [--url mysql://ensro\@compara1:3306/kb3_ensembl_compara_59 | -reg_conf reg_file.pm -reg_alias alias ]
 
---tree_id         the root_id of the tree to be dumped
---tree_id_file    a file with a list of tree_ids
+--tree_id         the root_id (or stable_id) of the tree to be dumped
+--tree_id_file    a file with a list of tree root_id or tree stable_id values
+--dataflow_file   a JSONL file with a list of dataflow events, one per line
 --url string      database url location of the form,
                   mysql://username[:password]\@host[:port]/[release_version]
 --aa              dump alignment in amino acid (default is in DNA)
@@ -145,7 +150,7 @@ sub dump_if_wanted {
     my $default_name = shift;
 
     my $filename = ($param =~ /^\// ? sprintf('%s.%s', $param, $tree_id) : sprintf('%s/%s.%s', $dirpath, $tree_id, $param eq 1 ? $default_name : $param));
-    return if -s $filename;
+    return $filename if -s $filename;  # ensures validation of pre-existing file, if using dataflow file to flow to validation step
 
     my $fh;
     open $fh, '>', $filename or die "couldnt open $filename:$!\n";
@@ -155,14 +160,26 @@ sub dump_if_wanted {
     my $extra = shift;
     &$sub($root, $fh, @$extra);
     close $fh;
+
+    return $filename;
 }
 
+my @dataflow_events;
 foreach my $tree_id (@tree_ids) {
 
   system("mkdir -p $dirpath") && die "Could not make directory '$dirpath: $!";
 
-  my $tree = $adaptor->fetch_by_root_id($tree_id);
+  my $tree = looks_like_number($tree_id)
+           ? $adaptor->fetch_by_root_id($tree_id)
+           : $adaptor->fetch_by_stable_id($tree_id)
+           ;
+
   my $root = $tree->root;
+
+  if ($root->is_supertree()) {
+      $tree->expand_subtrees;
+  }
+
   my $cafe_tree = $dba->get_CAFEGeneFamilyAdaptor->fetch_by_GeneTree($tree);
 
   $tree_id = "tree.".$tree_id;
@@ -173,16 +190,41 @@ foreach my $tree_id (@tree_ids) {
       Bio::EnsEMBL::Compara::Utils::Preloader::load_all_DnaFrags($dba->get_DnaFragAdaptor, $tree->get_all_Members);
   }
 
+  my $orthoxml_compatible = 1;
+  if ($orthoxml) {
+      my $tree_num_dup_nodes = $tree->get_value_for_tag('tree_num_dup_nodes');
+      my $tree_num_leaves = $tree->get_value_for_tag('tree_num_leaves');
+      if (defined $tree_num_dup_nodes && defined $tree_num_leaves) {
+          # If all the internal nodes of the binary tree are duplications,
+          # then the tree is not currently expressible in OrthoXML format.
+          $orthoxml_compatible = 0 if ($tree_num_dup_nodes == ($tree_num_leaves - 1));
+      }
+  }
+
   dump_if_wanted($aln_out, $tree_id, 'aln.emf', \&dumpTreeMultipleAlignment, $tree, []);
   dump_if_wanted($nh_out, $tree_id, 'nh.emf', \&dumpNewickTree, $root, [0]);
   dump_if_wanted($nhx_out, $tree_id, 'nhx.emf', \&dumpNewickTree, $root, [1]);
   dump_if_wanted($fasta_out, $tree_id, $fasta_names{$tree->member_type}, \&dumpTreeFasta, $root, [0]);
   dump_if_wanted($fasta_cds_out, $tree_id, 'cds.fasta', \&dumpTreeFasta, $root, [1]) if $tree->member_type eq 'protein';
-  dump_if_wanted($orthoxml, $tree_id, 'orthoxml.xml', \&dumpTreeOrthoXML, $tree);
-  dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $tree);
-  dump_if_wanted($cafe_phyloxml, $tree_id, 'cafe_phyloxml.xml', \&dumpCafeTreePhyloXML, $cafe_tree) if $cafe_tree;
+
+  my ($orthoxml_file_path, $phyloxml_file_path, $cafe_file_path);
+  $orthoxml_file_path = dump_if_wanted($orthoxml, $tree_id, 'orthoxml.xml', \&dumpTreeOrthoXML, $tree) if $orthoxml_compatible;
+  $phyloxml_file_path = dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $tree);
+  $cafe_file_path = dump_if_wanted($cafe_phyloxml, $tree_id, 'cafe_phyloxml.xml', \&dumpCafeTreePhyloXML, $cafe_tree) if $cafe_tree;
 
   $root->release_tree;
+
+  if ($dataflow_file) {
+      push(@dataflow_events, { 'schema' => 'orthoxml', 'filename' => $orthoxml_file_path }) if $orthoxml_file_path;
+      push(@dataflow_events, { 'schema' => 'phyloxml', 'filename' => $phyloxml_file_path }) if $phyloxml_file_path;
+      push(@dataflow_events, { 'schema' => 'phyloxml', 'filename' => $cafe_file_path }) if $cafe_file_path;
+  }
+}
+
+if ($dataflow_file) {
+    my @dataflow_lines = map { encode_json($_) } @dataflow_events;
+    my $dataflow_text = join("\n", @dataflow_lines) . "\n";
+    spurt($dataflow_file, $dataflow_text);
 }
 
 sub dumpTreeMultipleAlignment {

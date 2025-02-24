@@ -38,6 +38,12 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Code+branching",
             "summary": "Code branching"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Ensembl+repositories+configuration#Ensemblrepositoriesconfiguration-Preparingeverythingforarelease",
+            "summary": "Prepare the shared repositories"
          }
       ],
       "summary": "Release <version> preparation"
@@ -57,12 +63,6 @@
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Static+documentation+update#Staticdocumentationupdate-Schemadocumentation",
             "summary": "Update Compara schema documentation in Ensembl plugins"
-         },
-         {
-            "assignee": "<RelCo>",
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Updatingdatadumpregistryfiles",
-            "summary": "Update Compara data dump registry files"
          },
          {
             "assignee": "<RelCo>",

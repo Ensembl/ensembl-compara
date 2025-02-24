@@ -14,7 +14,7 @@
 
   <pairwise_alignments>
 
-    <!-- LastZ batch 1 -->
+    <!-- LastZ batch -->
     <all_vs_all method="LASTZ_NET">
       <species_set>
         <genome name="phytophthora_infestans"/>
@@ -28,17 +28,12 @@
         <genome name="pythium_iwayamai"/>
         <genome name="pythium_ultimum"/>
         <genome name="pythium_vexans"/>
-      </species_set>
-    </all_vs_all>
 
-    <!-- LastZ batch 2 -->
-    <all_vs_all method="LASTZ_NET">
-      <species_set>
         <genome name="albugo_laibachii"/>
         <genome name="bigelowiella_natans"/>
         <genome name="emiliania_huxleyi"/>
         <genome name="entamoeba_histolytica"/>
-        <genome name="giardia_lamblia"/>
+        <genome name="giardia_intestinalis_gca000002435v2"/>
         <genome name="guillardia_theta"/>
         <genome name="hyaloperonospora_arabidopsidis"/>
         <genome name="paramecium_tetraurelia"/>

@@ -36,6 +36,15 @@ my $prev_release = $curr_release - 1;
 my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
 my $prev_eg_release = $curr_eg_release - 1;
 
+# ---------------------- DATABASE HOSTS -----------------------------------------
+
+my ($curr_nv_host, $curr_nv_port) = $curr_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
+
+my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
@@ -56,7 +65,14 @@ my @collection_groups = qw(
 
 # Server for single species fungal cores
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
-Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+
+# Ensure we're using the correct cores for species that overlap with other divisions
+my @overlap_species = qw(saccharomyces_cerevisiae);
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+my $overlap_cores = {
+    'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_${curr_eg_release}_${curr_release}_4" ],
+};
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
 foreach my $group ( @collection_groups ) {
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
@@ -68,14 +84,30 @@ foreach my $group ( @collection_groups ) {
     );
 }
 
+# ---------------------- CURRENT CORE DATABASES : ALTERNATE HOSTS ----------------
+
+# Fungi single-species cores
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_nv_host:$curr_nv_port/$curr_release");
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+
+# Fungi collection cores
+#foreach my $group ( @collection_groups ) {
+#    Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+#        -host   => $curr_nv_host,
+#        -port   => $curr_nv_port,
+#        -user   => 'ensro',
+#        -pass   => '',
+#        -dbname => "fungi_${group}_collection_core_${curr_eg_release}_${curr_release}_1",
+#    );
+#}
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host           => 'mysql-ens-sta-3-b',
-        -port           => 4686,
+        -host           => $prev_nv_host,
+        -port           => $prev_nv_port,
         -user           => 'ensro',
         -pass           => '',
         -db_version     => $prev_release,
@@ -86,8 +118,8 @@ foreach my $group ( @collection_groups ) {
     # Fungi collection databases
     foreach my $group ( @collection_groups ) {
         Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-            -host           => 'mysql-ens-sta-3-b',
-            -port           => 4686,
+            -host           => $prev_nv_host,
+            -port           => $prev_nv_port,
             -user           => 'ensro',
             -pass           => '',
             -dbname         => "fungi_${group}_collection_core_${prev_eg_release}_${prev_release}_1",
@@ -106,16 +138,16 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${prev_eg_release}_${prev_release}" ],
 
     # LASTZ dbs
-    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch1_110' ],
-    'lastz_batch_2'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch2_110' ],
-    'lastz_batch_3'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch3_110' ],
-    'lastz_batch_4'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch4_110' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch1_114' ],
+    #'lastz_batch_2'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch2_110' ],
+    #'lastz_batch_3'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch3_110' ],
+    #'lastz_batch_4'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch4_110' ],
     #Synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-4', 'sbhurji_sbhurji_fungi_synteny_take2_110' ],
+    #'compara_syntenies' => [ 'mysql-ens-compara-prod-4', 'sbhurji_sbhurji_fungi_synteny_take2_110' ],
 
     # homology dbs
-    #'compara_members' => [ 'mysql-ens-compara-prod-X', '' ],
-    'compara_ptrees'  => [ 'mysql-ens-compara-prod-4', 'ensembl_compara_fungi_56_109' ],
+    'compara_members' => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_load_members_114' ],
+    'compara_ptrees'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_default_fungi_protein_trees_114' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -124,7 +156,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_${curr_release}" ],
+    'ncbi_taxonomy' => [ $curr_nv_host, "ncbi_taxonomy_${curr_release}" ],
 });
 
 # -------------------------------------------------------------------

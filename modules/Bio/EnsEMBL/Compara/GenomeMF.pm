@@ -89,7 +89,9 @@ sub locator {
 sub get_coordinates {
     my $self = shift;
 
-    $self->_load_coordinates unless exists $self->{'_coordinates'};
+    if ( !(exists $self->{'_gene_coordinates'} && exists $self->{'_cds_coordinates'}) ) {
+        $self->_load_coordinates;
+    }
     return ($self->{'_gene_coordinates'}, $self->{'_cds_coordinates'})
 }
 
@@ -101,8 +103,6 @@ sub _load_coordinates {
     my %local_cds_coordinates  = ();
     my %gene_coordinates = ();
     my %cds_coordinates  = ();
-    #my %gene_mapper = ();
-    #my %mRNA_mapper = ();
 
     if ( exists $self->{'gene_coord_gff'} ) {
         my $fh = FileHandle->new;
@@ -220,7 +220,27 @@ sub _load_coordinates {
     print scalar( keys %local_mrna_coordinates ),  " LOCAL mrna coordinates\n";
     print scalar( keys %local_gene_coordinates ),  " LOCAL gene coordinates\n";
 
-    if ( ( $self->{"source"} eq "refseq" ) || ( $self->{"source"} eq "augustus_maker" ) ) {
+    if ( ( $self->{"source"} eq "uniprot" and scalar( keys %local_cds_coordinates ) == 0 ) ) {
+        my ($prot_seq, $cds_seq) = $self->get_sequences;
+
+        foreach my $prot_id (keys %$prot_seq) {
+            $local_cds_coordinates{$prot_id}{'protein_id'} = $prot_id;
+            $local_cds_coordinates{$prot_id}{'parent'} = $prot_id;
+            $local_mrna_coordinates{$prot_id}{'protein_id'} = $prot_id;
+            $local_mrna_coordinates{$prot_id}{'parent'} = $prot_id;
+            $local_gene_coordinates{$prot_id}{'protein_id'} = $prot_id;
+            if ( defined $cds_seq->{$prot_id} ) {
+                $local_gene_coordinates{$prot_id}{'coord'} = [ $prot_id, 1, length($cds_seq->{$prot_id}->{'seq_obj'}->seq), 1 ];
+            }
+            else {
+                $local_gene_coordinates{$prot_id}{'coord'} = [ $prot_id, 1, length($prot_seq->{$prot_id}->{'seq_obj'}->seq), 1 ];
+            }
+            $local_cds_coordinates{$prot_id}{'coord'} = $local_gene_coordinates{$prot_id}{'coord'};
+            $local_mrna_coordinates{$prot_id}{'coord'} = $local_gene_coordinates{$prot_id}{'coord'};
+        }
+    }
+
+    if ( ( $self->{"source"} eq "refseq" ) || ( $self->{"source"} eq "augustus_maker" ) || ( $self->{"source"} eq "uniprot" )) {
 
         #Build hierarchy
         foreach my $cds_id (keys %local_cds_coordinates){
@@ -259,7 +279,10 @@ sub _load_coordinates {
 
 sub get_sequences {
     my $self = shift;
-    $self->_load_sequences();
+
+    if ( !(exists $self->{'_seqs'} && exists $self->{'_seqs'}{'prot'} && exists $self->{'_seqs'}{'cds'}) ) {
+        $self->_load_sequences();
+    }
     return ($self->{'_seqs'}{'prot'},$self->{'_seqs'}{'cds'});
 }
 
@@ -296,15 +319,22 @@ sub _load_sequences {
                     else{
                         $protein_id = $seq->id;
                     }
-
                     if ( $seq->desc =~ /gene=/ ) {
                         my @tok = split( /gene=/, $seq->desc );
                         my $tmp = $tok[1];
                         @tok = split( /\]/, $tmp );
                         $sequence2hash{$protein_id}{'display_name'} = $tok[0];
                     }
-                    $sequence2hash{$protein_id}{'seq_obj'} = $seq;
-
+                    elsif ( $self->{"source"} eq "uniprot" ) {
+                        my ( $sptr, $pid, $acc ) = split /[|]/, $protein_id;
+                        $protein_id = $pid;
+                        $seq->id($protein_id);
+                        $sequence2hash{$protein_id}{'seq_obj'} = $seq;
+                        $sequence2hash{$protein_id}{'display_name'} = $protein_id;
+                    }
+                    else {
+                        $sequence2hash{$protein_id}{'seq_obj'} = $seq;
+                    }
                 }
                 else {
                     $sequence2hash{ $seq->id }{'seq_obj'} = $seq;
@@ -313,6 +343,13 @@ sub _load_sequences {
             elsif( $self->{"source"} eq "gigascience" ){
                 $sequence2hash{ $seq->id }{'seq_obj'} = $seq;
                 $sequence2hash{ $seq->id }{'display_name'} = $seq->id;
+            }
+            elsif ( $self->{"source"} eq "uniprot" ) {
+                my ( $sptr, $pid, $acc ) = split /[|]/, $seq->id;
+                my $protein_id = $pid;
+                $seq->id($protein_id);
+                $sequence2hash{$protein_id}{'seq_obj'} = $seq;
+                $sequence2hash{$protein_id}{'display_name'} = $protein_id;
             }
 
             print scalar( keys %sequence2hash ), " sequences of type $type\n";

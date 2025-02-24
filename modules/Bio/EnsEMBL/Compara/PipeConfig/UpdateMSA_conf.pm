@@ -57,6 +57,7 @@ sub default_options {
         'work_dir'      => $self->o('pipeline_dir'),
         'output_dir'    => $self->o('work_dir') . '/feature_dumps/',
         'bed_dir'       => $self->o('work_dir') . '/bed_dir/',
+        'output_dir_path' => $self->o('work_dir') . '/' . 'datachecks',
 
         'master_db'         => 'compara_master',
         'prev_db'           => $self->o('species_set_name') . '_' . $self->o('method_type') . '_prev',
@@ -86,6 +87,7 @@ sub default_options {
 
         # Default statistics
         'skip_multiplealigner_stats'    => 0,  # skip this module if set to 1
+        'msa_stats_shared_dir' => $self->o('msa_stats_shared_basedir') . '/' . $self->o('species_set_name') . '/' . $self->o('ensembl_release'),
 
         # Resource requirements
         'gerp_capacity' => 500,
@@ -106,7 +108,8 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # inherit creation of DB, hive tables and compara tables
 
-        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir', 'bed_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['work_dir', 'output_dir', 'output_dir_path', 'bed_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['msa_stats_shared_dir'], undef, 'do not rm'),
     ];
 }
 
@@ -127,6 +130,8 @@ sub pipeline_wide_parameters {
         'curr_release'      => $self->o('ensembl_release'),
 
         'genome_dumps_dir'  => $self->o('genome_dumps_dir'),
+        'output_dir_path'   => $self->o('output_dir_path'),
+        'msa_stats_shared_dir' => $self->o('msa_stats_shared_dir'),
 
         'lastz_complete'             => $self->o('lastz_complete'),
         'run_gerp'                   => $self->o('run_gerp'),
@@ -137,6 +142,13 @@ sub pipeline_wide_parameters {
 
 sub core_pipeline_analyses {
     my $self = shift;
+
+    my %dc_analysis_params = (
+        'compara_db' => $self->pipeline_url(),
+        'datacheck_names' => [ 'CheckNonMinimisedGATs' ],
+        'db_type' => 'compara',
+        'registry_file' => undef,
+    );
 
     return [
         {   -logic_name => 'load_mlss_ids',
@@ -174,7 +186,7 @@ sub core_pipeline_analyses {
                 'filter_by_mlss'    => 1,
                 'skip_gerp'         => 1,
             },
-            -rc_name    => '1Gb_job',
+            -rc_name    => '1Gb_24_hour_job',
         },
         # Update the MSA-related information in this and the ancestral core databases
         {   -logic_name => 'msa_update_factory',
@@ -219,6 +231,17 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree',
             -parameters => {
                 'species_tree_input_file' => $self->o('binary_species_tree'),
+            },
+            -flow_into  => {
+                2 => { 'hc_species_tree' => { 'mlss_id' => '#mlss_id#', 'species_tree_root_id' => '#species_tree_root_id#' } },
+            },
+        },
+        {   -logic_name => 'hc_species_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MSA::SqlHealthChecks',
+            -parameters => {
+                'mode'                      => 'species_tree',
+                'binary'                    => 0,
+                'n_missing_species_in_tree' => 0,
             },
         },
         # Copy data from the previous ancestral core database and update the ancestor names with new MLSS id
@@ -268,18 +291,29 @@ sub core_pipeline_analyses {
             -parameters => {
                 'method_type' => $self->o('method_type'),
             },
-            -flow_into  => [ 'affected_gabs_factory' ],
+            -flow_into  => [ 'fire_gab_analyses' ],
         },
-        {   -logic_name => 'affected_gabs_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::UpdateGABFactory',
+        {   -logic_name => 'fire_gab_analyses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '2->A' => [ 'update_gab' ],
+                '1->A' => [ 'affected_gabs_factory' ],
                 'A->1' => WHEN(
                     '#method_type# eq "epo"' => [ 'sync_ancestral_database' ],
                     ELSE                        [ 'remove_prev_mlss' ],
                 ),
             },
         },
+        {   -logic_name => 'affected_gabs_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::UpdateGABFactory',
+            -flow_into  => {
+                '2->A' => [ 'update_gab' ],
+                'A->1' => [ { 'minimize_gab_check' => \%dc_analysis_params } ]
+            }
+        },
+        {   -logic_name        => 'minimize_gab_check',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+            -max_retry_count   => 0,
+		},
         {   -logic_name     => 'update_gab',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::UpdateMSA::UpdateGAB',
             -rc_name        => '1Gb_job',

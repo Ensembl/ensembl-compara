@@ -1,0 +1,18 @@
+{
+    "even": {
+        "compara_dump_host": "mysql-ens-compara-prod-7",
+        "core_dump_hosts": [
+            "mysql-ens-sta-1",
+            "mysql-ens-sta-3",
+            "mysql-ens-sta-4"
+        ]
+    },
+    "odd": {
+        "compara_dump_host": "mysql-ens-compara-prod-7",
+        "core_dump_hosts": [
+            "mysql-ens-sta-1-b",
+            "mysql-ens-sta-3-b",
+            "mysql-ens-sta-4"
+        ]
+    }
+}

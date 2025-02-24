@@ -23,14 +23,15 @@ Typical usage example::
 from contextlib import nullcontext as does_not_raise
 from pathlib import Path
 import subprocess
-from typing import ContextManager, Dict, List, Set
+from typing import ContextManager
 
 import pytest
+from sqlalchemy import text
 
-from ensembl.database import DBConnection, UnitTestDB
+from ensembl.utils.database import DBConnection, UnitTestDB
 
 
-@pytest.mark.parametrize("db", [{'src': 'pan'}], indirect=True)
+@pytest.mark.parametrize("test_dbs", [[{'src': 'pan'}]], indirect=True)
 class TestRepairMLSSTags:
     """Tests `repair_mlss_tags.py` script.
 
@@ -39,21 +40,21 @@ class TestRepairMLSSTags:
 
     """
 
-    dbc = None  # type: DBConnection
+    dbc: DBConnection = None  # type: ignore
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
     @pytest.fixture(scope='class', autouse=True)
-    def setup(self, db: UnitTestDB) -> None:
+    def setup(self, test_dbs: dict[str, UnitTestDB]) -> None:
         """Loads the required fixtures and values as class attributes.
 
         Args:
-            db: Unit test database (fixture).
+            test_dbs: Unit test databases (fixture).
 
         """
         # Use type(self) instead of self as a workaround to @classmethod decorator (unsupported by pytest and
         # required when scope is set to "class" <https://github.com/pytest-dev/pytest/issues/3778>)
-        type(self).dbc = db.dbc
+        type(self).dbc = test_dbs["pan"].dbc
 
     @pytest.mark.parametrize(
         "mlss_tag, alt_queries, exp_stdout, exp_tag_value, expectation",
@@ -101,12 +102,18 @@ class TestRepairMLSSTags:
             ),
         ]
     )
-    def test_repair_mlss_tag(self, mlss_tag: str, alt_queries: List[str], exp_stdout: Set[str],
-                             exp_tag_value: Dict[int, int], expectation: ContextManager) -> None:
+    def test_repair_mlss_tag(
+        self,
+        mlss_tag: str,
+        alt_queries: list[str],
+        exp_stdout: set[str],
+        exp_tag_value: dict[int, int],
+        expectation: ContextManager
+    ) -> None:
         """Tests `repair_mlss_tags.py` script, including its output.
 
         Args:
-            mlss_tags: MLSS tag as found in the ``method_link_species_set_tag`` table.
+            mlss_tag: MLSS tag as found in the ``method_link_species_set_tag`` table.
             alt_queries: MySQL queries to alter the content of the database before running the test.
             exp_stdout: Expected messages printed in STDOUT.
             exp_tag_value: Expected MLSS id - value pairs for the given `mlss_tag` after the script is run.
@@ -115,11 +122,11 @@ class TestRepairMLSSTags:
 
         """
         # Alter the MLSS tags table so there is something to repair
-        with self.dbc.connect() as connection:
-            connection.execute("SET FOREIGN_KEY_CHECKS = 0")
+        with self.dbc.begin() as connection:
+            connection.execute(text("SET FOREIGN_KEY_CHECKS = 0"))
             for sql in alt_queries:
-                connection.execute(sql)
-            connection.execute("SET FOREIGN_KEY_CHECKS = 1")
+                connection.execute(text(sql))
+            connection.execute(text("SET FOREIGN_KEY_CHECKS = 1"))
         # Run the repair_mlss_tags.py command
         cmd = [str(Path(__file__).parents[3] / 'scripts' / 'production' / 'repair_mlss_tags.py'),
                '--url', self.dbc.url]
@@ -131,8 +138,10 @@ class TestRepairMLSSTags:
             assert set(output.decode().strip().split("\n")) == exp_stdout
             if exp_tag_value:
                 # Check the database has the expected information
-                with self.dbc.connect() as connection:
-                    result = connection.execute(f"SELECT method_link_species_set_id AS mlss_id, value "
-                                                f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}'")
+                with self.dbc.begin() as connection:
+                    result = connection.execute(text(
+                        f"SELECT method_link_species_set_id AS mlss_id, value "
+                        f"FROM method_link_species_set_tag WHERE tag = '{mlss_tag}'"
+                    ))
                     curr_tag_value = {row.mlss_id: int(row.value) for row in result.fetchall()}
                     assert curr_tag_value == exp_tag_value
