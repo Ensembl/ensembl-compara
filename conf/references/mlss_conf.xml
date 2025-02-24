@@ -448,31 +448,31 @@
       <genome name="marchantia_polymorpha"/>
       <genome name="solanum_lycopersicum"/>
       <!-- Asparagales -->
-      <genome name="asparagus_officinalis"/>
+      <genome name="asparagus_officinalis_gca001876935v1"/>
       <!-- Dioscoreales -->
-      <genome name="dioscorea_rotundata"/>
+      <genome name="dioscorea_rotundata_gca009730915v1"/>
       <!-- Poales -->
       <genome name="aegilops_tauschii"/>
-      <genome name="ananas_comosus"/>
-      <genome name="avena_sativa_ot3098"/>
-      <genome name="brachypodium_distachyon"/>
-      <genome name="digitaria_exilis"/>
-      <genome name="eragrostis_tef"/>
+      <genome name="ananas_comosus_gca902162155v1"/>
+      <genome name="avena_sativa_gca022788535v1"/>
+      <genome name="brachypodium_distachyon_gca000005505v4"/>
+      <genome name="digitaria_exilis_gca902859565v1"/>
+      <genome name="eragrostis_tef_gca024500355v1cm"/>
       <genome name="hordeum_vulgare"/>
-      <genome name="lolium_perenne"/>
-      <genome name="oryza_indica"/>
-      <genome name="saccharum_spontaneum"/>
-      <genome name="secale_cereale"/>
-      <genome name="setaria_italica"/>
+      <genome name="lolium_perenne_gca019359855v1"/>
+      <genome name="oryza_indica_gca000004655v2"/>
+      <genome name="saccharum_spontaneum_gca003544955v1"/>
+      <genome name="secale_cereale_gca902687465v1"/>
+      <genome name="setaria_italica_gca000263155v2"/>
       <genome name="sorghum_bicolor"/>
       <genome name="triticum_aestivum"/>
-      <genome name="triticum_dicoccoides"/>
-      <genome name="triticum_spelta"/>
+      <genome name="triticum_dicoccoides_gca002162155v1"/>
+      <genome name="triticum_spelta_gca903994165v1"/>
       <genome name="triticum_turgidum"/>
-      <genome name="triticum_urartu"/>
+      <!-- <genome name="triticum_urartu"/> -->
       <genome name="zea_mays"/>
       <!-- Zingiberales -->
-      <genome name="musa_acuminata"/>
+      <genome name="musa_acuminata_gca904845865v1"/>
     </collection>
 
     <collection name="eudicotyledons">
@@ -481,45 +481,45 @@
       <genome name="chlamydomonas_reinhardtii"/>
       <genome name="marchantia_polymorpha"/>
       <!-- Apiales -->
-      <genome name="daucus_carota"/>
+      <genome name="daucus_carota_gca001625215v1"/>
       <!-- Asterales -->
-      <genome name="helianthus_annuus"/>
+      <genome name="helianthus_annuus_gca002127325v2"/>
       <!-- Brassicales -->
       <genome name="brassica_napus"/>
-      <genome name="brassica_rapa_ro18"/>
+      <genome name="brassica_rapa_gca017639395v1"/>
       <!-- Caryophyllales -->
-      <genome name="chenopodium_quinoa"/>
+      <genome name="chenopodium_quinoa_gca001683475v1"/>
       <!-- Cucurbitales -->
-      <genome name="cucumis_sativus"/>
+      <genome name="cucumis_sativus_gca000004075v2"/>
       <!-- Fabales -->
-      <genome name="arachis_hypogaea"/>
+      <genome name="arachis_hypogaea_gca003086295v3"/>
       <genome name="glycine_max"/>
       <genome name="medicago_truncatula"/>
-      <genome name="phaseolus_vulgaris"/>
-      <genome name="pisum_sativum"/>
-      <genome name="vicia_faba"/>
-      <genome name="vigna_angularis"/>
+      <genome name="phaseolus_vulgaris_gca000499845v1"/>
+      <genome name="pisum_sativum_gca900700895v2"/>
+      <genome name="vicia_faba_gca948472305v1cm"/>
+      <genome name="vigna_angularis_gca001190045v1"/>
       <!-- Fagales -->
-      <genome name="quercus_suber"/>
+      <genome name="quercus_suber_gca002906115v4"/>
       <!-- Gentianales -->
-      <genome name="coffea_canephora"/>
+      <genome name="coffea_canephora_gca900059795v1"/>
       <!-- Lamiales -->
-      <genome name="olea_europaea"/>
+      <genome name="olea_europaea_gca902713445v1"/>
       <!-- Malpighiales -->
-      <genome name="manihot_esculenta"/>
-      <genome name="populus_trichocarpa"/>
+      <genome name="manihot_esculenta_gca001659605v2"/>
+      <genome name="populus_trichocarpa_gca000002775v4"/>
       <!-- Malvales -->
-      <genome name="theobroma_cacao"/>
+      <genome name="theobroma_cacao_gca000403535v1"/>
       <!-- Myrtales -->
-      <genome name="eucalyptus_grandis"/>
+      <genome name="eucalyptus_grandis_gca000612305v1"/>
       <!-- Rosales -->
-      <genome name="malus_domestica_golden"/>
-      <genome name="prunus_avium"/>
+      <genome name="malus_domestica_gca002114115v1"/>
+      <genome name="prunus_avium_gca002207925v1"/>
       <!-- Sapindales -->
-      <genome name="pistacia_vera"/>
+      <genome name="pistacia_vera_gca008641045v1"/>
       <!-- Solanales -->
-      <genome name="ipomoea_triloba"/>
-      <genome name="nicotiana_attenuata"/>
+      <genome name="ipomoea_triloba_gca003576645v1"/>
+      <genome name="nicotiana_attenuata_gca001879085v1"/>
       <genome name="solanum_lycopersicum"/>
       <genome name="solanum_tuberosum"/>
       <!-- Vitales -->
