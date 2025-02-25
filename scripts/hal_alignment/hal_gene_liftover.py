@@ -38,7 +38,7 @@ from subprocess import PIPE, Popen, run
 from tempfile import TemporaryDirectory
 from typing import Dict, Iterable, Mapping, NamedTuple, Union
 
-import pybedtools  # type: ignore
+#import pybedtools  # type: ignore
 
 
 class SimpleRegion(NamedTuple):
@@ -72,7 +72,7 @@ def load_chr_sizes(hal_file: Union[Path, str], genome_name: str) -> Dict[str, in
 
 
 # pylint: disable-next=c-extension-no-member
-def make_src_region_file(regions: Iterable[Union[pybedtools.cbedtools.Interval, SimpleRegion]],
+def make_src_region_file(regions: Iterable[SimpleRegion],
                          chr_sizes: Mapping[str, int], bed_file: Union[Path, str],
                          flank_length: int = 0) -> None:
     """Make source region file.
@@ -166,9 +166,10 @@ if __name__ == '__main__':
     parser.add_argument('dest_genome', help="Destination genome name.")
     parser.add_argument('output_file', help="Output file.")
 
-    group = parser.add_mutually_exclusive_group(required=True)
-    group.add_argument('--src-region', help="Region to liftover.")
-    group.add_argument('--src-bed-file', help="BED file containing regions to liftover.")
+    parser.add_argument('--src-region', required=True, help="Region to liftover.")
+    #group = parser.add_mutually_exclusive_group(required=True)
+    #group.add_argument('--src-region', help="Region to liftover.")
+    #group.add_argument('--src-bed-file', help="BED file containing regions to liftover.")
 
     parser.add_argument('--flank', default=0, type=int,
                         help="Requested length of upstream/downstream"
@@ -181,10 +182,11 @@ if __name__ == '__main__':
 
         query_bed_file = os.path.join(tmp_dir, 'src_regions.bed')
 
-        if args.src_region is not None:
-            src_regions = [parse_region(args.src_region)]
-        else:  # i.e. bed_file is not None
-            src_regions = pybedtools.BedTool(args.src_bed_file)
+        src_regions = [parse_region(args.src_region)]
+        #if args.src_region is not None:
+        #    src_regions = [parse_region(args.src_region)]
+        #else:  # i.e. bed_file is not None
+        #    src_regions = pybedtools.BedTool(args.src_bed_file)
 
         src_chr_sizes = load_chr_sizes(args.hal_file, args.src_genome)
 
