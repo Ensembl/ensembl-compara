@@ -239,7 +239,7 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
 
-         '4Gb_big_tmp_job'  => { 'LSF' => ['-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"', '-worker_base_tmp_dir ' . $self->o('big_tmp_dir')] },
+         '4Gb_big_tmp_job'  => { 'SLURM' => ['--mem=4g', '-worker_base_tmp_dir ' . $self->o('big_tmp_dir')] },
     };
 }
 

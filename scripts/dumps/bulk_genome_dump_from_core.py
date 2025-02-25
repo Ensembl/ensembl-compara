@@ -50,27 +50,6 @@ def parse_arguments():
     return parser.parse_args()
 
 
-def detect_job_scheduler():
-    """
-    Detect if the system is using SLURM, LSF, or no job scheduler.
-
-    Returns:
-        str: The name of the detected job scheduler ('SLURM', 'LSF') or 'NONE' if no known scheduler is found.
-    """
-
-    schedulers = {
-        "SLURM": "srun",
-        "LSF": "bsub",
-    }
-
-    for scheduler, command in schedulers.items():
-        if subprocess.run(["which", command], check=False).returncode == 0:
-            return scheduler
-
-    logging.error("No job scheduler detected.")
-    sys.exit(1)
-
-
 def subprocess_call(
     command,
     stdout_file="/dev/null",
@@ -95,35 +74,21 @@ def subprocess_call(
         RuntimeError if the subprocess return code is nonzero.
     """
     if use_job_scheduler:
-        job_scheduler = detect_job_scheduler()
 
         if not job_name:
             job_name = os.path.basename(__file__)
 
-        if job_scheduler == "SLURM":
-            command = [
-                "sbatch",
-                "--time=1-00",
-                "--mem-per-cpu=4gb",
-                "--cpus-per-task=1",
-                "--export=ALL",
-                f"--output={stdout_file}",
-                f"--error={stderr_file}",
-                f"--job-name={job_name}",
-                f"--wrap={shlex.join(command)}",
-            ]
-        elif job_scheduler == "LSF":
-            command = [
-                "bsub",
-                "-W",
-                "1:00",
-                "-R",
-                "rusage[mem=4096]",
-                "-J",
-                job_name,
-                f"-o {stdout_file}",
-                f"-e {stderr_file}",
-            ] + command
+        command = [
+            "sbatch",
+            "--time=1-00",
+            "--mem-per-cpu=4gb",
+            "--cpus-per-task=1",
+            "--export=ALL",
+            f"--output={stdout_file}",
+            f"--error={stderr_file}",
+            f"--job-name={job_name}",
+            f"--wrap={shlex.join(command)}",
+        ]
 
     logging.info("Running: %s", " ".join(command))
     with subprocess.Popen(

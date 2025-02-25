@@ -32,8 +32,6 @@ params.embassy = false
 */
 process orthoFinderFactory {
 
-    label 'slurm_default'
-
     publishDir "${params.ref_destination_cloud}/", mode: 'copy', overwrite: 'true'
 
     input:
@@ -87,8 +85,6 @@ process runOrthoFinder {
 */
 // process queryFactory {
 //
-//     label 'lsf_default'
-//
 //     input:
 //     val x
 //
@@ -106,8 +102,6 @@ process runOrthoFinder {
 *@output path of uncompressed fasta file
 */
 process processGenomeFasta {
-
-    label 'lsf_default'
 
     input:
     path x
@@ -134,8 +128,6 @@ process processGenomeFasta {
 */
 process queryTaxonSelectionFactory {
 
-    label 'lsf_default'
-
     input:
     val x
 
@@ -157,8 +149,6 @@ process queryTaxonSelectionFactory {
 *@output path of new directory containing query and reference fasta files
 */
 process mergeRefToQuery {
-
-    label 'lsf_default'
 
     publishDir "${params.query_destination}/${query}", mode: 'copy'
 
@@ -188,8 +178,6 @@ process mergeRefToQuery {
 *@output same as input
 */
 process triggerUpdateOrthofinderNF {
-
-    label 'lsf_default'
 
     input:
     val x
@@ -231,8 +219,6 @@ process triggerUpdateOrthofinderNF {
 */
 process updateOrthofinderRun {
 
-    label params.embassy ? 'slurm_default' : 'lsf_default'
-
     input:
     val x
 
@@ -259,8 +245,6 @@ process updateOrthofinderRun {
 *@output Publishable results directory for example FTP
 */
 // process copyToFTP {
-// 
-//     label 'lsf_default'
 // 
 //     publishDir "${params.output_path}${x}", mode: 'copy'
 // 
