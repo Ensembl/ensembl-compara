@@ -48,22 +48,21 @@ sub run {
     my $jira_exe = $self->param_required('create_datacheck_tickets_exe');
     my $tap_file = $self->param_required('output_results');
 
-    my $merge_ticket_key_param = $self->param_is_defined('merge_ticket_key')
-                               ? sprintf('--merge_ticket_key %s', $self->param('merge_ticket_key'))
-                               : '';
-
-    my $csv_param = $self->param('csv_mode')
-                  ? sprintf('--csv %s.csv', $tap_file)
-                  : '';
-
     my $command = join(" ", (
         $jira_exe, $tap_file, "--update",
         "--division", $self->param_required('division'),
         ( $self->param('datacheck_type') ? '--label ' . $self->param('datacheck_type') : '' ),
         ( $self->param('dry_run') ? '--dry_run' : ''),
-        $merge_ticket_key_param,
-        $csv_param,
     ));
+
+    if ($self->param_is_defined('merge_ticket_key')) {
+        $command .= ' ' . sprintf('--merge_ticket_key %s', $self->param('merge_ticket_key'));
+    }
+
+    if ($self->param('csv_mode')) {
+        $command .= ' ' . sprintf('--csv %s.csv', $tap_file);
+    }
+
     $self->warning( "Command: " . $command );
 
     return if $self->param('test_mode');
