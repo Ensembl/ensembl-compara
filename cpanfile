@@ -21,6 +21,7 @@ requires 'IO::String';
 requires 'Try::Tiny';
 requires 'Getopt::Long';
 requires 'Time::Piece';
+requires 'Proc::ProcessTable';
 
 test_requires 'Test::Exception';
 test_requires 'Test::Most';

@@ -29,10 +29,10 @@ import time
 import pytest
 from _pytest.fixtures import FixtureRequest
 
-from ensembl.compara.filesys import DirCmp, PathLike
+from ensembl.compara.filesys import DirCmp
 
 
-pytest_plugins = ("ensembl.plugins.pytest_unittest",)
+pytest_plugins = ("ensembl.utils.plugin",)
 
 
 def pytest_configure() -> None:
@@ -47,8 +47,8 @@ def pytest_configure() -> None:
     pytest.files_dir = test_data_dir / 'flatfiles'  # type: ignore[attr-defined]
 
 
-@pytest.fixture(scope='session')
-def dir_cmp(request: FixtureRequest, tmp_dir: PathLike) -> DirCmp:
+@pytest.fixture(scope="session")
+def dir_cmp(request: FixtureRequest, tmp_path_factory: pytest.TempPathFactory) -> DirCmp:
     """Returns a directory tree comparison (:class:`DirCmp`) object.
 
     Requires a dictionary with the following keys:
@@ -66,16 +66,17 @@ def dir_cmp(request: FixtureRequest, tmp_dir: PathLike) -> DirCmp:
 
     Args:
         request: Access to the requesting test context.
-        tmp_dir: Temporary directory path.
+        tmp_path_factory: Temporary directory path factory fixture.
 
     """
+    tmp_path = tmp_path_factory.mktemp("dir_cmp_root")
     # Get the source and temporary absolute paths for reference and target root directories
     ref = Path(request.param['ref'])  # type: ignore[attr-defined]
     ref_src = ref if ref.is_absolute() else pytest.files_dir / ref  # type: ignore
-    ref_tmp = Path(tmp_dir) / str(ref).replace(os.path.sep, '_')
+    ref_tmp = tmp_path / str(ref).replace(os.path.sep, '_')
     target = Path(request.param['target'])  # type: ignore[attr-defined]
     target_src = target if target.is_absolute() else pytest.files_dir / target  # type: ignore
-    target_tmp = Path(tmp_dir) / str(target).replace(os.path.sep, '_')
+    target_tmp = tmp_path / str(target).replace(os.path.sep, '_')
     # Copy directory trees (if they have not been copied already) ignoring file metadata
     if not ref_tmp.exists():
         shutil.copytree(ref_src, ref_tmp, copy_function=shutil.copy)

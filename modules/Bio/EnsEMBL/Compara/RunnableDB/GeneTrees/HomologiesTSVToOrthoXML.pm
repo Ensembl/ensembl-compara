@@ -56,13 +56,23 @@ sub fetch_input {
 
     return if $self->param('hc_only');
     # create mapping of seq_member stable_id
-    my $sql = 'SELECT seq_member.stable_id, seq_member.taxon_id, name, seq_member_id, assembly, genebuild, source_name FROM seq_member JOIN genome_db USING (genome_db_id)';
-    # $sql .= " WHERE seq_member.stable_id IN ('ENSAPOP00000034950','ENSAPEP00000008265','ENSACIP00000010104','ENSACLP00000033329','ENSAPOP00000017196','ENSAPOP00000001384')";
-    # $sql .= ' GROUP BY taxon_id, seq_member_id';
-    # print "fetching stable_id mapping from " . $self->compara_dba->dbc->url . "\n\n";
+    my $sql = q/
+        SELECT
+            sm.stable_id,
+            sm.taxon_id,
+            gdb.name,
+            sm.seq_member_id,
+            gdb.assembly,
+            gdb.genebuild,
+            sm.source_name
+        FROM
+            seq_member sm
+        JOIN
+            genome_db gdb USING (genome_db_id)
+    /;
     my $sth = $self->compara_dba->dbc->prepare($sql);
     $sth->execute();
-    my $mapping = $sth->fetchall_hashref('stable_id');
+    my $mapping = $sth->fetchall_hashref(['name', 'stable_id']);
     $self->param('stable_id_mapping', $mapping);
 }
 
@@ -75,7 +85,7 @@ sub run {
     unless ( $self->param('hc_only') ) {
         my $stable_id_map = $self->param('stable_id_mapping');
         my $tmp_file_name = $self->param('high_confidence') ? "tmp_groups.strict.xml" : "tmp_groups.xml";
-        my $tmp_groups_file = $self->param('hash_dir') . "/$tmp_file_name";
+        my $tmp_groups_file = $self->param('work_dir') . "/$tmp_file_name";
         print "\n  !! TMP_GROUPS_FILE: $tmp_groups_file !!\n\n";
         open(my $tmp_groups_fh, '>', $tmp_groups_file) or die "Cannot open tmp file '$tmp_groups_file' for writing\n";
 
@@ -94,27 +104,27 @@ sub run {
 
 
             # grab and store list of species & genes
-            my $seq1_info = $stable_id_map->{$protein_stable_id};
-            my $seq2_info = $stable_id_map->{$homology_protein_stable_id};
+            my $seq1_info = $stable_id_map->{$species}{$protein_stable_id};
+            my $seq2_info = $stable_id_map->{$homology_species}{$homology_protein_stable_id};
 
-            die "Cannot find info for $protein_stable_id\n" unless defined $seq1_info;
-            die "Cannot find info for $homology_protein_stable_id\n" unless defined $seq2_info;
+            die "Cannot find info for $species protein $protein_stable_id\n" unless defined $seq1_info;
+            die "Cannot find info for $homology_species protein $homology_protein_stable_id\n" unless defined $seq2_info;
 
             my $species1_header = "<species name=\"" . $seq1_info->{name} . "\" NCBITaxId=\"" . $seq1_info->{taxon_id} . "\"><database name=\"Unknown\" version=\"" . $seq1_info->{assembly} . "/" . $seq1_info->{genebuild} . "\"><genes>";
             my $species2_header = "<species name=\"" . $seq2_info->{name} . "\" NCBITaxId=\"" . $seq2_info->{taxon_id} . "\"><database name=\"Unknown\" version=\"" . $seq2_info->{assembly} . "/" . $seq2_info->{genebuild} . "\"><genes>";
 
             my $gene1_info = "<gene id=\"" . $seq1_info->{seq_member_id} . "\" " . ($seq1_info->{source_name} =~ /PEP$/ ? "protId" : "transcriptId") . "=\"" . $seq1_info->{stable_id} . "\"/>";
             my $gene2_info = "<gene id=\"" . $seq2_info->{seq_member_id} . "\" " . ($seq2_info->{source_name} =~ /PEP$/ ? "protId" : "transcriptId") . "=\"" . $seq2_info->{stable_id} . "\"/>";
-            $species_and_genes{$species1_header}->{$seq1_info->{seq_member_id}} = $gene1_info;
-            $species_and_genes{$species2_header}->{$seq2_info->{seq_member_id}} = $gene2_info;
+            $species_and_genes{$species1_header}->{$seq1_info->{stable_id}} = $gene1_info;
+            $species_and_genes{$species2_header}->{$seq2_info->{stable_id}} = $gene2_info;
 
             # store homology pairs
-            my $group_str = "<orthologGroup id=\"${homology_id}\"><property name=\"homology_description\" value=\"$homology_type\" /><geneRef id=\"" . $seq1_info->{seq_member_id} . "\" /> <geneRef id=\"" . $seq2_info->{seq_member_id} . "\" />";
+            my $group_str = "<orthologGroup id=\"${homology_id}\"><property name=\"homology_description\" value=\"$homology_type\" /><geneRef id=\"" . $seq1_info->{seq_member_id} . "\" /><geneRef id=\"" . $seq2_info->{seq_member_id} . "\" />";
             $group_str .= "<score id=\"dn\" value=\"$dn\" />" if defined $dn and $dn ne 'NULL';
-            $group_str .= qq{ <score id=\"ds\" value=\"$ds\" />} if defined $ds and $ds ne 'NULL';
-            $group_str .= qq{ <score id=\"goc_score\" value=\"$goc_score\" />} if defined $goc_score and $goc_score ne 'NULL';
-            $group_str .= qq{ <score id=\"wga_coverage\" value=\"$wga_coverage\" />} if defined $wga_coverage and $wga_coverage ne 'NULL';
-            $group_str .= qq{  </orthologGroup>\n};
+            $group_str .= qq{<score id=\"ds\" value=\"$ds\" />} if defined $ds and $ds ne 'NULL';
+            $group_str .= qq{<score id=\"goc_score\" value=\"$goc_score\" />} if defined $goc_score and $goc_score ne 'NULL';
+            $group_str .= qq{<score id=\"wga_coverage\" value=\"$wga_coverage\" />} if defined $wga_coverage and $wga_coverage ne 'NULL';
+            $group_str .= qq{</orthologGroup>\n};
             # push( @ortholog_groups, $str );
             print $tmp_groups_fh $group_str;
         }
@@ -151,29 +161,15 @@ sub run {
 sub healthcheck_xml {
     my $self = shift;
     my $xml_file = $self->param_required('xml_file');
-    my $clusterset_id = $self->param_required('clusterset_id');
-    my $member_type = $self->param_required('member_type');
-    my $orth_ml_id = $self->param_required('ortholog_method_link_id');
+
+    my $exp_count_param = $self->param('high_confidence') ? 'exp_strict_ortho_count' : 'exp_ortho_count';
+    my $exp_count = $self->param_required($exp_count_param);
 
     # check for truncated line near EOF
     my $tail_out = $self->get_command_output(['tail', '-3', $xml_file]);
     unless ( $tail_out =~ /<groups>\s+<\/groups>\s+<\/orthoXML>$/ ) { # allow for 'empty' XML
         die "Detected truncation at EOF in $xml_file:\n$tail_out\n\n" unless $tail_out =~ /<\/orthologGroup>\s+<\/groups>\s+<\/orthoXML>$/;
     }
-
-    # need to get exp count from db, to filter on is_high_confidence!
-    print "Counting expected orthologGroup entries..\n";
-    my $exp_count_sql = "
-    SELECT COUNT(*) FROM homology h
-        JOIN gene_tree_root gtr ON h.gene_tree_root_id = gtr.root_id
-    WHERE gtr.member_type = '$member_type'
-        AND gtr.clusterset_id = '$clusterset_id'
-        AND LEFT(h.description, 8) = 'ortholog'
-    ";
-    $exp_count_sql .= " and h.is_high_confidence = 1" if $self->param('high_confidence');
-    my $sth = $self->compara_dba->dbc->prepare($exp_count_sql);
-    $sth->execute();
-    my $exp_count = $sth->fetchrow_arrayref->[0];
 
     print "Counting orthologGroup entries in XML..\n";
     my $xml_count_cmd = "grep -c orthologGroup $xml_file";

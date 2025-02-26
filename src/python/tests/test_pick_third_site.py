@@ -31,15 +31,15 @@ class TestPickThirdSite:
     """Tests for the `pick_third_site.py` script.
     """
 
-    def test_pick_third_site(self, tmp_dir: Path) -> None:
+    def test_pick_third_site(self, tmp_path: Path) -> None:
         """Tests the output of `collate_busco_results.py` script.
 
         Args:
-            tmp_dir: Unit test temp directory (fixture).
+            tmp_path: Unit test temp directory (fixture).
         """
         input_file = str(Path(__file__).parents[2] / 'test_data' /
                          'flatfiles' / 'SpeciesTreeFromBusco' / 'pick_third_site_input.fas')
-        output_fas = str(tmp_dir / "pick_third_site_output.fas")
+        output_fas = str(tmp_path / "pick_third_site_output.fas")
 
         # Run the command
 

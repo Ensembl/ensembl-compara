@@ -261,10 +261,10 @@ sub iterate_over_lowcov_mlsss {
     my @gab_ids;
     $self->param('low_cov_leaves_to_delete', []);
     foreach my $epo_low_mlss (@$epolow_mlsss) {
-        my $epo_hc_mlss = $epo_low_mlss->get_linked_mlss_by_tag('base_mlss_id')
-            || die "Could not find the matching 'EPO' MLSS in ".$self->param('epo_db')."\n";
-        my %hc_gdb_id = (map {$_->dbID => 1} @{$epo_hc_mlss->species_set->genome_dbs});
-        my @lowcov_gdbs = grep {not exists $hc_gdb_id{$_->dbID}} @{$epo_low_mlss->species_set->genome_dbs};
+        my @epo_low_mlss_gdbs = @{$epo_low_mlss->species_set->genome_dbs};
+        my @good_gdbs = grep {$_->is_good_for_alignment} @epo_low_mlss_gdbs;
+        my %hc_gdb_id = (map {$_->dbID => 1} @good_gdbs);
+        my @lowcov_gdbs = grep {not exists $hc_gdb_id{$_->dbID}} @epo_low_mlss_gdbs;
         my %low_gdb_id = (map {$_->dbID => 1} @lowcov_gdbs);
         my $gab_id = $self->run_low_coverage_best_in_alignment($epo_low_mlss, \%hc_gdb_id, \%low_gdb_id);
         push @gab_ids, $gab_id if $gab_id;
@@ -343,6 +343,10 @@ sub run_low_coverage_best_in_alignment {
    my $gdb_name = $genome_db->name;
    print STDERR "working on $gdb_name\n" if $self->debug;
    my $leaves = $members_per_genome_db_id{$gdb_id};
+   if (defined $leaves && scalar(@$leaves) == 1) {
+       print STDERR sprintf("%s is the only member of this tree in %s -> will be kept\n", $leaves->[0]->stable_id, $gdb_name) if $self->debug;
+       next;
+   }
    my $core_db_adaptor = $genome_db->db_adaptor;
    $core_db_adaptor->dbc->prevent_disconnect( sub {
    foreach my $leaf (@$leaves) {

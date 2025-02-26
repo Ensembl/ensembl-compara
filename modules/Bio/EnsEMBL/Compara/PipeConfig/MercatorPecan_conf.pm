@@ -155,7 +155,7 @@ sub pipeline_analyses {
 	       -flow_into => {
 			      1 => [ 'set_mlss_tag' ],
 			     },
-		-rc_name => '1Gb_job',
+		-rc_name => '1Gb_24_hour_job',
 	    },
 
 # -------------------------------------------[Set conservation score method_link_species_set_tag ]------------------------------------------
@@ -255,8 +255,20 @@ sub pipeline_analyses {
                                'species_tree_input_file' => $self->o('binary_species_tree'),
                               },
             -flow_into => {
-                           1 => [ 'set_gerp_neutral_rate' ],
+                           2 => [ 'hc_species_tree' ],
                           },
+        },
+
+        {   -logic_name => 'hc_species_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MSA::SqlHealthChecks',
+            -parameters => {
+                'mode'                      => 'species_tree',
+                'binary'                    => 0,
+                'n_missing_species_in_tree' => 0,
+            },
+            -flow_into  => {
+                1 => [ 'set_gerp_neutral_rate' ],
+            },
         },
 
         {   -logic_name => 'set_gerp_neutral_rate',
@@ -328,6 +340,7 @@ sub pipeline_analyses {
                 'where'         => 'hgenome_db_id IN (#reuse_ss_csv#)',
             },
             -hive_capacity => $self->o('reuse_capacity'),
+            -rc_name => '1Gb_24_hour_job',
         },
 
 # ---------------------------------------------[load the rest of members]------------------------------------------------------------
@@ -361,7 +374,7 @@ sub pipeline_analyses {
             -parameters => {'coding_exons' => 1,
 			    'min_length' => 20,
                 },
-	    -rc_name => '4Gb_job',
+            -rc_name => '4Gb_24_hour_job',
         },
 
 
@@ -432,7 +445,7 @@ sub pipeline_analyses {
             },
             -batch_size => 10,
             -hive_capacity => $self->o('blast_capacity'),
-	    -rc_name => '2Gb_job',
+            -rc_name => '2Gb_24_hour_job',
         },
 
 
@@ -452,7 +465,7 @@ sub pipeline_analyses {
 			      'input_dir'   => $self->o('input_dir'),
 			      'all_hits'    => $self->o('all_hits'),
 			    },
-	     -rc_name => '2Gb_job',
+	     -rc_name => '2Gb_24_hour_job',
              -analysis_capacity => 8,
          },
 
@@ -462,7 +475,7 @@ sub pipeline_analyses {
 			     'input_dir' => $self->o('input_dir'),
                              'mercator_exe' => $self->o('mercator_exe'),
 			    },
-	     -rc_name => '32Gb_job',
+	     -rc_name => '32Gb_168_hour_job',
              -flow_into => {
                  "2->A" => WHEN (
                     "(#total_residues_count# <= 3000000) || ( #dnafrag_count# <= 10 )"                          => "pecan",
@@ -472,9 +485,14 @@ sub pipeline_analyses {
                     "(#total_residues_count# > 60000000) && (#dnafrag_count# > 10)"      => "pecan_mem3",
                     ),
 
-                 "A->1" => [ "update_max_alignment_length" ],
+                 "A->1" => [ "alignment_funnel_check" ],
              },
          },
+
+        {   -logic_name => 'alignment_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ "update_max_alignment_length" ],
+        },
 
 # ---------------------------------------------[pecan]---------------------------------------------------------------------
 
@@ -499,7 +517,7 @@ sub pipeline_analyses {
 		-1 => [ 'pecan_mem1'],
 		-2 => [ 'pecan_mem1'], #RUNLIMIT
              },
-	    -rc_name => '2Gb_job',
+	    -rc_name => '2Gb_24_hour_job',
          },
 
          {   -logic_name => 'pecan_mem1',
@@ -517,7 +535,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 15,
-	     -rc_name => '8Gb_job',
+	     -rc_name => '8Gb_24_hour_job',
              -hive_capacity => $self->o('pecan_himem_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
@@ -540,7 +558,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 20,
-	     -rc_name => '16Gb_job',
+	     -rc_name => '16Gb_168_hour_job',
              -hive_capacity => $self->o('pecan_himem_capacity'),
              -flow_into => {
                  1 => [ 'gerp' ],
@@ -563,7 +581,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 40,
-	     -rc_name => '32Gb_job',
+	     -rc_name => '64Gb_720_hour_job',
              -flow_into => {
                  1 => [ 'gerp' ],
                  -1 => [ 'pecan_mem4'],
@@ -585,7 +603,7 @@ sub pipeline_analyses {
              },
              -max_retry_count => 1,
              -priority => 50,
-             -rc_name => '96Gb_job',
+             -rc_name => '96Gb_720_hour_job',
              -flow_into => {
                  1 => [ 'gerp' ],
              },
@@ -602,6 +620,7 @@ sub pipeline_analyses {
              -hive_capacity => $self->o('gerp_capacity'),
              -flow_into => {
 		 -1 => [ 'gerp_himem'], #retry with more memory
+                 -2 => [ 'gerp_himem'], #retry with more time
              },
 	     -rc_name => '1Gb_job',
          },
@@ -612,7 +631,7 @@ sub pipeline_analyses {
 		 'gerp_exe_dir'    => $self->o('gerp_exe_dir'),
              },
             -hive_capacity => $self->o('gerp_capacity'),
-	     -rc_name => '4Gb_job',
+	     -rc_name => '4Gb_24_hour_job',
          },
 
  	 {  -logic_name => 'update_max_alignment_length',

@@ -102,10 +102,22 @@ sub run {
 
 sub write_output {
 	my $self = shift;
-	$self->dataflow_output_id( { 
-		mlss_dump_dirs => $self->param('mlss_dump_dirs'),
-		archived_dumps => $self->param('archived_dumps'),
-	}, 1 );
+
+    while (my ($mlss_path, $mlss_id) = each %{$self->param('mlss_dump_dirs')}) {
+        $self->dataflow_output_id( {
+            mlss_path_type => 'directory',
+            mlss_path      => $mlss_path,
+            mlss_id        => $mlss_id,
+        }, 2 );
+    }
+
+    while (my ($mlss_path, $mlss_id) = each %{$self->param('archived_dumps')}) {
+        $self->dataflow_output_id( {
+            mlss_path_type => 'archive',
+            mlss_path      => $mlss_path,
+            mlss_id        => $mlss_id,
+        }, 2 );
+    }
 }
 
 sub _mlss_dirs {

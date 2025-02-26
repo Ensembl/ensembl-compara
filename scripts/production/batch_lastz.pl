@@ -40,7 +40,7 @@ my @intervals_in_mbp = (
 my $method_link = 'LASTZ_NET';
 my $index = 1;
 
-my ( $help, $reg_conf, $master_db, $release, $include_mlss_ids, $exclude_mlss_ids, $exclude_mlss_ids_file, $jira_off, $dry_run );
+my ( $help, $reg_conf, $master_db, $release, $include_mlss_ids, $exclude_mlss_ids, $exclude_mlss_ids_file, $jira_off, $dry_run, $csv, $jira_prod_key );
 my ( $verbose, $very_verbose );
 $jira_off = 0;
 $dry_run = 0;
@@ -57,11 +57,14 @@ GetOptions(
     'start_index=i'      => \$index,
     'jira_off|jira-off!' => \$jira_off,
     'dry_run|dry-run!'   => \$dry_run,
+    'csv=s'              => \$csv,
+    'jira_prod_key=s'    => \$jira_prod_key,
     'v|verbose!'         => \$verbose,
     'vv|very_verbose!'   => \$very_verbose,
 );
 
 die "WARNING: this script is not tailored for $method_link yet\n" if ($method_link ne 'LASTZ_NET');
+die "ERROR: Jira ticket creation must be switched off when creating a LastZ batch CSV file\n" if ($csv && !$jira_off);
 
 $release = $ENV{CURR_ENSEMBL_RELEASE} unless $release;
 die &helptext if ( $help || ($reg_conf && !$master_db) || !$master_db );
@@ -166,7 +169,18 @@ my $division = $dba->get_division();
 my $division_pkg_name = Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf->get_division_package_name($division);
 
 my ($jira_adaptor, %ticket_tmpl);
-unless ($jira_off) {
+if ($jira_off) {
+    if ($csv) {
+        $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(-DIVISION => $division, -RELEASE => $release, -CSV => $csv);
+        %ticket_tmpl = (
+            'name_on_graph' => 'LastZ',
+            'components'    => ['Pairwise pipeline', 'Production tasks']
+        );
+        if (defined $jira_prod_key) {
+            $ticket_tmpl{'parent'} = $jira_prod_key;
+        }
+    }
+} else {
     # Get a new Utils::JIRA object to create the tickets for the given division and
     # release
     $jira_adaptor = new Bio::EnsEMBL::Compara::Utils::JIRA(-DIVISION => $division, -RELEASE => $release);
@@ -188,10 +202,10 @@ unless ($jira_off) {
 # Generate the command line of each batch and build its corresponding ticket
 my ( @cmd_list, $ticket_list );
 foreach my $group ( @$mlss_groups ) {
-    my $this_mlss_list = '"[' . join(',', @{$group->{mlss_ids}}) . ']"';
-    my $cmd = "ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::${division_pkg_name}::Lastz_conf -mlss_id_list $this_mlss_list -pipeline_name ${division}_lastz_batch${index}_${release} -host mysql-ens-compara-prod-X -port XXXX";
+    my $this_mlss_list = sprintf("'[%s]'", join(',', @{$group->{mlss_ids}}));
+    my $cmd = qq/isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::${division_pkg_name}::Lastz_conf -mlss_id_list $this_mlss_list -pipeline_name ${division}_lastz_batch${index}_${release} -host mysql-ens-compara-prod-X -port XXXX/;
     push @cmd_list, $cmd;
-    unless ($jira_off) {
+    if (%ticket_tmpl) {
         # Copy the template and add the specific details for this group
         my $ticket = { %ticket_tmpl };
         $ticket->{'summary'} = "LastZ batch $index";
@@ -201,7 +215,16 @@ foreach my $group ( @$mlss_groups ) {
     $index++;
 }
 my $subtask_keys;
-unless ($jira_off) {
+if ($csv) {
+    # Output all JIRA tickets to CSV
+    $subtask_keys =  $jira_adaptor->create_ticket_csv(
+        -JSON_OBJ           => $ticket_list,
+        -DEFAULT_ISSUE_TYPE => 'Sub-task',
+        -DRY_RUN            => $dry_run,
+        -CSV_FILE           => $csv,
+        -PARENT_LINK        => $jira_prod_key,
+    );
+} elsif (!$jira_off) {
     # Create all JIRA tickets
     $subtask_keys = $jira_adaptor->create_tickets(
         -JSON_OBJ           => $ticket_list,
@@ -448,6 +471,9 @@ Options:
 	jira_off|jira-off : do not submit JIRA tickets to the JIRA server (default: tickets are submitted)
 	dry_run|dry-run   : in dry-run mode, the JIRA tickets will not be submitted to the JIRA
 	                    server (default: off)
+    -csv              : Instead of creating JIRA tickets, output to a CSV file to be imported to JIRA.
+    -jira_prod_key    : Jira production ticket key. If specified, LastZ batch
+                        tickets will be created as subtasks of this ticket.
 	v|verbose         : print out per-mlss job count estimates
 	vv|very_verbose   : print out per-analysis, per-mlss job count estimates
 

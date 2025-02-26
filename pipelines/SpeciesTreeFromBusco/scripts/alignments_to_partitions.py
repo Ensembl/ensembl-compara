@@ -22,6 +22,7 @@ Example:
 """
 
 import sys
+import os
 import argparse
 from collections import OrderedDict
 
@@ -69,6 +70,9 @@ if __name__ == '__main__':
     total_len = 0
     # For each alignment:
     for nr_part, aln_file in enumerate(aln_files):
+        # Check for empty alignments:
+        if os.stat(aln_file).st_size == 0:
+            continue
         # Read in aligned sequences:
         records = {x.id: x for x in SeqIO.parse(aln_file, "fasta")}
         # Get current lenght:

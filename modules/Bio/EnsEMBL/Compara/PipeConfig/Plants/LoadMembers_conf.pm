@@ -65,6 +65,9 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
+    # Genomes such as avena_sativa_ot3098 need a little more memory.
+    $analyses_by_name->{'check_reusability'}->{'-rc_name'} = '4Gb_job';
+
     # The metadata service reports human annotation updates almost every
     # release because of LRGs and assembly patches, which we don't care
     # about in this division.

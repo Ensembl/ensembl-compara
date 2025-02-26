@@ -24,7 +24,7 @@ import pytest
 from _pytest.config.argparsing import Parser
 from _pytest.runner import TestReport
 
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from ..filesys import DirCmp
 from .testdb import CITestDBItem
 from .testfiles import CITestFilesItem

@@ -121,7 +121,7 @@ sub run_pecan {
   my $alignment_file = "$tmp_dir/pecan.mfa";
   my $this_genomic_align_block = new Bio::EnsEMBL::Compara::GenomicAlignBlock;
 
-  sleep 30 unless -e $alignment_file; # give LSF time to die properly if MEMLIMIT is hit
+  sleep 30 unless -e $alignment_file; # give the job scheduler time to die properly if MEMLIMIT is hit
 
   unless (-e $alignment_file) {
       # Note that this error message will be caught by RunnableDB::MercatorPecan::Pecan

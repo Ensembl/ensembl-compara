@@ -62,6 +62,7 @@ sub default_options {
             'master_db'     => 'compara_master',
             'protein_db'    => 'compara_ptrees',
             'wheat_prot_db' => 'wheat_cultivars_ptrees',
+            'rice_prot_db'  => 'rice_cultivars_ptrees',
             'members_db'    => 'compara_members',
         },
 
@@ -86,8 +87,9 @@ sub default_options {
         # In these databases, ignore these tables
         'ignored_tables' => {
             # 'db_alias'     => Arrayref of table names
-            'protein_db'     => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
-            'wheat_prot_db'  => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
+            'protein_db'     => [qw(ortholog_quality datacheck_results)],
+            'wheat_prot_db'  => [qw(ortholog_quality datacheck_results)],
+            'rice_prot_db'   => [qw(ortholog_quality datacheck_results)],
         },
     };
 }

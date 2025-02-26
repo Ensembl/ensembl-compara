@@ -38,7 +38,6 @@ use warnings;
 use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
-use Data::Dumper;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DeleteOneTree');
 
@@ -47,7 +46,6 @@ sub fetch_input {
     my $tree = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($self->param_required('gene_tree_id'));
     $self->param('gene_tree', $tree);
     $self->_extract_tree_data;
-    $self->_find_overlapping_species;
 }
 
 sub run {
@@ -77,30 +75,11 @@ sub _extract_tree_data {
     $self->param( 'gene_tree_leaves', $gene_tree_leaves );
 }
 
-sub _find_overlapping_species {
-    my $self = shift;
-
-    my $master_dba = $self->get_cached_compara_dba('master_db');
-    my $ref_collection_name = $self->param_required('ref_collection');
-    my $ref_collection = $master_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($ref_collection_name);
-    die "Cannot find collection '$ref_collection_name' in master_db" unless $ref_collection;
-    my @ref_genome_ids = map { $_->dbID } @{ $ref_collection->genome_dbs };
-
-    my $this_gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
-    my @these_genome_ids = map { $_->dbID } @{ $this_gdb_adaptor->fetch_all };
-
-    my @overlapping_species;
-    foreach my $ref_gdb_id ( @ref_genome_ids ) {
-        push @overlapping_species, $ref_gdb_id if grep { $ref_gdb_id == $_ } @these_genome_ids;
-    }
-    $self->param('overlapping_species', \@overlapping_species);
-}
-
 sub _get_non_overlapping_species_count {
     my $self = shift;
     
     my %genomes_in_cluster = %{$self->param('genomes_list')};
-    my @overlapping_species = @{$self->param('overlapping_species')};
+    my @overlapping_species = @{$self->param_required('overlapping_genomes')};
     
     foreach my $overlap_species_id ( @overlapping_species ) {
         $genomes_in_cluster{$overlap_species_id} = 0;

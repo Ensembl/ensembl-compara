@@ -194,6 +194,14 @@ sub genome_db {
   if (defined($genome_db)) {
     throw("[$genome_db] must bu a Bio::EnsEMBL::Compara::GenomeDB object")
       unless ($genome_db and ref($genome_db) and $genome_db->isa("Bio::EnsEMBL::Compara::GenomeDB"));
+
+    $self->{distinct_Slice_name} = ucfirst($genome_db->get_distinct_name) || "FakeAlignSlice";
+
+    if(defined($genome_db->genome_component)) {
+      $self->{_genome_component} = $genome_db->genome_component;
+      $genome_db = $genome_db->principal_genome_db;
+    }
+
     $self->{genome_db} = $genome_db;
   }
 
@@ -218,6 +226,22 @@ sub display_Slice_name {
   }
 
   return ucfirst $self->{display_Slice_name};
+}
+
+
+=head2 distinct_Slice_name
+
+  Arg[1]     : string $name
+  Example    : $slice->distinct_Slice_name("triticum_aestivum_A");
+  Description: getter for the attribute distinct_Slice_name
+  Returntype : string
+
+=cut
+
+sub distinct_Slice_name {
+  my ($self) = @_;
+
+  return $self->{distinct_Slice_name};
 }
 
 
@@ -1235,6 +1259,25 @@ sub _sort_Exons {
 #
 # WARNING - WARNING - WARNING - WARNING - WARNING - WARNING - WARNING
 #
+
+=head2 get_genome_component
+
+  Arg []     : none
+  Example    : my $genome_component = $slice->get_genome_component();
+  Description: Returns the name of the genome component of the slice
+  Returntype : string containing the name of the genome component of the slice,
+               or undef if the slice is not on a polyploid genome component
+  Exceptions : none
+  Caller     : general
+  Status     : Experimental
+
+=cut
+
+sub get_genome_component {
+    my $self = shift;
+    return $self->{_genome_component};
+}
+
 
 =head2 invert (not supported)
 

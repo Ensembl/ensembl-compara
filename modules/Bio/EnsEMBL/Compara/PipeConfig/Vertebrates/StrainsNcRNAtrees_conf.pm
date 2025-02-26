@@ -49,6 +49,9 @@ sub default_options {
             # collection in master that will have overlapping data
             'ref_collection'   => 'default',
 
+            # misc parameters
+            'model_name_blocklist' => [],
+
             # CAFE parameters
             'do_cafe'  => 0,
 
@@ -70,6 +73,14 @@ sub core_pipeline_analyses {
     return [
         @{$self->SUPER::core_pipeline_analyses},
 
+        {   -logic_name => 'find_overlapping_genomes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes',
+            -parameters => {
+                'collection' => $self->o('collection'),
+            },
+            -flow_into  => [ 'check_strains_cluster_factory' ],
+        },
+
         {   -logic_name => 'check_strains_cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -77,7 +88,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => [ 'cleanup_strains_clusters' ],
-                'A->1' => [ 'cluster_qc_factory' ],
+                'A->1' => [ 'cluster_cleanup_funnel_check' ],
             },
             -rc_name    => '1Gb_job',
         },
@@ -85,6 +96,10 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
         },
 
+        {   -logic_name => 'cluster_cleanup_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'cluster_qc_factory' ],
+        },
 
         {
              -logic_name => 'remove_overlapping_homologies',
@@ -103,13 +118,12 @@ sub tweak_analyses {
     $analyses_by_name->{'orthotree_himem'}->{'-rc_name'} = '2Gb_job';
 
     # wire up strain-specific analyses
-    $analyses_by_name->{'expand_clusters_with_projections'}->{'-flow_into'} = 'check_strains_cluster_factory';
-    push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';
+    $analyses_by_name->{'expand_clusters_with_projections'}->{'-flow_into'} = 'find_overlapping_genomes';
+    push @{$analyses_by_name->{'fire_final_analyses'}->{'-flow_into'}}, 'remove_overlapping_homologies';
 
     # datacheck specific tweaks for pipelines
     $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
     $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
-    $analyses_by_name->{'datacheck_factory'}->{'-wait_for'} = 'remove_overlapping_homologies';
 }
 
 

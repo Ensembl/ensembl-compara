@@ -38,13 +38,14 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpAllForRelease_conf;
 use strict;
 use warnings;
 
+use File::Basename qw(dirname);
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpMultiAlign;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpSpeciesTrees;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpAncestralAlleles;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements;
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConservationScores;
-use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # for conditional dataflow
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf; # for conditional dataflow and INPUT_PLUS
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
@@ -57,26 +58,27 @@ sub default_options {
         # Review these options prior to running each release #
         ######################################################
 
-        # Where to put the new dumps and the symlinks
+        # Where to put the new dumps and associated files
         'dump_root'    => $self->o('pipeline_dir'),
         'work_dir'     => $self->o('dump_root') . '/dump_hash/',
-        # Location of the previous dumps
-        'ftp_root'     => '/nfs/production/flicek/ensembl/production/ensemblftp/',
+        'dataflow_dir' => $self->o('work_dir') . '/dataflows/',
 
-        'prev_rel_ftp_root' => $self->o('ftp_root') . '/release-' . $self->o('prev_release'),
+        # Dump registry options
+        'reg_conf'            => $self->o('work_dir') . '/' . 'dump_reg_conf.pm',
+        'compara_dump_host'   => undef,
+        'ancestral_dump_host' => undef,
+        'core_dump_hosts'     => undef,
+
+        # Dump location parameters
+        'prev_rel_ftp_root' => undef,  # current location of the previous dumps (required)
+        'curr_ftp_pub_root' => undef,  # final location of dumps for current release (required)
+        'prev_ftp_pub_root' => undef,  # final location of dumps for previous release (required)
 
         'compara_db'   => 'compara_curr', # can be URL or reg alias
         'ancestral_db' => undef,
 
         'no_remove_existing_files' => undef, # on by default
         'clean_intermediate_files' => 0, # off by default
-
-        # were there lastz patches this release? pass hive pipeline urls if yes, pass undef if no
-        #  'lastz_patch_dbs' => [
-        #  	'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_lastz_human_patches_92',
-		#   'mysql://ensro@mysql-ens-compara-prod-3:4523/carlac_lastz_mouse_patches_92',
-        #  ],
-        'lastz_patch_dbs' => undef,
 
         ######################################################
         ######################################################
@@ -86,16 +88,14 @@ sub default_options {
         # the following options should remain largely unchanged #
         # ----------------------------------------------------- #
         # capacities for heavy-hitting jobs
-        'dump_aln_capacity'   => 400,
+        'dump_aln_capacity'   => 150,
 		'dump_trees_capacity' => 10,
 		'dump_ce_capacity'    => 10,
     	'dump_cs_capacity'    => 20,
-        'dump_hom_capacity'   => 10,
         'dump_per_genome_cap' => 10,
 
 
     	# general settings
-		'lastz_dump_path' => 'maf/ensembl-compara/pairwise_alignments', # where, from the FTP root, is the LASTZ dumps?
         'reuse_prev_rel'  => 1, # copy symlinks from previous release dumps
         #'updated_mlss_ids' => [1142,1143,1134,1141], #the list of mlss_ids that we have re_ran/updated and cannot be detected through first_release
         'updated_mlss_ids' => [],
@@ -167,17 +167,50 @@ sub hive_meta_table {
     }
 }
 
+sub pipeline_checks_pre_init {
+    my ($self) = @_;
+
+    die "Pipeline parameter 'dump_dir' is undefined, but must be specified" unless $self->o('dump_dir');
+    die "Pipeline parameter 'prev_rel_ftp_root' is undefined, but must be specified" unless $self->o('prev_rel_ftp_root');
+    die "Pipeline parameter 'curr_ftp_pub_root' is undefined, but must be specified" unless $self->o('curr_ftp_pub_root');
+    die "Pipeline parameter 'prev_ftp_pub_root' is undefined, but must be specified" unless $self->o('prev_ftp_pub_root');
+}
+
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},
+    };
+}
+
 sub pipeline_create_commands {
     my $self = shift;
+
+    $self->{'_skip_reg_conf_file_check'} = 1;
 
     return [
         @{ $self->SUPER::pipeline_create_commands },
 
-        $self->pipeline_create_commands_rm_mkdir(['dump_root', 'work_dir', 'dump_dir'], undef, $self->o('no_remove_existing_files')),
+        $self->pipeline_create_commands_rm_mkdir(['dataflow_dir', 'dump_dir', 'dump_root', 'work_dir'], undef, $self->o('no_remove_existing_files')),
+        $self->pipeline_create_commands_reg_conf_stub(),
 
         $self->db_cmd( 'CREATE TABLE other_gab (genomic_align_block_id bigint NOT NULL, PRIMARY KEY (genomic_align_block_id) )' ),
         $self->db_cmd( 'CREATE TABLE healthcheck (filename VARCHAR(400) NOT NULL, expected INT NOT NULL, dumped INT NOT NULL)' ),
     ];
+}
+
+sub pipeline_create_commands_reg_conf_stub {
+    my ($self) = @_;
+
+    my $reg_conf_file = $self->o('reg_conf');
+    my $reg_conf_dir = dirname($reg_conf_file);
+
+    my @cmd_args = (
+        "mkdir -p $reg_conf_dir",
+        "echo '1;' > $reg_conf_file",  # Even a registry stub must return a true value.
+    );
+
+    return @cmd_args;
 }
 
 sub pipeline_wide_parameters {
@@ -185,24 +218,25 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
-        'registry'        => '#reg_conf#',
         'dump_root'       => $self->o('dump_root' ),
         'dump_dir'        => $self->o('dump_dir'),
         'work_dir'        => $self->o('work_dir'),
-        'ftp_root'        => $self->o('ftp_root'),
+        'dataflow_dir'    => $self->o('dataflow_dir'),
         'division'        => $self->o('division'),
         'genome_dumps_dir'=> $self->o('genome_dumps_dir'),
         'warehouse_dir'   => $self->o('warehouse_dir'),
         'uniprot_file'    => $self->o('uniprot_file'),
         'prev_rel_ftp_root' => $self->o('prev_rel_ftp_root'),
+        'curr_ftp_pub_root' => $self->o('curr_ftp_pub_root'),
+        'prev_ftp_pub_root' => $self->o('prev_ftp_pub_root'),
 
         # tree params
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
-        'dump_hom_capacity'   => $self->o('dump_hom_capacity'),
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
         'basename'            => '#member_type#_#clusterset_id#',
         'name_root'           => 'Compara.#curr_release#.#basename#',
-        'hash_dir'            => '#work_dir#/#basename#',
+        'mlss_hash_dir'       => '#work_dir#/#basename#/mlsses',
+        'tree_hash_dir'       => '#work_dir#/#basename#/trees',
         'target_dir'          => '#dump_dir#',
         'xml_dir'             => '#target_dir#/xml/ensembl-compara/homologies/',
         'emf_dir'             => '#target_dir#/emf/ensembl-compara/homologies/',
@@ -236,7 +270,7 @@ sub pipeline_wide_parameters {
         # species trees
         'dump_species_tree_exe'  => $self->o('dump_species_tree_exe'),
 
-        # dump alignments + aln patches
+        # dump alignments
         'dump_aln_capacity'   => $self->o('dump_aln_capacity'),
         'split_size'          => $self->o('split_size'),
         'masked_seq'          => $self->o('masked_seq'),
@@ -248,6 +282,10 @@ sub pipeline_wide_parameters {
         'output_file_gen'     => '#output_dir#/#base_filename#.#region_name#.#format#',
         'output_file'         => '#output_dir#/#base_filename#.#region_name##filename_suffix#.#format#',
 
+        'compara_dump_host'   => $self->o('compara_dump_host'),
+        'ancestral_dump_host' => $self->o('ancestral_dump_host'),
+        'core_dump_hosts'     => $self->o('core_dump_hosts'),
+
         'clean_intermediate_files' => $self->o('clean_intermediate_files'),
     }
 }
@@ -257,29 +295,38 @@ sub core_pipeline_analyses {
     my ($self) = @_;
 
     my @all_pa = (
-        {   -logic_name => 'create_all_dump_jobs',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CreateDumpJobs',
+        {   -logic_name => 'init_dump_registry',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::InitDumpRegistry',
             -input_ids  => [ {
                     'compara_db'           => $self->o('compara_db'),
                     'curr_release'         => $self->o('ensembl_release'),
                     'reuse_prev_rel'       => $self->o('reuse_prev_rel'),
                     'reg_conf'             => $self->o('reg_conf'),
                     'updated_mlss_ids'     => $self->o('updated_mlss_ids'),
-                    'lastz_patch_dbs'      => $self->o('lastz_patch_dbs'),
                     'alignment_dump_options' => $self->o('alignment_dump_options'),
                     'default_dump_options' => $self->o('default_dump_options'),
                     'ancestral_db'         => $self->o('ancestral_db'),
                 } ],
+            -parameters => {
+                'init_dump_registry_exe' => $self->o('init_dump_registry_exe'),
+            },
             -flow_into  => {
-                '9->A' => [ 'DumpMultiAlign_start'          ],
-                '2->A' => [ 'DumpTrees_start','add_hmm_lib' ],
-                '3->A' => [ 'DumpConstrainedElements_start' ],
-                '4->A' => [ 'DumpConservationScores_start'  ],
-                '5->A' => [ 'DumpSpeciesTrees_start'        ],
-                '6->A' => [ 'DumpAncestralAlleles_start'    ],
-                '7->A' => [ 'DumpMultiAlignPatches_start'   ],
-                '8->A' => [ 'create_ftp_skeleton'           ],
-                'A->1' => { 'clean_files_decision' => { 'clean_intermediate_files' => $self->o('clean_intermediate_files') } },
+                '1->A' => [ 'create_all_dump_jobs' ],
+                'A->1' => [ 'final_funnel_check'   ],
+            },
+            -rc_name    => '1Gb_job',
+        },
+
+        {   -logic_name => 'create_all_dump_jobs',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CreateDumpJobs',
+            -flow_into  => {
+                9 => [ 'DumpMultiAlign_start'          ],
+                2 => [ 'DumpTrees_start','add_hmm_lib' ],
+                3 => [ 'DumpConstrainedElements_start' ],
+                4 => [ 'DumpConservationScores_start'  ],
+                5 => [ 'DumpSpeciesTrees_start'        ],
+                6 => [ 'DumpAncestralAlleles_start'    ],
+                8 => [ 'create_ftp_skeleton'           ],
             },
             -rc_name    => '1Gb_job',
         },
@@ -291,33 +338,32 @@ sub core_pipeline_analyses {
         {	-logic_name => 'DumpMultiAlign_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into  => [ 'DumpMultiAlign_MLSSJobFactory' ],
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpTrees_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into => [ 'dump_trees_pipeline_start' ],
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpConstrainedElements_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into  => [ 'mkdir_constrained_elems' ],
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpConservationScores_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into => [ 'mkdir_conservation_scores' ],
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpSpeciesTrees_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into  => ['mk_species_trees_dump_dir' ],
+            -rc_name    => '1Gb_job',
         },
         {	-logic_name => 'DumpAncestralAlleles_start',
         	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         	-flow_into  => [ 'mk_ancestral_dump_dir' ],
-        },
-        {	-logic_name => 'DumpMultiAlignPatches_start',
-        	-module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-        	-flow_into  => {
-        		'1->A' => [ 'DumpMultiAlign_MLSSJobFactory' ],
-                        'A->1' => [ 'patch_lastz_dump' ],
-        	},
+            -rc_name    => '1Gb_job',
         },
 
        #------------------------------------------------------------------#
@@ -325,45 +371,110 @@ sub core_pipeline_analyses {
 
         {	-logic_name => 'create_ftp_skeleton',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FTPSkeleton',
-        	-flow_into => [ 'symlink_prev_dumps' ],
-        },
-
-        {	-logic_name => 'symlink_prev_dumps',
-        	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::SymlinkPreviousDumps',
-                -flow_into => { 2 => 'create_all_dump_jobs' }, # to top up any missing dumps
-        },
-
-        {   -logic_name => 'patch_lastz_dump',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump',
-            -parameters => {
-            	'lastz_dump_path' => $self->o('lastz_dump_path'),
+            -rc_name    => '1Gb_job',
+            -flow_into => {
+                '2->A' => [ 'symlink_prev_dumps' ],
+                'A->1' => [ 'symlink_funnel_check' ],
             },
+        },
+
+        {   -logic_name => 'symlink_prev_dumps',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_datamover_job',
+            -parameters => {
+                'cmd'                   => join(' ', (
+                    '#symlink_prev_dump_exe#',
+                    '--curr_ftp_dump_root',
+                    '#dump_dir#',
+                    '--prev_ftp_dump_root',
+                    '#prev_rel_ftp_root#',
+                    '--curr_ftp_pub_root',
+                    '#curr_ftp_pub_root#',
+                    '--prev_ftp_pub_root',
+                    '#prev_ftp_pub_root#',
+                    '--mlss_path_type',
+                    '#mlss_path_type#',
+                    '--mlss_path',
+                    '#mlss_path#',
+                    '--mlss_id',
+                    '#mlss_id#',
+                    '--dataflow_file',
+                    '#dataflow_file#',
+                )),
+                'dataflow_file'         => '#dataflow_dir#/symlink_prev_dumps/#hashed_mlss_id#/#mlss_id#.dataflow.json',
+                'hashed_mlss_id'        => '#expr(dir_revhash(#mlss_id#))expr#',
+                'symlink_prev_dump_exe' => $self->o('symlink_prev_dump_exe'),
+            },
+            -flow_into => {
+                2 => [ '?accu_name=missing_mlss_id&accu_address=[]&accu_input_variable=missing_mlss_id' ],
+            },
+        },
+
+        {   -logic_name => 'symlink_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'flow_any_missing_mlsses' => INPUT_PLUS() } ],
+        },
+
+        {   -logic_name => 'flow_any_missing_mlsses',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FlowAnyMissingMLSSes',
+            -rc_name    => '1Gb_job',
+            -flow_into  => { 2 => 'create_all_dump_jobs' },
         },
 
         {   -logic_name => 'add_hmm_lib',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_24_hour_job',
             -parameters => {
+                'add_hmm_lib_exe' => $self->o('add_hmm_lib_exe'),
+                'cmd'             => join(' ', (
+                    '#add_hmm_lib_exe#',
+                    '--curr_ftp_dump_root',
+                    '#dump_dir#',
+                    '--prev_ftp_dump_root',
+                    '#prev_rel_ftp_root#',
+                    '--curr_ftp_pub_root',
+                    '#curr_ftp_pub_root#',
+                    '--prev_ftp_pub_root',
+                    '#prev_ftp_pub_root#',
+                    '--hmm_library_basedir',
+                    '#hmm_library_basedir#',
+                    '--ref_tar_path_templ',
+                    '#ref_tar_path_templ#',
+                    '--tar_dir_path',
+                    '#tar_dir_path#',
+                )),
                 'ref_tar_path_templ' => '#warehouse_dir#/hmms/treefam/multi_division_hmm_lib.%s.tar.gz',
-                'tar_ftp_path'       => '#dump_dir#/compara/multi_division_hmm_lib.tar.gz',
+                'tar_dir_path'       => 'compara',
             },
+        },
+
+        {   -logic_name => 'final_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'final_registry_backup' => INPUT_PLUS() } ],
+        },
+
+        {   -logic_name => 'final_registry_backup',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LogRegistry',
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'clean_files_decision' => { 'clean_intermediate_files' => $self->o('clean_intermediate_files') } } ],
         },
 
         {   -logic_name => 'clean_files_decision',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -rc_name    => '1Gb_job',
             -flow_into  => {
-                1 => WHEN('#clean_intermediate_files#' => [ 'clean_dump_hash' ])
+                1 => WHEN('#clean_intermediate_files#' => [ 'start_file_cleanup' ])
             },
         },
 
-        {   -logic_name     => 'clean_dump_hash',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd' => 'rm -rf #work_dir#',
-            },
+        {   -logic_name => 'start_file_cleanup',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into =>  {
                 1 => WHEN(
                     '#division# eq "vertebrates"' => 'move_uniprot_file',
-                    ELSE 'remove_uniprot_file'
+                    ELSE 'clean_dump_hash'
                 ),
             },
         },
@@ -381,13 +492,14 @@ sub core_pipeline_analyses {
                 ))
             },
             -rc_name       => '1Gb_datamover_job',
+            -flow_into  => [ 'clean_dump_hash' ],
         },
 
-        {   -logic_name     => 'remove_uniprot_file',
+        {   -logic_name     => 'clean_dump_hash',
             -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name        => '1Gb_registryless_job',
             -parameters     => {
-                'clusterset_id' => 'default',
-                'cmd'           => 'rm #dump_root#/#division#.#uniprot_file#.gz',
+                'cmd' => 'rm -rf #work_dir#',
             },
         },
 
@@ -402,7 +514,7 @@ sub core_pipeline_analyses {
 
 	# add DumpTree analyses seperately in order to set the collection_factory parameters
     my $tree_pa = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees::pipeline_analyses_dump_trees($self);
-    $tree_pa->[1]->{'-parameters'} = {
+    $tree_pa->[2]->{'-parameters'} = {
         'inputquery'    => 'SELECT clusterset_id, member_type FROM gene_tree_root WHERE tree_type = "tree" AND ref_root_id IS NULL GROUP BY clusterset_id, member_type',
         'db_conn'       => '#rel_db#',
     };
@@ -414,7 +526,9 @@ sub tweak_analyses {
     my $self = shift;
     my $analyses_by_name = shift;
 
-    $analyses_by_name->{'dump_per_genome_homologies_tsv'}->{'-parameters'}{'healthcheck'} = 'unexpected_nulls';
+    $analyses_by_name->{'start_uniprot_dump'}{'-flow_into'} = [
+        WHEN('#division# eq "vertebrates" && #clusterset_id# eq "default" && #member_type# eq "protein"' => 'dump_for_uniprot'),
+    ],
 }
 
 1;

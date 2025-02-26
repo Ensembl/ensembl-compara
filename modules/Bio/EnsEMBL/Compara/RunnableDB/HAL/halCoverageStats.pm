@@ -26,10 +26,9 @@ Bio::EnsEMBL::Compara::RunnableDB::HAL::halCoverageStats
 
 =head1 DESCRIPTION
 
-This Runnable takes 3 inputs a genome_db_id, the hal_species_name, the hal alignment file. it uses the HalXs code to calculate the pairwise coverage of the given species in the given hal alignment file 
+This Runnable calculates the pairwise coverage of the given species in the given hal alignment file.
 
-The coverages are stored in an accu neme
-
+The coverage stats for each HAL genome are stored in the corresponding node of the species tree.
 
 =cut
 
@@ -37,7 +36,9 @@ package Bio::EnsEMBL::Compara::RunnableDB::HAL::halCoverageStats;
 
 use strict;
 use warnings;
-use Data::Dumper;
+
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub param_defaults {
@@ -54,9 +55,6 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift;
-    print Dumper($self->param('species_name_mapping'));
-    my %species_map = %{ eval $self->param('species_name_mapping') };
-#    my %species_map = %{$self->param('species_name_mapping')};
     unless ( $self->param('halStats_exe')) {
     	die "Please provide the path to hal stat executable";
     }
@@ -68,6 +66,8 @@ sub fetch_input {
     unless ($hal_path) {
     	die "the path to the hal file is missing \n";
     }
+
+    my %species_map = %{destringify($mlss->get_value_for_tag('HAL_mapping', '{}'))};
 
     my $species_tree = $mlss->species_tree();
     my $species_tree_root = $species_tree->root();

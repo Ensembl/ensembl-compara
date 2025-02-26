@@ -148,7 +148,7 @@ sub pipeline_analyses_hom_stats {
             -parameters => {
                 'member_type' => $self->o('member_type'),
             },
-            -rc_name => '4Gb_job',
+            -rc_name => '4Gb_24_hour_job',
         },
 
     ];

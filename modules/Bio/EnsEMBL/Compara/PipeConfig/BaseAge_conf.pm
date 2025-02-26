@@ -126,7 +126,7 @@ sub pipeline_analyses {
                               },
                -flow_into => {
                               '2->A' => { 'base_age' => { 'seq_region' => '#name#', }, },
-                              'A->1' => [ 'big_bed' ],
+                              'A->1' => [ 'base_age_funnel_check' ],
                              },
             },
             
@@ -143,7 +143,7 @@ sub pipeline_analyses {
                              },
               -batch_size => 1,
               -hive_capacity => $self->o('base_age_capacity'),
-              -rc_name => '4Gb_job',
+              -rc_name => '4Gb_24_hour_job',
               -flow_into => {
                   2 => { 'sort_bed' => INPUT_PLUS(), },
               },
@@ -161,6 +161,11 @@ sub pipeline_analyses {
                 },
             },
 
+            {   -logic_name => 'base_age_funnel_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => { 1 => { 'big_bed' => INPUT_PLUS() } },
+            },
+
              { -logic_name => 'big_bed',
                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BigBed',
                -parameters => {
@@ -171,7 +176,7 @@ sub pipeline_analyses {
                                'chr_sizes_file' => $self->o('chr_sizes_file'),
                                'chr_sizes' => '#bed_dir#/#chr_sizes_file#',
                               },
-               -rc_name => '16Gb_job',
+               -rc_name => '16Gb_24_hour_job',
              },
 
      ];

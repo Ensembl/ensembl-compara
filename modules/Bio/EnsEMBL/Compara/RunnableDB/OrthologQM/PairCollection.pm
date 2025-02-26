@@ -98,6 +98,8 @@ sub fetch_input {
 	my $ss; 
 	if ( $species_set_name ){
 		my @ss_list = @{ $ss_adaptor->fetch_all_by_name( $species_set_name ) };
+        my $unprefixed_ss_name = $species_set_name =~ s/^collection-//r;
+        push(@ss_list, @{ $ss_adaptor->fetch_all_by_name( $unprefixed_ss_name ) }) if ($unprefixed_ss_name ne $species_set_name);
 		if ( scalar( @ss_list ) > 1 ){
 			my @id_list = map { $_->dbID } @ss_list;
 			die "More than one species set exists for '$species_set_name':\n" . join("\n", @id_list) . "\nPlease specify the ID of the set of interest (species_set_id)\n";

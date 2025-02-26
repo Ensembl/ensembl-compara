@@ -28,12 +28,12 @@ from typing import ContextManager, List
 import pytest
 from pytest import raises
 
-from ensembl.database import UnitTestDB
+from ensembl.utils.database import UnitTestDB
 
 
-@pytest.mark.parametrize("db", [{"src": "ncbi_db"}], indirect=True)
+@pytest.mark.parametrize("test_dbs", [[{"src": "ncbi_db"}]], indirect=True)
 class TestGetNearestTaxonomy:
-    """Tests `get+get_nearest_taxonomy.py` script.
+    """Tests `get_nearest_taxonomy.py` script.
 
     Attributes:
         dbc (DBConnection): Database connection to the unit test database.
@@ -44,13 +44,13 @@ class TestGetNearestTaxonomy:
     dbc: UnitTestDB = None
 
     @pytest.fixture(scope="class", autouse=True)
-    def setup(self, db: UnitTestDB) -> None:
+    def setup(self, test_dbs: dict[str, UnitTestDB]) -> None:
         """Loads the required fixtures and values as class attributes.
 
         Args:
-            db: Generator of unit test database (fixture).
+            test_dbs: Unit test databases (fixture).
         """
-        type(self).dbc = db.dbc
+        type(self).dbc = test_dbs["ncbi_db"].dbc
         # pylint: disable=no-member
         type(self).script = (  # type: ignore
             Path(__file__).parents[3]

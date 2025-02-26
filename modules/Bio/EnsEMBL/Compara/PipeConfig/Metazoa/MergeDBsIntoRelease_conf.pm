@@ -54,6 +54,8 @@ sub default_options {
             'master_db'                 => 'compara_master',
             'default_protein_db'        => 'compara_ptrees',
             'protostomes_protein_db'    => 'protostomes_ptrees',
+            'insects_protein_db'        => 'insects_ptrees',
+            'drosophila_protein_db'     => 'drosophila_ptrees',
             'members_db'                => 'compara_members',
         },
 
@@ -77,9 +79,20 @@ sub default_options {
         'ignored_tables' => {
             # Mapping 'db_alias' => Arrayref of table names
             'members_db'                => [qw(hmm_annot)],
-            'default_protein_db'        => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
-            'protostomes_protein_db'    => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
-        }
+            'default_protein_db'        => [qw(ortholog_quality datacheck_results)],
+            'protostomes_protein_db'    => [qw(ortholog_quality datacheck_results)],
+            'insects_protein_db'        => [qw(ortholog_quality datacheck_results)],
+            'drosophila_protein_db'     => [qw(ortholog_quality datacheck_results)],
+        },
+
+        'per_mlss_merge_tables' => [
+            'hmm_annot',
+            'homology',
+            'homology_member',
+            'method_link_species_set_attr',
+            'method_link_species_set_tag',
+            'peptide_align_feature',
+        ],
     }
 }
 1;

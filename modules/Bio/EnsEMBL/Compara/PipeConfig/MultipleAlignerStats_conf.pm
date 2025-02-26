@@ -77,6 +77,8 @@ sub default_options {
         'dump_dir'      => $self->o('pipeline_dir'),
         'bed_dir'       => $self->o('dump_dir').'bed_dir',
         'output_dir'    => $self->o('dump_dir').'feature_dumps',
+
+        'msa_stats_shared_dir' => undef,
     };
 }
 
@@ -87,6 +89,7 @@ sub pipeline_create_commands {
     return [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
         $self->pipeline_create_commands_rm_mkdir(['output_dir', 'bed_dir']),
+        $self->pipeline_create_commands_rm_mkdir(['msa_stats_shared_dir'], undef, 'do not rm'),
     ];
 }
 
@@ -103,6 +106,8 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},       # here we inherit anything from the base class
         'compara_db'    => $self->o('compara_db'),
+
+        'msa_stats_shared_dir'=> $self->o('msa_stats_shared_dir'),
     }
 }
 

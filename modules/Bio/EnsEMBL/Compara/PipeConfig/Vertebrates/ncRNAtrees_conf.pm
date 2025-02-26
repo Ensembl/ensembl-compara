@@ -59,6 +59,7 @@ sub default_options {
 
             # misc parameters
             'binary_species_tree_input_file' => $self->o('binary_species_tree'), # you can define your own species_tree for 'CAFE'. It *has* to be binary
+            'model_name_blocklist' => ['tRNA'],
 
             # CAFE parameters
             'do_cafe'  => 1,

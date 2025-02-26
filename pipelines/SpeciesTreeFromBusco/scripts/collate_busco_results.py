@@ -108,6 +108,8 @@ if __name__ == '__main__':
 
     # Dump per-gene cDNAs:
     for g, s in per_gene.items():
+        # Filter out sequences with lengths not divisible by 3:
+        s = [x for x in s if len(x.seq) % 3 == 0]
         # Filter out gene if we don't have enough taxa:
         if len(s) / len(taxa) < args.m:
             continue
@@ -119,11 +121,20 @@ if __name__ == '__main__':
             if (len(x.seq) % 3) != 0:
                 continue
             y = x.translate(stop_symbol='*', to_stop=False, cds=False)   # type: ignore
+            # Filter out if cDNA had too many Ns:
             if str(y.seq).count("X") > 10:
+                continue
+            # Filter out sequences with multiple stop
+            # codons:
+            if y.seq.count("*") > 1:
                 continue
             y.id = x.id     # type: ignore
             y.description = ""
             ts.append(y)
 
+        if len(ts) < 3:
+            continue
+        if len(ts) / len(taxa) < args.m:
+            continue
         with open(path.join(args.o, f"gene_prot_{g}.fas"), "w") as output_handle:
             SeqIO.write(ts, output_handle, "fasta")

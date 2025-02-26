@@ -53,7 +53,7 @@ sub pipeline_analyses_GeneSetQC {
         #    -parameters =>  {'compara_db'   => $self->o('compara_db')},
             -flow_into  =>  {
                 '2->A'       => ['get_split_genes'],
-                'A->2'   =>  ['store_tags'],
+                'A->2'       => ['store_tags'],
             },
             -hive_capacity  => $self->o('genesetQC_capacity'),
             -rc_name => '2Gb_job',

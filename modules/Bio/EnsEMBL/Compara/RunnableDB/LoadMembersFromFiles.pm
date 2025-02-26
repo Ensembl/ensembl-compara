@@ -56,6 +56,7 @@ use warnings;
 use Bio::EnsEMBL::Compara::DnaFrag;
 use Bio::EnsEMBL::Compara::SeqMember;
 use Bio::EnsEMBL::Compara::GeneMember;
+use Bio::EnsEMBL::Compara::GenomeMF;
 
 use Data::Dumper;
 
@@ -65,6 +66,8 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults()},
+        'allow_ambiguity_codes' => 0,
+        'mask_invalid_cds_seq' => 0,
         'need_cds_seq'  => 0,
     }
 }
@@ -73,8 +76,19 @@ sub fetch_input {
 	my $self = shift @_;
 
 	# Loads the genome
-      $self->param('genome_db', $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id')));
-      $self->param('genome_content', $self->param('genome_db')->db_adaptor);
+    my $genome_db = $self->compara_dba->get_GenomeDBAdaptor->fetch_by_dbID($self->param('genome_db_id'));
+    $self->param('genome_db', $genome_db);
+    my $genome_content;
+
+    if ( my $locator = $self->param('locator') =~ /GenomeMF/ ) {
+        my ( $adap, $file ) = split /[=;]/, $genome_db->locator;
+        $genome_content = Bio::EnsEMBL::Compara::GenomeMF->new( -filename => $file, -index => $self->param('genome_db_id') );
+    }
+    else {
+        $genome_content = $genome_db->db_adaptor;
+    }
+
+    $self->param('genome_content', $genome_content);
 
 }
 
@@ -87,6 +101,12 @@ sub write_output {
       my $sequence_adaptor = $compara_dba->get_SequenceAdaptor();
       my $gene_member_adaptor = $compara_dba->get_GeneMemberAdaptor();
       my $seq_member_adaptor = $compara_dba->get_SeqMemberAdaptor();
+      my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
+
+      my $valid_cds_symbols;
+      if ($self->param('mask_invalid_cds_seq')) {
+        $valid_cds_symbols = $self->param('allow_ambiguity_codes') ? 'ACGTNKMRSWYVHDB' : 'ACGTN';
+      }
 
       print Dumper($self->param('genome_content')) if $self->debug;
       my ($prot_seq,$cds_seq) = $self->param('genome_content')->get_sequences;
@@ -105,7 +125,6 @@ sub write_output {
 	  my $count = 0;
 
       foreach my $prot_id (keys %$prot_seq) {
-
 		$count++;
         my $sequence = $prot_seq->{$prot_id}->{'seq_obj'};
         my $display_name = $prot_seq->{$prot_id}->{'display_name'};
@@ -123,13 +142,21 @@ sub write_output {
             );
 
 		$gene_member->display_label($display_name);
+        if ( $self->param('genome_content')->{'source'} eq 'uniprot' ) {
+            $gene_member->biotype_group('coding');
+        }
             if (exists $gene_coordinates->{$prot_id}) {
-               my $coord = $gene_coordinates->{$prot_id};
-                if (not $cached_dnafrags{$coord->[0]}) {
+               my $coord = $gene_coordinates->{$prot_id}->{'coord'};
+                if (!defined $cached_dnafrags{$coord->[0]}) {
                     $cached_dnafrags{$coord->[0]} = Bio::EnsEMBL::Compara::DnaFrag->new(-GENOME_DB => $self->param('genome_db'), -NAME => $coord->[0]);
-                    my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
+                    if ( $self->param('genome_content')->{'source'} eq 'uniprot' ) {
+                        $cached_dnafrags{$coord->[0]}->cellular_component('NUC');
+                        my $gene_length = $coord->[2] - $coord->[1] + 1;
+                        $cached_dnafrags{$coord->[0]}->length($gene_length);
+                    }
 		            $dnafrag_adaptor->store($cached_dnafrags{$coord->[0]}) || die "Could not store dnafrags";
                 }
+
                 $gene_member->dnafrag($cached_dnafrags{$coord->[0]});
                 $gene_member->dnafrag_start($coord->[1]);
                 $gene_member->dnafrag_end($coord->[2]);
@@ -140,10 +167,9 @@ sub write_output {
             }
 
 		$gene_member_adaptor->store($gene_member);
-
 		my $pep_member = Bio::EnsEMBL::Compara::SeqMember->new(
                 -stable_id      => $prot_id,
-                -source_name    => 'EXTERNALPEP',
+                -source_name    => "EXTERNALPEP",
                 -taxon_id       => $taxon_id,
                 -description    => $sequence->desc,
                 -genome_db_id   => $genome_db_id,
@@ -152,15 +178,21 @@ sub write_output {
             $pep_member->gene_member_id($gene_member->dbID);
             if (exists $cds_coordinates->{$prot_id}) {
                 my $coord = $cds_coordinates->{$prot_id};
-                if (not $cached_dnafrags{$coord->[0]}) {
+                if (!defined $cached_dnafrags{$coord->[0]}) {
                     $cached_dnafrags{$coord->[0]} = Bio::EnsEMBL::Compara::DnaFrag->new(-GENOME_DB => $self->param('genome_db'), -NAME => $coord->[0]);
-                    my $dnafrag_adaptor = $compara_dba->get_DnaFragAdaptor();
+                    if ( $self->param('genome_content')->{'source'} eq 'uniprot' ) {
+                        my $gene_coord = $gene_coordinates->{$prot_id}->{'coord'};
+                        my $gene_length = $gene_coord->[2] - $gene_coord->[1] + 1;
+                        $cached_dnafrags{$coord->[0]}->length($gene_length);
+                    }
 		            $dnafrag_adaptor->store($cached_dnafrags{$coord->[0]}) || die "Could not store dnafrag";
                 }
                 $pep_member->dnafrag($cached_dnafrags{$coord->[0]});
                 $pep_member->dnafrag_start($coord->[1]);
                 $pep_member->dnafrag_end($coord->[2]);
                 $pep_member->dnafrag_strand($coord->[3]);
+                $pep_member->dnafrag_id($gene_member->dnafrag_id);
+                $pep_member->seq_length($coord->[2]-$coord->[1]) if $self->param('genome_content')->{'source'} eq "uniprot";
             } else {
                 warn $prot_id, " does not have cds coordinates\n";
                 die $prot_id, " does not have cds coordinates\n";
@@ -172,14 +204,25 @@ sub write_output {
             $seq_member_adaptor->_set_member_as_canonical($pep_member);
 
             if (exists $cds_seq->{ $prot_id }) {
-                $sequence_adaptor->store_other_sequence($pep_member, $cds_seq->{ $prot_id }->{'seq_obj'}->seq, 'cds');
+                my $cds_sequence = $cds_seq->{ $prot_id }->{'seq_obj'}->seq;
+                if ($self->param('mask_invalid_cds_seq')) {
+                    $cds_sequence =~ s/[^\Q$valid_cds_symbols\E]/N/gi;
+                }
+                $sequence_adaptor->store_other_sequence($pep_member, $cds_sequence, 'cds');
             } elsif ($self->param('need_cds_seq')) {
                 die $prot_id, " does not have cds sequence\n";
             } else {
                 warn $prot_id, " does not have cds sequence\n";
-            } 
+            }
+            if ( $self->param('genome_content')->{'source'} eq "uniprot" ) {
+                my $dnafrag_start = $gene_coordinates->{$prot_id}->{'coord'}->[1];
+                my $dnafrag_end = $gene_coordinates->{$prot_id}->{'coord'}->[2];
+                my $sequence_length = $dnafrag_end - $dnafrag_start + 1;
+                my $left_over = 0;
+                my @exons = ([$dnafrag_start, $dnafrag_end, $sequence_length, $left_over]);
+                $seq_member_adaptor->_store_exon_boundaries_for_SeqMember($pep_member, \@exons);
+            }
       };
-
 	print "$count genes and peptides loaded\n" if ($self->debug);
 }
 

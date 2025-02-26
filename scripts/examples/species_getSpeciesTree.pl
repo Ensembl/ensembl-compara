@@ -34,6 +34,7 @@ my $method = 'PROTEIN_TREES';
 my $ss_name;
 my $label = 'default';
 my $stn_root_id;
+my $format_mode;
 my $with_distances;
 my $ascii_scale;
 my ($reg_conf, $compara_db);
@@ -45,6 +46,7 @@ GetOptions(
        'ss_name=s'      => \$ss_name,
        'label=s'        => \$label,
        'stn_root_id=i'  => \$stn_root_id,
+       'format_mode=s'  => \$format_mode,
        'with_distances' => \$with_distances,
        'ascii_scale=f'  => \$ascii_scale,
        'reg_conf=s'     => \$reg_conf,
@@ -80,6 +82,17 @@ if ($stn_root_id) {
 
 if ($ascii_scale) {
     $species_tree->root->print_tree($ascii_scale);
+} elsif ($format_mode) {
+
+    my @format_args;
+    if ($format_mode =~ /^ryo\s+(?<ryo_string>.+)$/) {
+        push(@format_args, ('ryo', $+{'ryo_string'}));
+    } else {
+        push(@format_args, $format_mode);
+    }
+
+    print $species_tree->root->newick_format( @format_args ), "\n";
+
 } else {
     print $species_tree->root->newick_format( 'ryo', $with_distances ? '%{n}:%{d}' : '%{n}' ), "\n";
 }

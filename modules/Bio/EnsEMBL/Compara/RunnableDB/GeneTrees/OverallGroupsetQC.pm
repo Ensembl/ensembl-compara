@@ -113,6 +113,12 @@ sub overall_groupset_qc {
     $cpcmd = ['cp', $map_filename, $map_copy_filename];
     $self->run_command($cpcmd, { die_on_failure => 1 });
 
+    # Cluster mapping can take quite some time,
+    # and involves little or no database access.
+    $reuse_compara_dba->dbc->disconnect_if_idle;
+    $self->compara_dba->dbc->disconnect_if_idle;
+    $self->param('groupset_tree')->adaptor->dbc->disconnect_if_idle;
+
     $self->quantify_mapping($map_filename, $reuse_compara_dba);
 }
 

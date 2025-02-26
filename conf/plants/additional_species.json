@@ -1,0 +1,9 @@
+{
+    "vertebrates": [
+        "caenorhabditis_elegans",
+        "ciona_savignyi",
+        "drosophila_melanogaster",
+        "homo_sapiens",
+        "saccharomyces_cerevisiae"
+    ]
+}

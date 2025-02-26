@@ -88,6 +88,8 @@ sub default_options {
         'trim_anchor_align_capacity'    => 500,
 
         # Options
+        # linked MLSS is unreleased (e.g. Pig breeds EPO)
+        'linked_mlss_unreleased'     => 0,
         # Avoid reusing any species?
         'do_not_reuse_list'          => undef,
         #skip this module if set to 1
@@ -175,6 +177,7 @@ sub core_pipeline_analyses {
                 'species_set_name' => $self->o('species_set_name'),
                 'release'          => $self->o('ensembl_release'),
                 'add_sister_mlsss' => 1,
+                'linked_mlss_unreleased' => $self->o('linked_mlss_unreleased'),
             },
             -input_ids  => [{}],
             -flow_into  => {
@@ -214,7 +217,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'setup_extended_alignment',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => ['dump_mappings_to_file', 'check_for_lastz'],
         },
 
@@ -234,6 +237,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 method_link_species_set_id => '#ext_mlss_id#',
             },
+            -rc_name => '1Gb_24_hour_job',
             -flow_into => [ 'alignment_mlss_factory' ],
         },
 
@@ -272,7 +276,7 @@ sub tweak_analyses {
     # flow 2 "make_species_tree" jobs and add semaphore
     $analyses_by_name->{'create_mlss_ss'}->{'-flow_into'} = 'make_species_tree';
     delete $analyses_by_name->{'create_mlss_ss'}->{'-parameters'};
-    delete $analyses_by_name->{'make_species_tree'}->{'-flow_into'};
+    delete $analyses_by_name->{'hc_species_tree'}->{'-flow_into'};
 
     # Rewire "create_default_pairwise_mlss" and "dump_mappings_to_file" after having trimmed the anchors
     $analyses_by_name->{'trim_anchor_align_factory'}->{'-flow_into'} = {
@@ -290,7 +294,6 @@ sub tweak_analyses {
 
     # set mlss_id for "extended_genome_alignment*"
     $analyses_by_name->{'extended_genome_alignment'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
-    $analyses_by_name->{'extended_genome_alignment_again'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'extended_genome_alignment_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'extended_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
 
@@ -298,8 +301,9 @@ sub tweak_analyses {
     $analyses_by_name->{'extended_genome_alignment'}->{'-wait_for'} = 'create_default_pairwise_mlss';
     $analyses_by_name->{'gerp'}->{'-wait_for'} = 'set_gerp_neutral_rate';
 
-    # add "set_internal_ids_epo_ext" to "load_dnafrag_region"
-    $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'}->{'A->1'} = { 'set_internal_ids_epo_ext' => {} };
+    # link "set_internal_ids_epo_ext" indirectly to "load_dnafrag_region"
+    $analyses_by_name->{'load_dnafrag_region'}->{'-flow_into'}->{'A->1'} = { 'alignment_funnel_check' => {} };
+    $analyses_by_name->{'alignment_funnel_check'}->{'-flow_into'}->{1} = 'set_internal_ids_epo_ext';
 
     # ensure mlss_ids are flowed with their root_ids
     $analyses_by_name->{'create_neighbour_nodes_jobs_alignment'}->{'-parameters'}->{'inputquery'} = 'SELECT gat2.root_id, #mlss_id# as mlss_id FROM genomic_align_tree gat1 LEFT JOIN genomic_align ga USING(node_id) JOIN genomic_align_tree gat2 USING(root_id) WHERE gat2.parent_id IS NULL AND ga.method_link_species_set_id = #mlss_id# GROUP BY gat2.root_id';

@@ -23,6 +23,7 @@
 23	CACTUS_HAL_PW	GenomicAlignBlock.pairwise_alignment	Cactus (restricted)
 24	EPO_GEN_ANCHORS	ConservationScore.conservation_score	EPO Anchor generation
 25	POLYPLOID	GenomicAlignBlock.pairwise_alignment	polyploidy-aware self-alignment
+26	CACTUS_DB	GenomicAlignBlock.multiple_alignment	Cactus
 101	SYNTENY	SyntenyRegion.synteny	synteny
 102	SYNTENY_HARD_MASKED	SyntenyRegion.synteny	
 201	ENSEMBL_ORTHOLOGUES	Homology.homology	orthologues

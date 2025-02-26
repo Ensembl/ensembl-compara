@@ -149,6 +149,7 @@ use Getopt::Long;
 use Pod::Usage;
 
 use Bio::EnsEMBL::Registry;
+use Bio::EnsEMBL::Utils::Exception qw/throw/;
 use Bio::EnsEMBL::Utils::IO qw/:spurt/;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;

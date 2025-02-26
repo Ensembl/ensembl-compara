@@ -197,6 +197,7 @@ sub compose_sequence_with_cigar {
 
 sub cigar_from_alignment_string {
     my $alignment_string = shift;
+    $alignment_string =~ s/\*/X/g;
 
     my $cigar_line = '';
     while($alignment_string=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
@@ -370,6 +371,9 @@ sub cigar_from_two_alignment_strings {
 
     my @chunks1;
     my @chunks2;
+
+    $seq1 =~ s/\*/X/g;
+    $seq2 =~ s/\*/X/g;
 
     while($seq1=~/(?:\b|^)(.)(.*?)(?:\b|$)/g) {
         push @chunks1, [($1 eq '-'), ($2 ? length($2)+1 : 1)];

@@ -212,7 +212,7 @@ sub run_buildhmm {
     my $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
     unless ((-e $hmm_file) and (-s $hmm_file)) {
         # The file is not there / empty ... MEMLIMIT going on ? Let's have
-        # a break and give LSF the chance to kill us
+        # a break and give the job scheduler the chance to kill us
         sleep 30;
     }
 

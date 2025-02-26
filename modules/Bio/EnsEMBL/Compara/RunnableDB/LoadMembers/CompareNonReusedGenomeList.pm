@@ -101,11 +101,12 @@ sub fetch_input {
     unless (-e $expected_updates_file) {
         $self->die_no_retry("'$expected_updates_file' doesn't exist");
     }
-    my %expected_updated_gdbs   = map {$_ => 1} @{ slurp_to_array($expected_updates_file, 'chomp') };
+    my %rel_gdbs = map {$_->name => 1} @{ $self->compara_dba->get_GenomeDBAdaptor->fetch_all() };
+    my %expected_updated_gdbs = map {$_ => 1} grep {exists $rel_gdbs{$_}} @{ slurp_to_array($expected_updates_file, 'chomp') };
 
     my $nonreuse_ss_id  = $self->param_required('nonreuse_ss_id');
     my $nonreuse_ss     = $self->compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($nonreuse_ss_id);
-    my %nonreuse_gdbs   = map {$_->name => 1} @{$nonreuse_ss->genome_dbs};
+    my %nonreuse_gdbs   = map {$_->name => $_->dbID} @{$nonreuse_ss->genome_dbs};  # map GenomeDB name to dbID, so we can use both later
 
     my $do_not_reuse_list   = $self->param('do_not_reuse_list');
     my %do_not_reuse_hash   = map {$_ => 1} @$do_not_reuse_list;
@@ -125,11 +126,14 @@ sub run {
 
     my $error_msg = '';
 
-    # In nonreuse_gdbs, but not in expected_updated_gdbs / do_not_reuse_hash
+    # In nonreuse_gdbs, but not in expected_updated_gdbs, not in do_not_reuse_hash,
+    # not lacking reusable members in reuse_member_db, and not manually OK'd
+    my $reuse_member_adaptor = $self->get_cached_compara_dba('reuse_member_db')->get_GeneMemberAdaptor();
     foreach my $name (keys %$nonreuse_gdbs) {
         next if exists $do_not_reuse_hash->{$name};
         next if exists $expected_updated_gdbs->{$name};
         next if $self->param_exists("ok_$name") && $self->param("ok_$name");
+        next if $reuse_member_adaptor->count_all_by_GenomeDB($nonreuse_gdbs->{$name}) == 0;
         $error_msg .= "$name can't be reused but is not listed as having an updated annotation.\n";
     }
 

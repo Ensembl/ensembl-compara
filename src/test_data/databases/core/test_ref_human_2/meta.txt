@@ -1,5 +1,5 @@
 1	\N	schema_type	core
-2	\N	schema_version	110
+2	\N	schema_version	114
 46	1	genebuild.last_geneset_update	2020-10
 40	1	assembly.default	GRCh38
 41	1	assembly.date	2009-02
@@ -97,3 +97,10 @@
 1822	\N	patch	patch_109_110_a.sql|schema_version
 1823	\N	patch	patch_109_110_b.sql|Add IS_PAR relationship to link X- and Y-PAR genes
 1824	\N	patch	patch_109_110_c.sql|Allow gene id to belong to multiple alt allele groups
+1842	\N	patch	patch_110_111_a.sql|schema_version
+1843	\N	patch	patch_111_112_a.sql|schema_version
+1844	\N	patch	patch_111_112_b.sql|Allow meta_value to be null
+1845	\N	patch	patch_111_112_c.sql|Extend meta_key length to 64
+1846	\N	patch	patch_112_113_a.sql|schema_version
+1847	\N	patch	patch_112_113_b.sql|Ensure meta_value is not null
+1848	\N	patch	patch_113_114_a.sql|schema_version

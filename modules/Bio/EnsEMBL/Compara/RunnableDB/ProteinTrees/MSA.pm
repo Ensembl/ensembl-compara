@@ -148,7 +148,7 @@ sub write_output {
             my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
             unless ($aln_ok) {
                 # Probably an ongoing MEMLIMIT
-                # Let's wait a bit to let LSF kill the worker as it should
+                # Let's wait a bit to let the job scheduler kill the worker as it should
                 sleep 30;
                 # If we're still there, there is something weird going on.
                 # Perhaps not a MEMLIMIT, after all. Let's die and hope that
@@ -253,7 +253,12 @@ sub dumpProteinTreeToWorkdir {
   print("fastafile = '$fastafile'\n") if ($self->debug);
 
   $tree->expand_subtrees;   # In case we are given a supertree
-  my $num_pep = $tree->print_sequences_to_file($fastafile, -uniq_seq => 1, -id_type => 'SEQUENCE');
+  my $num_pep = $tree->print_sequences_to_file(
+      $fastafile,
+      -uniq_seq => 1,
+      -id_type => 'SEQUENCE',
+      -hide_stop_codons => 1,  # Sequences with internal stop symbols shouldn't get this far, but if any slip through, hide the stop codons.
+  );
 
   if ($num_pep <= 1) {
     $self->update_single_peptide_tree($tree);

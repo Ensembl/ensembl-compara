@@ -37,6 +37,7 @@ use Test::More;
 
 use Bio::EnsEMBL::Utils::IO qw/work_with_file/;
 use Bio::EnsEMBL::Test::MultiTestDB;
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
 
 =head2 GLOBAL VARIABLES
 
@@ -51,7 +52,24 @@ to "compute" it again and again.
 
 =cut
 
+my $repository_branch;
 my $repository_root;
+
+=head2 get_repository_branch
+
+  Description : Return name of the active branch of the repository.
+
+=cut
+
+sub get_repository_branch {
+    return $repository_branch if $repository_branch;
+    my $cmd_args = ['git', '-C', dirname(__FILE__), 'branch', '--show-current'];
+    my $cmd_opts = { die_on_failure => 1 };
+    my $run_cmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec($cmd_args, $cmd_opts);
+    $repository_branch = $run_cmd->out;
+    chomp $repository_branch;
+    return $repository_branch;
+}
 
 =head2 get_repository_root
 

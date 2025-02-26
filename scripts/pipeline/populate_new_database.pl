@@ -182,6 +182,7 @@ use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
 use Getopt::Long;
+use JSON;
 
 my $help;
 
@@ -276,27 +277,44 @@ my $rerun_tag = 'rerun_in_'.software_version();
 $skipped_mlss_ids{$_->dbID} = 1 for grep {$_->has_tag($rerun_tag)} @$all_default_method_link_species_sets;
 
 if($only_show_intentions) {
-    print "GenomeDB entries to be copied:\n";
+    my $copied_genome_db = {};
     foreach my $genome_db (@$all_default_genome_dbs) {
-        print "\t".$genome_db->dbID.": ".$genome_db->_get_unique_name."\n";
+        $copied_genome_db->{$genome_db->dbID} = $genome_db->_get_unique_name;
     }
-    print "MethodLinkSpeciesSet entries to be copied:\n";
+    my $copied_mlss = {};
+    my $copied_mlss_entry = {};
     my %counts;
     foreach my $mlss (sort {$a->method->dbID <=> $b->method->dbID} @$all_default_method_link_species_sets) {
         $counts{$mlss->method->type}++;
-        print "\t".$mlss->dbID.": ".$mlss->name;
-        print " (mlss entry only)" if $skipped_mlss_ids{$mlss->dbID};
-        print "\n";
+        if ($skipped_mlss_ids{$mlss->dbID}) {
+            $copied_mlss_entry->{$mlss->dbID} = $mlss->name;
+        } else {
+            $copied_mlss->{$mlss->dbID} = $mlss->name;
+        }
+
     }
-    print "Additional SpeciesSet entries to be copied:\n";
+    my $copied_mlss_all = {"copied" => $copied_mlss, "entry_only" => $copied_mlss_entry};
+    my $additional = {};
     foreach my $ss (@$all_default_species_sets) {
-        print "\t".$ss->dbID.": ".join(', ', map { $_->_get_unique_name} @{$ss->genome_dbs})."\n";
+        $additional->{$ss->dbID} = [ map { $_->_get_unique_name} @{$ss->genome_dbs} ];
     }
-    print "\nSummary:\n";
-    print "\t", scalar(@$all_default_genome_dbs), " GenomeDBs\n";
-    print "\t", scalar(@$all_default_method_link_species_sets), " MethodLinkSpeciesSets\n";
-    printf("\t\t%5d %s\n", $counts{$_}, $_) for sort keys %counts;
-    print "\t", scalar(@$all_default_species_sets), " SpeciesSets\n";
+    my $summary = {};
+    $summary->{genome_dbs} = scalar(@$all_default_genome_dbs);
+    $summary->{method_link_species_sets} = {};
+    foreach my $key (keys %counts) {
+        $summary->{method_link_species_sets}->{$key} = $counts{$key};
+    }
+    $summary->{species_sets} = scalar(@$all_default_species_sets);
+
+    my $out_json = {
+              "summary" => $summary, "additional_copied" => $additional,
+              "copied_mlss" => $copied_mlss_all, "copied_genome_db" => $copied_genome_db
+          };
+
+    my $json = JSON->new->utf8;
+    my $encoded = $json->pretty->encode( $out_json );
+    print $encoded;
+
     exit 0;
 }
 
@@ -745,8 +763,8 @@ sub copy_dna_to_dna_alignments {
     next if ($this_method_link_species_set->method->dbID >= 100);
     ## We ignore LASTZ_PATCH alignments as they should be reloaded fresh every release
     next if ($this_method_link_species_set->method->type eq 'LASTZ_PATCH');
-    ## Skip HAL alignments as there's nothing in the db
-    next if ($this_method_link_species_set->method->type =~ m/CACTUS_HAL/);
+    ## Skip Cactus alignments with nothing in the db
+    next if ($this_method_link_species_set->method->type =~ m/^(CACTUS_HAL|CACTUS_HAL_PW)$/);
 
     print "Copying dna-dna alignments for ", $this_method_link_species_set->name,
         " (", $this_method_link_species_set->dbID, "): ";

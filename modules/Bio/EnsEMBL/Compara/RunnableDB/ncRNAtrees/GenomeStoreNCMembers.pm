@@ -159,8 +159,6 @@ sub store_ncrna_gene {
     my $gene_member_adaptor = $self->compara_dba->get_GeneMemberAdaptor();
     my $seq_member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
 
-    my $longest_ncrna_member;
-    my $max_ncrna_length = 0;
     my $gene_member;
     my $gene_member_stored = 0;
 
@@ -219,13 +217,7 @@ sub store_ncrna_gene {
 
         $self->_store_seq_member_projection($ncrna_member, $transcript);
 
-        if (length($transcript_spliced_seq) > $max_ncrna_length) {
-            $max_ncrna_length = length($transcript_spliced_seq);
-            $longest_ncrna_member = $ncrna_member;
-        }
-    }
-    if (defined $longest_ncrna_member) {
-        $seq_member_adaptor->_set_member_as_canonical($longest_ncrna_member);
+        $seq_member_adaptor->_set_member_as_canonical($ncrna_member) if $transcript->is_canonical;
     }
 
     return $gene_member;

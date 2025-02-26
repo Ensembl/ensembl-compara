@@ -196,6 +196,9 @@ sub run_rfamclassify {
 sub build_hash_models {
   my $self = shift;
 
+  my $model_name_blocklist = $self->param('model_name_blocklist') // [];
+  my %model_name_block_set = map { $_ => 1 } @{$model_name_blocklist};
+
     # vivification:
   $self->param('rfamclassify', {});
 
@@ -236,6 +239,9 @@ sub build_hash_models {
           push @names_to_match, $transcript_model_id;
         }
       }
+
+      # Filter names-to-match by the model-name blocklist.
+      @names_to_match = grep { !exists $model_name_block_set{$_} } @names_to_match;
 
       # Check them all against the list of known names / model_ids
       my $transcript_model_id;

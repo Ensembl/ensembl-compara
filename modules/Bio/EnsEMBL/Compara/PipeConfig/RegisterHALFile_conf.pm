@@ -65,7 +65,23 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'master_db' => 'compara_master',
+
+        'collection'    => undef,
+        'method_type'   => 'CACTUS_HAL',
+        'pipeline_name' => $self->o('collection') . '_' . $self->o('division') . '_register_halfile_' . $self->o('rel_with_suffix'),
+
+        'do_alt_mlss'   => 1,
+
+        'species_name_mapping' => undef,
     };
+}
+
+
+
+sub pipeline_checks_pre_init {
+    my ($self) = @_;
+
+    die "Pipeline parameter 'collection' is undefined, but must be specified" unless $self->o('collection');
 }
 
 
@@ -76,6 +92,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
         'master_db'     => $self->o('master_db'),
         'halStats_exe'  => $self->o('halStats_exe'),
+        'do_alt_mlss'   => $self->o('do_alt_mlss'),
     };
 }
 
@@ -84,6 +101,17 @@ sub pipeline_analyses {
     my ($self) = @_;
 
     return [
+
+        {   -logic_name => 'load_mlss_id',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
+            -input_ids  => [ {
+                'method_type'      => $self->o('method_type'),
+                'species_set_name' => $self->o('collection'),
+                'release'          => $self->o('ensembl_release'),
+            } ],
+            -flow_into  => [ 'copy_mlss' ],
+        },
+
         {   -logic_name => 'copy_mlss',
 	    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithFK',
             -parameters => {
@@ -91,10 +119,6 @@ sub pipeline_analyses {
                 'method_link_species_set_id'    => '#mlss_id#',
             },
             -flow_into => [ 'load_component_genomedb_factory' ],
-            -input_ids => [ {
-                'mlss_id'   => $self->o('mlss_id'),
-                'species_name_mapping'  => $self->o('species_name_mapping'),
-            } ],
         },
 
         {   -logic_name => 'load_component_genomedb_factory',
@@ -111,7 +135,7 @@ sub pipeline_analyses {
                 '2->A'  => {
                     'load_component_genomedb' => { 'master_dbID' => '#genome_db_id#' },
                 },
-                'A->1'  => [ 'fire_hal_file_registration' ],
+                'A->1'  => [ 'copy_dnafrag_genomedb_factory' ],
             },
         },
 
@@ -122,9 +146,33 @@ sub pipeline_analyses {
             -max_retry_count => 2,
         },
 
+        {   -logic_name => 'copy_dnafrag_genomedb_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
+            -rc_name    => '4Gb_job',
+            -flow_into  => {
+                '2->A'  => [ 'genome_dnafrag_copy' ],
+                'A->1'  => [ 'fire_hal_file_registration' ],
+            },
+        },
+
+        {   -logic_name => 'genome_dnafrag_copy',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDnaFragsByGenomeDB',
+        },
+
         {   -logic_name => 'fire_hal_file_registration',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => [ 'find_pairwise_mlss_ids', 'set_name_mapping_tag' ],
+            -flow_into  => {
+                '1->A' => [ 'hal_registration_entry_point' ],
+                'A->1' => [ 'fire_hal_coverage' ],
+            },
+        },
+
+        {   -logic_name => 'hal_registration_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [
+                    WHEN('#do_alt_mlss#' => 'find_pairwise_mlss_ids'),
+                    'load_hal_mapping',
+            ]
         },
 
         {   -logic_name => 'find_pairwise_mlss_ids',
@@ -160,26 +208,41 @@ sub pipeline_analyses {
             -analysis_capacity  => 1,
         },
 
-        {   -logic_name => 'set_name_mapping_tag',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+        {   -logic_name => 'load_hal_mapping',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadHalMapping',
             -parameters => {
-                'sql' => [ 'INSERT IGNORE INTO method_link_species_set_tag (method_link_species_set_id, tag, value) VALUES (#mlss_id#, "HAL_mapping", "#species_name_mapping#")' ],
+                'species_name_mapping' => $self->o('species_name_mapping'),
             },
-            -flow_into  => [ 'load_species_tree', 'hal_genomedb_factory' ],
+            -rc_name    => '4Gb_job',
+            -flow_into  => [
+                'load_species_tree',
+                'synonyms_genome_factory'
+            ],
         },
 
         {   -logic_name => 'load_species_tree',
 	        -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSpeciesTree',
+            -flow_into  => {
+                2 => { 'hc_species_tree' => { 'mlss_id' => '#mlss_id#', 'species_tree_root_id' => '#species_tree_root_id#' } },
+            },
         },
 
-        {   -logic_name => 'hal_genomedb_factory',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halGenomeDBFactory',
-            -flow_into  => {
-                    2   => { "generate_coverage_stats" => INPUT_PLUS() },
-                '2->A' => { 'get_synonyms' => INPUT_PLUS() },
-		        'A->1' => [ 'aggregate_synonyms' ],
+        {   -logic_name => 'hc_species_tree',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MSA::SqlHealthChecks',
+            -parameters => {
+                'mode'                      => 'species_tree',
+                'binary'                    => 0,
+                'n_missing_species_in_tree' => 0,
             },
-	},
+        },
+
+        {   -logic_name => 'synonyms_genome_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halDualGenomeFactory',
+             -flow_into => {
+                '2->A' => { 'get_synonyms' => INPUT_PLUS() },
+                'A->1' => [ 'aggregate_synonyms' ],
+            },
+        },
 
         {   -logic_name => 'get_synonyms',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSynonyms',
@@ -198,11 +261,64 @@ sub pipeline_analyses {
 	    -rc_name    => '1Gb_job',
         },
 
+        {   -logic_name => 'fire_hal_coverage',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ 'pairwise_coverage_factory', 'per_genome_coverage_factory' ],
+        },
+
+        {   -logic_name => 'pairwise_coverage_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halDualGenomeFactory',
+             -flow_into => {
+                    3   => { 'generate_pairwise_coverage_stats' => INPUT_PLUS() },
+            },
+        },
+
         {
-            -logic_name => 'generate_coverage_stats',
+            -logic_name => 'generate_pairwise_coverage_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halCoverageStats',
+            -rc_name    => '4Gb_24_hour_job',
+        },
+
+        {   -logic_name => 'per_genome_coverage_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halDualGenomeFactory',
+             -flow_into => {
+                '3->A'  => { 'hal_seq_chunk_factory' => INPUT_PLUS() },
+                'A->2'  => { 'aggregate_per_genome_coverage' => INPUT_PLUS() },
+            },
+        },
+
+        {   -logic_name => 'hal_seq_chunk_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::halSeqChunkFactory',
+            -rc_name    => '4Gb_24_hour_job',
+            -parameters => {
+                'hal_stats_exe' => $self->o('halStats_exe'),
+            },
+            -flow_into  => {
+                2 => { 'calculate_seq_chunk_coverage' => INPUT_PLUS() },
+                3 => [ '?accu_name=hal_sequence_names&accu_address=[]&accu_input_variable=hal_sequence_name' ],
+            },
+        },
+
+        {   -logic_name        => 'calculate_seq_chunk_coverage',
+            -module            => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::CalculateHalSeqChunkCoverage',
+            -rc_name           => '8Gb_job',
+            -analysis_capacity => 700,
+            -parameters        => {
+                'hal_cov_one_seq_chunk_exe' => $self->o('hal_cov_one_seq_chunk_exe'),
+                'hal_alignment_depth_exe'   => $self->o('halAlignmentDepth_exe'),
+            },
+            -flow_into => {
+                3 => [
+                    '?accu_name=num_aligned_positions_by_chunk&accu_address={hal_sequence_name}{chunk_offset}&accu_input_variable=num_aligned_positions',
+                    '?accu_name=num_positions_by_chunk&accu_address={hal_sequence_name}{chunk_offset}&accu_input_variable=num_positions',
+                ],
+            },
+        },
+
+        {   -logic_name => 'aggregate_per_genome_coverage',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HAL::AggregateHalGenomicCoverage',
             -rc_name    => '4Gb_job',
-        }
+        },
 
      ];
 }

@@ -28,9 +28,15 @@ Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory
 
 This Runnable flows some GenomeDB ids, depending on a few parameters.
 The source is one of (by decreasing priority):
- - a species set (given by species_set_id)
- - a method_link_species_set (given by mlss_id)
+ - a species set given by species_set_id
+ - a method_link_species_set given by mlss_id
+ - a species set given by name
+ - a species set given by collection name
+ - all current GenomeDBs
  - all the GenomeDBs
+
+The set of GenomeDBs may be filtered further, whether by a positive filter
+(parameter 'include_species') or a negative filter (parameter 'exclude_species').
 
 The default is to flow all the GenomeDBs fetched by the previous rule, but
 specific kinds of GenomeDBs can be controlled individually:
@@ -50,6 +56,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Scalar qw(assert_integer);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -116,8 +124,42 @@ sub fetch_input {
     } elsif ($self->param('all_current')) {
         $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all_current();
 
+    } elsif ($self->param('all_in_current_gene_trees')) {
+        my %id_to_gdb;
+        my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
+        foreach my $method_type ('PROTEIN_TREES', 'NC_TREES') {
+            foreach my $mlss (@{$mlss_adaptor->fetch_all_by_method_link_type($method_type)}) {
+                next unless $mlss->is_current;
+                foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
+                    next unless $genome_db->is_current;
+                    $id_to_gdb{$genome_db->dbID} = $genome_db;
+                }
+            }
+        }
+        $genome_dbs = [values %id_to_gdb];
+
     } else {
         $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all();
+    }
+
+    if ($self->param_is_defined('include_species')) {
+        my @species_to_include = @{destringify($self->param('include_species'))};
+        throw("'include_species' array is empty") if scalar(@species_to_include) == 0;
+
+        my %genome_dbs_by_name;
+        foreach my $gdb (@{$genome_dbs}) {
+            push(@{$genome_dbs_by_name{$gdb->name}}, $gdb);
+        }
+
+        my @included_gdbs;
+        foreach my $species_name (@species_to_include) {
+            if (exists $genome_dbs_by_name{$species_name}) {
+                push(@included_gdbs, @{$genome_dbs_by_name{$species_name}});
+            } else {
+                throw("'include_species' array element '$species_name' not found in available genome_dbs");
+            }
+        }
+        $genome_dbs = \@included_gdbs;
     }
 
     if ($self->param('expand_polyploid_components')) {
@@ -166,7 +208,9 @@ sub fetch_input {
     foreach my $genome_db (@$genome_dbs) {
         my $mlsss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_all_by_GenomeDB($genome_db);
         my %method_hash;
-        $method_hash{$_->method->type}++ for @$mlsss;
+        foreach my $mlss (@$mlsss) {
+            $method_hash{$mlss->method->type}++ if $mlss->is_current;
+        }
         $extra_data{$genome_db->dbID}->{'methods'} = \%method_hash;
     }
 

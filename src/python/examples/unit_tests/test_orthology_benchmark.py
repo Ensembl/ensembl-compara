@@ -75,10 +75,10 @@ class TestDumpGenomes:
 
     """
 
-    core_dbs = {}  # type: Dict
-    host = None  # type: str
-    port = None  # type: int
-    username = None  # type: str
+    core_dbs: dict = {}
+    host: str | None = None
+    port: int | None = None
+    username: str | None = None
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
@@ -111,37 +111,37 @@ class TestDumpGenomes:
         ]
     )
     def test_dump_genomes(self, core_list: List[str], species_set_name: str,
-                          tmp_dir: Path, id_type: str, expectation: ContextManager) -> None:
+                          tmp_path: Path, id_type: str, expectation: ContextManager) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` when server connection can be established.
 
         Args:
             core_list: A list of core database names.
             species_set_name: Species set (collection) name.
-            tmp_dir: Unit test temp directory (fixture).
+            tmp_path: Unit test temp directory (fixture).
             expectation: Context manager for the expected exception, i.e. the test will only pass if that
                 exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
         """
         with expectation:
-            orthology_benchmark.dump_genomes(core_list, species_set_name, self.host, self.port, tmp_dir,
+            orthology_benchmark.dump_genomes(core_list, species_set_name, self.host, self.port, tmp_path,
                                              id_type)
 
-            out_files = tmp_dir / species_set_name
+            out_files = tmp_path / species_set_name
             # pylint: disable-next=no-member
             exp_out = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined,operator]
             for db_name, unittest_db in self.core_dbs.items():
                 assert file_cmp(out_files / f"{unittest_db.dbc.db_name}.fasta", exp_out / f"{db_name}.fasta")
 
-    def test_dump_genomes_fake_connection(self, tmp_dir: Path) -> None:
+    def test_dump_genomes_fake_connection(self, tmp_path: Path) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` with fake server details.
 
         Args:
-            tmp_dir: Unit test temp directory (fixture).
+            tmp_path: Unit test temp directory (fixture).
 
         """
         with raises(RuntimeError):
             orthology_benchmark.dump_genomes(["mus_musculus", "naja_naja"], "fake",
-                                             "fake-host", 65536, tmp_dir, "protein")
+                                             "fake-host", 65536, tmp_path, "protein")
 
     def test_dump_genomes_fake_output_path(self) -> None:
         """Tests :func:`orthology_benchmark.dump_genomes()` with fake output path."""
@@ -191,10 +191,10 @@ class TestGetCoreNames:
 
     """
 
-    core_dbs = {}  # type: Dict
-    host = None  # type: str
-    port = None  # type: int
-    username = None  # type: str
+    core_dbs: Dict = {}
+    host: str | None = None
+    port: int | None = None
+    username: str | None = None
 
     # autouse=True makes this fixture be executed before any test_* method of this class, and scope='class' to
     # execute it only once per class parametrization
@@ -254,12 +254,12 @@ class TestGetCoreNames:
                                                        r"not found."))
     ]
 )
-def test_get_gtf_file(core_name: str, tmp_dir: Path, expectation: ContextManager) -> None:
+def test_get_gtf_file(core_name: str, tmp_path: Path, expectation: ContextManager) -> None:
     """Tests :func:`orthology_benchmark.get_gtf_file()` function.
 
     Args:
         core_name: Core db name.
-        tmp_dir: Unit test temp directory (fixture).
+        tmp_path: Unit test temp directory (fixture).
         expectation: Context manager for the expected exception, i.e. the test will only pass if that
             exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
@@ -267,11 +267,11 @@ def test_get_gtf_file(core_name: str, tmp_dir: Path, expectation: ContextManager
     # pylint: disable-next=no-member
     test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined,operator]
     with expectation:
-        orthology_benchmark.get_gtf_file(core_name, test_source_dir, tmp_dir)
+        orthology_benchmark.get_gtf_file(core_name, test_source_dir, tmp_path)
 
     exp_out = test_source_dir / "release-51" / "plants" / "gtf" / "juglans_regia" / \
               "Juglans_regia.Walnut_2.0.51.gtf.gz"
-    assert file_cmp( tmp_dir / "Juglans_regia.Walnut_2.0.51.gtf.gz", exp_out)
+    assert file_cmp( tmp_path / "Juglans_regia.Walnut_2.0.51.gtf.gz", exp_out)
 
 
 @pytest.mark.parametrize(
@@ -281,12 +281,12 @@ def test_get_gtf_file(core_name: str, tmp_dir: Path, expectation: ContextManager
         ([], raises(ValueError, match=r"Empty list of core db names. Cannot search for GTF files."))
     ]
 )
-def test_prepare_gtf_files(core_names: str, tmp_dir: Path, expectation: ContextManager) -> None:
+def test_prepare_gtf_files(core_names: str, tmp_path: Path, expectation: ContextManager) -> None:
     """Tests :func:`orthology_benchmark.prepare_gtf_files()` function.
 
     Args:
         core_names: Core db names.
-        tmp_dir: Unit test temp directory (fixture).
+        tmp_path: Unit test temp directory (fixture).
         expectation: Context manager for the expected exception, i.e. the test will only pass if that
             exception is raised. Use :class:`~contextlib.nullcontext` if no exception is expected.
 
@@ -294,10 +294,10 @@ def test_prepare_gtf_files(core_names: str, tmp_dir: Path, expectation: ContextM
     # pylint: disable-next=no-member
     test_source_dir = pytest.files_dir / "orth_benchmark"  # type: ignore[attr-defined,operator]
     with expectation:
-        orthology_benchmark.prepare_gtf_files(core_names, test_source_dir, tmp_dir)
+        orthology_benchmark.prepare_gtf_files(core_names, test_source_dir, tmp_path)
 
         rel_dir = test_source_dir / "release-51"
         exp_out1 = rel_dir / "plants" / "gtf" / "juglans_regia" / "Juglans_regia.Walnut_2.0.51.gtf"
         exp_out2 = rel_dir / "metazoa" / "gtf" / "anopheles_albimanus" / "Anopheles_albimanus.AalbS2.51.gtf"
-        assert file_cmp( tmp_dir / "Juglans_regia.Walnut_2.0.51.gtf", exp_out1)
-        assert file_cmp( tmp_dir / "Anopheles_albimanus.AalbS2.51.gtf", exp_out2)
+        assert file_cmp( tmp_path / "Juglans_regia.Walnut_2.0.51.gtf", exp_out1)
+        assert file_cmp( tmp_path / "Anopheles_albimanus.AalbS2.51.gtf", exp_out2)

@@ -119,7 +119,7 @@ sub _healthcheck {
 
     my $cmd;
     if ($self->param('format') eq "emf") {
-	$cmd = "grep DATA " . $output_file . " | wc -l";
+        $cmd = "grep '^DATA\$' " . $output_file . " | wc -l";
 
     } elsif ($self->param('format') eq "maf") {
 	$cmd = "grep ^a " . $output_file . " | wc -l";

@@ -85,6 +85,8 @@ sub fetch_input {
 sub run {
 	my $self = shift;
 
+    $self->warning("RunnableDB::FTPDumps::SymlinkPreviousDumps is deprecated");
+
 	my @symlink_cmds = @{ $self->param('symlink_cmds') };
 	foreach my $this_cmd ( @symlink_cmds ) {
 		print STDERR "$this_cmd\n";

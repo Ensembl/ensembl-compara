@@ -37,7 +37,7 @@ my @all_files = Bio::EnsEMBL::Compara::Utils::Test::find_all_files();
 
 foreach my $f (@all_files) {
     if ($f =~ /\.tsv$/) {
-        is_valid_tsv($f);
+        is_valid_tsv($f, '"\t"');
     } elsif ($f =~ /\.matrix$/) {
         is_valid_tsv($f, ' ');
     }

@@ -33,18 +33,18 @@ class TestAlignmentsToParitions:
     """Tests for the `alignments_to_partitions.py` script.
     """
 
-    def test_merge_output(self, tmp_dir: Path) -> None:
+    def test_merge_output(self, tmp_path: Path) -> None:
         """Tests the output of `alignments_to_partitions.py` script.
 
         Args:
-            tmp_dir: Unit test temp directory (fixture).
+            tmp_path: Unit test temp directory (fixture).
         """
         input_file = str(Path(__file__).parents[2] /
                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_merge_input_fofn.txt')
         input_taxa = str(Path(__file__).parents[2] /
                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'collate_output_taxa.tsv')
-        output_fasta = str(tmp_dir / "merged_fasta.tsv")
-        output_parts = str(tmp_dir / "paritions.tsv")
+        output_fasta = str(tmp_path / "merged_fasta.tsv")
+        output_parts = str(tmp_path / "paritions.tsv")
 
         # Run the command
         cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /
@@ -61,18 +61,18 @@ class TestAlignmentsToParitions:
 
         assert file_cmp(output_fasta, expected_fasta)
 
-    def test_merge_for_empty_input(self, tmp_dir: Path) -> None:
+    def test_merge_for_empty_input(self, tmp_path: Path) -> None:
         """Tests the `alignments_to_partitions.py` script when input is empty.
 
         Args:
-            tmp_dir: Unit test temp directory (fixture).
+            tmp_path: Unit test temp directory (fixture).
         """
         input_file = str(Path(__file__).parents[2] /
                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'empty_file.txt')
         input_taxa = str(Path(__file__).parents[2] /
                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'collate_output_taxa.tsv')
-        output_fasta = str(tmp_dir / "merged_fasta.tsv")
-        output_parts = str(tmp_dir / "paritions.tsv")
+        output_fasta = str(tmp_path / "merged_fasta.tsv")
+        output_parts = str(tmp_path / "paritions.tsv")
 
         # Run the command
         cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /

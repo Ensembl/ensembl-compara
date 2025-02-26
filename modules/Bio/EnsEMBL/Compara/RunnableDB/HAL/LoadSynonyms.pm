@@ -53,8 +53,19 @@ use warnings;
 
 use Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor;
 use Bio::EnsEMBL::Compara::HAL::UCSCMapping;
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+sub param_defaults {
+    my $self = shift;
+    return {
+        %{$self->SUPER::param_defaults()},
+
+        'n_missing_dnafrags' => 0,
+    }
+}
 
 
 sub fetch_input {
@@ -62,17 +73,30 @@ sub fetch_input {
 
     my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
     my $mlss = $mlss_adaptor->fetch_by_dbID($self->param_required('mlss_id'));
-    $self->param('mlss', $mlss);
 
     my $master_dba = $self->get_cached_compara_dba('master_db');
     my $genome_db_adaptor = $master_dba->get_GenomeDBAdaptor;
     my $genome_db = $genome_db_adaptor->fetch_by_dbID( $self->param_required('genome_db_id') );
 
-    my $map_tag = $mlss->get_value_for_tag('HAL_mapping');
-    my $species_map = eval $map_tag;     # read species name mapping hash from mlss_tag
+    my $species_map = destringify($mlss->get_value_for_tag('HAL_mapping', '{}'));
+
+    my @hal_genome_dbs;
+    if (exists $species_map->{ $genome_db->dbID }) {
+        push(@hal_genome_dbs, $genome_db);
+    }
+    if ($genome_db->is_polyploid()) {
+        my @hal_comp_genome_dbs = grep { exists $species_map->{ $_->dbID } } @{$genome_db->component_genome_dbs()};
+        push(@hal_genome_dbs, @hal_comp_genome_dbs);
+    }
 
     my $hal_adaptor = Bio::EnsEMBL::Compara::HAL::HALXS::HALAdaptor->new($mlss->url);
-    my @chrom_list = $hal_adaptor->seqs_in_genome( $species_map->{ $genome_db->dbID } );
+    my %chrom_name_set;
+    foreach my $hal_genome_db (@hal_genome_dbs) {
+        foreach my $chrom_name ($hal_adaptor->seqs_in_genome($species_map->{ $hal_genome_db->dbID })) {
+            $chrom_name_set{$chrom_name} = 1;
+        }
+    }
+    my @chrom_list = sort keys %chrom_name_set;
 
     my $existing_synonyms = $Bio::EnsEMBL::Compara::HAL::UCSCMapping::u2e_mappings->{$genome_db->dbID} || {};
 
@@ -92,8 +116,8 @@ sub fetch_input {
         }
     }
 
-    # We don't have the MT chromosome, so we allow 1 missing DnaFrag
-    if ($n_missing > 1) {
+    # We don't always have all the chromosomes, so we allow for a configurable number of missing DnaFrags.
+    if ($n_missing > $self->param('n_missing_dnafrags')) {
         $self->input_job->transient_error(0);
         die "Too many DnaFrags ($n_missing) could not be found !";
     }

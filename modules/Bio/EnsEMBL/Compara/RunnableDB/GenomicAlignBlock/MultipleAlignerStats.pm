@@ -29,7 +29,7 @@ $module->write_output
 
 =head1 DESCRIPTION
 
-This module updates the method_link_species_set_tag table with multiple alignment statistics by firstly adding any new bed files to the correct directory and running compare_beds to generate the statistics
+This module updates the species_tree_node_tag or method_link_species_set_tag table with multiple alignment statistics by firstly adding any new bed files to the correct directory and running compare_beds to generate the statistics
 
 =cut
 
@@ -44,6 +44,12 @@ use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 use File::stat;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+sub param_defaults {
+    return {
+        'multiplealigner_stats_table' => 'species_tree_node_tag',
+    };
+}
 
 =head2 fetch_input
 
@@ -157,7 +163,7 @@ sub dump_bed_file {
 
 
 #
-#Store statistics in the method_link_species_set_tag table
+#Store statistics in the species_tree_node_tag or method_link_species_set_tag table
 #
 sub write_statistics {
     my ($self, $genome_bed, $coding_exon_bed) = @_;
@@ -168,13 +174,28 @@ sub write_statistics {
     my $genome_db = $self->param('genome_db');
     my ($coverage, $coding_exon_coverage) = $self->calc_stats($self->param('dbc_url'), $genome_db, $genome_bed, $coding_exon_bed);
 
+    if ($self->param('multiplealigner_stats_table') eq 'species_tree_node_tag') {
+        #write information to species_tree_node_tag table
+        $species_tree_node->store_tag('genome_coverage', $coverage->{both});
+        $species_tree_node->store_tag('genome_length', $coverage->{total});
+
+        $species_tree_node->store_tag('coding_exon_coverage', $coding_exon_coverage->{both});
+        $species_tree_node->store_tag('coding_exon_length', $coding_exon_coverage->{total});
+
+    } elsif ($self->param('multiplealigner_stats_table') eq 'method_link_species_set_tag') {
     #write information to method_link_species_set_tag table
-    $species_tree_node->store_tag('genome_coverage', $coverage->{both});
-    $species_tree_node->store_tag('genome_length', $coverage->{total});
+        my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
+        my $method_link_species_set = $mlss_adaptor->fetch_by_dbID($self->param('mlss_id'));
 
-    $species_tree_node->store_tag('coding_exon_coverage', $coding_exon_coverage->{both});
-    $species_tree_node->store_tag('coding_exon_length', $coding_exon_coverage->{total});
+        $method_link_species_set->store_tag("genome_coverage_" . $genome_db->dbID, $coverage->{both});
+        $method_link_species_set->store_tag("genome_length_" . $genome_db->dbID, $coverage->{total});
 
+        $method_link_species_set->store_tag("coding_exon_coverage_" . $genome_db->dbID, $coding_exon_coverage->{both});
+        $method_link_species_set->store_tag("coding_exon_length_" . $genome_db->dbID, $coding_exon_coverage->{total});
+
+    } else {
+        $self->die_no_retry("unsupported multiple-aligner stats table: " . $self->param('multiplealigner_stats_table'));
+    }
 }
 
 #

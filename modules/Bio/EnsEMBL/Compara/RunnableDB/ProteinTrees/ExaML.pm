@@ -54,12 +54,20 @@ sub param_defaults {
         'sequence_type'        => '#expr(#use_dna_for_phylogeny# ? "DNA" : "PROT")expr#',
         'remove_columns'       => 1,
         'ryo_gene_tree'     => '%{-m}%{"_"-X}',
+        'shunt_to_branch'      => undef,
 
     };
 }
 
 sub fetch_input {
     my $self = shift;
+
+    if ($self->param_is_defined('shunt_to_branch')) {
+        my $shunt_branch = $self->param('shunt_to_branch');
+        $self->dataflow_output_id(undef, $shunt_branch);
+        $self->input_job->autoflow(0);
+        $self->complete_early("Shunting to branch #$shunt_branch");
+    }
 
 	#We should inherit from GenericRunnable here since we will need the gene_tree object.
     $self->SUPER::fetch_input();

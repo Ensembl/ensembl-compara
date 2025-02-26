@@ -29,8 +29,7 @@ import json
 from typing import Tuple, List, Dict, Any
 
 from sqlalchemy import text
-from sqlalchemy.engine import Connection
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
 
 
@@ -72,7 +71,7 @@ def get_closest_ref(rr_dbc: DBConnection, ref_db: str) -> Tuple[int, str, int, s
     SELECT name, taxon_id FROM genome_db LIMIT 1;
     """
 
-    with rr_dbc.connect() as conn:
+    with rr_dbc.begin() as conn:
         query_species, query_taxid = conn.execute(text(query1)).one()
 
     query2 = f"""
@@ -81,7 +80,7 @@ def get_closest_ref(rr_dbc: DBConnection, ref_db: str) -> Tuple[int, str, int, s
     WHERE genome_db_id > 100;
     """
 
-    with rr_dbc.connect() as conn, rr_dbc.session_scope() as session:
+    with rr_dbc.begin() as conn, rr_dbc.session_scope() as session:
         result = conn.execute(text(query2))
         res: List[Tuple] = []
         for gdb_id, taxid, name in result:
@@ -93,7 +92,7 @@ def get_closest_ref(rr_dbc: DBConnection, ref_db: str) -> Tuple[int, str, int, s
     return ref_gdb, ref_species, ref_taxid, query_species, query_taxid
 
 
-def query_rr_database(rr_dbc: Connection, genome_db_id: int, ref_db: str) -> Tuple[int, int]:
+def query_rr_database(rr_dbc: DBConnection, genome_db_id: int, ref_db: str) -> Tuple[int, int]:
     """
     Query the database for the number of homologs and genes.
 
@@ -105,7 +104,7 @@ def query_rr_database(rr_dbc: Connection, genome_db_id: int, ref_db: str) -> Tup
     Returns:
         Tuple containing the number of homologs and genes
     """
-    with rr_dbc.connect() as connection:
+    with rr_dbc.begin() as connection:
         # Query nr_homologs
         query1 = text(
             f"""
@@ -138,7 +137,7 @@ def query_rr_database(rr_dbc: Connection, genome_db_id: int, ref_db: str) -> Tup
     return nr_homologs, nr_genes
 
 
-def get_meta_value(rr_dbc: Connection, key: str) -> str:
+def get_meta_value(rr_dbc: DBConnection, key: str) -> str:
     """
     Retrieves the value of a meta key from the meta table.
 
@@ -152,7 +151,7 @@ def get_meta_value(rr_dbc: Connection, key: str) -> str:
     Raises:
         KeyError: If the key does not exist in the meta table.
     """
-    with rr_dbc.connect() as connection:
+    with rr_dbc.begin() as connection:
         query = text(
             """
                 SELECT meta_value FROM meta

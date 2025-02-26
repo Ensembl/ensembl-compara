@@ -14,7 +14,9 @@
 # limitations under the License.
 """Folder tree comparison methods."""
 
-__all__ = ['PathLike', 'DirCmp']
+from __future__ import annotations
+
+__all__ = ['DirCmp']
 
 from collections import deque
 import fnmatch
@@ -22,13 +24,10 @@ import functools
 import itertools
 import os
 from pathlib import Path
-from typing import Callable, Deque, Dict, Iterator, List, Optional, Tuple, TypeVar, Union
+from typing import Callable, Deque, Iterator
 
-from ..utils import to_list
-
-
-# Create the PathLike type as an alias for supported types a path can be stored into
-PathLike = TypeVar('PathLike', str, os.PathLike)
+from ensembl.compara.utils import to_list
+from ensembl.utils import StrPath
 
 
 class DirCmp:
@@ -50,7 +49,7 @@ class DirCmp:
         OSError: If either reference or target directories do not exist.
 
     """
-    def __init__(self, ref_path: PathLike, target_path: PathLike) -> None:
+    def __init__(self, ref_path: StrPath, target_path: StrPath) -> None:
         self.ref_path = Path(ref_path)
         if not self.ref_path.exists():
             raise OSError(f"Reference directory '{ref_path}' not found")
@@ -67,21 +66,22 @@ class DirCmp:
         # Get files/subdirectories only present in the reference directory
         self.ref_only = ref_fnames - target_fnames
         for ref_only_dname in ref_dnames - target_dnames:
-            for path, dummy, files in os.walk(self.ref_path / ref_only_dname):
+            for path, _, files in os.walk(self.ref_path / ref_only_dname):
                 rel_path = os.path.relpath(path, self.ref_path)
                 self.ref_only |= {os.path.join(rel_path, fname) for fname in files}
         # Get files/subdirectories only present in the target directory
         self.target_only = target_fnames - ref_fnames
         for target_only_dname in target_dnames - ref_dnames:
-            for path, dummy, files in os.walk(self.target_path / target_only_dname):
+            for path, _, files in os.walk(self.target_path / target_only_dname):
                 rel_path = os.path.relpath(path, self.target_path)
                 self.target_only |= {os.path.join(rel_path, fname) for fname in files}
-        self.subdirs = {}  # type: Dict[Path, DirCmp]
+        self.subdirs: dict[Path, DirCmp] = {}
         for dirname in ref_dnames & target_dnames:
             self.subdirs[Path(dirname)] = DirCmp(self.ref_path / dirname, self.target_path / dirname)
 
-    def _traverse(self, attr: str, patterns: Optional[Union[str, List]] = None,
-                  paths: Optional[Union[PathLike, List]] = None) -> Iterator[str]:
+    def _traverse(
+            self, attr: str, patterns: str | list | None = None, paths: StrPath | list | None = None
+    ) -> Iterator[str]:
         """Yields each element of the requested attribute found in the directory trees.
 
         This method traverses the shared directory tree in breadth-first order.
@@ -95,7 +95,7 @@ class DirCmp:
             ValueError: If one of `paths` is not part of the shared directory tree.
 
         """
-        nodes_left = deque()  # type: Deque[Tuple[Path, DirCmp]]
+        nodes_left: Deque[tuple[Path, DirCmp]] = deque()
         # Fetch and append the root node of each relative path
         for rel_path in to_list(paths):
             try:
@@ -124,15 +124,16 @@ class DirCmp:
             for ename in elements:
                 yield str(dirname / str(ename))
 
-    def apply_test(self, test_func: Callable, patterns: Optional[Union[str, List]] = None,
-                   paths: Optional[Union[PathLike, List]] = None) -> List[str]:
+    def apply_test(
+        self, test_func: Callable, patterns: str | list | None = None, paths: StrPath | list | None = None
+    ) -> list[str]:
         """Returns the files in the shared directory tree for which the test function returns True.
 
         Args:
             test_func: Test function applied to each tuple reference- / target-file. It has to expect two
-                ``PathLike`` parameters and return a boolean, like::
+                ``StrPath`` parameters and return a boolean, like::
 
-                    def test_func(ref_filepath: PathLike, target_filepath: PathLike) -> bool:
+                    def test_func(ref_filepath: StrPath, target_filepath: StrPath) -> bool:
 
             patterns: Filenames returned will match at least one of these glob patterns.
             paths: Relative directory/file paths to evaluate (including their subdirectories).
@@ -144,8 +145,9 @@ class DirCmp:
                 positives.append(filepath)
         return positives
 
-    def common_list(self, patterns: Optional[Union[str, List]] = None,
-                    paths: Optional[Union[PathLike, List]] = None) -> List[str]:
+    def common_list(
+        self, patterns: str | list | None = None, paths: StrPath | list | None = None
+    ) -> list[str]:
         """Returns the files/directories found in the shared directory tree.
 
         Args:
@@ -155,8 +157,9 @@ class DirCmp:
         """
         return list(self._traverse('common_files', patterns, paths))
 
-    def ref_only_list(self, patterns: Optional[Union[str, List]] = None,
-                      paths: Optional[Union[PathLike, List]] = None) -> List[str]:
+    def ref_only_list(
+        self, patterns: str | list | None = None, paths: StrPath | list | None = None
+    ) -> list[str]:
         """Returns the files/directories only found in the reference directory tree.
 
         Args:
@@ -166,8 +169,9 @@ class DirCmp:
         """
         return list(self._traverse('ref_only', patterns, paths))
 
-    def target_only_list(self, patterns: Optional[Union[str, List]] = None,
-                         paths: Optional[Union[PathLike, List]] = None) -> List[str]:
+    def target_only_list(
+        self, patterns: str | list | None = None, paths: StrPath | list | None = None
+    ) -> list[str]:
         """Returns the files/directories only found in the target directory tree.
 
         Args:

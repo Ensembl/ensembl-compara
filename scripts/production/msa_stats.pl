@@ -68,11 +68,13 @@ use Pod::Usage;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 
 my ( $help, $url, $mlss_id, $html );
+my $msa_stats_table = 'species_tree_node_tag';
 GetOptions(
     "help|?"    => \$help,
     "url=s"     => \$url,
     "mlss_id=i" => \$mlss_id,
     "html"      => \$html,
+    "table=s"   => \$msa_stats_table,
 ) or pod2usage(-verbose => 2);
 
 # Handle "print usage" scenarios
@@ -90,27 +92,53 @@ my @cols = (
 
 my $html_output;
 if ( $html ) {
-	$html_output  = "<table style=\"width:100%\">\n\t<tr>\n\t\t";
+	$html_output  = qq/<table style="width:100%">\n\t<tr>\n\t\t/;
 	$html_output .= _html_tag_list( \@cols, 'th' );
 	$html_output .= "\n\t</tr>\n";
 } else {
 	print join("\t", @cols) . "\n";
 }
 
-for my $stn (@{$mlss->species_tree->root->get_all_leaves}) {
-    my $coding_exon_bp_coverage = $stn->get_tagvalue("coding_exon_coverage");
-    my $coding_exon_length      = $stn->get_tagvalue("coding_exon_length");
-    my $genome_bp_coverage      = $stn->get_tagvalue("genome_coverage");
-    my $genome_length           = $stn->get_tagvalue("genome_length");
+my %cov_tag_recs;
+if ($msa_stats_table eq 'species_tree_node_tag') {
+
+    for my $stn (@{$mlss->species_tree->root->get_all_leaves}) {
+        my $genome_name = $stn->name;
+        $cov_tag_recs{$genome_name}{'coding_exon_bp_coverage'} = $stn->get_tagvalue("coding_exon_coverage");
+        $cov_tag_recs{$genome_name}{'coding_exon_length'} = $stn->get_tagvalue("coding_exon_length");
+        $cov_tag_recs{$genome_name}{'genome_bp_coverage'} = $stn->get_tagvalue("genome_coverage");
+        $cov_tag_recs{$genome_name}{'genome_length'} = $stn->get_tagvalue("genome_length");
+    }
+
+} elsif ($msa_stats_table eq 'method_link_species_set_tag') {
+
+    for my $gdb (@{$mlss->species_set->genome_dbs}) {
+        my $genome_name = $gdb->name;
+        my $gdb_id = $gdb->dbID;
+        $cov_tag_recs{$genome_name}{'coding_exon_bp_coverage'} = $mlss->get_tagvalue("coding_exon_coverage_$gdb_id");
+        $cov_tag_recs{$genome_name}{'coding_exon_length'} = $mlss->get_tagvalue("coding_exon_length_$gdb_id");
+        $cov_tag_recs{$genome_name}{'genome_bp_coverage'} = $mlss->get_tagvalue("genome_coverage_$gdb_id");
+        $cov_tag_recs{$genome_name}{'genome_length'} = $mlss->get_tagvalue("genome_length_$gdb_id");
+    }
+
+} else {
+    die("unsupported multiple-aligner stats table: $msa_stats_table");
+}
+
+while (my ($genome_name, $cov_tag_rec) = each %cov_tag_recs) {
+    my $coding_exon_bp_coverage = $cov_tag_rec->{'coding_exon_bp_coverage'};
+    my $coding_exon_length      = $cov_tag_rec->{'coding_exon_length'};
+    my $genome_bp_coverage      = $cov_tag_rec->{'genome_bp_coverage'};
+    my $genome_length           = $cov_tag_rec->{'genome_length'};
 
     my $genome_cov_perc = $genome_length ? sprintf("%.3f", ($genome_bp_coverage/$genome_length) * 100) : 'N/A';
     my $exon_cov_perc   = $coding_exon_length ? sprintf("%.3f", ($coding_exon_bp_coverage/$coding_exon_length) * 100) : 'N/A';
 
     if ( $html ) {
-        $html_output .= '<tr>' . _html_tag_list( [ $stn->name, $mlss_id, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc ], 'td' ) . '</tr>';
+        $html_output .= '<tr>' . _html_tag_list( [ $genome_name, $mlss_id, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc ], 'td' ) . '</tr>';
         $html_output .= "\n";
     } else {
-        print join("\t", $stn->name, $mlss_id, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc);
+        print join("\t", $genome_name, $mlss_id, _commify($genome_length), _commify($genome_bp_coverage), $genome_cov_perc, _commify($coding_exon_length), _commify($coding_exon_bp_coverage), $exon_cov_perc);
         print "\n";
     }
 }

@@ -38,35 +38,57 @@ my $prev_eg_release = $curr_eg_release - 1;
 # Species found on both vertebrates and non-vertebrates servers
 my @overlap_species = qw(saccharomyces_cerevisiae drosophila_melanogaster caenorhabditis_elegans);
 
+# ---------------------- DATABASE HOSTS -----------------------------------------
+
+my ($curr_vert_host, $curr_vert_port, $curr_nv_host, $curr_nv_port);
+if ($curr_release % 2 == 0) {
+    ($curr_vert_host, $curr_vert_port) = ('mysql-ens-sta-1', 4519);
+    ($curr_nv_host, $curr_nv_port)     = ('mysql-ens-sta-3', 4160);
+} else {
+    ($curr_vert_host, $curr_vert_port) = ('mysql-ens-sta-1-b', 4685);
+    ($curr_nv_host, $curr_nv_port)     = ('mysql-ens-sta-3-b', 4686);
+}
+
+my ($prev_vert_host, $prev_vert_port, $prev_nv_host, $prev_nv_port);
+if ($prev_release % 2 == 0) {
+    ($prev_vert_host, $prev_vert_port) = ('mysql-ens-sta-1', 4519);
+    ($prev_nv_host, $prev_nv_port)     = ('mysql-ens-sta-3', 4160);
+} else {
+    ($prev_vert_host, $prev_vert_port) = ('mysql-ens-sta-1-b', 4685);
+    ($prev_nv_host, $prev_nv_port)     = ('mysql-ens-sta-3-b', 4686);
+}
+
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # Use our mirror (which has all the databases)
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
-# Or use the official staging servers
-#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
+# Ensure we're using the correct cores for species that overlap with other divisions
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+my $overlap_cores = {
+    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_release}_11" ],
+    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_release}_282" ],
+    'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_${curr_release}_4" ],
+};
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
+
+# ---------------------- CURRENT CORE DATABASES : ALTERNATE HOSTS ----------------
+
+# Use the official staging servers
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_nv_host:$curr_nv_port/$curr_release");
 # and remove the Non-Vertebrates version of the shared species
 #Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 #Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 # before loading the Vertebrates version
-#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-1:4519/$curr_release");
-
-# Ensure we're using the correct cores for species that overlap with metazoa
-my @metazoa_overlap_species = qw(drosophila_melanogaster caenorhabditis_elegans);
-Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@metazoa_overlap_species);
-my $metazoa_overlap_cores = {
-    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_110_10" ],
-    'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_110_282" ],
-};
-Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_vert_host:$curr_vert_port/$curr_release");
 
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3-b',
-        -port   => 4686,
+        -host   => $prev_nv_host,
+        -port   => $prev_nv_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -75,8 +97,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $metazoa_overlap_cores );
     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-1-b',
-        -port   => 4685,
+        -host   => $prev_vert_host,
+        -port   => $prev_vert_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -93,15 +115,21 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'thiagogenez_plants_load_members_110'],
-    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'thiagogenez_default_plants_protein_trees_110' ],
-    'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'jalvarez_wheat_cultivars_plants_protein_trees_106' ],
+    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_load_members_114'],
+    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'twalsh_default_plants_protein_trees_take2_114' ],
+    'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', 'twalsh_rice_cultivars_plants_protein_trees_lsf_112' ],
+    'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-6', 'thiagogenez_wheat_cultivars_plants_protein_trees_113' ],
 
     # LASTZ dbs
-    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-5', 'thiagogenez_plants_lastz_batch1_110' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch1_114' ],
+
+    # other alignments
+    'wheat_a_cactus' => [ 'mysql-ens-compara-prod-5', 'twalsh_wheat_a_plants_load_cactus_114' ],
+    'wheat_b_cactus' => [ 'mysql-ens-compara-prod-7', 'twalsh_wheat_b_plants_load_cactus_114' ],
+    'wheat_d_cactus' => [ 'mysql-ens-compara-prod-9', 'twalsh_wheat_d_plants_load_cactus_114' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'thiagogenez_plants_synteny_110' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_synteny_114' ],
 
     # EPO dbs
     ## rice
@@ -124,7 +152,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $ancestral_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ $curr_nv_host, "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------

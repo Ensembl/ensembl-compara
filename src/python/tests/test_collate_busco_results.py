@@ -33,25 +33,25 @@ class TestCollateBusco:
     """Tests for the `collate_busco_results.py` script.
     """
 
-    def test_collate_output(self, tmp_dir: Path) -> None:
+    def test_collate_output(self, tmp_path: Path) -> None:
         """Tests the output of `collate_busco_results.py` script.
 
         Args:
-            tmp_dir: Unit test temp directory (fixture).
+            tmp_path: Unit test temp directory (fixture).
         """
         input_file = str(Path(__file__).parents[2] /
                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_collate_fofn.txt')
         input_genes = str(Path(__file__).parents[2] /
                           'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_collate_genes.tsv')
-        output_stats = str(tmp_dir / "stats.tsv")
-        output_taxa = str(tmp_dir / "taxa.tsv")
+        output_stats = str(tmp_path / "stats.tsv")
+        output_taxa = str(tmp_path / "taxa.tsv")
 
         # Run the command
 
         cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /
                                    'SpeciesTreeFromBusco' / 'scripts' / 'collate_busco_results.py'),
                '-i', input_file, '-m', '0.6',
-               '-o', str(tmp_dir), '-l', input_genes, '-s', output_stats, '-t', output_taxa]
+               '-o', str(tmp_path), '-l', input_genes, '-s', output_stats, '-t', output_taxa]
         location = str(Path(__file__).parents[0])
         subprocess.check_call(cmd, cwd=location)
 
@@ -62,41 +62,35 @@ class TestCollateBusco:
                             / "collate_output_taxa.tsv")
         expected_gene1 = str(Path(__file__).parents[2] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                              / "collate_gene_prot_gene1.fas")
-        expected_gene2 = str(Path(__file__).parents[2] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
-                             / "collate_gene_prot_gene2.fas")
         expected_gene3 = str(Path(__file__).parents[2] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
                              / "collate_gene_prot_gene3.fas")
-        expected_gene4 = str(Path(__file__).parents[2] / 'test_data' / "flatfiles" / "SpeciesTreeFromBusco"
-                             / "collate_gene_prot_gene4.fas")
 
         # Compare stats and taxa:
         assert file_cmp(output_stats, expected_stats)
         assert file_cmp(output_taxa, expected_taxa)
 
         # Compare per-gene output:
-        assert file_cmp(str(tmp_dir / "gene_prot_gene1.fas"), expected_gene1)
-        assert file_cmp(str(tmp_dir / "gene_prot_gene2.fas"), expected_gene2)
-        assert file_cmp(str(tmp_dir / "gene_prot_gene3.fas"), expected_gene3)
-        assert file_cmp(str(tmp_dir / "gene_prot_gene4.fas"), expected_gene4)
+        assert file_cmp(str(tmp_path / "gene_prot_gene1.fas"), expected_gene1)
+        assert file_cmp(str(tmp_path / "gene_prot_gene3.fas"), expected_gene3)
 
-    def test_collate_for_empty_input(self, tmp_dir: Path) -> None:
+    def test_collate_for_empty_input(self, tmp_path: Path) -> None:
         """Tests the `collate_busco_results.py` script when input is empty.
 
         Args:
-            tmp_dir: Unit test temp directory (fixture).
+            tmp_path: Unit test temp directory (fixture).
         """
         input_file = str(Path(__file__).parents[2] /
                          'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'empty_file.txt')
         input_genes = str(Path(__file__).parents[2] /
                           'test_data' / 'flatfiles' / 'SpeciesTreeFromBusco' / 'busco_collate_genes.tsv')
-        output_stats = str(tmp_dir / "stats.tsv")
-        output_taxa = str(tmp_dir / "taxa.tsv")
+        output_stats = str(tmp_path / "stats.tsv")
+        output_taxa = str(tmp_path / "taxa.tsv")
 
         # Run the command
         cmd = [sys.executable, str(Path(__file__).parents[3] / 'pipelines' /
                                    'SpeciesTreeFromBusco' / 'scripts' / 'collate_busco_results.py'),
                '-i', input_file, '-m', '0.5',
-               '-o', str(tmp_dir), '-l', input_genes, '-s', output_stats, '-t', output_taxa]
+               '-o', str(tmp_path), '-l', input_genes, '-s', output_stats, '-t', output_taxa]
 
         with raises(subprocess.CalledProcessError):
             subprocess.check_call(cmd)

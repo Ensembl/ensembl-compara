@@ -34,14 +34,14 @@ from pathlib import Path
 
 from Bio import Phylo
 
-from .dircmp import PathLike
+from ensembl.utils import StrPath
 
 
 # File extensions that should be interpreted as the same file format:
 NEWICK_EXT = {'.nw', '.nwk', '.newick', '.nh'}
 
 
-def file_cmp(fpath1: PathLike, fpath2: PathLike) -> bool:
+def file_cmp(fpath1: StrPath, fpath2: StrPath) -> bool:
     """Returns True if files `fpath1` and `fpath2` are equivalent, False otherwise.
 
     Args:
@@ -58,7 +58,7 @@ def file_cmp(fpath1: PathLike, fpath2: PathLike) -> bool:
     return filecmp.cmp(str(fpath1), str(fpath2))
 
 
-def _tree_cmp(fpath1: PathLike, fpath2: PathLike, tree_format: str = 'newick') -> bool:
+def _tree_cmp(fpath1: StrPath, fpath2: StrPath, tree_format: str = 'newick') -> bool:
     """Returns True if trees stored in `fpath1` and `fpath2` are equivalent, False otherwise.
 
     Args:

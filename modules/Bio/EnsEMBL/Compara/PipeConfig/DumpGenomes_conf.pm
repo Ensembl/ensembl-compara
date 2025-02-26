@@ -146,7 +146,7 @@ sub pipeline_analyses {
                 'force_redump'  => $self->o('force_redump'),
             },
             -flow_into  => [ 'build_faidx_index', WHEN('#methods#->{"EPO"}' => [ 'build_exonerate_esd_index' ]), ],
-            -rc_name    => '4Gb_job',
+            -rc_name    => '4Gb_24_hour_job',
             -priority   => 10,
             -hive_capacity  => $self->o('dump_capacity'),
         },
@@ -159,7 +159,7 @@ sub pipeline_analyses {
             -flow_into  => {
                 2 => [ 'build_faidx_index' ],
             },
-            -rc_name    => '4Gb_job',
+            -rc_name    => '4Gb_24_hour_job',
             -hive_capacity  => $self->o('dump_capacity'),
         },
 

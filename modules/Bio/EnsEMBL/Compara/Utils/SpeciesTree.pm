@@ -145,6 +145,13 @@ sub create_species_tree {
             if ($allow_subtaxa) {
                 #warn sprintf('%s will be added later because it is below a node (%s) that is already in the tree', $taxon->name, $anc->name);
                 push @{$extra_gdbs_by_taxon_id{$anc->dbID}}, $ref_gdb_by_taxon_id{$taxon->dbID};
+
+                # If there are other GenomeDBs associated with the given
+                # subtaxon, associate those with the ancestral taxon too.
+                if (exists $extra_gdbs_by_taxon_id{$taxon->dbID}) {
+                    push @{$extra_gdbs_by_taxon_id{$anc->dbID}}, @{$extra_gdbs_by_taxon_id{$taxon->dbID}};
+                    delete $extra_gdbs_by_taxon_id{$taxon->dbID};
+                }
                 next;
             } else {
                 throw(sprintf('Cannot add %s because it is below a node (%s) that is already in the tree', $taxon->name, $anc->name));
@@ -224,7 +231,13 @@ sub create_species_tree {
                             throw("Could not find the leaf with taxon_id $taxon_id");
         my $new_node = $current_leaf->copy_node();
         $new_node->node_id($taxon_id);
-        $current_leaf->parent->add_child($new_node);
+
+        if (defined $current_leaf->parent) {
+          $current_leaf->parent->add_child($new_node);
+        } else {
+          $stn_root = $new_node;
+        }
+
         $new_node->add_child($current_leaf);
         $new_node->{'_genome_db_id'} = undef;
         $new_node->name($current_leaf->taxon->name);
@@ -286,7 +299,15 @@ sub new_from_newick {
             my $component_name = $2;
             my $pgdb = $all_genome_dbs{lc $species_name};
             if ($pgdb and $pgdb->is_polyploid and ($component_name =~ /^[A-Z][0-9]?$/)) {
-                $gdb = $pgdb->component_genome_dbs($component_name) or die "No component named '$component_name' in '$species_name'\n";
+                $gdb = $pgdb->component_genome_dbs($component_name);
+
+                # If this node appears to represent the component of a polyploid genome, it must be present in the genome_db table ...
+                if (!$gdb) {
+                    # ... unless the missing component genome is Triticum aestivum Sy Mattis (component U)
+                    unless ($species_name eq 'triticum_aestivum_mattis' && $component_name eq 'U') {
+                        die "No component named '$component_name' in '$species_name'\n";
+                    }
+                }
             }
         }
         if ($gdb) {

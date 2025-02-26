@@ -96,13 +96,12 @@ sub default_options {
         # In these databases, ignore these tables
         'ignored_tables' => {
             # Mapping 'db_alias' => Arrayref of table names
-            'ncrna_db'       => [qw(ortholog_quality id_generator id_assignments datacheck_results method_link_species_set_attr)],
-            'protein_db'     => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
-            'mouse_prot_db'  => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
-            'mouse_ncrna_db' => [qw(ortholog_quality id_generator id_assignments datacheck_results method_link_species_set_attr)],
-            'pig_prot_db'    => [qw(ortholog_quality id_generator id_assignments datacheck_results)],
-            'pig_ncrna_db'   => [qw(ortholog_quality id_generator id_assignments datacheck_results method_link_species_set_attr)],
-            'projection_db'  => [qw(id_generator id_assignments)],
+            'ncrna_db'       => [qw(ortholog_quality datacheck_results method_link_species_set_attr)],
+            'protein_db'     => [qw(ortholog_quality datacheck_results)],
+            'mouse_prot_db'  => [qw(ortholog_quality datacheck_results)],
+            'mouse_ncrna_db' => [qw(ortholog_quality datacheck_results method_link_species_set_attr)],
+            'pig_prot_db'    => [qw(ortholog_quality datacheck_results)],
+            'pig_ncrna_db'   => [qw(ortholog_quality datacheck_results method_link_species_set_attr)],
         },
    };
 }

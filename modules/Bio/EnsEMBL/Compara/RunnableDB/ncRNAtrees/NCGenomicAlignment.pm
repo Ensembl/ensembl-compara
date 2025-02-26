@@ -28,6 +28,7 @@ use Bio::EnsEMBL::Compara::AlignedMemberSet;
 use Bio::EnsEMBL::Compara::Graph::NewickParser;
 use Bio::EnsEMBL::Compara::Utils::Preloader;
 use Bio::EnsEMBL::Utils::Sequence qw(reverse_comp);
+use Bio::EnsEMBL::Compara::Utils::Cigars qw(cigar_from_alignment_string);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
@@ -138,10 +139,37 @@ sub dump_sequences_to_workdir {
     my $count = 0;
     $cluster->adaptor->db->get_GenomeDBAdaptor->dump_dir_location($self->param_required('genome_dumps_dir'));
     my $max_length = 0;
+    my %boundaries_by_member;
+    my $transcript_edits_found = 0;
+    my $members_lacking_exon_boundaries = 0;
     foreach my $member (@{$member_list}) {
         my $gene_member = $member->gene_member;
         $self->throw("Error fetching gene_member") unless (defined $gene_member) ;
-        my $seq = $no_flanking ? $member->sequence() : $gene_member->expand_Locus('500%')->get_sequence();
+
+        my $seq;
+        if ($no_flanking) {
+            $seq = $member->sequence();
+        } else {
+            my $locus = $gene_member->expand_Locus('500%');
+            $seq = $locus->get_sequence();
+
+            $transcript_edits_found = 1 if $member->has_transcript_edits;
+
+            unless ($transcript_edits_found) {
+                my $exon_boundaries = $member->adaptor->db->get_SeqMemberAdaptor->fetch_exon_boundaries_by_SeqMember($member);
+
+                $members_lacking_exon_boundaries = 1 if scalar(@{$exon_boundaries}) == 0;
+
+                unless ($members_lacking_exon_boundaries) {
+                    my $locus_boundaries = [$locus->dnafrag_start, $locus->dnafrag_end, $locus->dnafrag_strand];
+                    $boundaries_by_member{$member->seq_member_id} = {
+                        'locus' => $locus_boundaries,
+                        'exons' => $exon_boundaries,
+                    };
+                }
+            }
+        }
+
         $max_length = length($seq) if length($seq) > $max_length;
         $residues += length($seq);
         $seq =~ s/(.{72})/$1\n/g;
@@ -159,6 +187,15 @@ sub dump_sequences_to_workdir {
         $residues = 0;
         $residues += length($_->sequence) for @$member_list;
     }
+
+    my $store_unflanked_alignment = !(
+        $no_flanking
+        || $self->param('no_flanking')
+        || $transcript_edits_found
+        || $members_lacking_exon_boundaries
+    );
+    $self->param('boundaries_by_member', \%boundaries_by_member) if ($store_unflanked_alignment);
+    $self->param('store_unflanked_alignment', $store_unflanked_alignment);
 
     $self->param('tag_residue_count', $residues);
 
@@ -384,7 +421,95 @@ sub store_fasta_alignment {
     $self->compara_dba->get_GeneAlignAdaptor->store($aln);
     $self->param('alignment_id', $aln->dbID);
     $self->param('gene_tree')->store_tag('genomic_alignment_gene_align_id', $aln->dbID);
+
+    if ($self->param('store_unflanked_alignment')) {
+        $self->store_unflanked_alignment($self->param('gene_tree'), $aln);
+    }
+
     return;
+}
+
+sub store_unflanked_alignment {
+    my ($self, $nc_tree, $aln) = @_;
+
+    my $boundaries_by_member = $self->param('boundaries_by_member');
+
+    my $flanked_sa = $aln->get_SimpleAlign(-ID_TYPE => 'MEMBER');
+    while (my ($member_id, $member_boundaries) = each %{$boundaries_by_member}) {
+        my ($locus_dnafrag_start, $locus_dnafrag_end, $locus_dnafrag_strand) = @{$member_boundaries->{'locus'}};
+
+        my $flanked_sa_seq = $flanked_sa->get_seq_by_id($member_id);
+
+        # This will ultimately be an alignment sequence with nonexonic regions masked, though to keep things
+        # simpler we start with a fully masked sequence and then insert the aligned sequence for each exon.
+        my $masked_align_seq = '-' x $flanked_sa->length;
+
+        my @exon_boundaries_wrt_align;
+        foreach my $exon (@{$member_boundaries->{'exons'}}) {
+            my ($exon_dnafrag_start, $exon_dnafrag_end) = @{$exon};
+
+            my $exon_start_wrt_locus;
+            my $exon_end_wrt_locus;
+            if ($locus_dnafrag_strand == 1) {
+                $exon_start_wrt_locus = $exon_dnafrag_start - $locus_dnafrag_start + 1;
+                $exon_end_wrt_locus = $exon_dnafrag_end - $locus_dnafrag_start + 1;
+            } else {
+                $exon_start_wrt_locus = $locus_dnafrag_end - $exon_dnafrag_end  + 1;
+                $exon_end_wrt_locus = $locus_dnafrag_end - $exon_dnafrag_start + 1;
+            }
+
+            my $exon_start_wrt_align = $flanked_sa->column_from_residue_number($member_id, $exon_start_wrt_locus);
+            my $exon_end_wrt_align = $flanked_sa->column_from_residue_number($member_id, $exon_end_wrt_locus);
+            my $exon_offset_wrt_align = $exon_start_wrt_align - 1;
+            my $exon_length_wrt_align = $exon_end_wrt_align - $exon_start_wrt_align + 1;
+            my $extracted_exon_align_seq = substr($flanked_sa_seq->seq, $exon_offset_wrt_align, $exon_length_wrt_align);
+            substr($masked_align_seq, $exon_offset_wrt_align, $exon_length_wrt_align, $extracted_exon_align_seq);
+        }
+
+        $flanked_sa_seq->seq($masked_align_seq);
+    }
+
+    # Removing all-gap columns should filter out most masked nonexonic sequence, and leave
+    # us with an alignment in which every column contains sequence from at least one exon.
+    my $unflanked_sa = $flanked_sa->remove_gaps(undef, 1);
+
+    my $unflanked_aln = $nc_tree->deep_copy();
+    bless $unflanked_aln, 'Bio::EnsEMBL::Compara::AlignedMemberSet';
+    $unflanked_aln->aln_method('unflanked_' . $aln->aln_method());
+    $unflanked_aln->aln_length($unflanked_sa->length);
+    $unflanked_aln->seq_type(undef);
+
+    foreach my $member (@{$unflanked_aln->get_all_Members()}) {
+        my $unflanked_sa_seq = $unflanked_sa->get_seq_by_id($member->dbID)->seq;
+        my $cigar = Bio::EnsEMBL::Compara::Utils::Cigars::cigar_from_alignment_string($unflanked_sa_seq);
+        $member->cigar_line($cigar);
+    }
+
+    if ($self->debug) {
+        my $member_adaptor = $self->compara_dba->get_SeqMemberAdaptor();
+        foreach my $member (@{$unflanked_aln->get_all_Members()}) {
+            my $gapped_sa_seq = uc($unflanked_sa->get_seq_by_id($member->dbID)->seq);
+            my $ungapped_sa_seq = $gapped_sa_seq =~ s/-//gr;
+            my $seq_member = $member_adaptor->fetch_by_dbID($member->dbID);
+            if ($ungapped_sa_seq ne $seq_member->sequence) {
+                $self->die_no_retry(
+                    sprintf(
+                        "sequence mismatch for member %d - member sequence '%s' vs ungapped alignment sequence '%s'",
+                        $member->dbID,
+                        $seq_member->sequence,
+                        $ungapped_sa_seq,
+                    )
+                );
+            }
+        }
+    }
+
+    $unflanked_aln->dbID( $nc_tree->get_value_for_tag('unflanked_alignment_gene_align_id') );
+    $self->compara_dba->get_GeneAlignAdaptor->store($unflanked_aln);
+    $nc_tree->store_tag('unflanked_alignment_gene_align_id', $unflanked_aln->dbID);
+    $nc_tree->store_tag('unflanked_alignment_length', $unflanked_sa->length);
+    $nc_tree->store_tag('unflanked_alignment_num_residues', $unflanked_sa->num_residues);
+    $nc_tree->store_tag('unflanked_alignment_percent_identity', $unflanked_sa->average_percentage_identity);
 }
 
 1;
