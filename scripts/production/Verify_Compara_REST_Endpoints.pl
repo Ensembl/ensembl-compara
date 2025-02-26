@@ -121,12 +121,15 @@ elsif($division eq "plants"){
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
     # rice
-    $cactus_species           = 'oryza_sativa';
-    $cactus_region            = '5:20683551-20684336';
-    $cactus_species_set       = 'collection-rice';
+    $cactus_hal_species       = 'oryza_sativa';
+    $cactus_hal_region        = '5:20683551-20684336';
+    $cactus_hal_species_set   = 'collection-rice_cultivars';
+
+    $cactus_db_species        = 'triticum_aestivum';
+    $cactus_db_region         = '3D:2585940-2634711';
+    $cactus_db_species_set    = 'collection-wheat';
 
     $extra_params             = 'compara=plants';
-    $skip_cactus              = 0;
 }
 elsif($division eq "metazoa"){
     $gene_member_id           = "LOC726692";
