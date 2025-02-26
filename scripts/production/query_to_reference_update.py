@@ -36,7 +36,7 @@ from typing import Any, Dict, List
 import warnings
 import json
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, text
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm.exc import NoResultFound
 
@@ -55,14 +55,15 @@ def collect_rr_dbs(rr_server: str, db_pattern: str = "") -> list:
         sqlalchemy.orm.exc.NoResultFound: if no relevant dbs on server
     """
     eng = create_engine(rr_server)
-    con = " WHERE `database` LIKE '%%_compara_%%' AND `database` NOT LIKE 'ensembl_%%'"
+    conditional = " WHERE `database` LIKE '%%_compara_%%' AND `database` NOT LIKE 'ensembl_%%'"
     if db_pattern:
-        con += f" AND `database` LIKE '%%{db_pattern}%%'"
-    q = eng.execute("SHOW DATABASES" + con)
-    result = q.fetchall()
-    if not result:
-        raise NoResultFound()
-    rr_compara_dbs = [(rr_server + "/" + r) for r, in result]
+        conditional += f" AND `database` LIKE '%%{db_pattern}%%'"
+    with eng.connect() as conn:
+        q = conn.execute(text("SHOW DATABASES" + conditional))
+        result = q.fetchall()
+        if not result:
+            raise NoResultFound()
+        rr_compara_dbs = [(rr_server + "/" + r) for r, in result]
     return rr_compara_dbs
 
 
@@ -76,13 +77,16 @@ def initial_release(url: str) -> int:
         sqlalchemy.orm.exc.NoResultFound: if relevant patch row is not present
     """
     eng = create_engine(url)
-    q = eng.execute(
-        "SELECT meta_value FROM meta WHERE meta_key = 'patch' ORDER BY meta_id ASC LIMIT 1"
-    )
-    result = q.fetchall()
-    if not result:
-        raise NoResultFound()
-    release = str(result[0]).split("_", 3)[2]
+    with eng.connect() as conn:
+        q = conn.execute(
+            text(
+                "SELECT meta_value FROM meta WHERE meta_key = 'patch' ORDER BY meta_id ASC LIMIT 1"
+            )
+        )
+        result = q.fetchall()
+        if not result:
+            raise NoResultFound()
+        release = str(result[0]).split("_", 3)[2]
     return int(release)
 
 
@@ -96,7 +100,9 @@ def fetch_all_collections(dbc: DBConnection) -> List[Dict[Any, Any]]:
         sqlalchemy.orm.exc.NoResultFound: if no collections found
     """
     q = dbc.execute(
-        "SELECT species_set_id, name, first_release, last_release FROM species_set_header"
+        text(
+            "SELECT species_set_id, name, first_release, last_release FROM species_set_header"
+        )
     )
     result = q.fetchall()
     if not result:
@@ -141,7 +147,7 @@ def fetch_current_collections(dbc: DBConnection) -> List[Dict[Any, Any]]:
         "SELECT species_set_id, name, first_release FROM species_set_header" +
         constraint
     )
-    q = dbc.execute(sql)
+    q = dbc.execute(text(sql))
     result = q.fetchall()
     if not result:
         raise NoResultFound()
@@ -170,11 +176,13 @@ def flag_for_update(
             dbname = url.database
             comparator_taxonomy = ""
 
-            match = rr_compara_dbname_regex.fullmatch(dbname)
-            try:
-                genome = match["prod_name"]  # type: ignore
-            except TypeError as exc:
-                raise ValueError(f"failed to extract genome name from dbname {dbname}") from exc
+            genome = None
+            if dbname:
+                if match := rr_compara_dbname_regex.fullmatch(dbname):
+                    genome = match["prod_name"]
+
+            if not genome:
+                raise ValueError(f"failed to extract genome name from dbname {dbname}")
 
             query_taxon_id = get_taxon_id_from_rapid_compara_db(query)
             try:
@@ -229,13 +237,16 @@ def get_species_name(url: str) -> str:
         url: url of core database
     """
     eng = create_engine(url)
-    q = eng.execute(
-        "SELECT meta_value FROM meta WHERE meta_key = 'species.scientific_name' LIMIT 1"
-    )
-    result = q.fetchone()
-    if not result:
-        raise NoResultFound()
-    return result["meta_value"]
+    with eng.connect() as conn:
+        q = conn.execute(
+            text(
+                "SELECT meta_value FROM meta WHERE meta_key = 'species.scientific_name' LIMIT 1"
+            )
+        )
+        result = q.fetchone()
+        if not result:
+            raise NoResultFound()
+        return result[0]
 
 
 def get_taxon_id_from_rapid_compara_db(url: str) -> int:
@@ -249,11 +260,14 @@ def get_taxon_id_from_rapid_compara_db(url: str) -> int:
         url: url of Rapid Compara database
     """
     eng = create_engine(url)
-    q = eng.execute(
-        "SELECT taxon_id FROM genome_db"
-    )
-    result = q.one()
-    return result["taxon_id"]
+    with eng.connect() as conn:
+        q = conn.execute(
+            text(
+                "SELECT taxon_id FROM genome_db"
+            )
+        )
+        result = q.one()
+        return result[0]
 
 
 def get_taxon_id_from_rapid_core_db(url: str) -> int:
@@ -267,11 +281,14 @@ def get_taxon_id_from_rapid_core_db(url: str) -> int:
         url: url of Rapid core database
     """
     eng = create_engine(url)
-    q = eng.execute(
-        "SELECT meta_value FROM meta WHERE meta_key = 'species.taxonomy_id'"
-    )
-    result = q.one()
-    return result["meta_value"]
+    with eng.connect() as conn:
+        q = conn.execute(
+            text(
+                "SELECT meta_value FROM meta WHERE meta_key = 'species.taxonomy_id'"
+            )
+        )
+        result = q.one()
+        return result[0]
 
 
 def main():
