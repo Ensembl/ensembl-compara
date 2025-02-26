@@ -28,7 +28,7 @@ from typing import ContextManager, List
 import pytest
 from pytest import raises
 
-from ensembl.utils.database import DBConnection, UnitTestDB
+from ensembl.utils.database import UnitTestDB
 
 
 @pytest.mark.parametrize("test_dbs", [[{"src": "ncbi_db"}]], indirect=True)

@@ -28,7 +28,7 @@ from pytest import raises
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from ensembl.utils.database import DBConnection, UnitTestDB
+from ensembl.utils.database import UnitTestDB
 from ensembl.compara.utils.taxonomy import (
     collect_taxonomys_from_path,
     match_taxon_to_reference,
