@@ -1482,6 +1482,7 @@ sub _get_GenomicAlignBlocks_from_HAL {
     $min_gab_len = max(1, $min_gab_len);
     $min_ga_len = max(1, $min_ga_len);
 
+    my $ga_adaptor = $self->db->get_GenomicAlignAdaptor;
     if ( !$target_dnafrag or ($num_targets > 1) ){ # multiple sequence alignment, or unfiltered pairwise alignment
       my %hal_target_set;
       foreach my $target_gdb (@$targets_gdb) {
@@ -1527,8 +1528,6 @@ sub _get_GenomicAlignBlocks_from_HAL {
         my @species_order = ();
         my %seqs_by_species;
         my $block_len = length($aln_block->[0]->{seq});
-
-        next if ( $block_len < $min_gab_len );
 
         my $gab = new Bio::EnsEMBL::Compara::GenomicAlignBlock(
           -length => $block_len,
