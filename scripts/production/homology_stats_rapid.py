@@ -29,7 +29,6 @@ import json
 from typing import Tuple, List, Dict, Any
 
 from sqlalchemy import text
-from sqlalchemy.engine import Connection
 from ensembl.utils.database import DBConnection
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
 
