@@ -43,7 +43,7 @@ classifiers = [
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
 dependencies = [
-    "ensembl-hive>=5.0",
+    "ensembl-hive@git+https://github.com/Ensembl/ensembl-hive.git@version/2.8#egg=ensembl-hive",
     "ensembl-py>=2.1.0",
     "ensembl-utils>=0.4.4",
     "biopython>=1.76",
