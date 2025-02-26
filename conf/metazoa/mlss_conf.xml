@@ -239,7 +239,7 @@
       <genome name="culicoides_sonorensis"/>
       <genome name="daktulosphaira_vitifoliae_gca025091365v1rs"/>
       <genome name="danaus_plexippus_gca018135715v1"/>
-      <genome name="dendroctonus_ponderosae_gca020466585v1rs"/>
+      <genome name="dendroctonus_ponderosae_gca020466585v2rs"/>
       <genome name="diabrotica_virgifera_gca917563875v2rs"/>
       <genome name="diuraphis_noxia_gca001186385v1"/>
       <genome name="drosophila_melanogaster"/>
@@ -273,7 +273,7 @@
       <genome name="megaselia_scalaris"/>
       <genome name="melitaea_cinxia_gca905220565v1"/>
       <genome name="monomorium_pharaonis_gca013373865v2"/>
-      <genome name="musca_domestica_gca030504385v1rs"/>
+      <genome name="musca_domestica_gca030504385v2rs"/>
       <genome name="nasonia_vitripennis"/>
       <genome name="neodiprion_lecontei_gca021901455v1rs"/>
       <genome name="neodiprion_pinetum_gca021155775v1rs"/>
@@ -334,14 +334,14 @@
       <genome name="drosophila_ananassae_gca017639315v2rs"/>
       <genome name="drosophila_arizonae_gca001654025v1rs"/>
       <genome name="drosophila_biarmipes_gca025231255v1rs"/>
-      <genome name="drosophila_bipectinata_gca030179905v1rs"/>
+      <genome name="drosophila_bipectinata_gca030179905v2rs"/>
       <genome name="drosophila_busckii_gca011750605v1rs"/>
       <genome name="drosophila_elegans_gca018152505v1rs"/>
       <genome name="drosophila_eugracilis_gca018153835v1rs"/>
       <genome name="drosophila_ficusphila_gca018152265v1rs"/>
       <genome name="drosophila_guanche_gca900245975v1rs"/>
       <genome name="drosophila_hydei_gca003285905v2rs"/>
-      <genome name="drosophila_kikkawai_gca030179895v1rs"/>
+      <genome name="drosophila_kikkawai_gca030179895v2rs"/>
       <genome name="drosophila_mauritiana_gca004382145v1rs"/>
       <genome name="drosophila_miranda_gca003369915v2rs"/>
       <genome name="drosophila_navojoa_gca001654015v2rs"/>
@@ -353,7 +353,7 @@
       <genome name="drosophila_subobscura_gca008121235v1rs"/>
       <genome name="drosophila_subpulchrella_gca014743375v2rs"/>
       <genome name="drosophila_suzukii_gca037355615v1rs"/>
-      <genome name="drosophila_takahashii_gca030179915v1rs"/>
+      <genome name="drosophila_takahashii_gca030179915v2rs"/>
       <genome name="drosophila_teissieri_gca016746235v2rs"/>
       <genome name="drosophila_willistoni_gca018902025v2rs"/>
       <genome name="drosophila_yakuba_gca016746365v2rs"/>
