@@ -31,7 +31,7 @@ from typing import List
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import NoResultFound
 
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from ensembl.compara.utils.taxonomy import match_taxon_to_reference
 
 

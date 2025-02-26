@@ -40,7 +40,7 @@ from sqlalchemy import create_engine
 from sqlalchemy.engine.url import make_url
 from sqlalchemy.orm.exc import NoResultFound
 
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from ensembl.compara.utils.taxonomy import fetch_scientific_name, match_taxon_to_reference
 
 
