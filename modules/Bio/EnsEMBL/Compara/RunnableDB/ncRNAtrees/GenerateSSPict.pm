@@ -31,20 +31,6 @@ secondary structures (in bracket notation) created by Infernal.
 In addition to secondary structure plots for the whole alignments 
 of the family, plots for individual members are also created.
 
-=head1 CONTACT
-
-   Please email comments or questions to the public Ensembl
-   developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-   Questions may also be sent to the Ensembl help desk at
-   <http://www.ensembl.org/Help/Contact>
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-
-Internal methods are usually preceded with an underscore (_)
-
 =cut
 
 
@@ -131,7 +117,7 @@ sub get_cons_aln {
     my ($self) = @_;
     my $aln_file = $self->param('aln_file');
     my $out_aln_file = $aln_file . ".cons";
-    ## For information about these options, check http://breaker.research.yale.edu/R2R/R2R-manual-1.0.3.pdf";
+    ## For information about these options, check the manual file(s) at https://sourceforge.net/projects/weinberg-r2r/files/
     $self->run_r2r_and_check("--GSC-weighted-consensus", $aln_file, $out_aln_file, "3 0.97 0.9 0.75 4 0.97 0.9 0.75 0.5 0.1");
     return;
 }

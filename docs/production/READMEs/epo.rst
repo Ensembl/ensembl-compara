@@ -58,7 +58,7 @@ You will need 1 pre-existing compara database containing all the pairwise alignm
 
 You will also need to install the following executables and set their locations:
 
-- `Gerp <http://mendel.stanford.edu/SidowLab/downloads/gerp/index.html>`_ set in ``gerp_exe_dir``
+- `Gerp <https://doi.org/10.1371/journal.pcbi.1001025>`_ set in ``gerp_exe_dir``
 - `Pecan <https://github.com/benedictpaten/pecan>`_ set in ``jar_file`` in ``Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan``
 
 Configuration of the pipeline
@@ -92,7 +92,7 @@ You will need the database containing the anchor set from the 1st part (set in '
  
 You will also need to install the following executables and set their locations:
 
-- `exonerate <http://www.ebi.ac.uk/~guy/exonerate/>`_ set in ``exonerate_exe``
+- `exonerate <https://ftp.ebi.ac.uk/pub/software/vertebrategenomics/exonerate/>`_ set in ``exonerate_exe``
 
 Configuration of the pipeline
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -136,7 +136,7 @@ the sequence from which will be use to generate the MSA.
 You will also need to install the following executables and set their locations:
 
 - bl2seq (from NCBI), set in the ``bl2seq``
-- gerpcol and gerpelem (`download link <http://mendel.stanford.edu/SidowLab/downloads/gerp/>`_) set in ``gerp_exe_dir``
+- gerpcol and gerpelem (`Davydov et al. (2010) <https://doi.org/10.1371/journal.pcbi.1001025>`_) set in ``gerp_exe_dir``
 - `Pecan <https://github.com/benedictpaten/pecan>`_ set in ``jar_file``
 - `Enredo <https://github.com/jherrero/enredo>`_ set in ``enredo_bin_dir``
 - `Ortheus <https://github.com/benedictpaten/ortheus>`_

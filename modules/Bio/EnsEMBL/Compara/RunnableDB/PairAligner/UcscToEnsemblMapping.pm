@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::UcscToEnsemblMapping
@@ -36,10 +25,10 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::UcscToEnsemblMapping
 Convert UCSC names to ensembl names (reference only chromosomes and supercontigs, ie no haplotypes)
 First check the names using chromInfo.txt and then go to mapping file if necessary eg ctgPos.txt for human
 Download from:
-http://hgdownload.cse.ucsc.edu/downloads.html
+https://hgdownload.cse.ucsc.edu/downloads.html
 Choose species
 Choose Annotation database
-wget http://hgdownload.cse.ucsc.edu/goldenPath/ponAbe2/database/chromInfo.txt.gz
+wget https://hgdownload.cse.ucsc.edu/goldenPath/ponAbe2/database/chromInfo.txt.gz
 
 =cut
 

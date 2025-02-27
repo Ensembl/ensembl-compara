@@ -6,7 +6,7 @@ Example for Homo sapiens NCBI36 against Canis familiaris BROADD2
 mkdir HsapNCBI36.vs.CfamBROADD2; cd HsapNCBI36.vs.CfamBROADD2
 mkdir ucsc_sql;cd ucsc_sql
 
-wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database
+wget -t 5 https://hgdownload.cse.ucsc.edu/goldenPath/hg18/database
 
 (replace hg18 with the species abbreviation of interest (check by going to a
 webpage and typing in the URL -- it should be a valid webpage)
@@ -22,7 +22,7 @@ Then wget the files with:
 
 grep CanFam2 index.html | awk -F "\"" '{print $6}' | grep -e net -e chain | \
 while read i; do wget -t 5 \
-http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/$i; done
+https://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/$i; done
 
 again remembering to replace hg18 with the relevent species abbreviation.
 Note they tend to be in the format of CanFam1 or xenTro1 or galGal2 for
@@ -33,7 +33,7 @@ to map alignments on the *_random and hap chromosomes:
 
 grep gold index.html | grep -e random -e hap | awk -F "\"" '{print $6}' | \
 while read i; do wget -t 5 \
-http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/$i; done
+https://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/$i; done
 
 
 (2)- set up a mysql database with UCSC data
@@ -56,13 +56,13 @@ gzip $i; echo $i loaded; done
 
 mkdir query; cd query
 
-wget -t 5 http://hgdownload.cse.ucsc.edu/goldenPath/canFam2/database/
+wget -t 5 https://hgdownload.cse.ucsc.edu/goldenPath/canFam2/database/
 
 grep gold.txt.gz index.html | awk -F "\"" '{print $6}' | while read i; do wget -t 5 \
-http://hgdownload.cse.ucsc.edu/goldenPath/canFam2/database/$i; done
+https://hgdownload.cse.ucsc.edu/goldenPath/canFam2/database/$i; done
 
 grep gold.sql index.html | head -1 | awk -F "\"" '{print $6}' | while read i; do wget -t 5 \
-http://hgdownload.cse.ucsc.edu/goldenPath/canFam2/database/$i -O query_gold.sql; done
+https://hgdownload.cse.ucsc.edu/goldenPath/canFam2/database/$i -O query_gold.sql; done
 
 sed -r -i -e 's/\w+_gold/query_gold/' query_gold.sql
 
@@ -97,7 +97,7 @@ uscs and e! DBs and the two core DBs
 ~/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl \
 --reg-conf ../reg.conf --master compara_master --method_link_type BLASTZ_NET \
 --genome_db_id 22 --genome_db_id 39 --source ucsc \
---url http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/
+--url https://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/
 
  populate tables with master data
 
