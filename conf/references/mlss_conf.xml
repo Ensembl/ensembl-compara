@@ -372,7 +372,7 @@
       <!-- Tardigrada -->
       <genome name="hypsibius_exemplaris_gca002082055v1gb"/>
       <!-- Rotifera -->
-      <genome name="adineta_vaga"/>
+      <!-- <genome name="adineta_vaga"/> -->
       <!-- Nematoda -->
       <genome name="ascaris_suum"/>
       <genome name="brugia_malayi"/>
@@ -431,7 +431,7 @@
       <!-- Tardigrada -->
       <genome name="hypsibius_exemplaris_gca002082055v1gb"/>
       <!-- Rotifera -->
-      <genome name="adineta_vaga"/>
+      <!-- <genome name="adineta_vaga"/> -->
       <!-- Nematoda -->
       <genome name="strongyloides_ratti"/>
       <genome name="haemonchus_contortus_gca000469685v2wb"/>
