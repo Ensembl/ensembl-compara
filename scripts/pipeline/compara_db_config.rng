@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="UTF-8"?>
-<grammar xmlns="http://relaxng.org/ns/structure/1.0" xmlns:blockly="http://blockly.com/">
+<grammar xmlns="http://relaxng.org/ns/structure/1.0" datatypeLibrary="http://www.w3.org/2001/XMLSchema-datatypes" xmlns:blockly="http://blockly.com/">
   <define name="new_species_set">
     <oneOrMore>
       <choice>
@@ -147,10 +147,14 @@
               </optional>
               <optional>
                 <attribute name="strain_type" blockly:blockName="Predominant strain type of this collection">
+                  <!-- This should be kept in sync with strain types in the StrainType datacheck. -->
                   <choice>
                     <value blockly:blockName="Strain">strain</value>
                     <value blockly:blockName="Breed">breed</value>
                     <value blockly:blockName="Cultivar">cultivar</value>
+                    <value blockly:blockName="Ecotype">ecotype</value>
+                    <value blockly:blockName="Haplotype">haplotype</value>
+                    <value blockly:blockName="Isolate">isolate</value>
                   </choice>
                 </attribute>
               </optional>
@@ -302,9 +306,29 @@
             <choice>
               <element name="protein_trees" blockly:blockName="Protein-trees">
                 <attribute name="collection" blockly:blockName="Collection name"/>
+                <optional>
+                  <attribute name="prefer_for_genomes"
+                             blockly:blockName="If we must choose, this is the preferred strain collection for the given space-delimited list of genomes.">
+                    <list>
+                      <oneOrMore>
+                        <data type="string"/>
+                      </oneOrMore>
+                    </list>
+                  </attribute>
+                </optional>
               </element>
               <element name="nc_trees" blockly:blockName="ncRNA-trees">
                 <attribute name="collection" blockly:blockName="Collection name"/>
+                <optional>
+                  <attribute name="prefer_for_genomes"
+                             blockly:blockName="If we must choose, this is the preferred strain collection for the given space-delimited list of genomes.">
+                    <list>
+                      <oneOrMore>
+                        <data type="string"/>
+                      </oneOrMore>
+                    </list>
+                  </attribute>
+                </optional>
               </element>
             </choice>
           </oneOrMore>

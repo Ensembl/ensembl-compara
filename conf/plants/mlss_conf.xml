@@ -447,9 +447,15 @@
 
   <gene_trees>
     <protein_trees collection="default"/>
-    <protein_trees collection="wheat_cultivars"/>
+    <protein_trees
+      collection="wheat_cultivars"
+      prefer_for_genomes="secale_cereale triticum_aestivum"
+    />
     <protein_trees collection="rice_cultivars"/>
-    <protein_trees collection="barley_cultivars"/>
+    <protein_trees
+      collection="barley_cultivars"
+      prefer_for_genomes="hordeum_vulgare"
+    />
   </gene_trees>
 
   <species_trees>
