@@ -31,13 +31,19 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-7 -port 4617{code}",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Checkcoredatabases",
+            "summary": "Check the core databases"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-7 -port 4617{code}",
             "summary": "Prepare the master database"
          },
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the member loading pipeline",
             "name_on_graph": "Member loading"
          }
@@ -49,10 +55,18 @@
       "component": "Relco tasks",
       "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>\n*Production pipelines brief*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+Pipelines+Brief",
       "subtasks": [{
+            "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}ibsub init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*GitHub*: [<Division>/ProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/ProteinTrees_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::ProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the Protein-trees pipeline",
             "name_on_graph": "Protein-trees"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "Review the gene-tree stats for each gene-tree pipeline, and address any issues.",
+            "summary": "Check gene-tree stats",
+            "name_on_graph": "Check gene-tree stats"
          }
       ],
       "labels": ["Production_anchor"],
@@ -72,23 +86,14 @@
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
-            "summary": "Merge the homology pipelines"
+            "summary": "Merge the homology pipelines",
+            "name_on_graph": "Merge the homology pipelines"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+healthchecking+and+testing",
             "summary": "Run the healthchecks"
-         },
-         {
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
-            "summary": "test the homologies data"
-         },
-         {
-            "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
-            "summary": "test the downloads"
          },
          {
             "assignee": "<RelCo>",
@@ -100,12 +105,55 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "Update the jira_recurrent_tickets.json with any changes to the release process or tasks that has taken during the current release",
-            "summary": "Update conf/<division>/jira_recurrent_tickets.json"
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
+            "summary": "test the homologies data"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
+            "summary": "test the downloads"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisionswithoutanancestraldatabase(e.g.Pan,Metazoa)",
+            "summary": "Resubmit handover of updated release DB if needed"
          }
       ],
       "labels": ["Merge_anchor"],
       "summary": "<Division> Release <version> Database merge and handover"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "Clean up any <division> database backups that are no longer needed",
+            "summary": "Clean up unneeded <division> database backups"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks#Posthandovertasks-MovepipelinedirectoriestoNFS",
+            "summary": "Move pipeline directories to NFS"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "Ensure that the division production_reg_conf.pl is up to date on GitHub",
+            "summary": "Update conf/<division>/production_reg_conf.pl"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "Update the jira_recurrent_tickets.json with any changes to the release process or tasks that has taken during the current release",
+            "summary": "Update conf/<division>/jira_recurrent_tickets.json"
+         }
+      ],
+      "summary": "<Division> Release <version> Post-handover tasks"
    },
    {
       "assignee": "<RelCo>",

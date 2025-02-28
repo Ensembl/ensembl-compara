@@ -56,7 +56,7 @@ use strict;
 use warnings;
 use Statistics::Descriptive;
 
-use Bio::Tools::Run::Phylo::PAML::Codeml;
+use Bio::Tools::Phylo::PAML::Codeml;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 

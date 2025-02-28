@@ -62,6 +62,10 @@
               </choice>
             </attribute>
           </optional>
+          <optional>
+            <attribute name="genome_component"
+                       blockly:blockName="If specified, this indicates which genome component is represented by this genome element; an empty attribute string indicates the principal genome"/>
+          </optional>
         </element>
       </choice>
     </oneOrMore>
@@ -122,6 +126,31 @@
                   <choice>
                     <value blockly:blockName="Yes">1</value>
                     <value blockly:blockName="No">0</value>
+                  </choice>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="no_store" blockly:blockName="Do not store this collection">
+                  <choice>
+                    <value blockly:blockName="Yes">1</value>
+                    <value blockly:blockName="No">0</value>
+                  </choice>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="no_components" blockly:blockName="Omit polyploid subgenome components">
+                  <choice>
+                    <value blockly:blockName="Yes">1</value>
+                    <value blockly:blockName="No">0</value>
+                  </choice>
+                </attribute>
+              </optional>
+              <optional>
+                <attribute name="strain_type" blockly:blockName="Predominant strain type of this collection">
+                  <choice>
+                    <value blockly:blockName="Strain">strain</value>
+                    <value blockly:blockName="Breed">breed</value>
+                    <value blockly:blockName="Cultivar">cultivar</value>
                   </choice>
                 </attribute>
               </optional>
@@ -190,6 +219,7 @@
                   <value>EPO_EXTENDED</value>
                   <value>EPO+EPO_EXTENDED</value>
                   <value>CACTUS_HAL</value>
+                  <value>CACTUS_DB</value>
                 </choice>
               </attribute>
               <choice>
@@ -219,6 +249,12 @@
                     <value blockly:blockName="No">0</value>
                   </choice>
                 </attribute>
+              </optional>
+              <optional>
+                <attribute name="url" blockly:blockName="URL field for CACTUS_HAL"/>
+              </optional>
+              <optional>
+                <attribute name="ref_genome" blockly:blockName="Reference genome"/>
               </optional>
             </element>
           </oneOrMore>

@@ -75,7 +75,7 @@ If the NCBI taxonomy cannot be used (too many unresolved nodes), you can skip th
 General structure of the pipeline
 ---------------------------------
 
-You can refer to docs/pipeline_diagrams/ProteinTrees.png for a visual description of the pipeline.
+You can refer to docs/production/diagrams/ProteinTrees.gv for an eHive pipeline graph.
 
 The main structure is given by some backbone analysis. Each one of them will dump the current state of the database (for a backup) and 
 fire the next step of the pipeline. The backups can be used to restore the database if things go very wrong (let's hope they don't :) ).
@@ -160,7 +160,7 @@ To configure the pipeline:
 - make a copy of PipeConfig/Example/EnsemblProteinTrees_conf.pm into PipeConfig/Example/
 - update the package name
 - update the parameters in the default_options() section
-- check that your grid engine is parameterized in resource_classes(): by default, only LSF is.
+- check that your grid engine is parameterized in resource_classes(): by default, only Slurm is.
 
 Here follows a description of each category of parameters
 
@@ -383,8 +383,8 @@ beekeeper parameters
 All the z*_capacity parameters are tuned to fit the capacity of our MySQL servers. You might want to initially reduce them, and gradually increase
 them "as long as the database holds" :) The relative proportion of each analysis should probably stay the same
 
-The "resource_classes" of the configuration file defined how beekeeper should run each category of job. These are LSF parameters that you may only
-want to change if you don't have a LSF installation
+The "resource_classes" of the configuration file defined how beekeeper should run each category of job. These are Slurm parameters that you may only
+want to change if you don't have a Slurm installation
 
 Run the pipeline
 ----------------
@@ -646,7 +646,11 @@ SELECT value FROM gene_tree_root_tag WHERE root_id=458053 AND tag = 'model_name'
 
   .. code-block:: sql
 
-     SELECT * FROM lsf_usage WHERE analysis LIKE "raxml(%"
+     SELECT logic_name, role_id, worker_resource_usage.*
+     FROM worker_resource_usage
+     JOIN role USING (worker_id)
+     JOIN analysis_base USING (analysis_id)
+     WHERE logic_name LIKE "raxml%";
 
 * Get running times and alignment lengths:
 

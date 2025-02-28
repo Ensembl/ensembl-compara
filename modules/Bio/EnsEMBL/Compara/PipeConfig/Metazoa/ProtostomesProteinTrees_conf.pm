@@ -48,8 +48,30 @@ sub default_options {
 
         'collection'          => 'protostomes',
         'dbID_range_index'    => 10,
-        'ref_collection'      => 'default',
+        'ref_collection_list' => ['default'],
         'label_prefix' => 'protostomes_',
+
+        #GOC parameters:
+        'goc_taxlevels' => [ 'Cyclophyllidea', 'Entelegynae' , 'Ixodidae' ,'Mollusca' ,'Nematoda' ,'Neoptera', 'Schistosoma' ],
+
+        'threshold_levels' => [
+            {
+		        'taxa'          => [ 'Caenorhabditis', 'Crassostrea', 'Cyclophyllidea', 'Ditrysia', 'Haliotis', 'Octopus', 'Rhipicephalinae', 'Schistosoma', 'Spirurina' ],
+                'thresholds'    => [ 50, 50, 25 ],
+            },
+            {
+                'taxa'          => [ 'Entelegynae' , 'Ixodidae' ,'Mollusca' ,'Neoptera' ],
+                'thresholds'    => [ 25, 25, 25 ],
+            },
+            {
+                'taxa'          => [ 'Nematoda' ],
+                'thresholds'    => [ undef, undef, 25 ],
+            }, 
+            {
+                'taxa'          => [ 'all' ],
+                'thresholds'    => [ undef, undef, 25 ],
+            },
+        ],
     };
 }
 

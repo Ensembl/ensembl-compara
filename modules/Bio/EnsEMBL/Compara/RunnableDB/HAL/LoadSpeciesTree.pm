@@ -32,6 +32,7 @@ use strict;
 use warnings;
 
 use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::MakeSpeciesTree');
 
@@ -44,7 +45,7 @@ sub fetch_input {
     my $mlss = $mlss_adap->fetch_by_dbID( $self->param_required('mlss_id') );
     
     my $hal_path = $mlss->url;
-    my %species_map = %{ eval $mlss->get_tagvalue('HAL_mapping') };
+    my %species_map = %{destringify($mlss->get_value_for_tag('HAL_mapping', '{}'))};
 
     die "Path to HAL file missing from  MLSS (id " . $self->param('mlss_id') . ") url field\n" unless (defined $hal_path);
     die "Species name mapping missing from method_link_species_set_tag\n" unless (%species_map);
@@ -62,7 +63,18 @@ sub fetch_input {
     }
 
     my $species_tree_root  = Bio::EnsEMBL::Compara::Utils::SpeciesTree->new_from_newick($newick_tree, $self->compara_dba);
-    
+
+    if ($mlss->has_tag('genome_component')) {
+        my $genome_component = $mlss->get_value_for_tag('genome_component');
+        foreach my $leaf (@{$species_tree_root->get_all_leaves()}) {
+            my $leaf_gdb = $gdb_adap->fetch_by_dbID($leaf->genome_db_id);
+            my $comp_gdb = $gdb_adap->fetch_by_name_assembly($leaf_gdb->name, $leaf_gdb->assembly, $genome_component);
+            if (defined $comp_gdb) {
+                $leaf->node_name($comp_gdb->display_name);
+            }
+        }
+    }
+
     $self->param('species_tree_root', $species_tree_root);
 }
 

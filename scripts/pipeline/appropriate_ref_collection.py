@@ -33,7 +33,7 @@ from argparse import ArgumentParser
 from sqlalchemy.orm import Session
 from sqlalchemy.orm.exc import NoResultFound
 
-from ensembl.database import DBConnection
+from ensembl.utils.database import DBConnection
 from ensembl.compara.utils.taxonomy import (
     collect_taxonomys_from_path,
     match_taxon_to_reference,

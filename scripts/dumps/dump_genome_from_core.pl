@@ -24,7 +24,7 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 
 use Getopt::Long;
 
-my ($dbname, $host, $port, $mask, $genome_dump_file, $help);
+my ($dbname, $host, $port, $user, $pass, $mask, $genome_component, $genome_dump_file, $help);
 my $desc = "
 This script dumps all toplevel sequences from a core database and stores them in fasta file.
 The sequences can be unmasked, soft masked or hard masked.
@@ -38,20 +38,31 @@ Options:
       server hosting the core database
 * --port
       port for the host database
+* --user
+      username for accessing the core database
+* --pass
+      password for accessing the core database
 * --outfile
       file where the dumped sequence will be stored in fasta format
 * --mask
       level of masking of the dumped sequences [soft/hard]. If this option is not defined then the
       sequence will be unmasked.
+* --genome-component
+      component of a polyploid genome for which sequences should be dumped.
+      By default, sequences are dumped for all components of a polyploid genome.
+
 ";
 
 GetOptions(
-    'core-db|core_db=s' => \$dbname,
-    'host=s'            => \$host,
-    'port=s'            => \$port,
-    'mask=s'            => \$mask,
-    'outfile=s'         => \$genome_dump_file,
-    'help'              => \$help
+    'core-db|core_db=s'  => \$dbname,
+    'host=s'             => \$host,
+    'port=s'             => \$port,
+    'user=s'             => \$user,
+    'pass=s'             => \$pass,
+    'mask=s'             => \$mask,
+    'genome-component=s' => \$genome_component,
+    'outfile=s'          => \$genome_dump_file,
+    'help'               => \$help
   );
 
 
@@ -64,13 +75,31 @@ if ( defined $mask && $mask !~ /soft|hard/ ) {
     die "ERROR: '--mask' has to be either 'soft' or 'hard'\n"
 }
 
-my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -user   => 'ensro',
+my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -user   => $user,
+                                               -pass   => $pass,
                                                -dbname => $dbname,
                                                -host   => $host,
                                                -port   => $port,
                                                -driver => 'mysql');
 
-my $slices = $dba->get_SliceAdaptor->fetch_all("toplevel");
+my $slice_adaptor = $dba->get_SliceAdaptor();
+
+my $slices;
+if (defined $genome_component) {
+    # validate the genome component, if specified
+    my @core_db_components = @{$dba->get_GenomeContainer->get_genome_components()};
+    if (!@core_db_components) {
+        die "ERROR: invalid option '--genome-component' - no components found in core database '$dbname'\n";
+    }
+    elsif (! grep { $_ eq $genome_component } @core_db_components) {
+        die "ERROR: genome component '$genome_component' not found in core database '$dbname'\n";
+    }
+    # If the core has passed the PolyploidAttribs datacheck,
+    # only top-level regions will have genome components.
+    $slices = $slice_adaptor->fetch_all_by_genome_component($genome_component);
+} else {
+    $slices = $slice_adaptor->fetch_all("toplevel");
+}
 
 open(my $filehandle, '>', $genome_dump_file) or die "can't open $genome_dump_file for writing\n";
 
@@ -95,3 +124,5 @@ foreach my $slice (@$slices){
     my $padded_slice = Bio::EnsEMBL::PaddedSlice->new(-SLICE => $slice);
     $serializer->print_Seq($padded_slice);
 }
+
+close($filehandle) or die "can't close $genome_dump_file\n";

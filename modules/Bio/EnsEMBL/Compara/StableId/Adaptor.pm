@@ -59,7 +59,7 @@ sub new {
 sub treefam_dbh {
     my ($self, $release) = @_;
 
-    return DBI->connect("DBI:mysql:mysql_use_result=1;host=mysql-treefam-public.ebi.ac.uk;port=4418;database=treefam_production_${release}", 'treefam_ro', '');
+    return DBI->connect("DBI:mysql:mysql_use_result=1;host=mysql-ens-compara-prod-4;port=4401;database=treefam_production_${release}", 'ensro', '');
 }
 
 sub dbh_from_dgsuffix_dbname {

@@ -275,6 +275,21 @@ sub name{
   return $self->{'name'};
 }
 
+=head2 get_distinct_name
+
+  Example     : print $genome_db->get_distinct_name();
+  Description : Returns the name of the GenomeDB, with additional information
+                (e.g. genome component) appended if relevant to allow it to be
+                distinguished from other GenomeDBs with the same name.
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub get_distinct_name {
+    my $self = shift;
+    return $self->genome_component ? $self->name . '_' . $self->genome_component : $self->name;
+}
 
 =head2 get_short_name
 
@@ -933,6 +948,32 @@ sub get_dmnd_helper {
         die "Could not find diamond db for this genome" unless (-e $path);
         return $path;
     }
+}
+
+=head2 _get_ftp_dump_relative_path
+
+  Example     : my $genome_rel_path = $genome_db->_get_ftp_dump_relative_path();
+  Description : Returns the expected directory path for FTP dumps of data files for
+                this genome, relative to the homology TSV dump base directory.
+                This internal method is intended to be consistent with Production FTP dump code:
+                https://github.com/Ensembl/ensembl-production/blob/c945a38/modules/Bio/EnsEMBL/Production/Pipeline/Common/Base.pm#L198
+  Returntype  : String
+  Exceptions  : none
+
+=cut
+
+sub _get_ftp_dump_relative_path {
+    my ($self) = @_;
+
+    my $rel_path = $self->name;
+    my $core_dba = $self->db_adaptor;
+    if ($core_dba->is_multispecies()) {
+        if ($core_dba->dbc->dbname() =~ /^(?<collection_core_prefix>.+)\_core\_/) {
+            $rel_path = $+{'collection_core_prefix'} . '/' . $rel_path;
+        }
+    }
+
+    return $rel_path;
 }
 
 1;

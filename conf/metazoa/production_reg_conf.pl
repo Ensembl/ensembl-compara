@@ -36,13 +36,20 @@ my $prev_release = $curr_release - 1;
 my $curr_eg_release = $curr_release - 53;
 my $prev_eg_release = $curr_eg_release - 1;
 
+# ---------------------- DATABASE HOSTS -----------------------------------------
+
+my ($curr_nv_host, $curr_nv_port) = $curr_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
+
+my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
+
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # Use our mirror (which has all the databases)
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
-
-# Or use the official staging servers
-#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3:4160/$curr_release");
 
 # Ensure we are using the correct cores for species that overlap with vertebrates
 my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster);
@@ -53,13 +60,19 @@ my $overlap_cores = {
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
+# ---------------------- CURRENT CORE DATABASES : ALTERNATE HOSTS ----------------
+
+# Official staging servers
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_nv_host:$curr_nv_port/$curr_release");
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3-b',
-        -port   => 4686,
+        -host   => $prev_nv_host,
+        -port   => $prev_nv_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -76,16 +89,19 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-6', 'sbhurji_metazoa_load_members_110' ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-6', 'sbhurji_default_metazoa_protein_trees_110' ],
-    'protostomes_ptrees' => [ 'mysql-ens-compara-prod-8', 'twalsh_protostomes_metazoa_protein_trees_20230209_110' ],
+    'compara_members'    => [ 'mysql-ens-compara-prod-6', 'sbotond_metazoa_load_members_113' ],
+    'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', 'thiagogenez_default_metazoa_protein_trees_112' ],
+    'protostomes_ptrees' => [ 'mysql-ens-compara-prod-9', 'thiagogenez_protostomes_metazoa_protein_trees_112' ],
+    'insects_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbotond_insects_metazoa_protein_trees_113' ],
+    'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-9', 'thiagogenez_pangenome_drosophila_metazoa_protein_trees_112' ],
 
-    # LastZ dbs
-    # 'lastz_batch_1' => [ 'mysql-ens-compara-prod-X', '' ],
-    # 'lastz_batch_2' => [ 'mysql-ens-compara-prod-X', '' ],
+    # prev homology dbs required for ReindexMembers
+    #'default_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
+    #'protostomes_ptrees_prev'           => [ 'mysql-ens-compara-prod-X', '' ],
+    #'insects_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
+    #'pangenome_drosophila_ptrees_prev'  => [ 'mysql-ens-compara-prod-X', '' ],
 
-    # synteny
-    # 'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
+    'drosophila_cactus'  => [ 'mysql-ens-compara-prod-6', 'twalsh_pangenome_drosophila_metazoa_load_cactus_113' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -93,7 +109,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 # ----------------------NON-COMPARA DATABASES------------------------
 # NCBI taxonomy database (maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3', "ncbi_taxonomy_$curr_release" ],
+    'ncbi_taxonomy' => [ $curr_nv_host, "ncbi_taxonomy_$curr_release" ],
 });
 
 # -------------------------------------------------------------------

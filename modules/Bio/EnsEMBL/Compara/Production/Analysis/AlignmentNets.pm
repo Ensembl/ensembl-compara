@@ -44,7 +44,6 @@ package Bio::EnsEMBL::Compara::Production::Analysis::AlignmentNets;
 use warnings ;
 use strict;
 
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentProcessing');
 
 

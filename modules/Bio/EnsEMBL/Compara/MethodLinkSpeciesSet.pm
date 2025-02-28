@@ -248,8 +248,9 @@ sub source {
   Example    : my $url = $method_link_species_set->url();
   Example    : $method_link_species_set->url("http://hgdownload.cse.ucsc.edu/goldenPath/monDom1/vsHg17/");
   Description: get/set for attribute url. Defines where the data come from if they
-               have been imported. Note that some urls are defined with #base_dir# in the database to
-               represent a part that has to be substituted with runtime configuration. This method returns
+               have been imported. Note that some urls are defined with the prefix '#base_dir#' in the
+               database to represent a part that has to be substituted with runtime configuration.
+               If a URL contains the #base_dir#' prefix and a return value is wanted, this method returns
                the substituted URL.
   Returntype : string
   Exceptions : none
@@ -260,26 +261,29 @@ sub source {
 sub url {
   my ($self, $arg) = @_;
 
-  if (defined($arg)) {
-    $self->{'url'} = $arg ;
-  }
-  if ($self->{'url'} && ($self->{'url'} =~ /^#base_dir#/)) {
-      die "Need an adaptor to resolve the location of ".$self->{'url'} unless $self->adaptor;
+    if (defined($arg)) {
+        # store the original, non-resolved url
+        $self->{'original_url'} = $arg ;
+        $self->{'url'} = $self->{'original_url'};
+    }
 
-      my $data_dir = $self->adaptor->base_dir_location;
-      my $url = $self->{'url'};
-      #warn "<- $url";
-      $url =~ s/#base_dir#/$data_dir/;
-      $url =~ s/\/multi\/+multi\//\/multi\//;    # temporary hack for e88 production until the database has been updated
-      #warn "-> $url";
+    # Attempt to resolve the URL iff a return value is wanted.
+    if (defined wantarray()) {  # i.e. if method called in scalar or list context
 
-      if (-e $url) {
-          $self->{'original_url'} = $url;
-          $self->{'url'} = $url;
-      } else {
-          die "'$url' does not exist on this machine\n";
-      }
-  }
+        if ($self->{'url'} =~ /^#base_dir#/) {
+            if (!$self->adaptor) {
+                throw(sprintf("Need an adaptor to resolve the location of '%s'", $self->{'url'}));
+            }
+
+            my $data_dir = $self->adaptor->base_dir_location;
+
+            $self->{'url'} =~ s/^#base_dir#/$data_dir/;
+
+            if (! -e $self->{'url'}) {
+                throw(sprintf("'%s' does not exist on this machine", $self->{'url'}));
+            }
+        }
+    }
 
   return $self->{'url'};
 }
@@ -336,7 +340,7 @@ sub toString {
     my $txt = sprintf('MethodLinkSpeciesSet dbID=%s', $self->dbID || '?');
     $txt .= ' ' . ($self->name ? sprintf('"%s"', $self->name) : '(unnamed)');
     $txt .= sprintf(' {method "%s"} x {species-set "%s"}', $self->method->type, $self->species_set->name || $self->species_set->dbID);
-    $txt .= ', found in '.$self->{'url'} if $self->{'url'};
+    $txt .= ', located at ' . $self->get_original_url if $self->get_original_url;
     $txt .= ' ' . $self->SUPER::toString();
     return $txt;
 }

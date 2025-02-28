@@ -239,7 +239,7 @@ sub resource_classes {
     return {
         %{$self->SUPER::resource_classes('include_multi_threaded')},  # inherit the standard resource classes, incl. multi-threaded
 
-         '4Gb_big_tmp_job'  => { 'LSF' => ['-C0 -M4000 -R"select[mem>4000] rusage[mem=4000]"', '-worker_base_tmp_dir ' . $self->o('big_tmp_dir')] },
+         '4Gb_big_tmp_job'  => { 'SLURM' => ['--mem=4g', '-worker_base_tmp_dir ' . $self->o('big_tmp_dir')] },
     };
 }
 
@@ -836,7 +836,7 @@ sub core_pipeline_analyses {
                 'blast_db'                  => '#fasta_dir#/unannotated.fasta',
                 %blastp_parameters,
             },
-            -rc_name       => '250Mb_6_hour_job',
+            -rc_name       => '1Gb_6_hour_job',
             -flow_into => {
                -1 => [ 'blastp_unannotated_himem' ],  # MEMLIMIT
                -2 => 'break_batch',
@@ -924,7 +924,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                 1 => [ 'hcluster_parse_output' ],
             },
-            -rc_name => '32Gb_job',
+            -rc_name => '32Gb_24_hour_job',
         },
 
         {   -logic_name => 'hcluster_parse_output',
@@ -1090,7 +1090,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -batch_size           => 20,
-            -rc_name    => '1Gb_job',
+            -rc_name    => '1Gb_24_hour_job',
             -flow_into => {
                -1 => [ 'mcoffee' ],  # MEMLIMIT
                -2 => [ 'mafft' ],
@@ -1107,7 +1107,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -1,
             },
             -analysis_capacity    => $self->o('mcoffee_capacity'),
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -priority   => $self->o('mcoffee_priority'),
             -flow_into => {
                -1 => [ 'mcoffee_himem' ],  # MEMLIMIT
@@ -1139,7 +1139,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name    => '8Gb_job',
+            -rc_name    => '8Gb_24_hour_job',
             -priority   => $self->o('mcoffee_himem_priority'),
             -flow_into => {
                -1 => [ 'mafft_himem' ],
@@ -1443,7 +1443,7 @@ sub core_pipeline_analyses {
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
             -batch_size           => 20,
-            -rc_name    => '1Gb_job',
+            -rc_name    => '1Gb_24_hour_job',
             -flow_into => {
                -1 => [ 'cdhit_mcoffee' ],  # MEMLIMIT
                -2 => [ 'cdhit_mafft' ],
@@ -1460,7 +1460,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -1,
             },
             -analysis_capacity    => $self->o('mcoffee_capacity'),
-            -rc_name    => '2Gb_job',
+            -rc_name    => '2Gb_24_hour_job',
             -priority   => $self->o('mcoffee_priority'),
             -flow_into => {
                -1 => [ 'cdhit_mcoffee_himem' ],  # MEMLIMIT
@@ -1492,7 +1492,7 @@ sub core_pipeline_analyses {
                 'escape_branch'         => -2,
             },
             -hive_capacity        => $self->o('mcoffee_capacity'),
-            -rc_name    => '8Gb_job',
+            -rc_name    => '8Gb_24_hour_job',
             -priority   => $self->o('mcoffee_himem_priority'),
             -flow_into => {
                -1 => [ 'cdhit_mafft_himem' ],

@@ -35,7 +35,7 @@ use Getopt::Long;
 my $browser = HTTP::Tiny->new('timeout' => 300);
 my $server = 'https://test.rest.ensembl.org';
 my $division;
-my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_homology, $skip_cactus );
+my ( $skip_genetrees, $skip_cafe, $skip_alignments, $skip_epo, $skip_lastz, $skip_homology, $skip_cactus_hal, $skip_cactus_db );
 
 GetOptions( 
     "server=s"        => \$server, 
@@ -45,7 +45,8 @@ GetOptions(
     'skip_alignments' => \$skip_alignments,
     'skip_epo'        => \$skip_epo,
     'skip_lastz'      => \$skip_lastz,
-    'skip_cactus'     => \$skip_cactus,
+    'skip_cactus_hal' => \$skip_cactus_hal,
+    'skip_cactus_db'  => \$skip_cactus_db,
     'skip_homology'   => \$skip_homology,
 );
 
@@ -59,7 +60,8 @@ die "Server unavailable - please check your URL\n" unless $responseIDGet->{statu
 my ($gene_member_id, $gene_tree_id, $alignment_region, $lastz_alignment_region);
 my ($member_species, $species_1, $species_2, $species_3, $taxon_1, $taxon_2, $taxon_3);
 my ($gene_symbol, $species_set_group, $homology_type, $homology_method_link);
-my ($cactus_species, $cactus_region, $cactus_species_set);
+my ($cactus_hal_species, $cactus_hal_region, $cactus_hal_species_set);
+my ($cactus_db_species, $cactus_db_region, $cactus_db_species_set);
 my $extra_params;
 
 # RULES
@@ -89,11 +91,13 @@ if ($division eq "vertebrates"){
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
-    $cactus_species           = 'rattus_norvegicus';
-    $cactus_region            = '2:56040000-56040100:1';
-    $cactus_species_set       = 'murinae';
+    $cactus_hal_species       = 'gallus_gallus';
+    $cactus_hal_region        = '5:38111022-38265293';
+    $cactus_hal_species_set   = 'collection-fowl';
 
-    $skip_cactus              = 1;
+    $cactus_db_species        = 'homo_sapiens';
+    $cactus_db_region         = '17:63992802-64038237';
+    $cactus_db_species_set    = 'collection-primates';
 }
 elsif($division eq "plants"){
     $gene_member_id           = "AT3G52430";
@@ -117,12 +121,15 @@ elsif($division eq "plants"){
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
     # rice
-    $cactus_species           = 'oryza_sativa';
-    $cactus_region            = '5:20683551-20684336';
-    $cactus_species_set       = 'collection-rice';
+    $cactus_hal_species       = 'oryza_sativa';
+    $cactus_hal_region        = '5:20683551-20684336';
+    $cactus_hal_species_set   = 'collection-rice_cultivars';
+
+    $cactus_db_species        = 'triticum_aestivum';
+    $cactus_db_region         = '3D:2585940-2634711';
+    $cactus_db_species_set    = 'collection-wheat';
 
     $extra_params             = 'compara=plants';
-    $skip_cactus              = 0;
 }
 elsif($division eq "metazoa"){
     $gene_member_id           = "LOC726692";
@@ -144,9 +151,13 @@ elsif($division eq "metazoa"){
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 
-    $cactus_species           = 'caenorhabditis_elegans';
-    $cactus_region            = 'X:937766-957832:1';
-    $cactus_species_set       = 'wormbase-ws269';
+    $cactus_hal_species       = 'caenorhabditis_elegans';
+    $cactus_hal_region        = 'X:937766-957832:1';
+    $cactus_hal_species_set   = 'wormbase-ws269';
+
+    $cactus_db_species        = 'drosophila_melanogaster';
+    $cactus_db_region         = '2L:5055058-5056149';
+    $cactus_db_species_set    = 'collection-pangenome_drosophila';
 
     $extra_params             = 'compara=metazoa';
     $skip_epo                 = 1;
@@ -172,7 +183,8 @@ elsif($division eq 'pan' or $division eq 'pan_homology'){
     $extra_params             = 'compara=pan_homology';
     $skip_cafe                = 1;
     $skip_alignments          = 1;
-    $skip_cactus              = 1;
+    $skip_cactus_hal          = 1;
+    $skip_cactus_db           = 1;
 }
 elsif ( $division eq 'grch37' ) {
     $lastz_alignment_region = "17:64155265-64255266:1";
@@ -188,7 +200,8 @@ elsif ( $division eq 'grch37' ) {
 
     $skip_epo       = 1;
     $skip_genetrees = 1;
-    $skip_cactus    = 1;
+    $skip_cactus_hal = 1;
+    $skip_cactus_db  = 1;
 }
 elsif ($division eq 'protists' ) {
     $gene_member_id           = 'LMJF_27_0290';
@@ -210,7 +223,8 @@ elsif ($division eq 'protists' ) {
     $extra_params             = 'compara=protists';
     $skip_cafe                = 1;
     $skip_alignments          = 1;
-    $skip_cactus              = 1;
+    $skip_cactus_hal          = 1;
+    $skip_cactus_db           = 1;
 }
 elsif ($division eq 'fungi' ) {
     $lastz_alignment_region   = 'I:529814-541420:1';
@@ -233,7 +247,8 @@ elsif ($division eq 'fungi' ) {
     $extra_params             = 'compara=fungi';
     $skip_cafe                = 1;
     $skip_epo                 = 1;
-    $skip_cactus              = 1;
+    $skip_cactus_hal          = 1;
+    $skip_cactus_db           = 1;
 }
 else {
     die "Division '$division' is not understood\n";
@@ -444,27 +459,6 @@ try{
         ok($jsontxt && !(exists $json_leaf->{mol_seq}), "check sequence eq none validity");
 
 
-        print "\nTesting GET genetree by member\/id\/\:id \n\n";
-
-        $ext = "/genetree/member/id/$gene_member_id";
-        $ext .= "?$extra_params" if $extra_params;
-
-        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON validity");
-
-        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
-        ok($responseIDGet->{success}, "Check phyloXml validity");
-
-        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-orthoxml+xml' } } );
-        ok($responseIDGet->{success}, "Check orthoXml validity");
-
-        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
-        ok($responseIDGet->{success}, "Check New Hampshire NH validity");
-
-        $jsontxt = process_json_get($server."/genetree/member/id/$gene_member_id?content-type=application/json".($extra_params ? ";$extra_params" : ''));
-        ok($jsontxt->{tree}, "check gene tree member  validity");
-
-
         print "\nTesting GET genetree by member\/id\/\:species\/\:id \n\n";
 
         $ext = "/genetree/member/id/$member_species/$gene_member_id";
@@ -521,22 +515,6 @@ try{
         $nh = process_nh_get($server."/cafe/genetree/id/$gene_tree_id?content-type=text/x-nh;nh_format=simple".($extra_params ? ";$extra_params" : ''));
         ok(scalar $nh->get_leaf_nodes, "check cafe tree nh simple format validity");
 
-        print "\nTesting GET Cafe tree by member\/id\/\:id \n\n";
-
-        $ext = "/cafe/genetree/member/id/$gene_member_id";
-        $ext .= "?$extra_params" if $extra_params;
-
-        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON validity");
-
-        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-nh' } } );
-        ok($responseIDGet->{success}, "Check New Hampshire NH validity");
-
-
-        $jsontxt = process_json_get($server."/cafe/genetree/member/id/$gene_member_id?content-type=application/json".($extra_params ? ";$extra_params" : ''));
-        ok(exists $jsontxt->{pvalue_avg}, "Check get cafe tree by transcript member validity");
-
-
         print "\nTesting GET Cafe tree by member\/id\/\:species\/\:id \n\n";
 
         $ext = "/cafe/genetree/member/id/$member_species/$gene_member_id";
@@ -588,10 +566,10 @@ try{
         ok($jsontxt->[0]->{alignments}[0]->{species} eq $species_1, "Check alignment region display_species_set option validity");
     }
     
-    unless ( $skip_alignments || $skip_cactus ) {
-        print "\nTesting GET alignment region\/\:species\/\:region on HAL file\n\n";
+    unless ( $skip_alignments || $skip_cactus_hal ) {
+        print "\nTesting GET Cactus alignment region\/\:species\/\:region via HAL file\n\n";
     
-        my $ext = "/alignment/region/$cactus_species/$cactus_region?method=CACTUS_HAL;species_set_group=$cactus_species_set".($extra_params ? ";$extra_params" : '');
+        my $ext = "/alignment/region/$cactus_hal_species/$cactus_hal_region?method=CACTUS_HAL;species_set_group=$cactus_hal_species_set".($extra_params ? ";$extra_params" : '');
         $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
         ok($responseIDGet->{success}, "Check json validity");
     
@@ -602,61 +580,29 @@ try{
         ok($responseIDGet->{success}, "Check phyloXml validity with unaligned sequences");
     }
 
+    unless ( $skip_alignments || $skip_cactus_db ) {
+        print "\nTesting GET Cactus alignment region\/\:species\/\:region via database\n\n";
+
+        my $ext = "/alignment/region/$cactus_db_species/$cactus_db_region?method=CACTUS_DB;species_set_group=$cactus_db_species_set".($extra_params ? ";$extra_params" : '');
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'application/json' } } );
+        ok($responseIDGet->{success}, "Check json validity");
+
+        $responseIDGet = $browser->get($server.$ext, { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+        ok($responseIDGet->{success}, "Check phyloXml validity");
+
+        $responseIDGet = $browser->get($server.$ext.';aligned=0', { headers => { 'Content-type' => 'text/x-phyloxml+xml' } } );
+        ok($responseIDGet->{success}, "Check phyloXml validity with unaligned sequences");
+    }
+
     unless ( $skip_alignments || $skip_lastz ) {
         $jsontxt = process_json_get($server."/alignment/region/$species_1/$lastz_alignment_region?content-type=application/json;method=LASTZ_NET;species_set=$species_1;species_set=$species_2".($extra_params ? ";$extra_params" : ''));
         ok( index($jsontxt->[0]->{tree},"$species_1") !=-1 && index($jsontxt->[0]->{tree},$species_2) !=-1, "Check get alignment region method option");
     }
 
     unless ( $skip_homology ) {
-        print "\nTesting GET homology \/id\/\:id \n\n";
-
-        my $ext = "/homology/id/$gene_member_id";
-        $ext .= "?$extra_params" if $extra_params;
-
-        $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'application/json' } } );
-        ok($responseIDGet->{success}, "Check JSON validity");
-
-        $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'text/x-orthoxml+xml'} } );
-        ok($responseIDGet->{success}, "Check orthoXml validity");
-
-        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;target_taxon=$taxon_2".($extra_params ? ";$extra_params" : ''));
-        ok( $jsontxt->{data}[0]->{homologies}[0]->{target}->{taxon_id} == $taxon_2 , "Check homology endpoint target_taxon option validity");
-
-        if ( defined $species_2 && defined $species_3 ) {
-            $orthoXml = process_orthoXml_get($server."/homology/id/$gene_member_id?content-type=text/x-orthoxml+xml;target_species=$species_1;target_species=$species_2;target_species=$species_3".($extra_params ? ";$extra_params" : ''));
-            @pruned_species = keys %{ $orthoXml->{species} };
-            %pruned_species = map {$_ => 1} @pruned_species;
-            ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check homology endpoint target species option Validity");
-        }
-
-        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;sequence=cdna".($extra_params ? ";$extra_params" : ''));
-        ok( index($jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}, 'M') == -1 , "Check homology endpoint sequence CDNA option validity");
-
-        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;sequence=protein".($extra_params ? ";$extra_params" : ''));
-        ok( index($jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}, 'M') != -1 , "Check homology endpoint sequence protein option validity");
-
-        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;aligned=0;sequence=none".($extra_params ? ";$extra_params" : ''));
-        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{seq}), "Check homology endpoint sequence none option validity");
-
-        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=text/x-orthoxml+xml;type=$homology_type".($extra_params ? ";$extra_params" : ''));
-        ok( $jsontxt->{data}[0]->{homologies}[0]->{method_link_type} eq $homology_method_link, "Check homology endpoint type option validity");
-
-        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;aligned=0".($extra_params ? ";$extra_params" : ''));
-        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{align_seq}), "Check homology endpoint aligned =0 option validity");
-
-        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;cigar_line=1".($extra_params ? ";$extra_params" : ''));
-        ok( exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line} , "Check homology endpoint cigar line =1 validity");
-
-        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;cigar_line=0".($extra_params ? ";$extra_params" : ''));
-        ok( !(exists $jsontxt->{data}[0]->{homologies}[0]->{source}->{cigar_line}) , "Check homology endpoint cigar line =0 validity");
-
-        $jsontxt = process_json_get($server."/homology/id/$gene_member_id?content-type=application/json;format=condensed".($extra_params ? ";$extra_params" : ''));
-        ok(!(exists $jsontxt->{data}[0]->{homologies}[0]->{source}), "Check homology endpoint format validity");
-
-
         print "\nTesting GET homology \/id\/\:species\/\:id \n\n";
 
-        $ext = "/homology/id/$member_species/$gene_member_id";
+        my $ext = "/homology/id/$member_species/$gene_member_id";
         $ext .= "?$extra_params" if $extra_params;
 
         $responseIDGet = $browser->get($server.$ext, { headers => {'Content-type' => 'application/json' } } );

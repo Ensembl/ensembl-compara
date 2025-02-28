@@ -142,6 +142,7 @@ sub default_options {
             # misc parameters
             'species_tree_input_file'  => '',  # empty value means 'create using genome_db+ncbi_taxonomy information'; can be overriden by a file with a tree in it
             'binary_species_tree_input_file'   => undef, # you can define your own species_tree for 'CAFE'. It *has* to be binary
+            'model_name_blocklist'     => [],
             'skip_epo'                 => 0,   # Never tried this one. It may fail
             'create_ss_picts'          => 0,
 
@@ -164,20 +165,19 @@ sub default_options {
             'orthotree_dir'             => $self->o('dump_dir') . '/orthotree/',
             'homology_dumps_dir'        => $self->o('dump_dir'). '/homology_dumps/',
             'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('ensembl_release'),
-            'prev_homology_dumps_dir'   => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
 
+
+            # Do we want to do OrthologQMAlignment ?
+            'do_orth_wga'                => 1,
             # Parameters for OrthologQMAlignment
             'wga_species_set_name'       => "collection-" . $self->o('collection'),
             'homology_method_link_types' => ['ENSEMBL_ORTHOLOGUES'],
             # WGA dump directories for OrthologQMAlignment
             'wga_dumps_dir'      => $self->o('homology_dumps_dir'),
-            'prev_wga_dumps_dir' => $self->o('homology_dumps_shared_basedir') . '/' . $self->o('collection')    . '/' . $self->o('prev_release'),
             # set how many orthologs should be flowed at a time
             'orth_batch_size'   => 10,
             # set to 1 when all pairwise and multiple WGA complete
             'dna_alns_complete' => 0,
-            # populated by the check_file_copy analysis when wga analyses finished
-            'orth_wga_complete' => 0,
 
             #Parameters for HighConfidenceOrthologs
             'threshold_levels'            => [ ],          # division specific
@@ -241,11 +241,9 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'output_dir_path'           => $self->o('output_dir_path'),
         'dump_dir'                  => $self->o('dump_dir'),
         'homology_dumps_dir'        => $self->o('homology_dumps_dir'),
-        'prev_homology_dumps_dir'   => $self->o('prev_homology_dumps_dir'),
         'homology_dumps_shared_dir' => $self->o('homology_dumps_shared_dir'),
         'orthotree_dir'             => $self->o('orthotree_dir'),
         'wga_dumps_dir'             => $self->o('wga_dumps_dir'),
-        'prev_wga_dumps_dir'        => $self->o('prev_wga_dumps_dir'),
         'gene_dumps_dir'            => $self->o('gene_dumps_dir'),
         'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
 
@@ -254,7 +252,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'hashed_mlss_id'     => '#expr(dir_revhash(#mlss_id#))expr#',
         'goc_file'           => '#goc_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.goc.tsv',
         'wga_file'           => '#wga_files_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.wga.tsv',
-        'previous_wga_file'  => defined $self->o('prev_wga_dumps_dir') ? '#prev_wga_dumps_dir#/#hashed_mlss_id#/#orth_mlss_id#.#member_type#.wga.tsv' : undef,
         'high_conf_file'     => '#homology_dumps_dir#/#hashed_mlss_id#/#mlss_id#.#member_type#.high_conf.tsv',
 
         'skip_epo'      => $self->o('skip_epo'),
@@ -262,6 +259,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         'member_type'       => $self->o('member_type'),
         'create_ss_picts'   => $self->o('create_ss_picts'),
+        'do_orth_wga'       => $self->o('do_orth_wga'),
         'do_cafe'           => $self->o('do_cafe'),
         'dbID_range_index'  => $self->o('dbID_range_index'),
         'clustering_mode'   => $self->o('clustering_mode'),
@@ -269,7 +267,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'range_label'       => $self->o('range_label'),
 
         'dna_alns_complete' => $self->o('dna_alns_complete'), # manually change to 1 when all wgas have finished
-        'orth_wga_complete' => $self->o('orth_wga_complete'), # populated by the check_file_copy analysis when wga analyses finished
 
         'orth_batch_size'             => $self->o('orth_batch_size'),
         'high_confidence_capacity'    => $self->o('high_confidence_capacity'),
@@ -295,6 +292,13 @@ sub core_pipeline_analyses {
                      -priority          => $self->o('hc_priority'),
                      -batch_size        => $self->o('hc_batch_size'),
                     );
+
+    my %semaphore_check_params = (
+        'compara_db' => $self->pipeline_url(),
+        'datacheck_names' => [ 'TimelySemaphoreRelease' ],
+        'db_type' => $self->o('db_type'),
+        'registry_file' => undef,
+    );
 
     my %raxml_decision_params = (
         # The number of cores is based on the number of "alignment patterns"
@@ -334,8 +338,14 @@ sub core_pipeline_analyses {
                 -input_ids  => [ {} ],
                 -flow_into  => {
                                 '1->A'  => [ 'copy_tables_factory' ],
-                                'A->1'  => [ 'backbone_fire_classify_genes' ],
+                                'A->1'  => [ 'genome_loading_funnel_check' ],
                                },
+            },
+
+            {   -logic_name => 'genome_loading_funnel_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => [ 'backbone_fire_classify_genes' ],
+                %hc_params,
             },
 
             {   -logic_name => 'backbone_fire_classify_genes',
@@ -345,8 +355,14 @@ sub core_pipeline_analyses {
                                 },
                 -flow_into  => {
                                '1->A'   => [ 'load_rfam_models' ],
-                               'A->1'   => [ 'backbone_fire_tree_building' ],
+                               'A->1'   => [ 'classify_genes_funnel_check' ],
                               },
+            },
+
+            {   -logic_name => 'classify_genes_funnel_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => [ 'backbone_fire_tree_building' ],
+                %hc_params,
             },
 
             {   -logic_name => 'backbone_fire_tree_building',
@@ -354,17 +370,34 @@ sub core_pipeline_analyses {
                 -parameters  => {
                                   'output_file'          => $self->o('dump_dir').'/snapshot_before_tree_building.sql',
                                  },
+                -flow_into  => [ { 'pre_tree_building_semaphore_check' => \%semaphore_check_params } ],
+            },
+
+            {   -logic_name => 'pre_tree_building_semaphore_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+                -max_retry_count => 0,
+                -flow_into  => [ { 'fire_tree_building_analyses' => '{}' } ],
+            },
+
+            {   -logic_name => 'fire_tree_building_analyses',
+                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
                 -flow_into  => {
                                 '1->A'  => [ 'clusters_factory' ],
                                 'A->1'  => [ 'backbone_fire_posttree' ],
                                },
             },
-            
+
             {   -logic_name => 'backbone_fire_posttree',
-                -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => [ { 'posttree_semaphore_check' => \%semaphore_check_params } ],
+            },
+
+            {   -logic_name => 'posttree_semaphore_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DataCheckFan',
+                -max_retry_count => 0,
                 -flow_into  => {
-                    '1->A' => ['rib_fire_posttree_processing'],
-                    'A->1' => ['backbone_pipeline_finished'],
+                    '1->A' => [ { 'rib_fire_posttree_processing' => '{}' } ],
+                    'A->1' => [ { 'backbone_pipeline_finished' => '{}' } ],
                 },
             },
 
@@ -377,12 +410,43 @@ sub core_pipeline_analyses {
             },
 
             {   -logic_name => 'backbone_pipeline_finished',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => {
+                    '1->A' => [ 'fire_final_analyses' ],
+                    'A->1' => [ 'fire_final_datachecks' ],
+                },
+            },
+
+            {   -logic_name => 'fire_final_analyses',
                 -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-                -flow_into  => [ 
-                    'notify_pipeline_completed',
-                    'wga_expected_dumps',                    
-                    WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ), 
+                -flow_into  => [
+                    'wga_expected_dumps',
+                    WHEN( '#gene_tree_stats_shared_dir#' => 'generate_tree_stats_report' ),
+                    WHEN( '#homology_dumps_shared_dir#' => 'copy_dumps_to_shared_loc' ),
                 ],
+            },
+
+            {   -logic_name => 'generate_tree_stats_report',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StatsReport',
+                -parameters => {
+                    'stats_exe'                  => $self->o('gene_tree_stats_report_exe'),
+                    'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
+                },
+            },
+
+            {   -logic_name => 'fire_final_datachecks',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into => {
+                    '1->A' => {
+                        'datacheck_factory' => {
+                            'datacheck_groups' => $self->o('datacheck_groups'),
+                            'db_type' => $self->o('db_type'),
+                            'compara_db' => $self->pipeline_url(),
+                            'registry_file' => undef
+                        },
+                    },
+                    'A->1' => [ 'notify_pipeline_completed' ],
+                },
             },
 
             {   -logic_name => 'notify_pipeline_completed',
@@ -403,7 +467,7 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => [ 'copy_table'  ],
-                'A->1' => [ 'offset_tables' ],
+                'A->1' => [ 'copy_table_funnel_check' ],
             },
         },
 
@@ -414,6 +478,12 @@ sub core_pipeline_analyses {
                 'mode'          => 'overwrite',
                 'filter_cmd'    => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/"',
             },
+        },
+
+        {   -logic_name => 'copy_table_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'offset_tables' ],
+            %hc_params,
         },
 
         {   -logic_name => 'offset_tables',
@@ -446,6 +516,16 @@ sub core_pipeline_analyses {
                 'species_set_name' => $self->o('species_set_name'),
                 'release'          => '#ensembl_release#'
             },
+            -flow_into  => [ 'find_prev_homology_dumps' ],
+        },
+
+        {   -logic_name => 'find_prev_homology_dumps',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SetPrevHomologyDumpParams',
+            -parameters => {
+                'homology_dumps_shared_basedir' => $self->o('homology_dumps_shared_basedir'),
+                'collection'                    => $self->o('collection'),
+                'prev_release'                  => $self->o('prev_release'),
+            },
             -flow_into  => [ 'load_genomedb_factory' ],
         },
 
@@ -457,13 +537,19 @@ sub core_pipeline_analyses {
                                },
                 -flow_into => {
                                '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, }, # fan
-                               'A->1' => [ 'create_mlss_ss' ],
+                               'A->1' => [ 'load_genomedb_funnel_check' ],
                               },
             },
 
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -analysis_capacity => 10,
+        },
+
+        {   -logic_name => 'load_genomedb_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'create_mlss_ss' ],
+            %hc_params,
         },
 
         {   -logic_name => 'create_mlss_ss',
@@ -495,7 +581,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
                 '2->A' => 'genome_member_copy',
-                'A->1' => [ 'hc_members_globally' ],
+                'A->1' => [ 'load_members_funnel_check' ],
             },
         },
 
@@ -507,6 +593,12 @@ sub core_pipeline_analyses {
             },
             -analysis_capacity => 10,
             -flow_into         => [ 'hc_members_per_genome' ],
+        },
+
+        {   -logic_name => 'load_members_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'hc_members_globally' ],
+            %hc_params,
         },
 
         {   -logic_name         => 'hc_members_globally',
@@ -572,6 +664,7 @@ sub core_pipeline_analyses {
             {   -logic_name    => 'rfam_classify',
                 -module        => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::RFAMClassify',
                 -parameters    => {
+                    'model_name_blocklist' => $self->o('model_name_blocklist'),
                     'mirbase_url'   => $self->o('mirbase_url'),
                 },
                 -flow_into     => [ 'expand_clusters_with_projections' ],
@@ -597,12 +690,18 @@ sub core_pipeline_analyses {
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
                 -flow_into  => {
                     '2->A' => [ 'per_genome_qc' ],
-                    'A->1' => [ 'clusterset_backup' ],
+                    'A->1' => [ 'cluster_qc_funnel_check' ],
                 },
             },
 
             {   -logic_name => 'per_genome_qc',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::PerGenomeGroupsetQC',
+            },
+
+            {   -logic_name => 'cluster_qc_funnel_check',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => [ 'clusterset_backup' ],
+                %hc_params,
             },
 
         {   -logic_name => 'ortholog_cluster',
@@ -629,8 +728,16 @@ sub core_pipeline_analyses {
                                },
                 -flow_into     => {
                                    '2->A' => WHEN( '#skip_epo#' => 'msa_chooser', ELSE 'recover_epo' ),
-                                   'A->1' => [ 'hc_global_tree_set' ],
+                                   'A->1' => [ 'global_tree_processing' ],
                                   },
+            },
+
+            {   -logic_name => 'global_tree_processing',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+                -flow_into  => {
+                    '1->A' => [ 'hc_global_tree_set', 'hc_supertree_factory' ],
+                    'A->1' => [ 'fire_cafe' ],
+                },
             },
 
             { -logic_name         => 'hc_global_tree_set',
@@ -638,12 +745,32 @@ sub core_pipeline_analyses {
               -parameters         => {
                                       mode            => 'global_tree_set',
                                      },
-              -flow_into          => [
-                                       # 'backbone_fire_homology_dumps',
-                                        WHEN('#do_cafe# and  #binary_species_tree_input_file#', 'CAFE_species_tree'),
-                                        WHEN('#do_cafe# and !#binary_species_tree_input_file#', 'make_full_species_tree'),
-                                    ],
               %hc_params,
+            },
+
+            { -logic_name => 'hc_supertree_factory',
+              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+              -parameters => {
+                  'inputquery' => 'SELECT root_id AS gene_tree_id FROM gene_tree_root WHERE tree_type = "supertree"',
+              },
+              -flow_into  => {
+                  2 => 'hc_supertree'
+              },
+            },
+
+            { -logic_name => 'hc_supertree',
+              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneSupertree',
+              %hc_params,
+            },
+
+            { -logic_name => 'fire_cafe',
+              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+              -flow_into  => WHEN( '#do_cafe#' => 'species_tree_decision' ),
+            },
+
+            { -logic_name => 'species_tree_decision',
+              -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+              -flow_into  => WHEN( '#binary_species_tree_input_file#' => 'CAFE_species_tree', ELSE 'make_full_species_tree' ),
             },
 
         {
@@ -661,15 +788,6 @@ sub core_pipeline_analyses {
             -parameters     => {
                 'input_file'    => $self->o('tree_stats_sql'),
             },
-            -flow_into      => [ 'generate_tree_stats_report' ],
-        },
-
-        {   -logic_name => 'generate_tree_stats_report',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StatsReport',
-            -parameters => {
-                'stats_exe'                  => $self->o('gene_tree_stats_report_exe'),
-                'gene_tree_stats_shared_dir' => $self->o('gene_tree_stats_shared_dir'),
-            },
         },
 
             {   -logic_name    => 'recover_epo',
@@ -682,7 +800,7 @@ sub core_pipeline_analyses {
                     1 => 'hc_epo_removed_members',
                     -1 => 'recover_epo_himem',
                 },
-                -rc_name => '2Gb_job',
+                -rc_name => '2Gb_24_hour_job',
             },
 
             {   -logic_name    => 'recover_epo_himem',
@@ -692,7 +810,7 @@ sub core_pipeline_analyses {
                     1 => 'hc_epo_removed_members',
                     -1 => 'recover_epo_hugemem',
                 },
-                -rc_name => '16Gb_job',
+                -rc_name => '16Gb_24_hour_job',
             },
 
             {   -logic_name    => 'recover_epo_hugemem',
@@ -738,7 +856,7 @@ sub core_pipeline_analyses {
                     1 => ['quick_tree_break' ],
                     -1 => [ 'aligner_for_tree_break_himem' ],
                 },
-                -rc_name => '2Gb_job',
+                -rc_name => '2Gb_24_hour_job',
             },
 
             {   -logic_name    => 'aligner_for_tree_break_himem',
@@ -761,7 +879,7 @@ sub core_pipeline_analyses {
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
                 -analysis_capacity  => $self->o('quick_tree_break_capacity'),
-                -rc_name        => '2Gb_job',
+                -rc_name        => '2Gb_24_hour_job',
                 -priority       => 50,
                 -flow_into      => {
                    1   => ['other_paralogs', 'subcluster_factory'],
@@ -778,7 +896,7 @@ sub core_pipeline_analyses {
                                 'treebreak_gene_count'  => $self->o('treebreak_gene_count'),
                                },
                 -analysis_capacity  => $self->o('quick_tree_break_capacity'),
-                -rc_name        => '8Gb_job',
+                -rc_name        => '8Gb_168_hour_job',
                 -priority       => 50,
                 -flow_into      => [ 'other_paralogs', 'subcluster_factory' ],
             },
@@ -791,7 +909,7 @@ sub core_pipeline_analyses {
                 },
                 -analysis_capacity  => $self->o('other_paralogs_capacity'),
                 -priority           => 40,
-                -rc_name            => '1Gb_job',
+                -rc_name            => '1Gb_168_hour_job',
                 -max_retry_count    => 3,
                 -flow_into     => {
                                    -1 => [ 'other_paralogs_himem' ],
@@ -836,9 +954,10 @@ sub core_pipeline_analyses {
                                   },
                 -flow_into     => {
                                   -1 => [ 'infernal_himem' ],
+                                  -2 => [ 'infernal_himem' ],
                                    1 => [ 'pre_secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
                                   },
-                -rc_name       => '1Gb_job',
+                -rc_name       => '1Gb_24_hour_job',
             },
 
             {   -logic_name    => 'infernal_himem',
@@ -849,7 +968,7 @@ sub core_pipeline_analyses {
                                    'cmalign_exe' => $self->o('cmalign_exe'),
                                   },
                 -flow_into     => [ 'pre_secondary_structure_decision', WHEN('#create_ss_picts#' => 'create_ss_picts' ) ],
-                -rc_name       => '16Gb_job',
+                -rc_name       => '16Gb_24_hour_job',
             },
 
             {   -logic_name => 'pre_secondary_structure_decision',
@@ -911,9 +1030,11 @@ sub core_pipeline_analyses {
                             },
              -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_2_cores' ], # This analysis also has more memory
+                           -2 => [ 'pre_sec_struct_tree_2_cores' ], # This analysis also has a higher runlimit
                             2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_2_cores' ], #After trying to restart RAxML we should escalate the capacity.
                            },
+              -rc_name       => '1Gb_24_hour_job',
         },
 
         {   -logic_name    => 'pre_sec_struct_tree_2_cores', ## pre_sec_struct_tree
@@ -927,10 +1048,11 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_4_cores' ], # This analysis also has more memory
+                           -2 => [ 'pre_sec_struct_tree_4_cores' ],
                             2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_4_cores' ],
                           },
-            -rc_name => '500Mb_2c_job',
+            -rc_name => '1Gb_2c_168_hour_job',
         },
 
         {   -logic_name    => 'pre_sec_struct_tree_4_cores', ## pre_sec_struct_tree
@@ -944,10 +1066,11 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'pre_sec_struct_tree_8_cores' ], # This analysis also has more memory
+                           -2 => [ 'pre_sec_struct_tree_8_cores' ],
                             2 => [ 'secondary_structure_decision' ],
                             3 => [ 'pre_sec_struct_tree_8_cores' ],
                            },
-            -rc_name => '1Gb_4c_job',
+            -rc_name => '1Gb_4c_24_hour_job',
         },
 
         {   -logic_name    => 'pre_sec_struct_tree_8_cores', ## pre_sec_struct_tree
@@ -990,8 +1113,10 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_2_cores' ],   # This analysis has more cores *and* more memory
+                           -2 => [ 'sec_struct_model_tree_2_cores' ],
                             3 => [ 'sec_struct_model_tree_2_cores' ],
                           },
+            -rc_name => '1Gb_24_hour_job',
         },
 
         {   -logic_name    => 'sec_struct_model_tree_2_cores', ## sec_struct_model_tree
@@ -1005,9 +1130,10 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_4_cores' ],   # This analysis has more cores *and* more memory
+                           -2 => [ 'sec_struct_model_tree_4_cores' ],
                             3 => [ 'sec_struct_model_tree_4_cores' ],
                        },
-            -rc_name => '500Mb_2c_job',
+            -rc_name => '1Gb_2c_24_hour_job',
         },
 
         {   -logic_name    => 'sec_struct_model_tree_4_cores', ## sec_struct_model_tree
@@ -1021,9 +1147,10 @@ sub core_pipeline_analyses {
                            },
             -flow_into => {
                            -1 => [ 'sec_struct_model_tree_8_cores' ],   # This analysis has more cores *and* more memory
+                           -2 => [ 'sec_struct_model_tree_8_cores' ],
                             3 => [ 'sec_struct_model_tree_8_cores' ],
                        },
-            -rc_name => '1Gb_4c_job',
+            -rc_name => '1Gb_4c_24_hour_job',
         },
 
         {   -logic_name    => 'sec_struct_model_tree_8_cores', ## sec_struct_model_tree
@@ -1034,7 +1161,7 @@ sub core_pipeline_analyses {
                             'cmd_max_runtime'       => '86400',
                             'raxml_number_of_cores' => 8,
                            },
-            -rc_name => '2Gb_8c_job',
+            -rc_name => '2Gb_8c_24_hour_job',
         },
 
         {   -logic_name    => 'genomic_alignment',
@@ -1053,7 +1180,7 @@ sub core_pipeline_analyses {
                            3  => ['fast_trees'],
                            2  => ['genomic_tree'],
                           },
-            -rc_name => '2Gb_4c_job',
+            -rc_name => '2Gb_4c_24_hour_job',
             -priority      => $self->o('genomic_alignment_priority'),
         },
 
@@ -1070,7 +1197,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_himem'],
                           },
-             -rc_name => '8Gb_4c_mpi',
+             -rc_name => '8Gb_4c_168_hour_mpi',
             },
             {
              -logic_name => 'fast_trees_himem',
@@ -1085,7 +1212,7 @@ sub core_pipeline_analyses {
             -flow_into => {
                            -1 => ['fast_trees_hugemem'],
                           },
-             -rc_name => '16Gb_4c_mpi',
+             -rc_name => '16Gb_4c_24_hour_mpi',
             },
             {
              -logic_name => 'fast_trees_hugemem',
@@ -1113,7 +1240,7 @@ sub core_pipeline_analyses {
                             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
                             'inhugemem' => 1,
                            },
-         -rc_name => '8Gb_8c_job',
+         -rc_name => '8Gb_8c_24_hour_job',
          -priority  => $self->o('genomic_alignment_himem_priority'),
          -flow_into => {
                         3 => [ 'fast_trees' ],
@@ -1133,7 +1260,7 @@ sub core_pipeline_analyses {
                             'genome_dumps_dir' => $self->o('genome_dumps_dir'),
                             'inhugemem' => 1,
                            },
-         -rc_name => '32Gb_8c_job',
+         -rc_name => '32Gb_8c_168_hour_job',
          -flow_into => {
                         3 => [ 'fast_trees_himem' ],
                         2 => [ 'genomic_tree_himem' ],
@@ -1151,7 +1278,7 @@ sub core_pipeline_analyses {
                 'inhugemem'             => 1,
             },
             -analysis_capacity => $self->o('genomic_alignment_capacity'),
-            -rc_name           => '96Gb_8c_job',
+            -rc_name           => '96Gb_8c_24_hour_job',
             -flow_into         => {
                 3 => [ 'fast_trees_himem' ],
                 2 => [ 'genomic_tree_himem' ],
@@ -1178,7 +1305,7 @@ sub core_pipeline_analyses {
              -parameters => {
                              'treebest_exe' => $self->o('treebest_exe'),
                             },
-             -rc_name => '1Gb_job',
+             -rc_name => '1Gb_24_hour_job',
             },
 
         {   -logic_name    => 'treebest_mmerge',
@@ -1222,7 +1349,7 @@ sub core_pipeline_analyses {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
                            },
-            -rc_name => '2Gb_job',
+            -rc_name => '2Gb_24_hour_job',
         },
 
         {   -logic_name     => 'consensus_cigar_line_prep',
@@ -1314,7 +1441,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_homology_dumps',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => {
                 '1->A' => [ 'homology_dumps_mlss_id_factory', 'gene_dumps_genome_db_factory' ],
                 'A->1' => 'rib_fire_homology_processing',
@@ -1325,15 +1452,22 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => 'gene_count_factory',
-                'A->1' => 'write_stn_tags',
+                'A->1' => 'gene_count_funnel_check',
             },
+        },
+
+        {   -logic_name => 'gene_count_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'write_stn_tags' ],
+            %hc_params,
         },
 
         {   -logic_name => 'gene_count_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -rc_name    => '1Gb_job',
             -parameters => {
-                'component_genomes' => 0,
+                'component_genomes' => 1,
+                'polyploid_genomes' => 0,
                 'fan_branch_code' => 1,
             },
             -flow_into  => [ 'count_genes_in_tree' ],
@@ -1348,7 +1482,7 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_homology_processing',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => [ 'rib_fire_orth_wga_and_high_conf', 'rename_labels' ],
         },
 
@@ -1368,10 +1502,12 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_orth_wga',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
-            -parameters => {
-                'switch_name' => 'dna_alns_complete',
-            },
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => WHEN('#do_orth_wga#' => 'check_dna_alns_complete'),
+        },
+
+        {   -logic_name => 'check_dna_alns_complete',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckDnaAlnsComplete',
             -flow_into  => {
                 1 => { 'pair_species' => { 'species_set_name' => $self->o('wga_species_set_name') } },
             },
@@ -1379,12 +1515,8 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'rib_fire_high_confidence_orths',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CheckSwitch',
-            -parameters => {
-                'switch_name' => 'orth_wga_complete',
-            },
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => [ 'mlss_id_for_high_confidence_factory', 'paralogue_for_import_factory' ],
-            -max_retry_count => 0,
         },
 
         {   -logic_name => 'paralogue_for_import_factory',
@@ -1416,9 +1548,6 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DumpWGAExpectedTags',
             -parameters => {
                 'wga_expected_file'  => '#dump_dir#/wga_expected.mlss_tags.tsv',
-            },
-            -flow_into => {
-                1 => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef }},
             },
         },        
 

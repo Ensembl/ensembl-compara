@@ -57,6 +57,11 @@ sub run_comparison {
     my $self = shift @_;
 
     if ($self->comes_from_core_database($self->param('genome_db'))) {
+
+        # A core comparison is irrelevant if members have not previously been loaded for the given GenomeDB.
+        my $reuse_member_adaptor = $self->get_cached_compara_dba('reuse_db')->get_GeneMemberAdaptor();
+        return 0 unless( $reuse_member_adaptor->count_all_by_GenomeDB($self->param('genome_db')) > 0 );
+
         return $self->do_one_comparison('exons',
             $self->hash_all_exons_from_dba( $self->param('prev_core_dba') ),
             $self->hash_all_exons_from_dba( $self->param('curr_core_dba') ),

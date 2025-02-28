@@ -85,9 +85,7 @@ sub default_options {
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
         'assembly_patch_species' => [],
-        'additional_species'     => {},
-        # Example:
-        #'additional_species'     => {'vertebrates' => ['homo_sapiens', 'drosophila_melanogaster'],},
+        'additional_species_file' => undef,
         'species_trees'          => undef,
 
         'do_update_from_metadata' => 1,
@@ -123,7 +121,7 @@ sub pipeline_wide_parameters {
     };
 }
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     return [
@@ -142,6 +140,15 @@ sub pipeline_analyses {
 
         @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease::pipeline_analyses_prep_master_db_for_release($self) },
     ];
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    if (defined $self->o('additional_species_file')) {
+        $analyses_by_name->{'update_genome_from_metadata_factory'}->{'-parameters'}{'additional_species_file'} = $self->o('additional_species_file');
+    }
 }
 
 1;

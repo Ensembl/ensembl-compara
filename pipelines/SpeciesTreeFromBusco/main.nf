@@ -54,6 +54,14 @@ if (!params.dir && !params.url) {
     exit 0
 }
 
+// Set up constraint tree path if present:
+consNwk = params.cons_nwk
+if(consNwk) {
+    File consTmp = new File(consNwk)
+    consAbsPath = consTmp.getCanonicalPath();
+    consNwk = " -g ${consAbsPath}";
+}
+
 File fileResDir = new File(params.results_dir);
 absResPath = fileResDir.getCanonicalPath();
 
@@ -85,22 +93,20 @@ process dumpVersions {
     perl -v | grep "This is" >> $out
     echo "gffread:" >> $out
     ${params.gffread_exe} --version >> $out
-    echo "mafft:" >> $out
-    (${params.mafft_exe} --version 2>&1) >> $out
     echo "iqtree:" >> $out
     ${params.iqtree_exe} --version | grep "version" >> $out
     echo "trimal:" >> $out
     ${params.trimal_exe} --version | grep "build" >> $out
     echo "seqkit:" >> $out
     ${params.seqkit_exe} version >> $out
-    echo "gotree:" >> $out
-    ${params.gotree_exe} version >> $out
-    echo "pal2nal:" >> $out
-    (${params.pal2nal_exe} 2>&1| grep "(v") >> $out
     echo "astral:" >> $out
     (java -jar $params.astral_jar 2>&1| grep "This is") >> $out
-    echo "macse:" >> $out
-    (java -jar $params.macse_jar -help 2>&1| grep "This is") >> $out
+    echo "miniprot:" >> $out
+    ${params.miniprot_exe} --version >> $out
+    echo "prank" >> $out
+    ${params.prank_exe} -version | grep PRANK >> $out
+    echo "pagan" >> $out
+    ${params.pagan_exe} -v | grep "PAGAN" >> $out
     """
 
 }
@@ -117,7 +123,7 @@ process prepareGenome {
         path "processed/*", emit: proc_genome
     when: params.dir != ""
     script:
-        id = (genome =~ /(.+)\..+?$/)[0][1]
+        id = (genome =~ /(.+)\.fas?(\.gz)?$/)[0][1]
         """
             mkdir -p processed
             ${params.seqkit_exe} -j 5 grep -n -v -r -p "PATCH_*,HAP" $genome > processed/$id
@@ -132,7 +138,7 @@ process prepareGenome {
 *@output path to input genomes info csv
 */
 process prepareGenomeFromDb {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_16gb_mem_c1'
 
     publishDir "${params.results_dir}", pattern: "input_genomes.csv", mode: "copy", overwrite: true
 
@@ -211,7 +217,7 @@ process linkAnnoCache {
 *@output tuple of path to annotation GTF and genome fasta
 */
 process buscoAnnot {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_128gb_mem_c32'
 
     publishDir "${params.results_dir}/anno_cache/$genome", pattern: "annotation.gtf", mode: "copy",  overwrite: true
 
@@ -221,21 +227,34 @@ process buscoAnnot {
     output:
         tuple path("annotation.gtf"), path(genome), emit: busco_annot
     script:
+    if (params.use_anno == "")
     """
-    mkdir -p anno_res
-    export ENSCODE=$params.enscode
-    ln -s `which tblastn` .
-
-    python3 $params.anno_exe \
-    --output_dir anno_res \
-    --genome_file $genome \
-    --num_threads ${params.cores} \
-    --max_intron_length 100000 \
-    --run_busco \
-    --genblast_timeout  64800\
-    --busco_protein_file $busco_prot
-
-    mv anno_res/busco_output/annotation.gtf .
+        SENS=""
+        if [ "${params.sensitive}" != "" ];
+        then
+            SENS="-M0 -k5"
+        fi
+        ${params.miniprot_exe} \$SENS -t ${params.cores} -d genome.mpi $genome
+        ${params.miniprot_exe} -N 0 -Iu -t ${params.cores} --gff genome.mpi $busco_prot | grep -v '##PAF' \
+        | awk -F "\t" 'BEGIN{OFS="\t"} \$3=="mRNA" {match(\$9, /Target=([^; ]+)/, m)} {attribs=gensub(/(ID|Parent)=[^; ]+/, sprintf("\\\\1=%s", m[1]), "g", \$9); \$9=attribs; print}' > annotation.gtf
+        rm -f genome.mpi
+    """
+    else
+    """
+        mkdir -p anno_res
+        export ENSCODE=$params.enscode
+        ln -s `which tblastn` .
+        
+        python3 $params.anno_exe \
+        --output_dir anno_res \
+        --genome_file $genome \
+        --num_threads ${params.cores} \
+        --max_intron_length 100000 \
+        --run_busco \
+        --genblast_timeout  64800\
+        --busco_protein_file $busco_prot
+        
+        mv anno_res/busco_output/annotation.gtf .
     """
 }
 
@@ -244,7 +263,7 @@ process buscoAnnot {
 *@output path to cDNA fasta
 */
 process runGffread {
-    label 'rc_4gb'
+    label 'rc_4Gb'
     input:
         tuple path(busco_annot), path(genome)
     output:
@@ -252,7 +271,8 @@ process runGffread {
     script:
     """
     mkdir -p cdna
-    ${params.gffread_exe} -w cdna/$genome -g $genome $busco_annot
+    ${params.gffread_exe} $busco_annot > anno_clean.gtf
+    ${params.gffread_exe} --adj-stop -w cdna/$genome -g $genome anno_clean.gtf
     """
 }
 
@@ -266,7 +286,7 @@ process runGffread {
 *@output path to taxon list TSV
 */
 process collateBusco {
-    label 'rc_16gb'
+    label 'rc_16Gb'
 
     publishDir "${params.results_dir}/busco_genes", pattern: "cdnas_fofn.txt", mode: "copy", overwrite: true
     publishDir "${params.results_dir}/busco_genes/prot", pattern: "gene_prot_*.fas", mode: "copy",  overwrite: true
@@ -294,7 +314,6 @@ process collateBusco {
     python ${params.collate_busco_results_exe} -s busco_stats.tsv \
     -i cdnas_fofn.txt -l $genes_tsv -o ./ \
     -t taxa.tsv -m ${params.min_taxa}
-
     """
 
 }
@@ -304,106 +323,41 @@ process collateBusco {
 *@output path to aligned protein fasta
 *@output path to cDNA fasta
 */
-process alignProt {
-    label 'retry_with_4gb_mem_c1'
+process transAlign {
+    label 'retry_with_e64gb_mem_c16'
+
+    publishDir "${params.results_dir}/", pattern: "alignments/*_aln_*.fas", mode: "copy",  overwrite: true
 
     input:
-        val protFas
         path cdnas
     output:
         path "alignments/prot_aln_*.fas", emit: prot_aln
-        path cdnas, emit: cdnas
+        path "alignments/codon_aln_*.fas", emit: codon_aln
    
     script:
-    id = (protFas =~ /.*prot_(.*)\.fas$/)[0][1]
+    id = (cdnas =~ /.*cdna_(.*)\.fas$/)[0][1]
     """
     mkdir -p alignments
-    ${params.mafft_exe} --anysymbol --auto $protFas > alignments/prot_aln_${id}.fas
-    """
-}
+    set +e
+    ${params.pagan_exe} -s $cdnas --translate --threads ${task.cpus} -o pagan_out
+    exit_code=\$?
+    set -e
 
-/**
-*@input path to protein alignment fasta
-*@output path to cDNA sequences fasta
-*@output path to codon alignment fasta
-*/
-process protAlnToCodon {
-    label 'rc_1Gb'
-
-    input:
-        path prot_aln
-        val cdna
-    output:
-        path "alignments/codon_aln_*.fas", emit: codon_aln
-
-    script:
-    id = (prot_aln =~ /.*prot_aln_(.*)\.fas$/)[0][1]
-    """
-    mkdir -p alignments
-
-    # Filter out from the cDNA sequences which did not pass protein
-    # level filtering:
-    ${params.seqkit_exe} -j 5 fx2tab -n $prot_aln > prot.ids
-    ${params.seqkit_exe} grep -j 5 -n -f prot.ids $cdna > filtered_cdna.fas
-    # Convert AA to codon alignment:
-    ${params.pal2nal_exe} $prot_aln filtered_cdna.fas -output fasta > alignments/codon_aln_${id}.fas
-    if [ -s alignments/codon_aln_${id}.fas ];
-    then
-        true;
+    # Check if pagan succeeded
+    if [ \$exit_code -eq 0 ]; then
+        mv pagan_out.fas alignments/prot_aln_${id}.fas
+        mv pagan_out.codon.fas alignments/codon_aln_${id}.fas
+    # Check if it failed with a segmentation fault (exit code 139) or ABRT (exit code 134)
+    elif [ \$exit_code -eq 139 ] || [ \$exit_code -eq 134 ]; then
+        echo "PAGAN failed due to segmentation fault or ABRT, continuing with prank..."
+        ${params.prank_exe} -d=$cdnas -o=prank_out -translate +F -once -uselogs
+        mv prank_out.best.pep.fas alignments/prot_aln_${id}.fas
+        mv prank_out.best.nuc.fas alignments/codon_aln_${id}.fas
     else
-        echo "Codon alignment is empty!"
-        exit 1
-    fi
+        echo "PAGAN failed due to an error other than segmentation fault or ABRT: \$exit_code, exiting."
+        exit \$exit_code
+    fi 
     """
-}
-
-/**
-*@input path to codon alignment fasta
-*@output path to codon alignment fasta with stop codons removed
-*/
-process removeStopCodons {
-    label 'rc_1Gb'
-
-    publishDir "${params.results_dir}/", pattern: "alignments/codon_aln_*.fas", mode: "copy",  overwrite: true
-
-    input:
-        path codon_aln
-    output:
-        path "alignments/codon_aln_*.fas", emit: codon_aln
-
-    script:
-    id = (codon_aln =~ /.*codon_aln_(.*)\.fas$/)[0][1]
-    """
-    mkdir -p alignments
-    java -jar ${params.macse_jar} -prog exportAlignment \
-    -align $codon_aln \
-    -codonForFinalStop --- \
-    -codonForInternalStop NNN \
-    -out_NT alignments/codon_aln_${id}.fas
-    """
-}
-
-/**
-*@input path to protein alignment fasta
-*@output path to trimmed protein alignment
-*/
-process trimAlignments {
-    label 'rc_2Gb'
-
-    publishDir "${params.results_dir}/", pattern: "trimmed_alignments/trim_aln_*.fas", mode: "copy",  overwrite: true
-
-    input:
-        path full_aln
-    output:
-        path "trimmed_alignments/trim_aln_*.fas", emit: trim_aln
-
-    script:
-    id = (full_aln =~ /.*prot_(.*)\.fas$/)[0][1]
-    """
-    mkdir -p trimmed_alignments
-    trimal -gappyout -in $full_aln -out trimmed_alignments/trim_${id}.fas
-    """
-
 }
 
 
@@ -416,7 +370,7 @@ process trimAlignments {
 *@output path to RAXML style partition file
 */
 process mergeProtAlns {
-    label 'rc_4gb'
+    label 'retry_with_16gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "merged_protein_alns.fas", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "partitions.tsv", mode: "copy",  overwrite: true
@@ -442,6 +396,26 @@ process mergeProtAlns {
 }
 
 /**
+*@input merged protein alignment fasta
+*@output trimmed merged protein alignment fasta
+*/
+process trimMergedProtAln {
+    label 'retry_with_16gb_mem_c1'
+
+    publishDir "${params.results_dir}/", pattern: "trimmed_merged_protein_alns.fas", mode: "copy",  overwrite: true
+
+    input:
+        path merged_aln
+
+    output:
+        path "trimmed_merged_protein_alns.fas", emit: trimmed_merged_aln
+    script:
+    """
+    ${params.trimal_exe} -in ${merged_aln} -out trimmed_merged_protein_alns.fas -automated1 -keepheader
+    """
+}
+
+/**
 *@input list of filtered alignments
 *@input path to list of genes TSV
 *@input path to taxon list TSV
@@ -449,7 +423,7 @@ process mergeProtAlns {
 *@output path to merged alignments fasta
 */
 process mergeCodonAlns {
-    label 'rc_4gb'
+    label 'retry_with_16gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "merged_codon_alns.fas", mode: "copy",  overwrite: true
 
@@ -478,7 +452,7 @@ process mergeCodonAlns {
 *@output fasta alignment with every third site.
 */
 process pickThirdCodonSite {
-    label 'rc_4gb'
+    label 'retry_with_8gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "merged_third_sites_alns.fas", mode: "copy",  overwrite: true
 
@@ -495,62 +469,10 @@ process pickThirdCodonSite {
 
 /**
 *@input path to merged alignment fasta
-*@input path to partition file
-*@output path to tree in newick format
-*@output path to iqtree2 report
-*@output path to iqtree2 log file
-*/
-process runIqtree {
-    label 'retry_with_16gb_mem_c1'
-    publishDir "${params.results_dir}/", pattern: "species_tree.nwk", mode: "copy",  overwrite: true
-    publishDir "${params.results_dir}/", pattern: "iqtree_bionj.nwk", mode: "copy",  overwrite: true
-    publishDir "${params.results_dir}/", pattern: "iqtree_report.txt", mode: "copy",  overwrite: true
-    publishDir "${params.results_dir}/", pattern: "iqtree_log.txt", mode: "copy",  overwrite: true
-
-    input:
-        path merged_aln
-        path partitions
-    output:
-        path "species_tree.nwk", emit: newick
-        path "iqtree_report.txt", emit: iqrtree_report
-        path "iqtree_log.txt", emit: iqtree_log
-        path "iqtree_bionj.nwk", emit: iqtree_nj
-        stdout emit: debug
-
-    script:
-    """
-    ${params.iqtree_exe} -s $merged_aln -p $partitions --fast -T ${params.cores}
-    mv partitions.tsv.treefile species_tree.nwk
-    mv partitions.tsv.iqtree iqtree_report.txt
-    mv partitions.tsv.log iqtree_log.txt
-    mv partitions.tsv.bionj iqtree_bionj.nwk
-    """
-}
-
-/**
-*@input path to merged alignment fasta
-*@output path to tree in newick format
-*/
-process calcGeneTrees {
-    label 'retry_with_8gb_mem_c1'
-
-    input:
-        path aln
-
-    output:
-        path "codon_aln_*.treefile", emit: tree
-    script:
-    """
-    ${params.iqtree_exe} -st CODON -s $aln -m KOSI07_GY+F+G --fast -T ${params.cores}
-    """
-}
-
-/**
-*@input path to merged alignment fasta
 *@output path to tree in newick format
 */
 process calcProtTrees {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_8gb_mem_c32'
 
     input:
         path aln
@@ -559,7 +481,10 @@ process calcProtTrees {
         path "prot_aln_*.treefile", emit: tree
     script:
     """
-    ${params.iqtree_exe} -s $aln -m LG+F+G --fast -T ${params.cores}
+    # Remove taxa with gaps and stop codons only:
+    ${params.seqkit_exe} grep -v -s -r -p "^[*-]*\$" $aln > ${aln}.proc
+    # Run iqtree:
+    ${params.iqtree_exe} -s ${aln}.proc -m LG+I+G --fast -T ${params.cores}
     """
 }
 
@@ -569,7 +494,7 @@ process calcProtTrees {
 *@output path to astral log file
 */
 process runAstral {
-    label 'retry_with_8gb_mem_c1'
+    label 'retry_with_16gb_mem_c1'
 
     publishDir "${params.results_dir}/", pattern: "astral_species_tree.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "astral.log", mode: "copy",  overwrite: true
@@ -588,35 +513,50 @@ process runAstral {
 }
 
 /**
-*@input path to merged codon alignment fasta
+*@input path to protein alignment fasta
+*@input path to partition file
 *@input path to input newick tree
 *@output path to output tree in newick format
 *@output path to iqtree2 report
 *@output path to iqtree2 log file
 */
-process calcCodonBranchesIqtree {
-    label 'retry_with_16gb_mem_c1'
+process refineProtTree {
+    label 'retry_with_128gb_mem_c32'
 
-    publishDir "${params.results_dir}/", pattern: "species_tree_codon_bl.nwk", mode: "copy",  overwrite: true
-    publishDir "${params.results_dir}/", pattern: "iqtree_report_codon_bl.txt", mode: "copy",  overwrite: true
-    publishDir "${params.results_dir}/", pattern: "iqtree_log_codon_bl.txt", mode: "copy",  overwrite: true
-
+    publishDir "${params.results_dir}/", pattern: "astral_species_tree_prot_bl.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "astral_species_tree_prot_bl_fullid.nwk", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_prot_bl.txt", mode: "copy",  overwrite: true
+    publishDir "${params.results_dir}/", pattern: "astral_iqtree_log_prot_bl.txt", mode: "copy",  overwrite: true
 
     input:
-        path codon_aln
+        path aln
         path input_tree
+        val genomes_csv
 
     output:
-        path "species_tree_codon_bl.nwk", emit: newick
-        path "iqtree_report_codon_bl.txt", emit: iqrtree_report
-        path "iqtree_log_codon_bl.txt", emit: iqtree_log
+        path "astral_species_tree_prot_bl.nwk", emit: newick
+        path "astral_species_tree_prot_bl_fullid.nwk", emit: newick_fullid
+        path "astral_iqtree_report_prot_bl.txt", emit: iqrtree_report
+        path "astral_iqtree_log_prot_bl.txt", emit: iqtree_log
 
     script:
+    if (params.dir == "")
     """
-    ${params.iqtree_exe} -st CODON -s $codon_aln -m KOSI07_GY+F -g $input_tree --fast -T ${params.cores}
-    mv merged_codon_alns.fas.treefile species_tree_codon_bl.nwk
-    mv merged_codon_alns.fas.iqtree iqtree_report_codon_bl.txt
-    mv merged_codon_alns.fas.log iqtree_log_codon_bl.txt
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+I+G $consNwk -t $input_tree --fast -T ${params.cores}
+    mv *.treefile astral_species_tree_prot_bl.nwk
+    mv *.iqtree astral_iqtree_report_prot_bl.txt
+    mv *.log astral_iqtree_log_prot_bl.txt
+    cp astral_species_tree_prot_bl.nwk astral_species_tree_prot_bl_fullid.nwk
+    python ${params.fix_leaf_names_exe} -t astral_species_tree_prot_bl.nwk -c ${genomes_csv} -o TMP.nwk
+    mv TMP.nwk astral_species_tree_prot_bl.nwk
+    """
+    else
+    """
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+I+G $consNwk -t $input_tree --fast -T ${params.cores}
+    mv *.treefile astral_species_tree_prot_bl.nwk
+    mv *.iqtree astral_iqtree_report_prot_bl.txt
+    mv *.log astral_iqtree_log_prot_bl.txt
+    cp astral_species_tree_prot_bl.nwk astral_species_tree_prot_bl_fullid.nwk
     """
 }
 
@@ -625,10 +565,10 @@ process calcCodonBranchesIqtree {
 *@input path to input newick tree
 *@output path to output tree in newick format
 *@output path to iqtree2 report
-*@output path to iqtree2 log file
+*@output path to iqtree4 log file
 */
-process calcNeutralBranchesAstral {
-    label 'retry_with_16gb_mem_c1'
+process calcNeutralBranches {
+    label 'retry_with_128gb_mem_c32'
 
     publishDir "${params.results_dir}/", pattern: "astral_species_tree_neutral_bl.nwk", mode: "copy",  overwrite: true
     publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_neutral_bl.txt", mode: "copy",  overwrite: true
@@ -647,7 +587,7 @@ process calcNeutralBranchesAstral {
     script:
     if (params.dir == "")
     """
-    ${params.iqtree_exe} -s $aln -m GTR+G -g $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m GTR+G -g $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_neutral_bl.nwk
     mv *.iqtree astral_iqtree_report_neutral_bl.txt
     mv *.log astral_iqtree_log_neutral_bl.txt
@@ -656,110 +596,12 @@ process calcNeutralBranchesAstral {
     """
     else
     """
-    ${params.iqtree_exe} -s $aln -m GTR+G -g $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m GTR+G -g $input_tree --fast -T ${params.cores}
     mv *.treefile astral_species_tree_neutral_bl.nwk
     mv *.iqtree astral_iqtree_report_neutral_bl.txt
     mv *.log astral_iqtree_log_neutral_bl.txt
     """
 
-}
-
-/**
-*@input path to codon alignment fasta
-*@input path to input newick tree
-*@output path to output tree in newick format
-*@output path to iqtree2 report
-*@output path to iqtree2 log file
-*/
-process calcCodonBranchesAstral {
-    label 'retry_with_16gb_mem_c1'
-
-    publishDir "${params.results_dir}/", pattern: "astral_species_tree_codon_bl.nwk", mode: "copy",  overwrite: true
-    publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_codon_bl.txt", mode: "copy",  overwrite: true
-    publishDir "${params.results_dir}/", pattern: "astral_iqtree_log_codon_bl.txt", mode: "copy",  overwrite: true
-
-    input:
-        path codon_aln
-        path input_tree
-
-    output:
-        path "astral_species_tree_codon_bl.nwk", emit: newick
-        path "astral_iqtree_report_codon_bl.txt", emit: iqrtree_report
-        path "astral_iqtree_log_codon_bl.txt", emit: iqtree_log
-
-    script:
-    """
-    ${params.iqtree_exe} -st CODON -s $codon_aln -m KOSI07_GY+F -g $input_tree --fast -T ${params.cores}
-    mv merged_codon_alns.fas.treefile astral_species_tree_codon_bl.nwk
-    mv merged_codon_alns.fas.iqtree astral_iqtree_report_codon_bl.txt
-    mv merged_codon_alns.fas.log astral_iqtree_log_codon_bl.txt
-    """
-}
-
-/**
-*@input path to protein alignment fasta
-*@input path to partition file
-*@input path to input newick tree
-*@output path to output tree in newick format
-*@output path to iqtree2 report
-*@output path to iqtree2 log file
-*/
-process calcProtBranchesAstral {
-    label 'retry_with_16gb_mem_c1'
-
-    publishDir "${params.results_dir}/", pattern: "astral_species_tree_prot_bl.nwk", mode: "copy",  overwrite: true
-    publishDir "${params.results_dir}/", pattern: "astral_iqtree_report_prot_bl.txt", mode: "copy",  overwrite: true
-    publishDir "${params.results_dir}/", pattern: "astral_iqtree_log_prot_bl.txt", mode: "copy",  overwrite: true
-
-    input:
-        path aln
-        path partitions
-        path input_tree
-        val genomes_csv
-
-    output:
-        path "astral_species_tree_prot_bl.nwk", emit: newick
-        path "astral_iqtree_report_prot_bl.txt", emit: iqrtree_report
-        path "astral_iqtree_log_prot_bl.txt", emit: iqtree_log
-
-    script:
-    if (params.dir == "")
-    """
-    ${params.iqtree_exe} -s $aln -p $partitions -g $input_tree --fast -T ${params.cores}
-    mv *.treefile astral_species_tree_prot_bl.nwk
-    mv *.iqtree astral_iqtree_report_prot_bl.txt
-    mv *.log astral_iqtree_log_prot_bl.txt
-    python ${params.fix_leaf_names_exe} -t astral_species_tree_prot_bl.nwk -c ${genomes_csv} -o TMP.nwk
-    mv TMP.nwk astral_species_tree_prot_bl.nwk
-    """
-    else
-    """
-    ${params.iqtree_exe} -s $aln -p $partitions -g $input_tree --fast -T ${params.cores}
-    mv *.treefile astral_species_tree_prot_bl.nwk
-    mv *.iqtree astral_iqtree_report_prot_bl.txt
-    mv *.log astral_iqtree_log_prot_bl.txt
-    """
-}
-
-/**
-*@input path to input tree with codon branch lengths
-*@output path to output tree with nucleotide branch lengths
-*/
-process scaleToNucleotide {
-    label 'rc_2Gb'
-
-    publishDir "${params.results_dir}/", pattern: "astral_species_tree_nuc_bl.nwk", mode: "copy",  overwrite: true
-
-    input:
-        path in_tree
-
-    output:
-        path "astral_species_tree_nuc_bl.nwk", emit: tree
-
-    script:
-    """
-    ${params.gotree_exe} brlen scale -f 0.33333333333 < $in_tree > astral_species_tree_nuc_bl.nwk
-    """
 }
 
 /**
@@ -804,7 +646,6 @@ process outgroupRootingProt {
     """
 }
 
-
 // Function to check if a genome is present in
 // the annotation cache.
 def annoInCache(genome, anno_cache) {
@@ -822,18 +663,16 @@ workflow {
 
     // Prepare busco protein set:
     prepareBusco(params.busco_proteins)
-
     // Prepare input genomes:
     if (params.dir != "") {
         // Get a channel of input genomes if directory is specified:
-        genomes = Channel.fromPath("${params.dir}/*.fa*", type: 'file')
+        genomes = Channel.fromPath("${params.dir}/*.fa{,s}{,.gz}", type: 'file')
     } else {
         // Otherwise initialise an empty channel to avoid nextflow crash:
         genomes = Channel.of()
     }
     prepareGenome(genomes)
     prepareGenomeFromDb()
-
     if (params.dir == "") {
         // The input is from DB, the genomes CSV comes from the process:
         genCsvChan = prepareGenomeFromDb.out.input_genomes
@@ -842,83 +681,48 @@ workflow {
         // CSV file so the branch length calculations are executed:
         genCsvChan = Channel.of("/dummy/path")
     }
-
     proc_genomes = prepareGenome.out.proc_genome.flatten().mix(prepareGenomeFromDb.out.proc_genome.flatten())
-
     // Branch the genomes channel based on presence in the
     // annotation cache:
     proc_genomes.branch {
         annot: !annoInCache(it, params.anno_cache)
         link: annoInCache(it, params.anno_cache)
     }.set { genome_fork }
-
     // Link annotations present in the cache:
     linkAnnoCache(genome_fork.link)
     // Annotate genomes not present in the cache:
     buscoAnnot(prepareBusco.out.busco_prots, genome_fork.annot)
-
     // Merge the output of link and annotate steps:
     annots = buscoAnnot.out.busco_annot.mix(linkAnnoCache.out.busco_annot)
-
     // Get cDNA from the genomes and annotations:
     runGffread(annots)
-
     // Organise sequences per-gene:
     collateBusco(runGffread.out.collect(), prepareBusco.out.busco_genes)
-
     // Align protein sequences:
-    alignProt(collateBusco.out.prot_seq.flatten(), collateBusco.out.cdnas.flatten())
-
-    // Trim protein alignments (removed):
-    trimAlignments(alignProt.out.prot_aln)
-
-    // Convert protein alignments to codon alignment:
-    protAlnToCodon(alignProt.out.prot_aln, alignProt.out.cdnas)
-
-    // Remove stop codons from codon alignment:
-    removeStopCodons(protAlnToCodon.out.codon_aln)
-
-    // Calculate trees from the codon alignments (removed):
-    // calcGeneTrees(removeStopCodons.out.codon_aln)
-
+    transAlign(collateBusco.out.cdnas.flatten())
+    
     // Calculate trees from the protein alignments:
-    calcProtTrees(alignProt.out.prot_aln)
-
+    calcProtTrees(transAlign.out.prot_aln)
     trees = calcProtTrees.out.tree.collectFile(name: 'gene_trees.nwk', newLine: true)
-
     // Run astral to calculate species tree from
     // the gene trees:
     runAstral(trees)
-
     // Merge protein alignments:
-    mergeProtAlns(trimAlignments.out.trim_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
+    mergeProtAlns(transAlign.out.prot_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
 
+    // Trim merged protein alignment:
+    trimMergedProtAln(mergeProtAlns.out.merged_aln)
+    
     // Merge codon alignments:
-    mergeCodonAlns(removeStopCodons.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
-
+    mergeCodonAlns(transAlign.out.codon_aln.collect(), prepareBusco.out.busco_genes, collateBusco.out.taxa)
     // Pick out every third site from the merged codon alignment:
     pickThirdCodonSite(mergeCodonAlns.out.merged_aln)
-
-    // Calculate branch lenghts based on the third codon sites:
-    calcNeutralBranchesAstral(pickThirdCodonSite.out.third_aln, runAstral.out.tree, genCsvChan)
-
-    // Calculate species tree from protein alignments using iqtree2 (removed):
-    // runIqtree(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions)
-
-    // Calculate neutral branch lenghts from codon alignment (removed):
-    // calcCodonBranchesIqtree(mergeCodonAlns.out.merged_aln, runIqtree.out.newick)
-
     // Calculate branch lenghts from protein alignment:
-    calcProtBranchesAstral(mergeProtAlns.out.merged_aln, mergeProtAlns.out.partitions, runAstral.out.tree, genCsvChan)
-
-    // Calculate branch lenghts from codon alignment for the astral tree (removed):
-    // calcCodonBranchesAstral(mergeCodonAlns.out.merged_aln, runAstral.out.tree)
-
-    // Scale the branch lengths to nucleotide sites (removed):
-    // scaleToNucleotide(calcCodonBranchesAstral.out.newick)
-
+    refineProtTree(trimMergedProtAln.out.trimmed_merged_aln, runAstral.out.tree, genCsvChan)
+    // Calculate branch lenghts based on the third codon sites:
+    calcNeutralBranches(pickThirdCodonSite.out.third_aln, refineProtTree.out.newick_fullid, genCsvChan)
     // Perform outgroup rooting for tree with neutral branch lengths:
-    outgroupRootingNeutral(calcNeutralBranchesAstral.out.newick)
+    outgroupRootingNeutral(calcNeutralBranches.out.newick)
     // Perform outgroup rooting for tree with protein alignment based branch lengths:
-    outgroupRootingProt(calcProtBranchesAstral.out.newick)
+    outgroupRootingProt(refineProtTree.out.newick)
 }

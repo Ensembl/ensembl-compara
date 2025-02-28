@@ -67,6 +67,9 @@ sub write_output {
 
     my $dbc = $self->compara_dba->dbc;
 
+    my $max_seq_member_id = $dbc->sql_helper->execute_single_result( -sql => 'SELECT MAX(seq_member_id) FROM seq_member' );
+    $self->die_no_retry("max seq_member_id ($max_seq_member_id) >= reindexing offset ($offset)") if ($max_seq_member_id >= $offset);
+
     $self->call_within_transaction( sub {
         foreach my $r (@{$self->param('sorted_seq_member_id_pairs')}) {
             if ($r->[0] > $offset) {

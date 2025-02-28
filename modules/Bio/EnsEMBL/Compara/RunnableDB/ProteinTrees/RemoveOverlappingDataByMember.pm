@@ -39,8 +39,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub run {
     my $self = shift;
 
-    my $overlapping_species = $self->_find_overlapping_species;
-    my $overlap_genome_db_ids = '(' . join(',', @{$self->param('overlapping_species')}) . ')';
+    my $overlapping_species = $self->param_required('overlapping_genomes');
+    my $overlap_genome_db_ids = '(' . join(',', @{$overlapping_species}) . ')';
 
     my $hmm_annot_sql = qq/
         DELETE 
@@ -75,26 +75,6 @@ sub run {
             hmember.genome_db_id IN $overlap_genome_db_ids
     /;
     $self->compara_dba->dbc->do($peptide_align_feature_sql);
-}
-
-
-sub _find_overlapping_species {
-    my $self = shift;
-
-    my $master_dba = $self->get_cached_compara_dba('master_db');
-    my $ref_collection_name = $self->param_required('ref_collection');
-    my $ref_collection = $master_dba->get_SpeciesSetAdaptor->fetch_collection_by_name($ref_collection_name);
-    die "Cannot find collection '$ref_collection_name' in master_db" unless $ref_collection;
-    my @ref_genome_ids = map { $_->dbID } @{ $ref_collection->genome_dbs };
-
-    my $this_gdb_adaptor = $self->compara_dba->get_GenomeDBAdaptor;
-    my @these_genome_ids = map { $_->dbID } @{ $this_gdb_adaptor->fetch_all };
-
-    my @overlapping_species;
-    foreach my $ref_gdb_id ( @ref_genome_ids ) {
-        push @overlapping_species, $ref_gdb_id if grep { $ref_gdb_id == $_ } @these_genome_ids;
-    }
-    $self->param('overlapping_species', \@overlapping_species);
 }
 
 1;

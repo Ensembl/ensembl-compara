@@ -51,10 +51,13 @@ sub default_options {
 
     # complementary collection parameters:
 
-        # Collection in master that may have overlapping data. Potentially overlapping clusters
+        # Collection(s) in master that may have overlapping data. Potentially overlapping clusters
         # and homologies are removed during the complementary protein-trees pipeline. This should be
         # defined in the PipeConfig file for each complementary collection (or on the command line).
-        'ref_collection'   => undef,
+        'ref_collection_list' => undef,
+
+    # mapping parameters:
+
         'do_stable_id_mapping' => 0,
         'do_treefam_xref' => 0,
     };
@@ -66,7 +69,7 @@ sub pipeline_wide_parameters {
     return {
         %{$self->SUPER::pipeline_wide_parameters},
 
-        'ref_collection' => $self->o('ref_collection'),
+        'ref_collection_list' => $self->o('ref_collection_list'),
     }
 }
 
@@ -77,6 +80,15 @@ sub core_pipeline_analyses {
         @{$self->SUPER::core_pipeline_analyses},
 
         # include complementary collection-specific analyses
+        {
+            -logic_name => 'find_overlapping_genomes',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes',
+            -parameters => {
+                'collection' => $self->o('collection'),
+            },
+            -flow_into  => [ 'check_strains_cluster_factory' ],
+        },
+
         {   -logic_name => 'check_strains_cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
@@ -84,23 +96,30 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => [ 'cleanup_strains_clusters' ],
-                'A->1' => [ 'hc_clusters' ],
+                'A->1' => [ 'cluster_cleanup_funnel_check' ],
             },
             -rc_name    => '1Gb_job',
         },
 
         {   -logic_name => 'cleanup_strains_clusters',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingClusters',
+            -analysis_capacity => 100,
         },
 
-        {
-             -logic_name => 'remove_overlapping_homologies',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologies',
-             -flow_into  => [ 'remove_overlapping_data_by_member' ],
+        {   -logic_name => 'cluster_cleanup_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'hc_clusters_again' ],
         },
-        {
-             -logic_name => 'remove_overlapping_data_by_member',
-             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingDataByMember',
+
+        {   -logic_name         => 'hc_clusters_again',
+            -module             => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters         => {
+                mode            => 'global_tree_set',
+            },
+            -flow_into          => [ 'clusterset_backup' ],
+            -analysis_capacity  => $self->o('hc_capacity'),
+            -priority           => $self->o('hc_priority'),
+            -batch_size         => 20,
         },
     ]
 }
@@ -114,8 +133,7 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     # wire up complementary collection-specific analyses
-    $analyses_by_name->{'remove_blocklisted_genes'}->{'-flow_into'} = ['check_strains_cluster_factory'];
-    push @{$analyses_by_name->{'backbone_pipeline_finished'}->{'-flow_into'}}, 'remove_overlapping_homologies';
+    $analyses_by_name->{'cluster_qc_funnel_check'}->{'-flow_into'} = 'find_overlapping_genomes';
 }
 
 

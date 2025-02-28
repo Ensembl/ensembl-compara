@@ -112,6 +112,13 @@ sub hive_meta_table {
     };
 }
 
+sub resource_classes {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::resource_classes('include_multi_threaded')},
+    };
+}
+
 sub pipeline_wide_parameters {
     my ($self) = @_;
 
@@ -125,7 +132,6 @@ sub pipeline_wide_parameters {
         'split_by_chromosome'   => $self->o('split_by_chromosome'),
         'format'        => $self->o('format'),
         'split_size'    => $self->o('split_size'),
-        'registry'      => $self->o('reg_conf'),
         'compara_db'    => $self->o('compara_db'),
         'export_dir'    => $self->o('export_dir'),
         'masked_seq'    => $self->o('masked_seq'),

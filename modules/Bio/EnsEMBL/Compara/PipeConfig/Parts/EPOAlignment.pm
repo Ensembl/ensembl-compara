@@ -93,8 +93,20 @@ return
 	-parameters    => {
 			'species_tree_input_file' => $self->o('binary_species_tree'),
 	},
-        -flow_into     => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
-                                ELSE [ 'dump_mappings_to_file' ] ),
+    -flow_into     => {
+        2 => { 'hc_species_tree' => { 'mlss_id' => '#mlss_id#', 'species_tree_root_id' => '#species_tree_root_id#' } },
+    },
+},
+{
+    -logic_name => 'hc_species_tree',
+    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MSA::SqlHealthChecks',
+    -parameters => {
+        'mode'                      => 'species_tree',
+        'binary'                    => 0,
+        'n_missing_species_in_tree' => 0,
+    },
+    -flow_into  => WHEN( '#run_gerp#' => [ 'set_gerp_neutral_rate' ],
+                         ELSE [ 'dump_mappings_to_file' ] ),
 },
 # ------------------------------------- run enredo
 {
@@ -114,12 +126,18 @@ return
 	-parameters => {
                 'add_non_nuclear_alignments' => $self->o('add_non_nuclear_alignments'),
 	},
-        -rc_name   => '4Gb_job',
+        -rc_name   => '4Gb_24_hour_job',
         -flow_into => {
                 '2->A' => [ 'find_dnafrag_region_strand' ],
                 '3->A' => [ 'ortheus' ],
-		'A->1' => [ 'create_neighbour_nodes_jobs_alignment' ],
+        'A->1' => [ 'alignment_funnel_check' ],
 	},
+},
+
+{
+    -logic_name => 'alignment_funnel_check',
+    -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+    -flow_into  => { 1 => [ 'create_neighbour_nodes_jobs_alignment' ] },
 },
 # find the most likely strand orientation for genomic regions which enredo was unable to determine the
 # orientation (when the strand is set to '0' in the enredo output file)  
@@ -166,7 +184,7 @@ return
                 'semphy_exe'        => $self->o('semphy_exe'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
-        -rc_name   => '2Gb_job',
+        -rc_name   => '2Gb_24_hour_job',
 	-hive_capacity => 2000,
 	-max_retry_count => 3,
 	-flow_into => {
@@ -188,7 +206,7 @@ return
                 'semphy_exe'        => $self->o('semphy_exe'),
 	},
 	-module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
-	-rc_name => '8Gb_job',
+	-rc_name => '8Gb_24_hour_job',
 	-max_retry_count => 2,
 	-flow_into => { 
                 1 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
@@ -208,7 +226,7 @@ return
                 'semphy_exe'        => $self->o('semphy_exe'),
         },  
         -module => 'Bio::EnsEMBL::Compara::RunnableDB::Ortheus',
-        -rc_name => '32Gb_job',
+        -rc_name => '32Gb_24_hour_job',
 	-max_retry_count => 1,
 	-flow_into => {
                 1 => WHEN( '#run_gerp#' => [ 'gerp' ] ),
@@ -221,7 +239,7 @@ return
                 -parameters => {
                                 'inputquery' => 'SELECT root_id FROM genomic_align_tree WHERE parent_id IS NULL',
                                },  
-                -rc_name => '2Gb_job',
+                -rc_name => '2Gb_24_hour_job',
                 -flow_into => {
                                '2->A' => [ 'set_neighbour_nodes' ],
                                'A->1' => [ 'update_max_alignment_length' ],
@@ -275,6 +293,7 @@ sub pipeline_analyses_gerp {
             -failed_job_tolerance => 1,
             -flow_into => {
                 -1 => [ 'gerp_high_mem' ],
+                -2 => [ 'gerp_high_mem' ],
             },
         },
         {   -logic_name => 'gerp_high_mem',
@@ -312,7 +331,7 @@ sub pipeline_analyses_healthcheck {
 
         {   -logic_name => 'conservation_score_healthcheck',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::HealthCheck',
-            -rc_name    => '4Gb_job',
+            -rc_name    => '4Gb_24_hour_job',
         },
 
         {   -logic_name  => 'end_pipeline',

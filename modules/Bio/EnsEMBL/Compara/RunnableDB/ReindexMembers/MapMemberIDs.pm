@@ -33,29 +33,71 @@ package Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs;
 use strict;
 use warnings;
 
+use File::Spec::Functions qw(catfile);
+use JSON qw(decode_json);
+use List::Util qw(sum);
+
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
+
+
+sub param_defaults {
+    my $self = shift @_;
+    return {
+        %{$self->SUPER::param_defaults},
+
+        'do_genome_reindexing' => 0,
+    }
+}
 
 
 sub fetch_input {
     my $self = shift @_;
 
-    $self->param_required('genome_db_id');
+    my $curr_gdb_id = $self->param_required('genome_db_id');
+    my $prev_gdb_id = $curr_gdb_id;
+
+    if ($self->param('do_genome_reindexing') && $self->param('num_reindexed_genomes') > 0) {
+
+        my $reindexing_dir = $self->param_required('genome_reindexing_dir');
+        my $gdb_map_file = catfile($reindexing_dir, 'genome_db_id.json');
+        my $gdb_reindexing_map = decode_json($self->_slurp($gdb_map_file));
+        my %gdb_reindexing_rev_map = reverse %{$gdb_reindexing_map};
+
+        if (exists $gdb_reindexing_rev_map{$curr_gdb_id}) {
+            $prev_gdb_id = $gdb_reindexing_rev_map{$curr_gdb_id};
+        }
+    }
 
     my $reuse_compara_dba = $self->get_cached_compara_dba('prev_tree_db');
 
-    $self->param('current_members', $self->_fetch_members($self->compara_dba->dbc));
-    $self->param('previous_members', $self->_fetch_members($reuse_compara_dba->dbc));
+    $self->param('current_members', $self->_fetch_members($self->compara_dba->dbc, $curr_gdb_id));
+    $self->param('previous_members', $self->_fetch_members($reuse_compara_dba->dbc, $prev_gdb_id));
 }
 
 sub _fetch_members {
-    my $self = shift @_;
-    my $dbc = shift;
+    my ($self, $dbc, $genome_db_id) = @_;
 
-    my $sql = 'SELECT gene_member_id, gene_member.stable_id AS gene_member_stable_id, seq_member_id, seq_member.stable_id AS seq_member_stable_id, md5sum
-               FROM gene_member JOIN seq_member USING (gene_member_id) JOIN sequence USING (sequence_id) WHERE gene_member.genome_db_id = ?';
+    my $sql = q/
+        SELECT
+            gene_member.gene_member_id,
+            gene_member.stable_id AS gene_member_stable_id,
+            gene_member.version AS gene_member_version,
+            seq_member_id,
+            seq_member.stable_id AS seq_member_stable_id,
+            seq_member.version AS seq_member_version,
+            md5sum
+        FROM
+            gene_member
+        JOIN
+            seq_member ON seq_member_id = canonical_member_id
+        JOIN
+            sequence USING (sequence_id)
+        WHERE
+            gene_member.genome_db_id = ?
+    /;
 
     my $sth = $dbc->prepare($sql);
-    $sth->execute($self->param('genome_db_id'));
+    $sth->execute($genome_db_id);
     my $rows = $sth->fetchall_arrayref( {} );   # Get an arrayref of hashrefs
     $sth->finish;
     $self->warning('Fetched ' . scalar(@$rows) . ' genes from '. $dbc->dbname);
@@ -112,6 +154,18 @@ sub run {
         } else {
             # Gene gone
             push @{ $lost_seq{$prev_data->{'md5sum'}} }, $gene_member_stable_id;
+        }
+    }
+
+    my $num_versioned_gene_stable_ids = sum(
+        map { ($_->{'gene_member_version'} > 0 || $_->{'seq_member_version'} > 0) ? 1 : 0 } (values %$previous_members, values %$current_members)
+    );
+
+    if ($num_versioned_gene_stable_ids == 0) {
+        while (my ($gene_member_stable_id, $curr_data) = each %$current_members) {
+            unless ($previous_members->{$gene_member_stable_id}) {
+                push @{ $gained_seq{$curr_data->{'md5sum'}} }, $gene_member_stable_id;
+            }
         }
     }
 

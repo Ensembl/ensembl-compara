@@ -91,4 +91,4 @@ if __name__ == '__main__':
         with engine.connect() as conn:
             result = conn.execute(text(query))
             for dict_row in result.mappings():
-                writer.writerow(dict_row)
+                writer.writerow(dict(dict_row))

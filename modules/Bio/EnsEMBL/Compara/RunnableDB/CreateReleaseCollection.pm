@@ -64,8 +64,26 @@ sub write_output {
 
     my $dry_run = 0;
 
+    my $master_dba = $self->param('master_dba');
+    my $collection_name = $self->param_required('collection_name');
+    my $current_species = $self->param('current_species');
+    my $incl_components = $self->param_required('incl_components');
+
+    my @rel_collection_gdbs = map {$master_dba->get_GenomeDBAdaptor->_find_most_recent_by_name($_)} @$current_species;
+    if ($incl_components) {
+        @rel_collection_gdbs = Bio::EnsEMBL::Compara::Utils::MasterDatabase::_expand_components(\@rel_collection_gdbs);
+    }
+
+    my $species_set_dba = $master_dba->get_SpeciesSetAdaptor;
+    my $species_set = $species_set_dba->fetch_by_GenomeDBs(\@rel_collection_gdbs);
+    if (defined $species_set && $species_set->name ne "collection-$collection_name") {
+        $species_set->name("collection-$collection_name");
+        $species_set_dba->update_header($species_set);
+        $self->complete_early("Release collection already exists under a different name. Updated collection name");
+    }
+
     #Update the release collection.
-    Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $self->param('master_dba'), $self->param_required('collection_name'), $self->param( 'current_species' ), -DRY_RUN => $dry_run, -RELEASE => $self->param_required('release'), -INCL_COMPONENTS => $self->param_required('incl_components') );
+    Bio::EnsEMBL::Compara::Utils::MasterDatabase::new_collection( $master_dba, $collection_name, $current_species, -DRY_RUN => $dry_run, -RELEASE => $self->param_required('release'), -INCL_COMPONENTS => $incl_components );
 }
 
 1;

@@ -54,12 +54,19 @@ sub run {
         return;
     }
 
+    my $updated_mlss_ids = $self->param('updated_mlss_ids');
     foreach my $ml_typ (split /[,:]/, $self->param_required('method_link_types')){
         # Get MethodLinkSpeciesSet Objects for required method_link_type
         my $mlss_listref = $mlssa->fetch_all_by_method_link_type($ml_typ);
         foreach my $mlss (@$mlss_listref) {
             my $from_first_release = $self->param('from_first_release');
-            next if ( defined $from_first_release && !($mlss->first_release == $from_first_release || $mlss->has_tag("rerun_in_${from_first_release}")) );
+            if ( defined $from_first_release ) {
+                my $mlss_dump_wanted = ($mlss->first_release == $from_first_release
+                                        || $mlss->has_tag("patched_in_${from_first_release}")
+                                        || $mlss->has_tag("rerun_in_${from_first_release}")
+                                        || grep { $mlss->dbID eq $_ } @$updated_mlss_ids);
+                next unless $mlss_dump_wanted;
+            }
             $self->_process_mlss($mlss);
         }
     }
@@ -85,7 +92,7 @@ sub _check_valid_type {
     unless ($mlss->method->class =~ /^GenomicAlign/) {
         die sprintf("%s (%s) MLSSs cannot be dumped with this pipeline !\n", $mlss->method->type, $mlss->method->class);
     }
-    if ($mlss->method->type =~ /^CACTUS_HAL/) {
+    if ($mlss->method->type =~ /^(CACTUS_HAL|CACTUS_HAL_PW|CACTUS_DB)$/) {
         die "Cactus alignments cannot be dumped because they already exist as files\n";
     }
 }

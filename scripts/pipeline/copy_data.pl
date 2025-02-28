@@ -225,6 +225,7 @@ my %type_to_adaptor = (
                        'EPO'                    => $from_ga_adaptor,
                        'EPO_EXTENDED'           => $from_ga_adaptor,
                        'PECAN'                  => $from_ga_adaptor,
+                       'CACTUS_DB'              => $from_ga_adaptor,
                        'GERP_CONSERVATION_SCORE'    => $from_cs_adaptor,
                        'GERP_CONSTRAINED_ELEMENT'   => $from_ce_adaptor,
                        # Trick to allow the Method but skip counting

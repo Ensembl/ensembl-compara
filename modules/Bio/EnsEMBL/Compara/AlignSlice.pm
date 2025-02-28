@@ -935,6 +935,7 @@ sub get_all_ConstrainedElements {
   Arg[2]     : [optional] boolean $expanded (default = FALSE)
   Arg[3]     : [optional] boolean $solve_overlapping (default = FALSE)
   Arg[4]     : [optional] boolean $preserve_blocks (default = FALSE)
+  Arg[5]     : [optional] string $species_order (default = undef)
   Example    : 
   Description: Creates a set of Bio::EnsEMBL::Compara::AlignSlice::Slices
                and attach it to this object. 

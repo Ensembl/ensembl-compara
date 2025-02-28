@@ -35,11 +35,20 @@ my $prev_release = $curr_release - 1;
 my $curr_eg_release = $ENV{'CURR_EG_RELEASE'};
 my $prev_eg_release = $curr_eg_release - 1;
 
+# ---------------------- DATABASE HOSTS -----------------------------------------
+
+my ($curr_nv_host, $curr_nv_port) = $curr_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
+
+my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
+    ? ('mysql-ens-sta-3', 4160)
+    : ('mysql-ens-sta-3-b', 4686);
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
 # Non-Vertebrates server
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-3-b:4686/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 # Protist collections
 my @collection_groups = qw(
     alveolata1
@@ -56,30 +65,41 @@ my @collection_groups = qw(
     rhizaria1
     stramenopiles1
 );
-my @overlap_species = qw(hyaloperonospora_arabidopsidis);
-Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
-my $overlap_cores = {
-    'hyaloperonospora_arabidopsidis'  => [ 'mysql-ens-sta-3-b', "hyaloperonospora_arabidopsidis_core_${curr_eg_release}_${curr_release}_1"],
-};
-Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
 foreach my $group ( @collection_groups ) {
     Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-        -host   => 'mysql-ens-sta-3-b',
-        -port   => 4686,
+        -host   => 'mysql-ens-vertannot-staging',
+        -port   => 4573,
         -user   => 'ensro',
         -pass   => '',
         -dbname => "protists_${group}_collection_core_${curr_eg_release}_${curr_release}_1",
     );
 }
 
+# ---------------------- CURRENT CORE DATABASES : ALTERNATE HOSTS ----------------
+
+# Protists single-species cores
+#Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@$curr_nv_host:$curr_nv_port/$curr_release");
+#Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
+
+# Protists collection cores
+#foreach my $group ( @collection_groups ) {
+#    Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+#        -host   => $curr_nv_host,
+#        -port   => $curr_nv_port,
+#        -user   => 'ensro',
+#        -pass   => '',
+#        -dbname => "protists_${group}_collection_core_${curr_eg_release}_${curr_release}_1",
+#    );
+#}
+
 # ---------------------- PREVIOUS CORE DATABASES---------------------------------
 
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-sta-3',
-        -port   => 4160,
+        -host   => $prev_nv_host,
+        -port   => $prev_nv_port,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => $prev_release,
@@ -88,8 +108,8 @@ foreach my $group ( @collection_groups ) {
     # Protist Collections
     foreach my $group ( @collection_groups ) {
         Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-            -host   => 'mysql-ens-sta-3',
-            -port   => 4160,
+            -host   => $prev_nv_host,
+            -port   => $prev_nv_port,
             -user   => 'ensro',
             -pass   => '',
             -dbname => "protists_${group}_collection_core_${prev_eg_release}_${prev_release}_1",
@@ -107,18 +127,14 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
-    'compara_ptrees'  => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'jitender_protists_load_members_114' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'twalsh_default_protists_protein_trees_114' ],
 
     # LastZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-1', 'sbhurji_protists_lastz_batch1_109' ],
-    'lastz_batch_2' => [ 'mysql-ens-compara-prod-9', 'sbhurji_protists_lastz_batch2_109' ],
-    'lastz_batch_3' => [ 'mysql-ens-compara-prod-8', 'sbhurji_protists_lastz_batch3_109' ],
-    'lastz_batch_4' => [ 'mysql-ens-compara-prod-9', 'sbhurji_protists_lastz_batch4_109' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-8', 'jitender_protists_lastz_batch1_114' ],
 
     # synteny
-    #
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'sbhurji_protists_synteny_109' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'twalsh_protists_synteny_114' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -127,7 +143,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-3-b', "ncbi_taxonomy_${curr_release}" ],
+    'ncbi_taxonomy' => [ $curr_nv_host, "ncbi_taxonomy_${curr_release}" ],
 });
 
 # -------------------------------------------------------------------

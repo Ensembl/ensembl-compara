@@ -172,7 +172,7 @@ sub _fetch_and_compose {
             unless ( ( -e $tmp_hmm_file ) and ( -s $tmp_hmm_file ) ) {
 
                 # The file is not there / empty ... MEMLIMIT going on ? Let's have
-                # a break and give LSF the chance to kill us
+                # a break and give the job scheduler the chance to kill us
                 sleep 3;
             }
         }
@@ -184,7 +184,7 @@ sub _fetch_and_compose {
             unless ( ( -e $tmp_hmm_file ) and ( -s $tmp_hmm_file ) ) {
 
                 # The file is not there / empty ... MEMLIMIT going on ? Let's have
-                # a break and give LSF the chance to kill us
+                # a break and give the job scheduler the chance to kill us
                 sleep 3;
             }
         }
@@ -219,7 +219,7 @@ sub _run_hmmpress {
            ) {
 
         # The file is not there / empty ... MEMLIMIT going on ? Let's have
-        # a break and give LSF the chance to kill us
+        # a break and give the job scheduler the chance to kill us
         sleep 3;
     }
 } ## end sub _run_hmmpress

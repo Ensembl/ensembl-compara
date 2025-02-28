@@ -70,6 +70,8 @@ sub fetch_input {
 sub run {
 	my $self = shift;
 
+    $self->warning("RunnableDB::FTPDumps::PatchLastzDump is deprecated");
+
 	my $prev_rel_tarball = $self->param('prev_rel_tarball');
 	my $patch_dump_dir = $self->param('patch_dump_dir');
 	my $mlss_filename = $self->param('mlss_filename');

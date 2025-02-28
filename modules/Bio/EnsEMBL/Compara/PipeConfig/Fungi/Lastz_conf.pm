@@ -60,12 +60,12 @@ sub tweak_analyses {
         'alignment_nets'                              => '2Gb_job',
         'create_alignment_nets_jobs'                  => '2Gb_job',
         'create_alignment_chains_jobs'                => '4Gb_job',
-        'create_filter_duplicates_jobs'               => '2Gb_job',
+        'create_filter_duplicates_jobs'               => '2Gb_24_hour_job',
         'create_pair_aligner_jobs'                    => '2Gb_job',
         'populate_new_database'                       => '8Gb_job',
         'parse_pair_aligner_conf'                     => '4Gb_job',
-        $self->o('pair_aligner_logic_name')           => '4Gb_job',
-        $self->o('pair_aligner_logic_name')."_himem1" => '8Gb_job',
+        $self->o('pair_aligner_logic_name')           => '4Gb_24_hour_job',
+        $self->o('pair_aligner_logic_name')."_himem"  => '8Gb_24_hour_job',
     );
 
     foreach my $logic_name (keys %overriden_rc_names) {

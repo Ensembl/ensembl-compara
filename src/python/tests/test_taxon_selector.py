@@ -28,7 +28,7 @@ from pytest import raises
 
 from sqlalchemy.orm.exc import NoResultFound
 
-from ensembl.database import UnitTestDB
+from ensembl.utils.database import UnitTestDB
 from ensembl.compara.utils.taxonomy import (
     collect_taxonomys_from_path,
     match_taxon_to_reference,
@@ -39,7 +39,7 @@ from ensembl.compara.utils.taxonomy import (
 from ensembl.ncbi_taxonomy.api.utils import Taxonomy
 
 
-@pytest.mark.parametrize("db", [{"src": "ncbi_db"}], indirect=True)
+@pytest.mark.parametrize("test_dbs", [[{"src": "ncbi_db"}]], indirect=True)
 class TestTaxonomySelection:
     """Tests functions `~ensembl_compara.taxonomy.taxon_selector` in taxon_selector.py
 
@@ -53,13 +53,13 @@ class TestTaxonomySelection:
     dir = None
 
     @pytest.fixture(scope="class", autouse=True)
-    def setup(self, db: UnitTestDB) -> None:
+    def setup(self, test_dbs: dict[str, UnitTestDB]) -> None:
         """Loads the required fixtures and values as class attributes.
 
         Args:
-            db: Generator of unit test database (fixture).
+            test_dbs: Unit test databases (fixture).
         """
-        type(self).dbc = db.dbc
+        type(self).dbc = test_dbs["ncbi_db"].dbc
         # pylint: disable=no-member
         type(self).dir = pytest.files_dir # type: ignore[attr-defined]
 

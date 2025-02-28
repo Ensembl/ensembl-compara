@@ -36,7 +36,9 @@ sub param_defaults {
     my $self = shift;
     return {
         %{$self->SUPER::param_defaults},
+        'merge_ticket_key' => undef,
         'test_mode' => 0,
+        'csv_mode' => 0,
     }
 }
 
@@ -44,22 +46,32 @@ sub run {
     my $self = shift;
 
     my $jira_exe = $self->param_required('create_datacheck_tickets_exe');
+    my $tap_file = $self->param_required('output_results');
 
     my $command = join(" ", (
-        $jira_exe, $self->param_required('output_results'), "--update",
+        $jira_exe, $tap_file, "--update",
         "--division", $self->param_required('division'),
         ( $self->param('datacheck_type') ? '--label ' . $self->param('datacheck_type') : '' ),
-        ( $self->param('dry_run') ? '--dry_run' : '')
+        ( $self->param('dry_run') ? '--dry_run' : ''),
     ));
+
+    if ($self->param_is_defined('merge_ticket_key')) {
+        $command .= ' ' . sprintf('--merge_ticket_key %s', $self->param('merge_ticket_key'));
+    }
+
+    if ($self->param('csv_mode')) {
+        $command .= ' ' . sprintf('--csv %s.csv', $tap_file);
+    }
+
     $self->warning( "Command: " . $command );
 
     return if $self->param('test_mode');
 
-    if (defined $ENV{'JIRA_AUTH_TOKEN'}) {
+    if (defined $ENV{'JIRA_AUTH_TOKEN'} || $self->param('csv_mode')) {
         $self->run_command($command, { die_on_failure => 1, });
     }
     else {
-        $self->warning( "ERROR: ENV variable not defined: \$JIRA_AUTH_TOKEN. Define with:\nexport JIRA_AUTH_TOKEN=$(echo -n 'user:pass' | openssl base64)" );
+        $self->die_no_retry( "ERROR: ENV variable not defined: \$JIRA_AUTH_TOKEN. Define with:\nexport JIRA_AUTH_TOKEN=$(echo -n 'user:pass' | openssl base64)" );
     }
 
 }

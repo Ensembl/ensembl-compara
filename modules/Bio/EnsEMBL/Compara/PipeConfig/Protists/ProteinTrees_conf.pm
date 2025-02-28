@@ -58,7 +58,7 @@ sub default_options {
         # In this structure, the "thresholds" are for resp. the GOC score, the WGA coverage and %identity
         'threshold_levels' => [
             {
-                'taxa'          => [ 'Alveolata', 'Amoebozoa', 'Apusozoa', 'Choanoflagellida', 'Cryptophyta', 'Euglenozoa', 'Fornicata', 'Heterolobosea', 'Ichthyosporea', 'Nucleariidae', 'Fonticulagroup', 'Parabasalia', 'Rhizaria', 'Stramenopiles' ],
+                'taxa'          => [ 'Alveolata', 'Amoebozoa', 'Apusozoa', 'Choanoflagellida', 'Cryptophyta', 'Euglenozoa', 'Fornicata', 'Heterolobosea', 'Ichthyosporea', 'Nucleariidae', 'Fonticula', 'Parabasalia', 'Rhizaria', 'Stramenopiles' ],
                 'thresholds'    => [ 25, 25, 25 ],
             },
             {
@@ -81,8 +81,9 @@ sub default_options {
         # Do we want the Gene QC part to run?
         'do_gene_qc'             => 0,
         # Do we need a mapping between homology_ids of this database to another database?
-        # This parameter is automatically set to 1 when the GOC pipeline is going to run with a reuse database
         'do_homology_id_mapping' => 0,
+        # Do we expect to need shared homology dumps in a future release to facilitate reuse of WGA coverage data ?
+        'homology_dumps_shared_dir' => undef,
         # Quick tree break is not suitable for protists dataset due to divergence causing inappropriate subtrees
         'use_quick_tree_break' => 0,
 
