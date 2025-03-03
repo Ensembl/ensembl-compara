@@ -324,40 +324,14 @@ sub run {
 
                 my $pipeline_param_dba = $hive_pipeline->hive_dba->get_PipelineWideParametersAdaptor();
 
-                my $collection_name = destringify(
-                    $pipeline_param_dba->fetch_all("param_name = 'collection'", 'one_per_key', undef, 'param_value')
+                my $mlss_id = destringify(
+                    $pipeline_param_dba->fetch_all("param_name = 'mlss_id'", 'one_per_key', undef, 'param_value')
                 );
 
-                if (defined $collection_name) {
+                if (defined $mlss_id) {
 
-                    my $member_type = destringify(
-                        $pipeline_param_dba->fetch_all("param_name = 'member_type'", 'one_per_key', undef, 'param_value')
-                    );
-
-                    my $ref_collection = destringify(
-                        $pipeline_param_dba->fetch_all("param_name = 'ref_collection'", 'one_per_key', undef, 'param_value')
-                    );
-
-                    my $ref_collection_list = destringify(
-                        $pipeline_param_dba->fetch_all("param_name = 'ref_collection_list'", 'one_per_key', undef, 'param_value')
-                    );
-
-                    my $ref_collection_names;
-                    if (defined $ref_collection && defined $ref_collection_list) {
-                        $self->die_no_retry(" -ERROR- Only one of pipeline-wide parameters 'ref_collection' or 'ref_collection_list' can be defined, but $db has both");
-                    } elsif (defined $ref_collection) {
-                        $ref_collection_names = [$ref_collection];
-                    } elsif (defined $ref_collection_list) {
-                        $ref_collection_names = $ref_collection_list;
-                    } else {
-                        $ref_collection_names = [];
-                    }
-
-                    $mlss_info = $self->_fetch_collection_mlss_info(
-                        $master_dba,
-                        $collection_name,
-                        $ref_collection_names,
-                    );
+                    my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+                    $mlss_info = $mlss->find_homology_mlss_sets();
 
                     # Pipelines with collections can be merged per homology MLSS and member type.
                     # This allows for merging protein and ncRNA homologies in the same MLSS from
@@ -634,80 +608,6 @@ sub _assert_same_table_schema {
         return;
     }
     die sprintf("'%s' has a different schema in '%s' and '%s'\n", $table, $src_dbc->dbname, $dest_dbc->dbname) if stringify($src_schema) ne stringify($dest_schema);
-}
-
-sub _fetch_collection_mlss_info {
-    my ($self, $compara_dba, $collection_name, $ref_collection_names) = @_;
-
-    my $mlss_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
-    my $species_set_adaptor = $compara_dba->get_SpeciesSetAdaptor();
-    my $method_adaptor = $compara_dba->get_MethodAdaptor();
-
-    my $homology_methods = $method_adaptor->fetch_all_by_class_pattern('^Homology\.homology$');
-    my @homology_method_types = map { $_->type } @{$homology_methods};
-
-    my %collection_to_gdb_ids;
-    my %collection_to_mlss_ids;
-    foreach my $species_set_name (($collection_name, @{$ref_collection_names})) {
-        my $collection = $species_set_adaptor->fetch_collection_by_name($species_set_name);
-        $self->die_no_retry("Cannot find collection '$species_set_name' in database") unless $collection;
-        $collection_to_gdb_ids{$species_set_name} = [map { $_->dbID } @{ $collection->genome_dbs }];
-        my @collection_gdb_ids = map { $_->dbID } @{ $collection->genome_dbs };
-
-        foreach my $method_type (@homology_method_types) {
-            foreach my $i ( 0 .. $#collection_gdb_ids ) {
-                my $gdb1_id = $collection_gdb_ids[$i];
-                foreach my $j ( $i .. $#collection_gdb_ids ) {
-                    my $gdb2_id = $collection_gdb_ids[$j];
-
-                    my @homology_mlss_gdb_ids;
-                    if ($gdb2_id == $gdb1_id) {  # e.g. homoeology MLSS
-                        @homology_mlss_gdb_ids = ($gdb1_id);
-                    } else {  # e.g. orthology MLSS
-                        @homology_mlss_gdb_ids = ($gdb1_id, $gdb2_id);
-                    }
-
-                    my $mlss = $mlss_adaptor->fetch_by_method_link_type_GenomeDBs($method_type, \@homology_mlss_gdb_ids);
-                    next unless defined $mlss and $mlss->is_current;
-                    push(@{$collection_to_mlss_ids{$species_set_name}}, $mlss->dbID);
-                }
-            }
-        }
-    }
-
-    my %agg_ref_collection_gdb_id_set;
-    my %agg_ref_collection_mlss_id_set;
-    foreach my $ref_collection_name (@{$ref_collection_names}) {
-        foreach my $gdb_id (@{$collection_to_gdb_ids{$ref_collection_name}}) {
-            $agg_ref_collection_gdb_id_set{$gdb_id} = 1;
-        }
-        foreach my $mlss_id (@{$collection_to_mlss_ids{$ref_collection_name}}) {
-            $agg_ref_collection_mlss_id_set{$mlss_id} = 1;
-        }
-    }
-
-    my @overlap_gdb_ids;
-    my @complementary_gdb_ids;
-    foreach my $gdb_id (@{$collection_to_gdb_ids{$collection_name}}) {
-        if (exists $agg_ref_collection_gdb_id_set{$gdb_id}) {
-            push(@overlap_gdb_ids, $gdb_id);
-        } else {
-            push(@complementary_gdb_ids, $gdb_id);
-        }
-    }
-
-    my @complementary_mlss_ids;
-    foreach my $mlss_id (@{$collection_to_mlss_ids{$collection_name}}) {
-        if (!exists $agg_ref_collection_mlss_id_set{$mlss_id}) {
-            push(@complementary_mlss_ids, $mlss_id);
-        }
-    }
-
-    return {
-        'complementary_gdb_ids' => \@complementary_gdb_ids,
-        'complementary_mlss_ids' => \@complementary_mlss_ids,
-        'overlap_gdb_ids' => \@overlap_gdb_ids,
-    };
 }
 
 sub _get_effective_table_size {

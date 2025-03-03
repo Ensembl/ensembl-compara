@@ -446,14 +446,22 @@
   </self_alignments>
 
   <gene_trees>
-    <protein_trees collection="default"/>
+    <protein_trees
+      collection="default"
+      homology_range_index="0"
+    />
     <protein_trees
       collection="wheat_cultivars"
+      homology_range_index="20"
       prefer_for_genomes="secale_cereale triticum_aestivum"
     />
-    <protein_trees collection="rice_cultivars"/>
+    <protein_trees
+      collection="rice_cultivars"
+      homology_range_index="30"
+    />
     <protein_trees
       collection="barley_cultivars"
+      homology_range_index="40"
       prefer_for_genomes="hordeum_vulgare"
     />
   </gene_trees>

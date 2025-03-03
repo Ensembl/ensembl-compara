@@ -53,9 +53,6 @@ sub default_options {
         'do_stable_id_mapping'  => 0,
         'do_treefam_xref'       => 0,
 
-        # Collection in master that will have overlapping data:
-        'ref_collection' => 'default',
-
         # Extra analyses:
         # Gain/loss analysis?
         'do_cafe'    => 0,
@@ -73,7 +70,6 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},
 
         'cdna'           => $self->o('use_dna_for_phylogeny'),
-        'ref_collection' => $self->o('ref_collection'),
     }
 }
 
@@ -86,9 +82,6 @@ sub core_pipeline_analyses {
         # Include strain-specific analyses
         {   -logic_name => 'find_overlapping_genomes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes',
-            -parameters => {
-                'collection' => $self->o('collection'),
-            },
             -flow_into  => [ 'check_strains_cluster_factory' ],
         },
 

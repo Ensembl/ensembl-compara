@@ -47,8 +47,6 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'collection'          => 'insects',
-        'dbID_range_index'    => 20,
-        'ref_collection_list'      => ['default','protostomes'],
         'label_prefix' => 'insects_',
 
         #GOC parameters:

@@ -33,8 +33,6 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::RemoveOverlappingHomologie
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Hive::Utils qw(destringify);
-
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
@@ -43,39 +41,13 @@ sub fetch_input {
 
     my $master_dba          = $self->get_cached_compara_dba('master_db');
     my $master_mlss_adaptor = $master_dba->get_MethodLinkSpeciesSetAdaptor;
-    my $master_ss_adaptor   = $master_dba->get_SpeciesSetAdaptor;
+    my $mlss_id             = $self->param_required('mlss_id');
 
-    my $ref_collection_list;
-    if ( $self->param_is_defined('ref_collection') && $self->param_is_defined('ref_collection_list') ) {
-        $self->throw("Only one of parameters 'ref_collection' or 'ref_collection_list' can be defined")
-    } elsif ( $self->param_is_defined('ref_collection') ) {
-        $ref_collection_list = [$self->param('ref_collection')];
-    } elsif ( $self->param_is_defined('ref_collection_list') ) {
-        $ref_collection_list = destringify($self->param('ref_collection_list'));
-    } else {
-        $self->throw("One of parameters 'ref_collection' or 'ref_collection_list' must be defined")
-    }
+    my $mlss                = $master_mlss_adaptor->fetch_by_dbID($mlss_id);
+    my $mlss_info           = $mlss->find_homology_mlss_sets();
+    my @overlap_mlss_ids    = @{$mlss_info->{'overlap_mlss_ids'}};
 
-    my %ref_mlss_by_id;
-    foreach my $ref_collection_name (@{ $ref_collection_list }) {
-        my $ref_collection = $master_ss_adaptor->fetch_collection_by_name($ref_collection_name);
-        die "Cannot find collection '$ref_collection_name' in master_db" unless $ref_collection;
-        foreach my $ml ( qw(ENSEMBL_ORTHOLOGUES ENSEMBL_PARALOGUES ENSEMBL_HOMOEOLOGUES) ) {
-            foreach my $gdb1 ( @{ $ref_collection->genome_dbs } ) {
-                foreach my $gdb2 ( @{ $ref_collection->genome_dbs } ) {
-                    my $mlss = $master_mlss_adaptor->fetch_by_method_link_type_GenomeDBs($ml, [$gdb1, $gdb2]);
-                    next unless defined $mlss and $mlss->is_current;
-                    $ref_mlss_by_id{$mlss->dbID} = $mlss;
-                }
-            }
-        }
-    }
-    my @ref_mlsses = values %ref_mlss_by_id;
-
-    my $mlss_adaptor        = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor;
-    my @overlapping_mlsss   = grep {$mlss_adaptor->fetch_by_dbID($_->dbID)} @ref_mlsses;
-
-    $self->param('overlapping_mlsss', \@overlapping_mlsss);
+    $self->param('overlapping_mlsss', \@overlap_mlss_ids);
 }
 
 sub run {
