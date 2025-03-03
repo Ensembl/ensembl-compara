@@ -93,7 +93,6 @@
             "component": "Production tasks",
             "description": "Mark as done when LastZ coverage stats have been computed and checked",
             "summary": "Check LastZ coverage stats",
-            "name_on_graph": "LastZ coverage stats"
          },
          {
             "assignee": "<RelCo>",
