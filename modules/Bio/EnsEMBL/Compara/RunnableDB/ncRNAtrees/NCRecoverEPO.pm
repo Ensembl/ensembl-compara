@@ -262,8 +262,16 @@ sub iterate_over_lowcov_mlsss {
     $self->param('low_cov_leaves_to_delete', []);
     foreach my $epo_low_mlss (@$epolow_mlsss) {
         my @epo_low_mlss_gdbs = @{$epo_low_mlss->species_set->genome_dbs};
-        my @good_gdbs = grep {$_->is_good_for_alignment} @epo_low_mlss_gdbs;
-        my %hc_gdb_id = (map {$_->dbID => 1} @good_gdbs);
+
+        my %hc_gdb_id;
+        foreach my $gdb (@epo_low_mlss_gdbs) {
+            my $meta_container = $gdb->db_adaptor->get_MetaContainer;
+            my $asm_cov_depth = $meta_container->single_value_by_key('assembly.coverage_depth');
+            unless (defined $asm_cov_depth && $asm_cov_depth eq 'low') {
+                $hc_gdb_id{$gdb->dbID} = 1;
+            }
+        }
+
         my @lowcov_gdbs = grep {not exists $hc_gdb_id{$_->dbID}} @epo_low_mlss_gdbs;
         my %low_gdb_id = (map {$_->dbID => 1} @lowcov_gdbs);
         my $gab_id = $self->run_low_coverage_best_in_alignment($epo_low_mlss, \%hc_gdb_id, \%low_gdb_id);
