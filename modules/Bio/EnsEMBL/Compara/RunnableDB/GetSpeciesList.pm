@@ -91,47 +91,39 @@ sub _get_species {
     #print ">>>>|$division|\n" if ($self->debug);
     my $http = HTTP::Tiny->new();
 
-    # -----------------------[ Vertebrates ]-----------------------------
-    if ( $division eq "Vertebrates" ) {
-        my $server   = 'http://rest.ensembl.org';
-        my $ext      = '/info/species?';
-        my $response = $http->get( $server . $ext, { headers => { 'Content-type' => 'application/json' } } );
-        die "Failed!\n" unless $response->{success};
-        if ( length $response->{content} ) {
-            my $hash = decode_json( $response->{content} );
+    # ---------------[ Vertebrates / Non-Vertebrates ]----------------
+    if ( $division =~ m/^(?:Ensembl)?(?<division>Fungi|Metazoa|Plants|Protists|Vertebrates)$/i ) {
+        my $compara_division = lc $+{'division'};
+        my $server           = 'https://rest.ensembl.org';
+        my $ext              = '/info/species?';
 
-            foreach my $genome_count ( keys %{$hash->{'species'}} ) {
-                $self->param('all_genomes')->{ $hash->{'species'}->[$genome_count]->{'name'} } = "production_reg_vertebrates_conf.pl";
-            }
-        }
-    }
+        my %param_hash   = (
+            'content-type' => 'application/json',
+            'division' => 'Ensembl' . ucfirst($compara_division),
+        );
+        my @param_kv_pairs = map { $_ . '=' . $param_hash{$_} } sort keys %param_hash;
+        my $params = join('&', @param_kv_pairs);
 
-    # -----------------------[ Ensembl Genomes ]-----------------------------
-    elsif ( $division =~ m/(Fungi|Metazoa|Plants|Protists)/ ) {
-        my $server   = 'http://rest.ensemblgenomes.org';
-        my $ext      = "/info/genomes/division/$division?";
-        my $response = $http->get( $server . $ext, { headers => { 'Content-type' => 'application/json' } } );
+        my $response = $http->get( $server . $ext . $params );
+        die "Failed!\n" unless $response->{'success'};
+        if ( length $response->{'content'} ) {
+            my $hash = decode_json( $response->{'content'} );
 
-        die "Failed!\n" unless $response->{success};
-
-        my $hash;
-        if ( length $response->{content} ) {
-            $hash = decode_json( $response->{content} );
-
-            foreach my $genome_count ( keys %$hash ) {
-                if ( !$self->param('all_genomes')->{ $hash->[$genome_count]->{'species'} } ) {
-                    $self->param('all_genomes')->{ $hash->[$genome_count]->{'species'} } =
-                        sprintf('production_reg_%s_conf.pl', lc $division);
-                }
+            foreach my $genome_count (keys %{$hash->{'species'}}) {
+                $self->param('all_genomes')->{ $hash->{'species'}->[$genome_count]->{'name'} } = sprintf(
+                    'production_reg_%s_conf.pl',
+                    $compara_division,
+                );
             }
         }
     }
 
     # -----------------------[ WormBase ]-----------------------------
     elsif ( $division eq "wormbase_parasite" ) {
-        my $server   = 'https://parasite.wormbase.org';
-        my $ext      = '/rest-9/info/genomes/?';
-        my $response = $http->get( $server . $ext, { headers => { 'Content-type' => 'application/json' } } );
+        my $server     = 'https://parasite.wormbase.org';
+        my $ext        = '/rest/info/genomes/?';
+        my %param_hash = ( 'content-type' => 'application/json' );
+        my $response   = $http->get( $server . $ext, \%param_hash );
 
         die "Failed!\n" unless $response->{success};
 

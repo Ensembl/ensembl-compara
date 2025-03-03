@@ -59,7 +59,7 @@ my $logfile_fh;
 if ($logfile) {
   open $logfile_fh, '>', $logfile or die "couldn't open logfile $logfile $!\n";
   select((select($logfile_fh), $| = 1)[0]); #make $logfile_fh unbuffered (a.k.a. "hot").
-  #See http://perl.plover.com/FAQs/Buffering.html
+  #See https://perl.plover.com/FAQs/Buffering.html
 }
 
 print $logfile_fh "setting up adaptors\n" if $logfile;
