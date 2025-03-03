@@ -406,6 +406,89 @@ sub filename {
 }
 
 
+=head2 find_homology_mlss_sets
+
+  Example    : my $mlss_info = $mlss->find_homology_mlss_sets();
+  Description: Find homology MLSS sets for this gene-tree MLSS.
+  Returntype : Hashref containing a breakdown of several categories of MLSS-related info:
+               a) 'complementary_gdb_ids': Arrayref of GenomeDB IDs of those genomes in
+                  the given MLSS that are not in reference gene-tree MLSSes.
+               b) 'complementary_mlss_ids': Arrayref of homology MLSS IDs that are in
+                  the given gene-tree MLSS and not in reference gene-tree MLSSes.
+               c) 'overlap_gdb_ids': Arrayref of GenomeDB IDs of those genomes in the
+                  given MLSS that are also in reference gene-tree MLSSes.
+               d) 'overlap_mlss_ids': Arrayref of homology MLSS IDs that are in the
+                  given MLSS and also in reference gene-tree MLSSes.
+  Exceptions : none
+
+=cut
+
+sub find_homology_mlss_sets {
+    my ($self) = @_;
+
+    unless ($self->is_current && ($self->method->type ne 'PROTEIN_TREES' || $self->method->type ne 'NC_TREES')) {
+        throw("MethodLinkSpeciesSet::find_homology_mlss_sets() can only be used for current gene-tree MLSSes");
+    }
+
+    my $mlss_dba = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor();
+
+    my $ordered_gene_tree_mlsses = $mlss_dba->fetch_current_gene_tree_mlsses();
+
+    my @ref_mlsses;
+    foreach my $gene_tree_mlss (@{$ordered_gene_tree_mlsses}) {
+        last if $gene_tree_mlss->dbID == $self->dbID;
+        push(@ref_mlsses, $gene_tree_mlss);
+    }
+
+    my %gdb_id_map;
+    my %hom_mlss_id_map;
+    foreach my $gene_tree_mlss ($self, @ref_mlsses) {
+        my $gene_tree_mlss_id = $gene_tree_mlss->dbID;
+        $gdb_id_map{$gene_tree_mlss_id} = [map { $_->dbID } @{$gene_tree_mlss->species_set->genome_dbs}];
+        my $hom_mlsses = $mlss_dba->fetch_gene_tree_homology_mlsses($gene_tree_mlss);
+        $hom_mlss_id_map{$gene_tree_mlss_id} = [map { $_->dbID } @{$hom_mlsses}];
+    }
+
+    my %agg_ref_gdb_id_set;
+    my %agg_ref_hom_mlss_id_set;
+    foreach my $ref_mlss (@ref_mlsses) {
+        foreach my $hom_mlss_id (@{$hom_mlss_id_map{$ref_mlss->dbID}}) {
+            $agg_ref_hom_mlss_id_set{$hom_mlss_id} = 1;
+        }
+        foreach my $gdb_id (@{$gdb_id_map{$ref_mlss->dbID}}) {
+            $agg_ref_gdb_id_set{$gdb_id} = 1;
+        }
+    }
+
+    my @overlap_gdb_ids;
+    my @complementary_gdb_ids;
+    foreach my $gdb_id (@{$gdb_id_map{$self->dbID}}) {
+        if (exists $agg_ref_gdb_id_set{$gdb_id}) {
+            push(@overlap_gdb_ids, $gdb_id);
+        } else {
+            push(@complementary_gdb_ids, $gdb_id);
+        }
+    }
+
+    my @overlap_mlss_ids;
+    my @complementary_mlss_ids;
+    foreach my $hom_mlss_id (@{$hom_mlss_id_map{$self->dbID}}) {
+        if (exists $agg_ref_hom_mlss_id_set{$hom_mlss_id}) {
+            push(@overlap_mlss_ids, $hom_mlss_id);
+        } else {
+            push(@complementary_mlss_ids, $hom_mlss_id);
+        }
+    }
+
+    return {
+        'complementary_gdb_ids' => \@complementary_gdb_ids,
+        'complementary_mlss_ids' => \@complementary_mlss_ids,
+        'overlap_gdb_ids' => \@overlap_gdb_ids,
+        'overlap_mlss_ids' => \@overlap_mlss_ids,
+    };
+}
+
+
 =head2 find_pairwise_reference
 
   Example     : my $genome_dbs = $mlss->find_pairwise_reference();
@@ -462,6 +545,45 @@ sub find_pairwise_reference {
             return @$genome_dbs;
         }
     }
+}
+
+
+=head2 get_gene_tree_member_biotype_groups
+
+  Example    : my $biotype_groups = $mlss->get_gene_tree_member_biotype_groups();
+  Description: Get biotype groups for members in this gene-tree MLSS.
+  Returntype : Listref of biotype groups.
+  Exceptions : none
+
+=cut
+
+sub get_gene_tree_member_biotype_groups {
+    my ($self) = @_;
+
+    my $biotype_group_tag = $self->get_value_for_tag('member_biotype_groups');
+
+    my $biotype_groups;
+    if (defined $biotype_group_tag) {
+        $biotype_groups = [split(/,/, $biotype_group_tag)];
+    } else {
+        my $sql = q/
+            SELECT DISTINCT
+                biotype_group
+            FROM
+                gene_member gm
+            JOIN
+                gene_tree_node gtn ON gtn.seq_member_id = gm.canonical_member_id
+            JOIN
+                gene_tree_root gtr ON gtn.root_id = gtr.root_id
+            WHERE
+                gtr.method_link_species_set_id = ?
+            AND
+                gtr.ref_root_id IS NULL
+        /;
+        $biotype_groups = $self->adaptor->dbc->sql_helper->execute_simple( -SQL => $sql, -PARAMS => [$self->dbID] );
+    }
+
+    return [sort @{$biotype_groups}];
 }
 
 

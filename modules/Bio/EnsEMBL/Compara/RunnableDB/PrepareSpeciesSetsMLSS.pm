@@ -84,13 +84,31 @@ sub write_output {
 
     if (@{$self->param('whole_method_links')}) {
         my $ss = $self->_write_ss($all_gdbs);
+
+        my @homology_range_indices;
         foreach my $ml (@{$self->param('whole_method_links')}) {
             my $mlss = $self->_write_mlss( $ss, $ml );
+
+            if (($mlss->method->type eq 'PROTEIN_TREES' || $mlss->method->type eq 'NC_TREES')) {
+                my $homology_range_index = $mlss->get_value_for_tag('homology_range_index');
+                push(@homology_range_indices, $homology_range_index) if defined $homology_range_index;
+            }
 
             # The last method_link listed in whole_method_links will make
             # the pipeline-wide mlss_id, unless param_names have been specified
             my $this_param_name = shift @param_names || 'mlss_id';
             $self->add_or_update_pipeline_wide_parameter($this_param_name, $mlss->dbID);
+        }
+
+        if (scalar(@homology_range_indices) == 1) {
+            $self->add_or_update_pipeline_wide_parameter('homology_range_index', $homology_range_indices[0]);
+        } elsif (scalar(@homology_range_indices) > 1) {
+            $self->die_no_retry(
+                sprintf(
+                    "cannot set 'homology_range_index' pipeline-wide parameter; %d values specified",
+                    scalar(@homology_range_indices),
+                )
+            );
         }
     }
 

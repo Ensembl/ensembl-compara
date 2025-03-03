@@ -54,7 +54,6 @@ sub default_options {
 
     # Parameters to allow merging different runs of the pipeline
         'collection'            => 'murinae',       # The name of the species-set within that division
-        'dbID_range_index'      => 18,
         'label_prefix'          => 'mur_',
 
         'multifurcation_deletes_all_subnodes' => [ 10088 ], # All the species under the "Mus" genus are flattened, i.e. it's rat vs a rake of mice

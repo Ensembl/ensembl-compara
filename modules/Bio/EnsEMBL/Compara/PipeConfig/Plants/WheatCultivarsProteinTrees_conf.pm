@@ -45,7 +45,6 @@ sub default_options {
 
         # Parameters to allow merging different runs of the pipeline
         'collection'       => 'wheat_cultivars',  # The name of the species-set within that division
-        'dbID_range_index' => 20,
         'label_prefix'     => 'wheat_cultivars_',
 
         # Flatten all the species under the "Triticum" genus

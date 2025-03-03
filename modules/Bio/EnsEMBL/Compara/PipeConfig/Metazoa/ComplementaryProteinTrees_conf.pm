@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Metazoa::ComplementaryProteinTrees_conf
 =head1 SYNOPSIS
 
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Metazoa::ComplementaryProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -collection <complementary_collection> -ref_collection 'default'
+        -collection <complementary_collection>
 
 =head1 DESCRIPTION
 
@@ -49,28 +49,11 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-    # complementary collection parameters:
-
-        # Collection(s) in master that may have overlapping data. Potentially overlapping clusters
-        # and homologies are removed during the complementary protein-trees pipeline. This should be
-        # defined in the PipeConfig file for each complementary collection (or on the command line).
-        'ref_collection_list' => undef,
-
     # mapping parameters:
 
         'do_stable_id_mapping' => 0,
         'do_treefam_xref' => 0,
     };
-}
-
-
-sub pipeline_wide_parameters {
-    my ($self) = @_;
-    return {
-        %{$self->SUPER::pipeline_wide_parameters},
-
-        'ref_collection_list' => $self->o('ref_collection_list'),
-    }
 }
 
 
@@ -83,9 +66,6 @@ sub core_pipeline_analyses {
         {
             -logic_name => 'find_overlapping_genomes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes',
-            -parameters => {
-                'collection' => $self->o('collection'),
-            },
             -flow_into  => [ 'check_strains_cluster_factory' ],
         },
 

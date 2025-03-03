@@ -354,6 +354,21 @@ sub core_pipeline_analyses {
                 'sql'   => 'UPDATE gene_member_hom_stats JOIN gene_member USING (gene_member_id) LEFT JOIN gene_tree_node ON canonical_member_id = seq_member_id SET gene_trees = 0, orthologues = 0, paralogues = 0, homoeologues = 0 WHERE node_id IS NULL AND gene_trees > 0',
             },
             -flow_into         => {
+                1 => 'populate_new_member_stats',
+            },
+        },
+
+        {   -logic_name        => 'populate_new_member_stats',
+            -module            => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
+            -parameters        => {
+                'sql' => q/
+                    INSERT INTO gene_member_hom_stats (gene_member_id, collection)
+                    SELECT gene_member_id, '#collection#' FROM gene_member
+                    LEFT JOIN gene_member_hom_stats USING (gene_member_id)
+                    WHERE gene_member_hom_stats.gene_member_id IS NULL
+                /,
+            },
+            -flow_into         => {
                 1 => 'fire_datachecks',
             },
         },
@@ -365,7 +380,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => 'delete_tree',
-                'A->1' => 'cluster_factory',
+                'A->1' => 'hc_deletion',
             },
         },
 
@@ -385,7 +400,6 @@ sub core_pipeline_analyses {
             -flow_into      => {
                 '2->A' => 'exon_boundaries_prep',
                 'A->1' => 'pipeline_entry',
-                1      => 'hc_deletion',
             },
         },
         {   -logic_name     => 'hc_deletion',
@@ -393,8 +407,7 @@ sub core_pipeline_analyses {
             -parameters     => {
                 'diff_limit'    => -2.5,
             },
-            -flow_into      => {
-            },
+            -flow_into      => 'cluster_factory',
         },
 
         {   -logic_name     => 'exon_boundaries_prep',

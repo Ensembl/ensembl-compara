@@ -307,6 +307,13 @@
               <element name="protein_trees" blockly:blockName="Protein-trees">
                 <attribute name="collection" blockly:blockName="Collection name"/>
                 <optional>
+                  <attribute name="homology_range_index"
+                             blockly:blockName="Homology range index, to facilitate storing of multiple gene-tree collections in one Compara database.
+                             If set, homology-related dbIDs are offset by the product of this index and a multiplier.">
+                    <data type="integer"/>
+                  </attribute>
+                </optional>
+                <optional>
                   <attribute name="prefer_for_genomes"
                              blockly:blockName="If we must choose, this is the preferred strain collection for the given space-delimited list of genomes.">
                     <list>
@@ -319,6 +326,13 @@
               </element>
               <element name="nc_trees" blockly:blockName="ncRNA-trees">
                 <attribute name="collection" blockly:blockName="Collection name"/>
+                <optional>
+                  <attribute name="homology_range_index"
+                             blockly:blockName="Homology range index, to facilitate storing of multiple gene-tree collections in one Compara database.
+                             If set, homology-related dbIDs are offset by the product of this index and a multiplier.">
+                    <data type="integer"/>
+                  </attribute>
+                </optional>
                 <optional>
                   <attribute name="prefer_for_genomes"
                              blockly:blockName="If we must choose, this is the preferred strain collection for the given space-delimited list of genomes.">

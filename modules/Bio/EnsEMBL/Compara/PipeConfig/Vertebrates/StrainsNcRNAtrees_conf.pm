@@ -46,9 +46,6 @@ sub default_options {
 
             'skip_epo'          => 1,
 
-            # collection in master that will have overlapping data
-            'ref_collection'   => 'default',
-
             # misc parameters
             'model_name_blocklist' => [],
 
@@ -63,8 +60,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
     my ($self) = @_;
     return {
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
-
-        'ref_collection'   => $self->o('ref_collection'),
     }
 }
 
@@ -75,9 +70,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'find_overlapping_genomes',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes',
-            -parameters => {
-                'collection' => $self->o('collection'),
-            },
             -flow_into  => [ 'check_strains_cluster_factory' ],
         },
 

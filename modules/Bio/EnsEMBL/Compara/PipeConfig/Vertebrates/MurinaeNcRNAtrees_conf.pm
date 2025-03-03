@@ -42,11 +42,7 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            # Must be given on the command line
-            #'mlss_id'          => 40100,
-
             'collection'        => 'murinae',       # The name of the species-set within that division
-            'dbID_range_index'  => 19,
             'label_prefix'      => 'mur_',
 
             'projection_source_species_names' => ['mus_musculus'],

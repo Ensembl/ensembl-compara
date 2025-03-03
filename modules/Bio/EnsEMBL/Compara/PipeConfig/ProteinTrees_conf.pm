@@ -504,7 +504,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'do_homology_stats' => $self->o('do_homology_stats'),
         'do_hmm_export'     => $self->o('do_hmm_export'),
         'do_gene_qc'        => $self->o('do_gene_qc'),
-        'dbID_range_index'  => $self->o('dbID_range_index'),
         'dna_alns_complete' => $self->o('dna_alns_complete'), # manually change to 1 when all wgas have finished
 
         'mapped_gene_ratio_per_taxon' => $self->o('mapped_gene_ratio_per_taxon'),
@@ -1037,13 +1036,13 @@ sub core_pipeline_analyses {
             -parameters => {
                 'source_species_names'  => $self->o('projection_source_species_names'),
             },
-            -flow_into  => WHEN('#dbID_range_index#' => 'offset_homology_tables' ),
+            -flow_into  => WHEN('#homology_range_index#' => 'offset_homology_tables' ),
         },
 
         {   -logic_name => 'offset_homology_tables',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
             -parameters => {
-                'range_index'   => '#dbID_range_index#',
+                'range_index' => '#homology_range_index#',
             },
         },
 
@@ -3512,7 +3511,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_tree_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => 'gene_count_factory',
+            -flow_into  => [ 'gene_count_factory', 'store_member_biotype_group_tag' ],
         },
 
         {   -logic_name => 'rib_fire_hmm_build',
@@ -3763,6 +3762,10 @@ sub core_pipeline_analyses {
             -parameters => {
                 'gene_count_exe' => $self->o('count_genes_in_tree_exe'),
             },
+        },
+
+        {   -logic_name => 'store_member_biotype_group_tag',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreMemberBiotypeGroupTag',
         },
 
         {   -logic_name => 'homology_stats_factory',
