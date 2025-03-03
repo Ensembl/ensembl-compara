@@ -130,7 +130,17 @@ sub test_division {
     if (%allowed_species && -e $species_topology_file) {
         my $content = slurp($species_topology_file);
         my $topology = Bio::EnsEMBL::Compara::Graph::NewickParser::parse_newick_into_tree($content);
-        %species_in_topology = map {$_->name => 1} grep {$_->name} @{$topology->get_all_leaves};
+
+        my %unassigned_region_components;
+        foreach my $leaf (@{$topology->get_all_leaves}) {
+            $species_in_topology{$leaf->name} = 1;
+
+            my $u_component_tag_value = $leaf->get_value_for_tag('unassigned_region_component');
+            if ($u_component_tag_value) {
+                $unassigned_region_components{$leaf->name} = 1;
+            }
+        }
+
         # All species in allowed_species.json and additional_species.json must be in the species topology
         $has_files_to_test = 1;
         my $all_species_file_str = join(':', @all_species_files);
@@ -146,7 +156,7 @@ sub test_division {
         my $subgenome_name_re = qr/^(?<principal>${all_species_subpattern})_(?<component>[^_]+)$/;
         foreach my $name (keys %species_in_topology) {
             if (!exists $all_species{$name} && $name =~ $subgenome_name_re) {
-                if ($+{'component'} ne 'U') {
+                if (!exists $unassigned_region_components{$name}) {
                     $genome_weights{$+{'principal'}} += 1;
                 }
             }
