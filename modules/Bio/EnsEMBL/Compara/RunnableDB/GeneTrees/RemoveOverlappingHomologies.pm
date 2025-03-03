@@ -47,15 +47,15 @@ sub fetch_input {
     my $mlss_info           = $mlss->find_homology_mlss_sets();
     my @overlap_mlss_ids    = @{$mlss_info->{'overlap_mlss_ids'}};
 
-    $self->param('overlapping_mlsss', \@overlap_mlss_ids);
+    $self->param('overlapping_mlss_ids', \@overlap_mlss_ids);
 }
 
 sub run {
     my $self = shift;
 
-    foreach my $mlss (@{$self->param('overlapping_mlsss')}) {
-        warn "Going to remove ", $mlss->toString, "\n" if $self->debug;
-        $self->_remove_homologies($mlss->dbID);
+    foreach my $mlss_id (@{$self->param('overlapping_mlss_ids')}) {
+        warn "Going to remove ", $mlss_id, "\n" if $self->debug;
+        $self->_remove_homologies($mlss_id);
     }
 }
 
