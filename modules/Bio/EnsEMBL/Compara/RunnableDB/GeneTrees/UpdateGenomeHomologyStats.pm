@@ -78,7 +78,6 @@ sub run {
     my %gm_hom_stats;
     my %members_by_biotype_group;
     foreach my $gene_tree_mlss (@{$gene_tree_mlsses}) {
-        print STDERR 'processing gene-tree MLSS: ' . $gene_tree_mlss->name . "\n";
 
         # We should count homology stats for a gene-tree collection only if it contains this genome.
         my %gene_tree_gdb_id_set = map { $_->dbID => 1 } @{$gene_tree_mlss->species_set->genome_dbs};
@@ -102,7 +101,6 @@ sub run {
 
         my $homology_mlsses = $mlss_dba->fetch_gene_tree_homology_mlsses($gene_tree_mlss);
         foreach my $homology_mlss (@{$homology_mlsses}) {
-            print STDERR 'processing homology MLSS: ' . $homology_mlss->name . "\n";
 
             # We should count stats for a homology MLSS only if it contains this genome.
             my %homology_gdb_id_set = map { $_->dbID => 1 } @{$homology_mlss->species_set->genome_dbs};
@@ -119,7 +117,6 @@ sub run {
                 "${hom_mlss_id}.homologies.tsv",
             );
 
-            print STDERR 'processing homology dump file: ' . $homology_dump_file . "\n";
             open(my $fh, '<', $homology_dump_file) or $self->throw("Failed to open file [$homology_dump_file]");
             my $header = <$fh>;  # We can skip the header row.
             while ( my $line = <$fh> ) {
@@ -160,7 +157,6 @@ sub write_output {
     foreach my $clusterset_id (sort keys %{$gm_hom_stats}) {
         foreach my $gene_member_id (sort keys %{$gm_hom_stats->{$clusterset_id}}) {
 
-            print STDERR sprintf('updating homology stats for gene %d in collection %s', $gene_member_id, $clusterset_id) . "\n";
             my @hom_stat_values = map { $gm_hom_stats->{$clusterset_id}{$gene_member_id}{$_} // 0 } @{$hom_stat_names};
             $sth->execute(@hom_stat_values, $gene_member_id, $clusterset_id);
         }
