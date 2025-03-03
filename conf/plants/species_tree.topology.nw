@@ -185,7 +185,7 @@
                                 avena_sativa_sang_A,
                                 avena_sativa_sang_C,
                                 avena_sativa_sang_D,
-                                avena_sativa_sang_U
+                                avena_sativa_sang_U[&&NHX:unassigned_region_component=1]
                               )
                             )Avena_sativa,
                             lolium_perenne
@@ -353,16 +353,16 @@
                                 triticum_spelta_D
                               ),
                               (
-                                triticum_aestivum_U,
-                                triticum_aestivum_jagger_U,
-                                triticum_aestivum_julius_U,
-                                triticum_aestivum_kariega_U,
-                                triticum_aestivum_lancer_U,
-                                triticum_aestivum_mace_U,
-                                triticum_aestivum_mattis_U,
-                                triticum_aestivum_norin61_U,
-                                triticum_aestivum_stanley_U,
-                                triticum_turgidum_U
+                                triticum_aestivum_U[&&NHX:unassigned_region_component=1],
+                                triticum_aestivum_jagger_U[&&NHX:unassigned_region_component=1],
+                                triticum_aestivum_julius_U[&&NHX:unassigned_region_component=1],
+                                triticum_aestivum_kariega_U[&&NHX:unassigned_region_component=1],
+                                triticum_aestivum_lancer_U[&&NHX:unassigned_region_component=1],
+                                triticum_aestivum_mace_U[&&NHX:unassigned_region_component=1],
+                                triticum_aestivum_mattis_U[&&NHX:unassigned_region_component=1],
+                                triticum_aestivum_norin61_U[&&NHX:unassigned_region_component=1],
+                                triticum_aestivum_stanley_U[&&NHX:unassigned_region_component=1],
+                                triticum_turgidum_U[&&NHX:unassigned_region_component=1]
                               )
                             )Triticinae
                           )Triticeae
