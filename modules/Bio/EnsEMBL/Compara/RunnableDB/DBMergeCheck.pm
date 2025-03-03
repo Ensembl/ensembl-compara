@@ -330,6 +330,10 @@ sub run {
 
                 if (defined $mlss_id) {
 
+                    my $member_type = destringify(
+                        $pipeline_param_dba->fetch_all("param_name = 'member_type'", 'one_per_key', undef, 'param_value')
+                    );
+
                     my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
                     $mlss_info = $mlss->find_homology_mlss_sets();
 
