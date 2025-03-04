@@ -134,6 +134,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
+            "description": "Mark as done when LastZ coverage stats have been computed and checked",
+            "summary": "Check LastZ coverage stats"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
             "summary": "Process Cactus data",
             "name_on_graph": "Process Cactus data"
