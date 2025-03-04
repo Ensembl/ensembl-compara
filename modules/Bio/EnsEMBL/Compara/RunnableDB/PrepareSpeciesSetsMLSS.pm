@@ -68,7 +68,7 @@ sub fetch_input {
     my $method_adaptor = $self->compara_dba->get_MethodAdaptor;
     foreach my $cat (qw(whole singleton pairwise)) {
         my $param_name = "${cat}_method_links";
-        my @a = map {$method_adaptor->fetch_by_type($_) || die "Cannot find the method_link '$_'"} @{ $self->param($param_name) };
+        my @a = map {$method_adaptor->fetch_by_type($_) || $self->die_no_retry("Cannot find the method_link '$_'")} @{ $self->param($param_name) };
         $self->param($param_name, \@a);
     }
 }
@@ -160,7 +160,7 @@ sub _write_mlss {
     if ($self->param('reference_dba')) {
         $mlss = $self->param('reference_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($method->dbID, $ss->dbID);
         if ((not $mlss) and $self->param('reference_dba')->get_MethodAdaptor->fetch_by_dbID($method->dbID)) {
-            die sprintf("The %s / %s MethodLinkSpeciesSet could not be found in the master database\n", $method->toString, $ss->toString);
+            $self->die_no_retry(sprintf("The %s / %s MethodLinkSpeciesSet could not be found in the master database\n", $method->toString, $ss->toString));
         }
     }
     unless ($mlss) {
