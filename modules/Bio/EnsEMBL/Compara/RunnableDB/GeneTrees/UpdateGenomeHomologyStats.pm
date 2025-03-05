@@ -96,6 +96,8 @@ sub run {
 
             # Initialising homology stats with relevant members now
             # will make it easier to count only relevant homologies.
+            # Relevant members are in this genome and have a biotype_group
+            # (e.g. 'coding') associated with this gene-tree collection.
             %collection_hom_stats = map { $_ => {} } @{$members_by_biotype_group{$biotype_group}};
         }
 
@@ -123,7 +125,11 @@ sub run {
                 chomp($line);
                 my @hom_gene_member_ids = split(/\t/, $line);
                 foreach my $gene_member_id (@hom_gene_member_ids) {
-                    if (exists $collection_hom_stats{$gene_member_id}) {  # Count only relevant homologies.
+                    # Checking for $gene_member_id ensures we only count homologies for the relevant
+                    # gene members initialised earlier (i.e. members in this genome and gene-tree
+                    # collection). We do not compute homology stats for members of another genome
+                    # or gene-tree member type; we expect them to be counted in another job.
+                    if (exists $collection_hom_stats{$gene_member_id}) {
                         $collection_hom_stats{$gene_member_id}{$homology_type} += 1;
                     }
                 }
