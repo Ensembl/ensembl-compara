@@ -693,23 +693,23 @@ sub fetch_current_gene_tree_mlsses {
 }
 
 
-=head2 fetch_gene_tree_homology_mlsses
+=head2 _fetch_gene_tree_homology_mlsses
 
   Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object representing a gene-tree MLSS.
-  Example    : my $homology_mlsses = $mlssa->fetch_gene_tree_homology_mlsses($mlss);
-  Description: Fetch current homology MLSSes within and between genomes
-               that are represented in the specified gene-tree MLSS.
+  Example    : my $homology_mlsses = $mlssa->_fetch_gene_tree_homology_mlsses($mlss);
+  Description: Internal method to fetch current homology MLSSes within and between
+               genomes that are represented in the specified gene-tree MLSS.
   Returntype : Arrayref of homology MLSSes represented in the given gene-tree MLSS.
   Exceptions : throws if specified MLSS is not current or does
                not represent a gene-tree MethodLinkSpeciesSet
 
 =cut
 
-sub fetch_gene_tree_homology_mlsses {
+sub _fetch_gene_tree_homology_mlsses {
     my ($self, $mlss) = @_;
 
     unless ($mlss->is_current && ($mlss->method->type ne 'PROTEIN_TREES' || $mlss->method->type ne 'NC_TREES')) {
-        throw("MethodLinkSpeciesSetAdaptor::fetch_gene_tree_homology_mlsses() can only be used for current gene-tree MLSSes");
+        throw("MethodLinkSpeciesSetAdaptor::_fetch_gene_tree_homology_mlsses() can only be used for current gene-tree MLSSes");
     }
 
     my $homology_methods = $self->db->get_MethodAdaptor->fetch_all_by_class_pattern('^Homology\.homology$');

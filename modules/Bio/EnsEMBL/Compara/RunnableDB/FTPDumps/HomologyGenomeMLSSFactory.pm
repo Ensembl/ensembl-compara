@@ -72,7 +72,7 @@ sub run {
         };
     }
 
-    my $homology_mlsses = $mlss_dba->fetch_gene_tree_homology_mlsses($mlss);
+    my $homology_mlsses = $mlss_dba->_fetch_gene_tree_homology_mlsses($mlss);
 
     my %gdb_id_to_name;
     my %is_ortholog_mlss;

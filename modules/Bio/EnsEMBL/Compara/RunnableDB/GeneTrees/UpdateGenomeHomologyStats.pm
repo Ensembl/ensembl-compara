@@ -99,7 +99,7 @@ sub run {
             %collection_hom_stats = map { $_ => {} } @{$members_by_biotype_group{$biotype_group}};
         }
 
-        my $homology_mlsses = $mlss_dba->fetch_gene_tree_homology_mlsses($gene_tree_mlss);
+        my $homology_mlsses = $mlss_dba->_fetch_gene_tree_homology_mlsses($gene_tree_mlss);
         foreach my $homology_mlss (@{$homology_mlsses}) {
 
             # We should count stats for a homology MLSS only if it contains this genome.

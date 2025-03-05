@@ -445,7 +445,7 @@ sub find_homology_mlss_sets {
     foreach my $gene_tree_mlss ($self, @ref_mlsses) {
         my $gene_tree_mlss_id = $gene_tree_mlss->dbID;
         $gdb_id_map{$gene_tree_mlss_id} = [map { $_->dbID } @{$gene_tree_mlss->species_set->genome_dbs}];
-        my $hom_mlsses = $mlss_dba->fetch_gene_tree_homology_mlsses($gene_tree_mlss);
+        my $hom_mlsses = $mlss_dba->_fetch_gene_tree_homology_mlsses($gene_tree_mlss);
         $hom_mlss_id_map{$gene_tree_mlss_id} = [map { $_->dbID } @{$hom_mlsses}];
     }
 
