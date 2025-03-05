@@ -89,7 +89,7 @@ sub write_output {
         foreach my $ml (@{$self->param('whole_method_links')}) {
             my $mlss = $self->_write_mlss( $ss, $ml );
 
-            if (($mlss->method->type eq 'PROTEIN_TREES' || $mlss->method->type eq 'NC_TREES')) {
+            if ($mlss->method->type eq 'PROTEIN_TREES' || $mlss->method->type eq 'NC_TREES') {
                 my $homology_range_index = $mlss->get_value_for_tag('homology_range_index');
                 push(@homology_range_indices, $homology_range_index) if defined $homology_range_index;
             }
@@ -159,7 +159,16 @@ sub _write_mlss {
     my $mlss;
     if ($self->param('reference_dba')) {
         $mlss = $self->param('reference_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($method->dbID, $ss->dbID);
-        if ((not $mlss) and $self->param('reference_dba')->get_MethodAdaptor->fetch_by_dbID($method->dbID)) {
+        if ($mlss) {
+
+            if ($method->type eq 'PROTEIN_TREES' || $method->type eq 'NC_TREES') {
+                # Load the tagvalue hash, so that tags such
+                # as 'homology_range_index' will be loaded
+                # and stored along with this gene-tree MLSS.
+                $mlss->get_tagvalue_hash();
+            }
+
+        } elsif ($self->param('reference_dba')->get_MethodAdaptor->fetch_by_dbID($method->dbID)) {
             $self->die_no_retry(sprintf("The %s / %s MethodLinkSpeciesSet could not be found in the master database\n", $method->toString, $ss->toString));
         }
     }
