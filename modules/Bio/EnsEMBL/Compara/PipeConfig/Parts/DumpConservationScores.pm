@@ -88,6 +88,7 @@ sub pipeline_analyses_dump_conservation_scores {
             -rc_name           => '2Gb_24_hour_job',
             -parameters        => {
                 'registry'     => '#reg_conf#',
+                'healthcheck_list' => ['unexpected_nulls'],
             },
             -flow_into         => {
                 1 => '?accu_name=all_bedgraph_files&accu_address=[chunkset_id]&accu_input_variable=this_bedgraph',
