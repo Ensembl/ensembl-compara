@@ -42,7 +42,6 @@ sub default_options {
 
         # Parameters to allow merging different protein-tree collections
         'collection'       => 'barley_cultivars',
-        'dbID_range_index' => 40,
         'label_prefix'     => 'barley_cultivars_',
 
         # Flatten all the genomes under species 'Hordeum vulgare'

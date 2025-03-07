@@ -639,12 +639,34 @@
   </assembly_patches>
 
   <gene_trees>
-    <protein_trees collection="default"/>
-    <protein_trees collection="murinae"/>
-    <protein_trees collection="pig_breeds"/>
-    <nc_trees collection="default"/>
-    <nc_trees collection="murinae"/>
-    <nc_trees collection="pig_breeds"/>
+    <protein_trees
+      collection="default"
+      homology_range_index="0"
+    />
+    <!--
+      homology_range_index 13 is currently reserved for ENSEMBL_PROJECTIONS
+      see: modules/Bio/EnsEMBL/Compara/PipeConfig/Parts/ImportAltAlleGroupsAsHomologies.pm#L77
+    -->
+    <nc_trees
+      collection="default"
+      homology_range_index="14"
+    />
+    <protein_trees
+      collection="murinae"
+      homology_range_index="18"
+    />
+    <nc_trees
+      collection="murinae"
+      homology_range_index="19"
+    />
+    <protein_trees
+      collection="pig_breeds"
+      homology_range_index="20"
+    />
+    <nc_trees
+      collection="pig_breeds"
+      homology_range_index="21"
+    />
   </gene_trees>
 
   <species_trees>

@@ -374,10 +374,22 @@
   </multiple_alignments>
 
   <gene_trees>
-    <protein_trees collection="default"/>
-    <protein_trees collection="protostomes"/>
-    <protein_trees collection="insects"/>
-    <protein_trees collection="pangenome_drosophila"/>
+    <protein_trees
+        collection="default"
+        homology_range_index="0"
+    />
+    <protein_trees
+        collection="protostomes"
+        homology_range_index="10"
+    />
+    <protein_trees
+        collection="insects"
+        homology_range_index="20"
+    />
+    <protein_trees
+        collection="pangenome_drosophila"
+        homology_range_index="30"
+    />
   </gene_trees>
 
 </compara_db>

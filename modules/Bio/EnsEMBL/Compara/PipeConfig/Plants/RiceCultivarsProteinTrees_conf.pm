@@ -45,7 +45,6 @@ sub default_options {
 
         # Parameters to allow merging different runs of the pipeline
         'collection'       => 'rice_cultivars',  # The name of the species-set within that division
-        'dbID_range_index' => 30,
         'label_prefix'     => 'rice_cultivars_',
 
         # Flatten all the species under the "Oryza" genus

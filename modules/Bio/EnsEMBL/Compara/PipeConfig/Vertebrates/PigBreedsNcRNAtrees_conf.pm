@@ -31,8 +31,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsNcRNAtrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -mlss_id <curr_pig_breeds_ncrna_mlss_id>
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsNcRNAtrees_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
@@ -61,11 +60,7 @@ sub default_options {
     return {
             %{$self->SUPER::default_options},
 
-            # Must be given on the command line
-            #'mlss_id'          => 40100,
-
             'collection'        => 'pig_breeds',       # The name of the species-set within that division
-            'dbID_range_index'  => 21,
             'label_prefix'      => 'pig_breeds_',
 
             'projection_source_species_names' => ['sus_scrofa'],

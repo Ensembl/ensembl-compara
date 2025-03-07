@@ -21,12 +21,12 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes
 
 =head1 SYNOPSIS
 
-When we build complementary gene trees we want to identify and remove data in the overlap
-between gene-tree collections, giving priority to data in the reference collection(s).
+When we build complementary gene trees we want to identify and exclude data in the overlap
+between gene-tree collections, giving priority to data in higher-precedence collection(s).
 
 This runnable identifies the genomes that are overlapping between the current collection
-and its reference collection(s), and then updates the 'overlapping_genomes' pipeline-wide
-parameter accordingly.
+and its higher-precedence collection(s), and then updates the 'overlapping_genomes'
+pipeline-wide parameter accordingly.
 
 =cut
 
@@ -35,8 +35,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
-use Bio::EnsEMBL::Hive::Utils qw(destringify stringify);
+use Bio::EnsEMBL::Hive::Utils qw(stringify);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -45,21 +44,12 @@ sub run {
     my $self = shift;
 
     my $master_dba = $self->get_cached_compara_dba('master_db');
-    my $collection_name = $self->param_required('collection');
+    my $mlss_id = $self->param_required('mlss_id');
 
-    my $ref_collection_names;
-    if ( $self->param_is_defined('ref_collection') && $self->param_is_defined('ref_collection_list') ) {
-        $self->die_no_retry("Only one of parameters 'ref_collection' or 'ref_collection_list' can be defined");
-    } elsif ( $self->param_is_defined('ref_collection') ) {
-        $ref_collection_names = [$self->param('ref_collection')];
-    } elsif ( $self->param_is_defined('ref_collection_list') ) {
-        $ref_collection_names = destringify($self->param('ref_collection_list'));
-    } else {
-        $self->die_no_retry("One of parameters 'ref_collection' or 'ref_collection_list' must be defined");
-    }
+    my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+    my $mlss_info = $mlss->find_homology_mlss_sets();
 
-    my $overlapping_genomes = Bio::EnsEMBL::Compara::Utils::MasterDatabase::find_overlapping_genome_db_ids($master_dba, $collection_name, $ref_collection_names);
-    $self->add_or_update_pipeline_wide_parameter('overlapping_genomes', stringify($overlapping_genomes));
+    $self->add_or_update_pipeline_wide_parameter('overlapping_genomes', stringify($mlss_info->{'overlap_gdb_ids'}));
 }
 
 1;
