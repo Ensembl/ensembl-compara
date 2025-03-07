@@ -94,7 +94,7 @@ sub run {
         my $sth = $self->compara_dba->dbc->prepare($sql);
         $sth->execute($genome_db_id);
 
-        my $regex = '[^ACGT]'; #https://droog.gs.washington.edu/parc/images/iupac.html
+        my $regex = '[^ACGT]';  # Cornish-Bowden (1985) NAR, 13(9):3021-30. https://doi.org/10.1093/nar/13.9.3021
         my $seq_length;
         while (my $row = $sth->fetchrow_hashref()) {
             my $gene_member_id = $row->{gene_member_id};

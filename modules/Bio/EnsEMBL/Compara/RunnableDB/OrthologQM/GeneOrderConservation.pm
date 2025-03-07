@@ -26,7 +26,7 @@ Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::GeneOrderConservation
 =head1 SYNOPSIS
 
 Generate orthology quality metric based on gene order/neighbourhood conservation
-For more info, see: http://www.ensembl.org/info/genome/compara/Ortholog_qc_manual.html
+For more info, see: https://www.ensembl.org/info/genome/compara/Ortholog_qc_manual.html
 
 =cut
 

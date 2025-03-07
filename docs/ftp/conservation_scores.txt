@@ -1,9 +1,9 @@
 The bigWig files in this directory represent conservation scores as computed by the GERP software:
-http://mendel.stanford.edu/SidowLab/downloads/gerp/
+https://doi.org/10.1371/journal.pcbi.1001025
 on Multiple Sequence Alignments (MSA) of whole-genomes
 
-Information on the current set of Ensembl MSA and the species used to generate them can be found here:
-http://www.ensembl.org/info/docs/compara/analyses.html
+Information on current Ensembl multiple sequence alignments and the species used to generate them can be found here:
+https://www.ensembl.org/info/genome/compara/multiple_genome_alignments.html
 
 Each file lists the conservation scores of each position of the genome for which those could be
 computed (a minimum number of species have to be aligned). Positive scores represent highly-conserved

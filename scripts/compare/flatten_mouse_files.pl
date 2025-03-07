@@ -18,7 +18,7 @@
 =head1 DESCRIPTION
 
 This script fetches data from MGI and maps its ids with Ensembl stable ids.
-MGI annotations come dorectly from the web [http://www.genenames.org]
+MGI annotations come dorectly from the web [https://genenames.org/]
 
 =cut
 
@@ -86,7 +86,7 @@ my %mouse_homology;         # Stores all the homology
 my %mouse_homology_type;    # Stores the type of homology
 
 my %goden_ensembl_mgi_map;  # Maps MGI ids with Ensembl stable ids 
-my @mouse_gold_annotations; # Input from MGI annotations, it can come from a file or directly from the web [http://www.genenames.org]
+my @mouse_gold_annotations; # Input from MGI annotations, it can come from a file or directly from the web [https://genenames.org]
 
 if(($mouse_gold_annotations_file) && (! -e $mouse_gold_annotations_file)){
     print "Parsing from file: $mouse_gold_annotations_file\n";
@@ -98,8 +98,8 @@ if(($mouse_gold_annotations_file) && (! -e $mouse_gold_annotations_file)){
     }
 }
 else {
-    print "Parsing from remote source: [http://www.genenames.org]\n";
-    my $url = 'http://www.genenames.org/cgi-bin/download?col=gd_hgnc_id&col=gd_app_sym&col=gd_pub_ensembl_id&col=gd_mgd_id&status=Approved&status=Entry+Withdrawn&status_opt=2&where=&order_by=gd_app_sym_sort&format=text&limit=&hgnc_dbtag=on&submit=submit';
+    print "Parsing from remote source: [https://genenames.org]\n";
+    my $url = 'https://genenames.org/cgi-bin/download/custom?col=gd_hgnc_id&col=gd_app_sym&col=gd_pub_ensembl_id&col=gd_mgd_id&status=Approved&status=Entry%20Withdrawn&hgnc_dbtag=on&order_by=gd_app_sym_sort&format=text&submit=submit';
     my $lines = get $url;
     @mouse_gold_annotations = split /\n/, $lines;
 }

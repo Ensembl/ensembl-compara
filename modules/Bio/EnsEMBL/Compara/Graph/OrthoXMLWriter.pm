@@ -61,7 +61,7 @@ Bio::EnsEMBL::Compara::Graph::OrthoXMLWriter
 =head1 DESCRIPTION
 
 Used as a way of emitting Compara GeneTrees in a format which conforms
-to L<OrthoXML|http://www.orthoxml.org/>. The code is built to work with
+to L<OrthoXML|https://www.orthoxml.org/>. The code is built to work with
 instances of L<Bio::EnsEMBL::Compara::GeneTreeNode>.
 
 The same document is persistent between write_trees() calls so to create
@@ -70,14 +70,6 @@ a new XML document create a new instance of this object.
 =head1 SUBROUTINES/METHODS
 
 See inline
-
-=head1 CONTACT
-
- Please email comments or questions to the public Ensembl
- developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
- Questions may also be sent to the Ensembl help desk at
- <http://www.ensembl.org/Help/Contact>.
 
 =cut
 

@@ -23,17 +23,9 @@ create_pair_aligner_page.pl
 
 Kathryn Beal
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 COPYRIGHT
 
-This modules is part of the Ensembl project http://www.ensembl.org
+This modules is part of the Ensembl project https://www.ensembl.org
 
 =head1 DESCRIPTION
 
@@ -127,10 +119,10 @@ my $no_config_template= "$this_directory/pair_aligner_no_config_page.tmpl";
 my $ucsc_template = "$this_directory/pair_aligner_ucsc_page.tmpl";
 
 my $references = {
-       BlastZ => "<a href=\"http://www.genome.org/cgi/content/abstract/13/1/103\">Schwartz S et al., Genome Res.;13(1):103-7</a>, <a href=\"http://www.pnas.org/cgi/content/full/100/20/11484\">Kent WJ et al., Proc Natl Acad Sci U S A., 2003;100(20):11484-9</a>",
+       BlastZ => "<a href=\"https://doi.org/10.1101/gr.809403\">Schwartz S et al., Genome Res.;13(1):103-7</a>, <a href=\"https://doi.org/10.1073/pnas.1932072100\">Kent WJ et al., Proc Natl Acad Sci U S A., 2003;100(20):11484-9</a>",
 
-       LastZ => "<a href=\"http://www.bx.psu.edu/miller_lab/dist/README.lastz-1.02.00/README.lastz-1.02.00a.html\">LastZ</a>",
-       "Translated Blat" => "<a href=\"http://www.genome.org/cgi/content/abstract/12/4/656\">Kent W, Genome Res., 2002;12(4):656-64</a>"};
+       LastZ => "<a href=\"https://www.bx.psu.edu/miller_lab/dist/README.lastz-1.02.00/README.lastz-1.02.00a.html\">LastZ</a>",
+       "Translated Blat" => "<a href=\"https://doi.org/10.1101/gr.229202\">Kent W, Genome Res., 2002;12(4):656-64</a>"};
 
 #Set default parameters. Other parameters will be listed under "Additional parameters"
 my $blastz_options;

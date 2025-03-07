@@ -79,8 +79,8 @@ in bash
 
 Also refer to the following pages for tips about installation and setting up the environment:
 
-- http://www.ensembl.org/info/docs/api/api_installation.html
-- http://www.ensembl.org/info/docs/eHive.html
+- https://www.ensembl.org/info/docs/api/api_installation.html
+- https://www.ensembl.org/info/docs/eHive.html
 
 
 Configuration of the pipeline
