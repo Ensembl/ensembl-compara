@@ -335,7 +335,7 @@ sub run {
                     );
 
                     my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-                    $mlss_info = $mlss->find_homology_mlss_sets();
+                    $mlss_info = $mlss->_find_homology_mlss_sets();
 
                     # Pipelines with collections can be merged per homology MLSS and member type.
                     # This allows for merging protein and ncRNA homologies in the same MLSS from

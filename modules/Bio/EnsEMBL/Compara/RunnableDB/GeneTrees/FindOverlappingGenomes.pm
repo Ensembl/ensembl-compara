@@ -47,7 +47,7 @@ sub run {
     my $mlss_id = $self->param_required('mlss_id');
 
     my $mlss = $master_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    my $mlss_info = $mlss->find_homology_mlss_sets();
+    my $mlss_info = $mlss->_find_homology_mlss_sets();
 
     $self->add_or_update_pipeline_wide_parameter('overlapping_genomes', stringify($mlss_info->{'overlap_gdb_ids'}));
 }

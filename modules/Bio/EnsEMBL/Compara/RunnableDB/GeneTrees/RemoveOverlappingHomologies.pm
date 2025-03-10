@@ -44,7 +44,7 @@ sub fetch_input {
     my $mlss_id             = $self->param_required('mlss_id');
 
     my $mlss                = $master_mlss_adaptor->fetch_by_dbID($mlss_id);
-    my $mlss_info           = $mlss->find_homology_mlss_sets();
+    my $mlss_info           = $mlss->_find_homology_mlss_sets();
     my @overlap_mlss_ids    = @{$mlss_info->{'overlap_mlss_ids'}};
 
     $self->param('overlapping_mlss_ids', \@overlap_mlss_ids);

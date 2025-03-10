@@ -406,10 +406,10 @@ sub filename {
 }
 
 
-=head2 find_homology_mlss_sets
+=head2 _find_homology_mlss_sets
 
-  Example    : my $mlss_info = $mlss->find_homology_mlss_sets();
-  Description: Find homology MLSS sets for this gene-tree MLSS.
+  Example    : my $mlss_info = $mlss->_find_homology_mlss_sets();
+  Description: Internal method to find homology MLSS sets for this gene-tree MLSS.
   Returntype : Hashref containing a breakdown of several categories of MLSS-related info:
                a) 'complementary_gdb_ids': Arrayref of GenomeDB IDs of those genomes in
                   the given MLSS that are not in reference gene-tree MLSSes.
@@ -423,11 +423,11 @@ sub filename {
 
 =cut
 
-sub find_homology_mlss_sets {
+sub _find_homology_mlss_sets {
     my ($self) = @_;
 
     unless ($self->is_current && ($self->method->type ne 'PROTEIN_TREES' || $self->method->type ne 'NC_TREES')) {
-        throw("MethodLinkSpeciesSet::find_homology_mlss_sets() can only be used for current gene-tree MLSSes");
+        throw("MethodLinkSpeciesSet::_find_homology_mlss_sets() can only be used for current gene-tree MLSSes");
     }
 
     my $mlss_dba = $self->adaptor->db->get_MethodLinkSpeciesSetAdaptor();
