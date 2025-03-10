@@ -34,7 +34,7 @@ sub run {
 
     my $mlss_id = $self->param_required('mlss_id');
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    my $biotype_groups = $mlss->get_gene_tree_member_biotype_groups();
+    my $biotype_groups = $mlss->_get_gene_tree_member_biotype_groups();
     $mlss->store_tag('member_biotype_groups', join(',', @{$biotype_groups}));
 }
 

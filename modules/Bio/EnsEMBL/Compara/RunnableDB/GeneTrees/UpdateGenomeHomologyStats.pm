@@ -83,7 +83,7 @@ sub run {
         my %gene_tree_gdb_id_set = map { $_->dbID => 1 } @{$gene_tree_mlss->species_set->genome_dbs};
         next unless exists $gene_tree_gdb_id_set{$genome_db_id};
 
-        my $collection_biotype_groups = $gene_tree_mlss->get_gene_tree_member_biotype_groups();
+        my $collection_biotype_groups = $gene_tree_mlss->_get_gene_tree_member_biotype_groups();
 
         my %collection_hom_stats;
         foreach my $biotype_group (@{$collection_biotype_groups}) {

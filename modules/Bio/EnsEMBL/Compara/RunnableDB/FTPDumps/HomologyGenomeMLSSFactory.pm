@@ -85,7 +85,7 @@ sub run {
         }
     }
 
-    my @biotype_groups = @{$mlss->get_gene_tree_member_biotype_groups()};
+    my @biotype_groups = @{$mlss->_get_gene_tree_member_biotype_groups()};
     my $biotype_group_placeholders = '(' . join(',', ('?') x @biotype_groups) . ')';
     my $biotype_group_sql_list = "('" . join("','", @biotype_groups) . "')";
 

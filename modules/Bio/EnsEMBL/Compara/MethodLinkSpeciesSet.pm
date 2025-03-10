@@ -548,16 +548,16 @@ sub find_pairwise_reference {
 }
 
 
-=head2 get_gene_tree_member_biotype_groups
+=head2 _get_gene_tree_member_biotype_groups
 
-  Example    : my $biotype_groups = $mlss->get_gene_tree_member_biotype_groups();
-  Description: Get biotype groups for members in this gene-tree MLSS.
+  Example    : my $biotype_groups = $mlss->_get_gene_tree_member_biotype_groups();
+  Description: Internal method to get biotype groups for members in this gene-tree MLSS.
   Returntype : Listref of biotype groups.
   Exceptions : none
 
 =cut
 
-sub get_gene_tree_member_biotype_groups {
+sub _get_gene_tree_member_biotype_groups {
     my ($self) = @_;
 
     my $biotype_group_tag = $self->get_value_for_tag('member_biotype_groups');
