@@ -88,6 +88,7 @@ sub pipeline_analyses_dump_conservation_scores {
             -rc_name           => '2Gb_24_hour_job',
             -parameters        => {
                 'registry'     => '#reg_conf#',
+                'healthcheck_list' => ['unexpected_nulls'],
             },
             -flow_into         => {
                 1 => '?accu_name=all_bedgraph_files&accu_address=[chunkset_id]&accu_input_variable=this_bedgraph',
@@ -96,6 +97,9 @@ sub pipeline_analyses_dump_conservation_scores {
 
         {   -logic_name     => 'concatenate_bedgraph_files',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateBedGraphFiles',
+            -parameters     => {
+                'healthcheck_list' => ['line_count', 'unexpected_nulls'],
+            },
             -rc_name        => '1Gb_24_hour_job',
             -flow_into      => 'convert_to_bigwig',
         },

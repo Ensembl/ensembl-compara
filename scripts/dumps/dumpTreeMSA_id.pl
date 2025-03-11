@@ -150,7 +150,6 @@ sub dump_if_wanted {
     my $default_name = shift;
 
     my $filename = ($param =~ /^\// ? sprintf('%s.%s', $param, $tree_id) : sprintf('%s/%s.%s', $dirpath, $tree_id, $param eq 1 ? $default_name : $param));
-    return $filename if -s $filename;  # ensures validation of pre-existing file, if using dataflow file to flow to validation step
 
     my $fh;
     open $fh, '>', $filename or die "couldnt open $filename:$!\n";

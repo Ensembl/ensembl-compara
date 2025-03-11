@@ -45,7 +45,8 @@ use warnings;
 use File::Basename;
 use File::Path qw(make_path);
 
-use Bio::EnsEMBL::Hive::Utils ('dir_revhash');
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(check_for_null_characters);
+use Bio::EnsEMBL::Hive::Utils qw(destringify dir_revhash);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
@@ -56,6 +57,7 @@ sub param_defaults {
         %{ $self->SUPER::param_defaults() },
         'this_bedgraph' => '#work_dir#/#dirname#/#hash_dir#/#name#.#chunkset_id#.bedgraph',
         'cmd'           => '#dump_features_exe# --feature cs_#mlss_id# --compara_db #compara_db# --species #name# --regions "#regions_bed_file#" --reg_conf "#registry#" > #this_bedgraph#',
+        'healthcheck_list' => [],
     }
 }
 
@@ -93,6 +95,10 @@ sub write_output {
         my $empty_file_msg = "No conservation scores found for these regions in " . $self->param('name') . "... Skipping!\n";
         $self->complete_early( $empty_file_msg );
     }
+
+    if ($self->param_is_defined('healthcheck_list')) {
+        $self->_healthcheck();
+    }
 }
 
 #
@@ -108,6 +114,21 @@ sub _check_if_empty_record {
 
     return 1 if ( int($run_cmd->out) < 2 ); # file contains nothing/header only
     return 0; # file contains records
+}
+
+sub _healthcheck {
+    my $self = shift;
+
+    my $healthcheck_list = destringify($self->param('healthcheck_list'));
+    my $output_file = $self->param('this_bedgraph');
+
+    foreach my $hc_type (@{$healthcheck_list}) {
+        if ( $hc_type eq 'unexpected_nulls' ) {
+            check_for_null_characters($output_file);
+        } else {
+            $self->die_no_retry("Healthcheck type '$hc_type' not recognised");
+        }
+    }
 }
 
 1;
