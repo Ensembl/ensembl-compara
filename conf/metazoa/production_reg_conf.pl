@@ -89,19 +89,19 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'    => [ 'mysql-ens-compara-prod-6', 'sbhurji_metazoa_load_members_114' ],
+    'compara_members'    => [ 'mysql-ens-compara-prod-X', 'sbhurji_metazoa_load_members_114' ],
     'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbhurji_default_metazoa_protein_trees_114' ],
     'protostomes_ptrees' => [ 'mysql-ens-compara-prod-10', 'sbhurji_protostomes_metazoa_protein_trees_114' ],
-    'insects_ptrees'     => [ 'mysql-ens-compara-prod-9', 'sbhurji_insects_metazoa_protein_trees_114' ],
-    'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-7', 'sbhurji_metazoa_pangenome_drosophila_protein_reindexed_trees_114' ],
+    #'insects_ptrees'     => [ 'mysql-ens-compara-prod-X', '' ],
+    #'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-X', '' ],
 
     # prev homology dbs required for ReindexMembers
     #'default_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
     #'protostomes_ptrees_prev'           => [ 'mysql-ens-compara-prod-X', '' ],
     #'insects_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
-    'pangenome_drosophila_ptrees_prev'  => [ 'mysql-ens-compara-prod-9', 'thiagogenez_pangenome_drosophila_metazoa_protein_trees_112' ],
+    #'pangenome_drosophila_ptrees_prev'  => [ 'mysql-ens-compara-prod-X', '' ],
 
-    'drosophila_cactus'  => [ 'mysql-ens-compara-prod-9', 'twalsh_pangenome_drosophila_metazoa_load_cactus_114' ],
+    #'drosophila_cactus'  => [ 'mysql-ens-compara-prod-X', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
