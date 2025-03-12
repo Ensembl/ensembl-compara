@@ -86,6 +86,7 @@ jobs:
       name: "SQL unit tests"
       install:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
+        - cpanm --quiet --installdeps --notest .
       script: prove -r ./travisci/sql-unittest/
 
     - language: perl
