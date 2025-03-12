@@ -361,7 +361,8 @@
 
   <multiple_alignments>
     <!-- Drosophila pan genome -->
-    <multiple_alignment method="CACTUS_DB" collection="pangenome_drosophila" url="#base_dir#/multi/hal_files/Drosophila-40-way_20240605.hal"/>
+    <multiple_alignment method="CACTUS_DB" collection="pangenome_drosophila" url="#base_dir#/multi/hal_files/Drosophila-40-way_20240605.hal"
+                        ref_genome="drosophila_melanogaster"/>
 
   </multiple_alignments>
 
