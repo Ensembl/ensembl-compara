@@ -112,25 +112,23 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_master_plants' ],
-    'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
+    #'compara_curr'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_load_members_114'],
-    'compara_ptrees'         => [ 'mysql-ens-compara-prod-5', 'twalsh_default_plants_protein_trees_take2_114' ],
+    #'compara_members'        => [ 'mysql-ens-compara-prod-X', ''],
+    #'compara_ptrees'         => [ 'mysql-ens-compara-prod-X', '' ],
     'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', 'twalsh_rice_cultivars_plants_protein_trees_lsf_112' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-6', 'thiagogenez_wheat_cultivars_plants_protein_trees_113' ],
 
     # LASTZ dbs
-    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch1_114' ],
+    #'lastz_batch_1'  => [ 'mysql-ens-compara-prod-X', '' ],
 
     # other alignments
-    'wheat_a_cactus' => [ 'mysql-ens-compara-prod-5', 'twalsh_wheat_a_plants_load_cactus_114' ],
-    'wheat_b_cactus' => [ 'mysql-ens-compara-prod-7', 'twalsh_wheat_b_plants_load_cactus_114' ],
-    'wheat_d_cactus' => [ 'mysql-ens-compara-prod-9', 'twalsh_wheat_d_plants_load_cactus_114' ],
+    #'barley_cactus' => [ 'mysql-ens-compara-prod-X', '' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_synteny_114' ],
+    #'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
 
     # EPO dbs
     ## rice
