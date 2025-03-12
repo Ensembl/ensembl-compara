@@ -68,7 +68,7 @@ sub fetch_input {
     my $method_adaptor = $self->compara_dba->get_MethodAdaptor;
     foreach my $cat (qw(whole singleton pairwise)) {
         my $param_name = "${cat}_method_links";
-        my @a = map {$method_adaptor->fetch_by_type($_) || die "Cannot find the method_link '$_'"} @{ $self->param($param_name) };
+        my @a = map {$method_adaptor->fetch_by_type($_) || $self->die_no_retry("Cannot find the method_link '$_'")} @{ $self->param($param_name) };
         $self->param($param_name, \@a);
     }
 }
@@ -84,13 +84,31 @@ sub write_output {
 
     if (@{$self->param('whole_method_links')}) {
         my $ss = $self->_write_ss($all_gdbs);
+
+        my @homology_range_indices;
         foreach my $ml (@{$self->param('whole_method_links')}) {
             my $mlss = $self->_write_mlss( $ss, $ml );
+
+            if ($mlss->method->type eq 'PROTEIN_TREES' || $mlss->method->type eq 'NC_TREES') {
+                my $homology_range_index = $mlss->get_value_for_tag('homology_range_index');
+                push(@homology_range_indices, $homology_range_index) if defined $homology_range_index;
+            }
 
             # The last method_link listed in whole_method_links will make
             # the pipeline-wide mlss_id, unless param_names have been specified
             my $this_param_name = shift @param_names || 'mlss_id';
             $self->add_or_update_pipeline_wide_parameter($this_param_name, $mlss->dbID);
+        }
+
+        if (scalar(@homology_range_indices) == 1) {
+            $self->add_or_update_pipeline_wide_parameter('homology_range_index', $homology_range_indices[0]);
+        } elsif (scalar(@homology_range_indices) > 1) {
+            $self->die_no_retry(
+                sprintf(
+                    "cannot set 'homology_range_index' pipeline-wide parameter; %d values specified",
+                    scalar(@homology_range_indices),
+                )
+            );
         }
     }
 
@@ -141,8 +159,17 @@ sub _write_mlss {
     my $mlss;
     if ($self->param('reference_dba')) {
         $mlss = $self->param('reference_dba')->get_MethodLinkSpeciesSetAdaptor->fetch_by_method_link_id_species_set_id($method->dbID, $ss->dbID);
-        if ((not $mlss) and $self->param('reference_dba')->get_MethodAdaptor->fetch_by_dbID($method->dbID)) {
-            die sprintf("The %s / %s MethodLinkSpeciesSet could not be found in the master database\n", $method->toString, $ss->toString);
+        if ($mlss) {
+
+            if ($method->type eq 'PROTEIN_TREES' || $method->type eq 'NC_TREES') {
+                # Load the tagvalue hash, so that tags such
+                # as 'homology_range_index' will be loaded
+                # and stored along with this gene-tree MLSS.
+                $mlss->get_tagvalue_hash();
+            }
+
+        } elsif ($self->param('reference_dba')->get_MethodAdaptor->fetch_by_dbID($method->dbID)) {
+            $self->die_no_retry(sprintf("The %s / %s MethodLinkSpeciesSet could not be found in the master database\n", $method->toString, $ss->toString));
         }
     }
     unless ($mlss) {

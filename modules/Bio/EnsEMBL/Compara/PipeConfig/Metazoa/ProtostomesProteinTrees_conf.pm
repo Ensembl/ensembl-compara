@@ -46,9 +46,7 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        'collection'          => 'protostomes',
-        'dbID_range_index'    => 10,
-        'ref_collection_list' => ['default'],
+        'collection'   => 'protostomes',
         'label_prefix' => 'protostomes_',
 
         #GOC parameters:

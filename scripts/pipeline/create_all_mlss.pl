@@ -124,7 +124,7 @@ use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 
-use constant CONFIG_MLSS_TAGS => qw(prefer_for_genomes reference_species);
+use constant CONFIG_MLSS_TAGS => qw(homology_range_index prefer_for_genomes reference_species);
 use constant CONFIG_SS_TAGS => qw(display_name strain_type);
 
 
@@ -494,6 +494,9 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
     );
 
     if ($method->type eq 'CACTUS_DB') {
+        if (!$xml_msa->hasAttribute('ref_genome')) {
+            throw(sprintf("No 'ref_genome' configured for CACTUS_DB %s (line %d)", $xml_msa->nodeName, $xml_msa->line_number));
+        }
         my $ref_gdb = find_genome_from_xml_node_attribute($xml_msa, 'ref_genome');
         foreach my $mlss (@{$multiple_wga_mlsss}) {
             $mlss->add_tag('reference_species', $ref_gdb->name);
@@ -530,8 +533,10 @@ foreach my $gt (qw(protein nc)) {
             $species_set,
         );
 
-        if ($gt_node->hasAttribute('prefer_for_genomes')) {
-            $gt_mlsss->[0]->add_tag('prefer_for_genomes', $gt_node->getAttribute('prefer_for_genomes'));
+        foreach my $gt_attr_name ('homology_range_index', 'prefer_for_genomes') {
+            if ($gt_node->hasAttribute($gt_attr_name)) {
+                $gt_mlsss->[0]->add_tag($gt_attr_name, $gt_node->getAttribute($gt_attr_name));
+            }
         }
 
         push @mlsss, @{$gt_mlsss};
