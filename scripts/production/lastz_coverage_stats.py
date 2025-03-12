@@ -12,8 +12,9 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""This script obtains lastz coverage statistics for a release or lastz db. To get relevant 
-statistics from release DB use the --release flag. 
+"""This script obtains lastz coverage statistics for a release or lastz db. 
+
+To get relevant statistics from release DB use the --release flag. 
 
 Example command:
 Lastz db:
@@ -32,9 +33,9 @@ get_lastz_mlss_from_first_release = """
     SELECT 
         method_link_species_set_id
     FROM 
-        method_link_species_set As mlss
+        method_link_species_set
     WHERE 
-        mlss.method_link_id = 16
+        method_link_id = 16
     AND 
         first_release = :release;
     """
