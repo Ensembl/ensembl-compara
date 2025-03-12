@@ -115,6 +115,7 @@ sub pipeline_analyses_cafe {
                              'cafe_shell'   => $self->o('cafe_shell'),
                             },
              -rc_name => '4Gb_24_hour_job',
+             -meadow_type => 'SLURM',
              -flow_into => {
                  '2->A' => [ 'CAFE_analysis' ],
                  'A->1' => [ 'hc_cafe_results' ],
@@ -133,6 +134,7 @@ sub pipeline_analyses_cafe {
                             },
              -rc_name => '1Gb_8c_24_hour_job',
              -hive_capacity => $self->o('cafe_capacity'),
+             -meadow_type => 'SLURM',
              -flow_into => {
                  -1 => 'CAFE_analysis_himem',
                  -2 => 'CAFE_analysis_himem',
@@ -152,6 +154,7 @@ sub pipeline_analyses_cafe {
                             },
              -rc_name => '4Gb_48c_24_hour_job',
              -hive_capacity => $self->o('cafe_capacity'),
+             -meadow_type => 'SLURM',
              -flow_into => {
                  2 => 'CAFE_json_himem',
              },

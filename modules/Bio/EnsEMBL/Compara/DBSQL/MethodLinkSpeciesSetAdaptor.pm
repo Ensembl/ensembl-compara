@@ -653,6 +653,94 @@ sub fetch_by_method_link_type_species_set_name {
 }
 
 
+=head2 fetch_current_gene_tree_mlsses
+
+  Example    : my $gene_tree_mlsses = $mlssa->fetch_current_gene_tree_mlsses();
+  Description: Fetch current gene-tree MLSSes from the database.
+  Returntype : Arrayref of current gene-tree MethodLinkSpeciesSet objects
+  Exceptions : throws if any two gene-tree MLSSes have the same homology range index
+
+=cut
+
+sub fetch_current_gene_tree_mlsses {
+    my ($self) = @_;
+
+    my %mlsses_by_range_index;
+    foreach my $method_type ('PROTEIN_TREES', 'NC_TREES') {
+        foreach my $gene_tree_mlss (@{$self->fetch_all_by_method_link_type($method_type)}) {
+            next unless $gene_tree_mlss->is_current;
+
+            my $homology_range_index = $gene_tree_mlss->get_value_for_tag('homology_range_index', 0);
+
+            if (exists $mlsses_by_range_index{$homology_range_index}) {
+                throw(
+                    sprintf(
+                        "MLSSes %d and %d have a clashing homology range index %d",
+                        $mlsses_by_range_index{$homology_range_index}->dbID,
+                        $gene_tree_mlss->dbID,
+                        $homology_range_index,
+                    )
+                );
+            }
+
+            $mlsses_by_range_index{$homology_range_index} = $gene_tree_mlss;
+        }
+    }
+
+    my @ordered_homology_range_indices = sort { $a <=> $b } keys %mlsses_by_range_index;
+
+    return [map { $mlsses_by_range_index{$_} } @ordered_homology_range_indices];
+}
+
+
+=head2 _fetch_gene_tree_homology_mlsses
+
+  Arg  1     : Bio::EnsEMBL::Compara::MethodLinkSpeciesSet object representing a gene-tree MLSS.
+  Example    : my $homology_mlsses = $mlssa->_fetch_gene_tree_homology_mlsses($mlss);
+  Description: Internal method to fetch current homology MLSSes within and between
+               genomes that are represented in the specified gene-tree MLSS.
+  Returntype : Arrayref of homology MLSSes represented in the given gene-tree MLSS.
+  Exceptions : throws if specified MLSS is not current or does
+               not represent a gene-tree MethodLinkSpeciesSet
+
+=cut
+
+sub _fetch_gene_tree_homology_mlsses {
+    my ($self, $mlss) = @_;
+
+    unless ($mlss->is_current && ($mlss->method->type ne 'PROTEIN_TREES' || $mlss->method->type ne 'NC_TREES')) {
+        throw("MethodLinkSpeciesSetAdaptor::_fetch_gene_tree_homology_mlsses() can only be used for current gene-tree MLSSes");
+    }
+
+    my $homology_methods = $self->db->get_MethodAdaptor->fetch_all_by_class_pattern('^Homology\.homology$');
+    my @collection_gdb_ids = map { $_->dbID } @{$mlss->species_set->genome_dbs};
+
+    my @homology_mlsses;
+    foreach my $method (@{$homology_methods}) {
+
+        foreach my $i ( 0 .. $#collection_gdb_ids ) {
+            my $gdb1_id = $collection_gdb_ids[$i];
+            foreach my $j ( $i .. $#collection_gdb_ids ) {
+                my $gdb2_id = $collection_gdb_ids[$j];
+
+                my @homology_mlss_gdb_ids;
+                if ($gdb2_id == $gdb1_id) {  # e.g. homoeology MLSS
+                    @homology_mlss_gdb_ids = ($gdb1_id);
+                } else {  # e.g. orthology MLSS
+                    @homology_mlss_gdb_ids = ($gdb1_id, $gdb2_id);
+                }
+
+                my $homology_mlss = $self->fetch_by_method_link_type_GenomeDBs($method->type, \@homology_mlss_gdb_ids);
+                next unless defined $homology_mlss and $homology_mlss->is_current;
+                push(@homology_mlsses, $homology_mlss);
+            }
+        }
+    }
+
+    return \@homology_mlsses;
+}
+
+
 ######################################################################
 # Implements Bio::EnsEMBL::Compara::DBSQL::BaseReleaseHistoryAdaptor #
 ######################################################################

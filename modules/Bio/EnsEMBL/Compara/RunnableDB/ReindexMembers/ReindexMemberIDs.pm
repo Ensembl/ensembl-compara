@@ -71,6 +71,12 @@ sub write_output {
     $self->die_no_retry("max seq_member_id ($max_seq_member_id) >= reindexing offset ($offset)") if ($max_seq_member_id >= $offset);
 
     $self->call_within_transaction( sub {
+
+        # Temporarily add keys to peptide_align_feature columns
+        # qmember_id and hmember_id so any updates will be quick.
+        $dbc->do('ALTER TABLE peptide_align_feature ADD KEY qmember_id (qmember_id)');
+        $dbc->do('ALTER TABLE peptide_align_feature ADD KEY hmember_id (hmember_id)');
+
         foreach my $r (@{$self->param('sorted_seq_member_id_pairs')}) {
             if ($r->[0] > $offset) {
                 # Insert a dummy seq_member to still honour the foreign key
@@ -85,7 +91,13 @@ sub write_output {
             $dbc->do('UPDATE gene_tree_node        SET seq_member_id = ?        WHERE seq_member_id = ?',        undef, @$r);
             $dbc->do('UPDATE gene_align_member     SET seq_member_id = ?        WHERE seq_member_id = ?',        undef, @$r);
             $dbc->do('UPDATE homology_member       SET seq_member_id = ?        WHERE seq_member_id = ?',        undef, @$r);
+            $dbc->do('UPDATE hmm_annot             SET seq_member_id = ?        WHERE seq_member_id = ?',        undef, @$r);
+            $dbc->do('UPDATE peptide_align_feature SET qmember_id = ?           WHERE qmember_id = ?',           undef, @$r);
+            $dbc->do('UPDATE peptide_align_feature SET hmember_id = ?           WHERE hmember_id = ?',           undef, @$r);
         }
+
+        $dbc->do('ALTER TABLE peptide_align_feature DROP KEY qmember_id');
+        $dbc->do('ALTER TABLE peptide_align_feature DROP KEY hmember_id');
 
         foreach my $r (@{$self->param('sorted_gene_member_id_pairs')}) {
             if ($r->[0] > $offset) {

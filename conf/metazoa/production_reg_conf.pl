@@ -56,7 +56,7 @@ my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 my $overlap_cores = {
     'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_282" ],
-    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_eg_release}_${curr_release}_10" ],
+    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_${curr_eg_release}_${curr_release}_11" ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
@@ -89,11 +89,11 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'    => [ 'mysql-ens-compara-prod-6', 'sbotond_metazoa_load_members_113' ],
-    'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', 'thiagogenez_default_metazoa_protein_trees_112' ],
-    'protostomes_ptrees' => [ 'mysql-ens-compara-prod-9', 'thiagogenez_protostomes_metazoa_protein_trees_112' ],
-    'insects_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbotond_insects_metazoa_protein_trees_113' ],
-    'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-9', 'thiagogenez_pangenome_drosophila_metazoa_protein_trees_112' ],
+    #'compara_members'    => [ 'mysql-ens-compara-prod-X', 'sbhurji_metazoa_load_members_114' ],
+    'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbhurji_default_metazoa_protein_trees_114' ],
+    'protostomes_ptrees' => [ 'mysql-ens-compara-prod-10', 'sbhurji_protostomes_metazoa_protein_trees_114' ],
+    #'insects_ptrees'     => [ 'mysql-ens-compara-prod-X', '' ],
+    #'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-X', '' ],
 
     # prev homology dbs required for ReindexMembers
     #'default_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
@@ -101,7 +101,7 @@ my $compara_dbs = {
     #'insects_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
     #'pangenome_drosophila_ptrees_prev'  => [ 'mysql-ens-compara-prod-X', '' ],
 
-    'drosophila_cactus'  => [ 'mysql-ens-compara-prod-6', 'twalsh_pangenome_drosophila_metazoa_load_cactus_113' ],
+    #'drosophila_cactus'  => [ 'mysql-ens-compara-prod-X', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

@@ -99,6 +99,13 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
+            "description": "*GitHub*: [BarleyCultivarsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/BarleyCultivarsProteinTrees_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::BarleyCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "summary": "Run the barley cultivars Protein-trees pipeline",
+            "name_on_graph": "Protein-trees:Barley cultivars"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
             "description": "Review the gene-tree stats for each gene-tree pipeline, and address any issues.",
             "summary": "Check gene-tree stats"
          },
@@ -108,6 +115,12 @@
             "description": "Mark as done when all LastZs have been merged into the new release database.",
             "summary": "Merge all LastZ",
             "name_on_graph": "Merge all LastZ"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
+            "description": "Mark as done when LastZ coverage stats have been computed and checked",
+            "summary": "Check LastZ coverage stats"
          },
          {
             "assignee": "<RelCo>",
@@ -146,6 +159,19 @@
       ],
       "labels": ["Production_anchor"],
       "summary": "<Division> Release <version> Production pipelines"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Mid-production+division+tasks",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Mid-production+division+tasks#Midproductiondivisiontasks-Preliminarystaging-sitecheck",
+            "summary": "Preliminary staging-site check"
+         }
+      ],
+      "summary": "<Division> Release <version> mid-production tasks"
    },
    {
       "assignee": "<RelCo>",

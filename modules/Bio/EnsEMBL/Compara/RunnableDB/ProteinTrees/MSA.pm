@@ -148,7 +148,7 @@ sub write_output {
             my $aln_ok = $self->parse_and_store_alignment_into_proteintree;
             unless ($aln_ok) {
                 # Probably an ongoing MEMLIMIT
-                # Let's wait a bit to let LSF kill the worker as it should
+                # Let's wait a bit to let the job scheduler kill the worker as it should
                 sleep 30;
                 # If we're still there, there is something weird going on.
                 # Perhaps not a MEMLIMIT, after all. Let's die and hope that

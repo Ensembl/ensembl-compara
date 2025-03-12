@@ -91,9 +91,7 @@ sub default_options {
         'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
 
     # Parameters to allow merging different runs of the pipeline
-        'dbID_range_index'      => 14,
         'collection'            => 'default',
-        'species_set_name'      => $self->o('collection'),
         'label_prefix'          => '',
         'member_type'           => 'ncrna',
 
@@ -228,6 +226,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'ensembl_release' => $self->o('ensembl_release'),
+        'collection'      => $self->o('collection'),
 
         'master_db'     => $self->o('master_db'),
         'member_db'     => $self->o('member_db'),
@@ -260,7 +259,6 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'create_ss_picts'   => $self->o('create_ss_picts'),
         'do_orth_wga'       => $self->o('do_orth_wga'),
         'do_cafe'           => $self->o('do_cafe'),
-        'dbID_range_index'  => $self->o('dbID_range_index'),
         'clustering_mode'   => $self->o('clustering_mode'),
         'threshold_levels'  => $self->o('threshold_levels'),
         'range_label'       => $self->o('range_label'),
@@ -488,7 +486,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'offset_tables',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
             -parameters => {
-                'range_index'   => '#dbID_range_index#',
+                'range_index' => '#homology_range_index#',
             },
             -flow_into  => [ 'offset_more_tables' ],
         },
@@ -512,7 +510,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
             -parameters => {
                 'method_type'      => $self->o('method_type'),
-                'species_set_name' => $self->o('species_set_name'),
+                'species_set_name' => $self->o('collection'),
                 'release'          => '#ensembl_release#'
             },
             -flow_into  => [ 'find_prev_homology_dumps' ],
@@ -1437,7 +1435,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_tree_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => 'gene_count_factory',
+                '1->A' => [ 'gene_count_factory', 'store_member_type_tag' ],
                 'A->1' => 'gene_count_funnel_check',
             },
         },
@@ -1465,6 +1463,10 @@ sub core_pipeline_analyses {
             -parameters => {
                 'gene_count_exe' => $self->o('count_genes_in_tree_exe'),
             },
+        },
+
+        {   -logic_name => 'store_member_biotype_group_tag',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreMemberBiotypeGroupTag',
         },
 
         {   -logic_name => 'rib_fire_homology_processing',

@@ -22,8 +22,8 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RemoveOverlappingDataByMember
 =head1 DESCRIPTION
 
 When we infer protein trees for a complementary collection, we end up with some redundant homology data,
-which currently needs to be removed from the pipeline database of the complementary collection so that it
-does not clash with or duplicate the data in its reference collection(s). This runnable can be used to
+which may need to be removed from the pipeline database of the complementary collection so that it does
+not clash with or duplicate the data in higher-precedence collection(s). This runnable can be used to
 remove member-associated redundant homology data from a complementary collection pipeline database.
 
 =cut

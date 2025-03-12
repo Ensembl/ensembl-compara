@@ -123,6 +123,11 @@ use JSON;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
+
+use constant CONFIG_MLSS_TAGS => qw(homology_range_index prefer_for_genomes reference_species);
+use constant CONFIG_SS_TAGS => qw(display_name strain_type);
+
+
 my $help;
 my $reg_conf;
 my $compara = 'compara_master';
@@ -489,6 +494,9 @@ foreach my $xml_msa (@{$division_node->findnodes('multiple_alignments/multiple_a
     );
 
     if ($method->type eq 'CACTUS_DB') {
+        if (!$xml_msa->hasAttribute('ref_genome')) {
+            throw(sprintf("No 'ref_genome' configured for CACTUS_DB %s (line %d)", $xml_msa->nodeName, $xml_msa->line_number));
+        }
         my $ref_gdb = find_genome_from_xml_node_attribute($xml_msa, 'ref_genome');
         foreach my $mlss (@{$multiple_wga_mlsss}) {
             $mlss->add_tag('reference_species', $ref_gdb->name);
@@ -519,7 +527,19 @@ foreach my $gt (qw(protein nc)) {
     foreach my $gt_node (@{$division_node->findnodes("gene_trees/${gt}_trees")}) {
         my $allow_components = $gt eq 'protein';
         my $species_set = make_named_species_set_from_XML_node($gt_node, $gt_method, $division_genome_dbs, $allow_components);
-        push @mlsss, @{ Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_homology_mlsss($compara_dba, $gt_method, $species_set) }
+        my $gt_mlsss = Bio::EnsEMBL::Compara::Utils::MasterDatabase::create_homology_mlsss(
+            $compara_dba,
+            $gt_method,
+            $species_set,
+        );
+
+        foreach my $gt_attr_name ('homology_range_index', 'prefer_for_genomes') {
+            if ($gt_node->hasAttribute($gt_attr_name)) {
+                $gt_mlsss->[0]->add_tag($gt_attr_name, $gt_node->getAttribute($gt_attr_name));
+            }
+        }
+
+        push @mlsss, @{$gt_mlsss};
     }
 }
 
@@ -571,6 +591,19 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
             # Check if it is already in the database
             my $exist_set = $compara_dba->get_SpeciesSetAdaptor->fetch_by_GenomeDBs($collection->genome_dbs);
             if ($exist_set and ($exist_set->is_current || $collection->{_no_release})) {
+
+                if (!$dry_run) {
+                    # If the collection exists, this may be our last chance to update its configurable tags.
+                    foreach my $tag_name (CONFIG_SS_TAGS) {
+                        my $existing_tag_value = $exist_set->get_value_for_tag($tag_name);
+                        my $tag_value = $collection->get_value_for_tag($tag_name);
+                        if (defined $tag_value
+                                && (!defined $existing_tag_value || $tag_value ne $existing_tag_value)) {
+                            $exist_set->store_tag($tag_name, $tag_value);
+                        }
+                    }
+                }
+
                 next;
             }
             if ($verbose) {
@@ -631,6 +664,16 @@ $compara_dba->dbc->sql_helper->transaction( -CALLBACK => sub {
                             $mlss_ss_name,
                             $exist_mlss->species_set->dbID,
                         );
+                    }
+                }
+
+                # If the MLSS exists, this may be our last chance to update its configurable tags.
+                foreach my $tag_name (CONFIG_MLSS_TAGS) {
+                    my $existing_tag_value = $exist_mlss->get_value_for_tag($tag_name);
+                    my $tag_value = $mlss->get_value_for_tag($tag_name);
+                    if (defined $tag_value
+                            && (!defined $existing_tag_value || $tag_value ne $existing_tag_value)) {
+                        $exist_mlss->store_tag($tag_name, $tag_value);
                     }
                 }
 

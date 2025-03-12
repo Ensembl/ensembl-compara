@@ -48,8 +48,6 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'collection'          => 'pangenome_drosophila',
-        'dbID_range_index'    => 30,
-        'ref_collection_list' => ['default', 'protostomes', 'insects'],
         'label_prefix'        => 'pangenome_drosophila_',
 
         # GOC parameters:

@@ -46,7 +46,6 @@ sub run {
 
     my $clusterset_id = $self->param_required('clusterset_id');
     my $member_type = $self->param_required('member_type');
-    my $member_type_map = $self->param_required('member_type_map');
 
     my $mlss_dba = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
     my $method_dba = $self->compara_dba->get_MethodAdaptor();
@@ -72,37 +71,21 @@ sub run {
             'species_path' => $gdb->_get_ftp_dump_relative_path(),
         };
     }
-    my @collection_gdb_ids = sort { $a <=> $b } keys %gdb_info;
 
-    my $homology_methods = $method_dba->fetch_all_by_class_pattern('^Homology\.homology$');
-    my @homology_method_types = map { $_->type } @{$homology_methods};
+    my $homology_mlsses = $mlss_dba->_fetch_gene_tree_homology_mlsses($mlss);
 
+    my %gdb_id_to_name;
     my %is_ortholog_mlss;
     my %gdb_to_hom_mlss_ids;
-    foreach my $method_type (@homology_method_types) {
-        foreach my $i ( 0 .. $#collection_gdb_ids ) {
-            my $gdb1_id = $collection_gdb_ids[$i];
-            foreach my $j ( $i .. $#collection_gdb_ids ) {
-                my $gdb2_id = $collection_gdb_ids[$j];
-
-                my @homology_mlss_gdb_ids;
-                if ($gdb2_id == $gdb1_id) {  # e.g. homoeology MLSS
-                    @homology_mlss_gdb_ids = ($gdb1_id);
-                } else {  # e.g. orthology MLSS
-                    @homology_mlss_gdb_ids = ($gdb1_id, $gdb2_id);
-                }
-
-                my $mlss = $mlss_dba->fetch_by_method_link_type_GenomeDBs($method_type, \@homology_mlss_gdb_ids);
-                next unless defined $mlss and $mlss->is_current;
-                $is_ortholog_mlss{$mlss->dbID} = $method_type eq 'ENSEMBL_ORTHOLOGUES';
-                foreach my $gdb_id (@homology_mlss_gdb_ids) {
-                    push(@{$gdb_to_hom_mlss_ids{$gdb_id}}, $mlss->dbID);
-                }
-            }
+    foreach my $homology_mlss (@{$homology_mlsses}) {
+        $is_ortholog_mlss{$homology_mlss->dbID} = $homology_mlss->method->type eq 'ENSEMBL_ORTHOLOGUES';
+        foreach my $gdb (@{$homology_mlss->species_set->genome_dbs}) {
+            push(@{$gdb_to_hom_mlss_ids{$gdb->dbID}}, $homology_mlss->dbID);
+            $gdb_id_to_name{$gdb->dbID} = $gdb->name;
         }
     }
 
-    my @biotype_groups = @{$member_type_map->{$member_type}};
+    my @biotype_groups = @{$mlss->_get_gene_tree_member_biotype_groups()};
     my $biotype_group_placeholders = '(' . join(',', ('?') x @biotype_groups) . ')';
     my $biotype_group_sql_list = "('" . join("','", @biotype_groups) . "')";
 

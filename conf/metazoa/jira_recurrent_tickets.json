@@ -134,6 +134,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
+            "description": "Mark as done when LastZ coverage stats have been computed and checked",
+            "summary": "Check LastZ coverage stats"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
             "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
             "summary": "Process Cactus data",
             "name_on_graph": "Process Cactus data"
@@ -155,6 +161,19 @@
       ],
       "labels": ["Production_anchor"],
       "summary": "<Division> Release <version> Production pipelines"
+   },
+   {
+      "assignee": "<RelCo>",
+      "component": "Relco tasks",
+      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Mid-production+division+tasks",
+      "subtasks": [{
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
+            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Mid-production+division+tasks#Midproductiondivisiontasks-Preliminarystaging-sitecheck",
+            "summary": "Preliminary staging-site check"
+         }
+      ],
+      "summary": "<Division> Release <version> mid-production tasks"
    },
    {
       "assignee": "<RelCo>",

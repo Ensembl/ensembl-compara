@@ -98,6 +98,8 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'HMMer_classify_factory'}->{'-parameters'}->{'step'} = 50;
+
+    $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
 }
 
 1;

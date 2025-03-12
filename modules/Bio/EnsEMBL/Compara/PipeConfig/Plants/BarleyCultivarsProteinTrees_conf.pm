@@ -17,19 +17,16 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Plants::RiceCultivarsProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Plants::BarleyCultivarsProteinTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::RiceCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX
-
-=head1 DESCRIPTION
-
-The Rice cultivars PipeConfig file for CultivarsProteinTrees pipeline that should automate most of the pre-execution tasks.
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::BarleyCultivarsProteinTrees_conf \
+    -host mysql-ens-compara-prod-X -port XXXX
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Plants::RiceCultivarsProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Plants::BarleyCultivarsProteinTrees_conf;
 
 use strict;
 use warnings;
@@ -43,29 +40,21 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},
 
-        # Parameters to allow merging different runs of the pipeline
-        'collection'       => 'rice_cultivars',  # The name of the species-set within that division
-        'label_prefix'     => 'rice_cultivars_',
+        # Parameters to allow merging different protein-tree collections
+        'collection'       => 'barley_cultivars',
+        'label_prefix'     => 'barley_cultivars_',
 
-        # Flatten all the species under the "Oryza" genus
-        'multifurcation_deletes_all_subnodes' => [ 4527 ],
+        # Flatten all the genomes under species 'Hordeum vulgare'
+        'multifurcation_deletes_all_subnodes' => [4513],
 
         # Clustering parameters:
-        # List of species some genes have been projected from
-        'projection_source_species_names' => ['oryza_sativa'],
-
-        # Parameters used by 'homology_dnds':
-        'taxlevels' => ['Oryza'],
-
-        # Threshold used by per_genome_qc in order to check if the amount of orphan genes are acceptable
-        # values are lower than in the Plants config file because the clustering method is less comprehensive
         'mapped_gene_ratio_per_taxon' => {
-            '2759'    => 0.5,     # eukaryotes
-            '4527'    => 0.75,    # oryza
+            '2759' => 0.5,  # eukaryotes
+            '4513' => 0.9,  # hordeum vulgare
         },
 
         # GOC parameters
-        'goc_taxlevels' => ['Oryza'],
+        'goc_taxlevels' => ['Hordeum'],
     };
 }
 
@@ -79,7 +68,7 @@ sub tweak_analyses {
 
     $analyses_by_name->{'fasttree'}->{'-parameters'}->{'cmd'} = '#fasttree_exe# -nosupport -pseudo -quiet -nopr -wag #alignment_file# > #output_file#';
 
-    # Flow "examl_32_cores" #-2 to "fasttree"
+    # Flow 'examl_32_cores' #-2 to 'fasttree'
     $analyses_by_name->{'examl_32_cores'}->{'-flow_into'}->{-2} = [ 'fasttree' ];
 }
 

@@ -74,7 +74,6 @@ sub default_options {
 
     # Parameters to allow merging different runs of the pipeline
         'collection'            => 'pig_breeds',       # The name of the species-set within that division
-        'dbID_range_index'      => 20,
         'label_prefix'          => 'pig_breeds_',
 
         'multifurcation_deletes_all_subnodes' => [ 9822 ], # All the species under the "Sus" genus are flattened, i.e. it's cow vs a rake of pigs
