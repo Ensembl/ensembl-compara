@@ -3,7 +3,7 @@
    You can adapt this file completely to your liking, but it should at least
    contain the root `toctree` directive.
 
-.. Have a look at https://raw.githubusercontent.com/rtfd/readthedocs.org/master/docs/index.rst for inspiration
+.. Have a look at https://raw.githubusercontent.com/readthedocs/readthedocs.org/refs/heads/main/docs/user/index.rst for inspiration
 
 Welcome to the Ensembl Compara documentation
 ============================================

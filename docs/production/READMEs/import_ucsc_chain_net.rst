@@ -56,7 +56,7 @@ The pipeline requires a "master" database. This is a compara database containing
 
    ::
 
-        perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type LASTZ_NET --genome_db_id <genome_db_id> --source "ucsc" --compara mysql://user:pass@host:port/ensembl_compara_master --url "http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/"
+        perl ~/src/ensembl_main/ensembl-compara/scripts/pipeline/create_mlss.pl --method_link_type LASTZ_NET --genome_db_id <genome_db_id> --source "ucsc" --compara mysql://user:pass@host:port/ensembl_compara_master --url "https://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/"
 
 Download files from UCSC
 ------------------------
@@ -68,7 +68,7 @@ Download files from UCSC
       mkdir /lustre/scratch101/ensembl/kb3/scratch/hive/release_66/kb3_hsap_self_ucsc_lastz_66
       cd /lustre/scratch101/ensembl/kb3/scratch/hive/release_66/kb3_hsap_self_ucsc_lastz_66
 
-#. Goto the UCSC downloads directory: http://hgdownload.cse.ucsc.edu/downloads.html
+#. Goto the UCSC downloads directory: https://hgdownload.cse.ucsc.edu/downloads.html
 
 #. Select the reference species eg Human
 
@@ -81,8 +81,8 @@ Download files from UCSC
 
      ::
 
-         wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.all.chain.gz
-         wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.net.gz
+         wget https://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.all.chain.gz
+         wget https://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.net.gz
 
 #. Uncompress the downloaded files
 
@@ -103,8 +103,8 @@ Download files from UCSC
      ::
 
          cd hsap
-         wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/chromInfo.txt.gz
-         wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/ctgPos.txt.gz
+         wget https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/chromInfo.txt.gz
+         wget https://hgdownload.cse.ucsc.edu/goldenPath/hg19/database/ctgPos.txt.gz
 
 #. Uncompress the downloaded files
 
@@ -154,13 +154,13 @@ Human self alignments
 
 ::
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf --dbname hsap_hsap_ucsc_test --password *** -mlss_id 1 --ref_species homo_sapiens --non_ref_species homo_sapiens --chain_file hg19.hg19.all.chain --net_file hg19.hg19.net --ref_chromInfo_file hsap/chromInfo.txt --ref_ucsc_map hsap/ctgPos.txt --config_url mysql://user:pass@host:port/pair_aligner_config_db --ucsc_url http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf --dbname hsap_hsap_ucsc_test --password *** -mlss_id 1 --ref_species homo_sapiens --non_ref_species homo_sapiens --chain_file hg19.hg19.all.chain --net_file hg19.hg19.net --ref_chromInfo_file hsap/chromInfo.txt --ref_ucsc_map hsap/ctgPos.txt --config_url mysql://user:pass@host:port/pair_aligner_config_db --ucsc_url https://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/
 
 Human vs Orangutan alignments
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 ::
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf --dbname hsap_pabe_ucsc_test1 --password **** -mlss_id 394 --ref_species homo_sapiens --non_ref_species pongo_abelii --chain_file hg19.ponAbe2.all.chain --net_file hg19.ponAbe2.net --ref_chromInfo_file hsap/chromInfo.txt --non_ref_chromInfo_file pabe/chromInfo.txt --ref_ucsc_map hsap/ctgPos.txt --config_url mysql://user:pass@host:port/pair_aligner_config_db --ucsc_url http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsPonAbe2/
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ImportUcscChainNet_conf --dbname hsap_pabe_ucsc_test1 --password **** -mlss_id 394 --ref_species homo_sapiens --non_ref_species pongo_abelii --chain_file hg19.ponAbe2.all.chain --net_file hg19.ponAbe2.net --ref_chromInfo_file hsap/chromInfo.txt --non_ref_chromInfo_file pabe/chromInfo.txt --ref_ucsc_map hsap/ctgPos.txt --config_url mysql://user:pass@host:port/pair_aligner_config_db --ucsc_url https://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsPonAbe2/
 
 Sync and loop the beekeeper.pl as shown in init_pipeline.pl's output

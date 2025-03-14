@@ -73,7 +73,7 @@ subtest "Test Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::new(ALL)", sub {
     my $mlss_name = "H.sap-M.mus blastz-net (on H.sap)";
     my $mlss_source = "ensembl";
     my $mlss_url;
-    my $mlss_url_set = "http://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/";
+    my $mlss_url_set = "https://hgdownload.cse.ucsc.edu/goldenPath/hg18/database/";
     my $mlss_classification = "Euarchontoglires:Eutheria:Mammalia:Euteleostomi:Vertebrata:Craniata:Chordata:Metazoa:Eukaryota";
     my $method_link_species_set_adaptor = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
 

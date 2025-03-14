@@ -183,7 +183,7 @@ sub calc_genetic_distance {
       10 => 7,
       12 => 8,
       13 => 9,
-      15 => 10, # deprecated ?? Not listed on https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi but is on http://www.bioinformatics.org/jambw/2/3/TranslationTables.html#SG15
+      15 => 10, # deprecated ?? Not listed on https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi but is on https://www.bioinformatics.org/jambw/2/3/TranslationTables.html#SG15
   );
   $codeml->set_parameter("icode", $genbank_to_codeml{$codon_table_id}) if exists $genbank_to_codeml{$codon_table_id};
 

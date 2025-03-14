@@ -1,5 +1,5 @@
 More information about the file formats can be found:
- - OrthoXML at http://orthoxml.org
+ - OrthoXML at https://orthoxml.org
  - PhyloXML at http://www.phyloxml.org
 
 This directory contains all the XML dumps of the gene-tree related resources:
