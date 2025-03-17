@@ -139,6 +139,7 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'report_genomes_script' => $self->o('report_genomes_script'),
                 'work_dir'              => $self->o('work_dir'),
                 'annotation_file'       => $self->o('annotation_file'),
+                'compara_updates_file'  => $self->o('compara_updates_file'),
                 'meta_host'             => $self->o('meta_host'),
                 'allowed_species_file'  => $self->o('config_dir') . '/allowed_species.json',
                 'perc_threshold'        => $self->o('perc_threshold'),
@@ -203,7 +204,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'update_metadata_script' => $self->o('update_metadata_script'),
                 'reg_conf'               => $self->o('reg_conf'),
-                'cmd'                    => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db#',
+                'cmd'                    => 'perl #update_metadata_script# --reg_conf #reg_conf# --compara #master_db# --check_species_missing_from_compara',
             },
             -flow_into  => [ 'update_collection' ],
         },

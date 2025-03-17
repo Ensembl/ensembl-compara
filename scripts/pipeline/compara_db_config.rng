@@ -164,6 +164,19 @@
                   </element>
               </optional>
               <ref name="new_named_species_set"/>
+              <zeroOrMore>
+                <element name="composable_collection" blockly:blockName="Include or exclude collection">
+                  <attribute name="name" blockly:blockName="Collection name"/>
+                  <optional>
+                    <attribute name="exclude" blockly:blockName="Exclude this collection">
+                      <choice>
+                        <value blockly:blockName="Yes">1</value>
+                        <value blockly:blockName="No">0</value>
+                      </choice>
+                    </attribute>
+                  </optional>
+                </element>
+              </zeroOrMore>
             </element>
           </oneOrMore>
         </element>

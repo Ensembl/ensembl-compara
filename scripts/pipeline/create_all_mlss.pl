@@ -314,6 +314,10 @@ sub make_species_set_from_XML_node {
         # include all genomes in this base collection
         my $base_collection = find_collection_from_xml_node_attribute($child, 'name', 'base collection');
         $some_genome_dbs = $base_collection->genome_dbs;
+      } elsif ($child->nodeName eq 'composable_collection') {
+        # get all genomes in this composable collection
+        my $composable_collection = find_collection_from_xml_node_attribute($child, 'name', 'composable collection');
+        $some_genome_dbs = $composable_collection->genome_dbs;
       } else {
         throw(sprintf('Unknown child: %s (line %d)', $child->nodeName, $child->line_number));
       }

@@ -36,6 +36,7 @@ before_install:
     - git-ensembl --clone --branch $ENSEMBL_BRANCH --secondary_branch $SECONDARY_BRANCH --depth 1 ensembl-io
     - git-ensembl --clone --branch $ENSEMBL_BRANCH --secondary_branch $SECONDARY_BRANCH --depth 1 ensembl
     - git-ensembl --clone --branch $ENSEMBL_BRANCH --secondary_branch $SECONDARY_BRANCH --depth 1 ensembl-datacheck
+    - git-ensembl --clone --branch $ENSEMBL_BRANCH --secondary_branch $SECONDARY_BRANCH --depth 1 ensembl-metadata
     # yamllint enable rule:line-length
     - git-ensembl --clone --branch version/2.7.0 --depth 1 ensembl-hive
     - git-ensembl --clone --branch main --depth 1 ensembl-taxonomy
@@ -59,6 +60,7 @@ before_install:
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-taxonomy/modules
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-datacheck/lib
+    - export PERL5LIB=$PERL5LIB:$PWD/ensembl-metadata/modules
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
