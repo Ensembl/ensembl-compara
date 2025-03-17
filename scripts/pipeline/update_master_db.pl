@@ -185,8 +185,8 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
             if ($dry_run) {
                 $has_errors = 1;
             } else {
-                #$genome_db_adaptor->update($proper_genome_db);
-                warn "\t> Would have updated $that_genome_name in the master database\n";
+                $genome_db_adaptor->update($proper_genome_db);
+                warn "\t> Successfully updated the master database\n";
             }
         } elsif ($master_genome_db->is_current) {
             print "> $that_genome_name OK\n";
