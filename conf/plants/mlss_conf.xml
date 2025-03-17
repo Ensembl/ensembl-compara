@@ -4,103 +4,113 @@
   <!-- Collections are species-sets that are needed to define several mlsss -->
   <collections>
 
-    <!-- All plants except the triticum_aestivum cultivars -->
+    <!-- Non-reference rice cultivars -->
+    <collection name="non_ref_rice_cultivars" no_store="1">
+      <genome name="oryza_sativa_arc"/>
+      <genome name="oryza_sativa_azucena"/>
+      <genome name="oryza_sativa_chaomeo"/>
+      <genome name="oryza_sativa_gobolsailbalam"/>
+      <genome name="oryza_sativa_ir64"/>
+      <genome name="oryza_sativa_ketannangka"/>
+      <genome name="oryza_sativa_khaoyaiguang"/>
+      <genome name="oryza_sativa_larhamugad"/>
+      <genome name="oryza_sativa_lima"/>
+      <genome name="oryza_sativa_liuxu"/>
+      <genome name="oryza_sativa_mh63"/>
+      <genome name="oryza_sativa_n22"/>
+      <genome name="oryza_sativa_natelboro"/>
+      <genome name="oryza_sativa_pr106"/>
+      <genome name="oryza_sativa_zs97"/>
+    </collection>
+
+    <!-- Non-reference barley cultivars -->
+    <collection name="non_ref_barley_cultivars" no_store="1">
+      <genome name="hordeum_vulgare_10tj18"/>
+      <genome name="hordeum_vulgare_aizu6"/>
+      <genome name="hordeum_vulgare_akashinriki"/>
+      <genome name="hordeum_vulgare_barke"/>
+      <genome name="hordeum_vulgare_bonus"/>
+      <genome name="hordeum_vulgare_bowman"/>
+      <genome name="hordeum_vulgare_chikurinibaraki1"/>
+      <genome name="hordeum_vulgare_foma"/>
+      <genome name="hordeum_vulgare_ft11"/>
+      <genome name="hordeum_vulgare_ft144"/>
+      <genome name="hordeum_vulgare_ft262"/>
+      <genome name="hordeum_vulgare_ft286"/>
+      <genome name="hordeum_vulgare_ft333"/>
+      <genome name="hordeum_vulgare_ft628"/>
+      <genome name="hordeum_vulgare_ft67"/>
+      <genome name="hordeum_vulgare_ft880"/>
+      <genome name="hordeum_vulgare_goldenmelon"/>
+      <genome name="hordeum_vulgare_goldenpromise"/>
+      <genome name="hordeum_vulgare_hid055"/>
+      <genome name="hordeum_vulgare_hid101"/>
+      <genome name="hordeum_vulgare_hid249"/>
+      <genome name="hordeum_vulgare_hid357"/>
+      <genome name="hordeum_vulgare_hid380"/>
+      <genome name="hordeum_vulgare_hockett"/>
+      <genome name="hordeum_vulgare_hor10096"/>
+      <genome name="hordeum_vulgare_hor10350"/>
+      <genome name="hordeum_vulgare_hor10892"/>
+      <genome name="hordeum_vulgare_hor1168"/>
+      <genome name="hordeum_vulgare_hor12184"/>
+      <genome name="hordeum_vulgare_hor12541"/>
+      <genome name="hordeum_vulgare_hor13594"/>
+      <genome name="hordeum_vulgare_hor13663"/>
+      <genome name="hordeum_vulgare_hor13821"/>
+      <genome name="hordeum_vulgare_hor13942"/>
+      <genome name="hordeum_vulgare_hor14061"/>
+      <genome name="hordeum_vulgare_hor14121"/>
+      <genome name="hordeum_vulgare_hor14273"/>
+      <genome name="hordeum_vulgare_hor1702"/>
+      <genome name="hordeum_vulgare_hor18321"/>
+      <genome name="hordeum_vulgare_hor19184"/>
+      <genome name="hordeum_vulgare_hor21256"/>
+      <genome name="hordeum_vulgare_hor21322"/>
+      <genome name="hordeum_vulgare_hor21595"/>
+      <genome name="hordeum_vulgare_hor21599"/>
+      <genome name="hordeum_vulgare_hor2180"/>
+      <genome name="hordeum_vulgare_hor2779"/>
+      <genome name="hordeum_vulgare_hor2830"/>
+      <genome name="hordeum_vulgare_hor3081"/>
+      <genome name="hordeum_vulgare_hor3365"/>
+      <genome name="hordeum_vulgare_hor3474"/>
+      <genome name="hordeum_vulgare_hor4224"/>
+      <genome name="hordeum_vulgare_hor495"/>
+      <genome name="hordeum_vulgare_hor6220"/>
+      <genome name="hordeum_vulgare_hor7172"/>
+      <genome name="hordeum_vulgare_hor7385"/>
+      <genome name="hordeum_vulgare_hor7552"/>
+      <genome name="hordeum_vulgare_hor8117"/>
+      <genome name="hordeum_vulgare_hor8148"/>
+      <genome name="hordeum_vulgare_hor9043"/>
+      <genome name="hordeum_vulgare_hor9972"/>
+      <genome name="hordeum_vulgare_igri"/>
+      <genome name="hordeum_vulgare_maximus"/>
+      <genome name="hordeum_vulgare_oun333"/>
+      <genome name="hordeum_vulgare_rgtplanet"/>
+      <genome name="hordeum_vulgare_tritex"/>
+      <genome name="hordeum_vulgare_wbdc078"/>
+      <genome name="hordeum_vulgare_wbdc103"/>
+      <genome name="hordeum_vulgare_wbdc133"/>
+      <genome name="hordeum_vulgare_wbdc184"/>
+      <genome name="hordeum_vulgare_wbdc199"/>
+      <genome name="hordeum_vulgare_wbdc207"/>
+      <genome name="hordeum_vulgare_wbdc237"/>
+      <genome name="hordeum_vulgare_wbdc348"/>
+      <genome name="hordeum_vulgare_wbdc349"/>
+      <genome name="hordeum_vulgare_zdm01467"/>
+      <genome name="hordeum_vulgare_zdm02064"/>
+    </collection>
+
+    <!-- All plants except cultivars -->
     <collection name="default">
       <taxonomic_group taxon_name="Eukaryota">
-        <!-- But exclude all triticum_aestivum cultivars -->
+        <!-- exclude triticum_aestivum cultivars -->
         <ref_for_taxon name="triticum_aestivum"/>
       </taxonomic_group>
-      <genome name="hordeum_vulgare_10tj18" exclude="1"/>
-      <genome name="hordeum_vulgare_aizu6" exclude="1"/>
-      <genome name="hordeum_vulgare_akashinriki" exclude="1"/>
-      <genome name="hordeum_vulgare_barke" exclude="1"/>
-      <genome name="hordeum_vulgare_bonus" exclude="1"/>
-      <genome name="hordeum_vulgare_bowman" exclude="1"/>
-      <genome name="hordeum_vulgare_chikurinibaraki1" exclude="1"/>
-      <genome name="hordeum_vulgare_foma" exclude="1"/>
-      <genome name="hordeum_vulgare_ft11" exclude="1"/>
-      <genome name="hordeum_vulgare_ft144" exclude="1"/>
-      <genome name="hordeum_vulgare_ft262" exclude="1"/>
-      <genome name="hordeum_vulgare_ft286" exclude="1"/>
-      <genome name="hordeum_vulgare_ft333" exclude="1"/>
-      <genome name="hordeum_vulgare_ft628" exclude="1"/>
-      <genome name="hordeum_vulgare_ft67" exclude="1"/>
-      <genome name="hordeum_vulgare_ft880" exclude="1"/>
-      <genome name="hordeum_vulgare_goldenmelon" exclude="1"/>
-      <genome name="hordeum_vulgare_goldenpromise" exclude="1"/>
-      <genome name="hordeum_vulgare_hid055" exclude="1"/>
-      <genome name="hordeum_vulgare_hid101" exclude="1"/>
-      <genome name="hordeum_vulgare_hid249" exclude="1"/>
-      <genome name="hordeum_vulgare_hid357" exclude="1"/>
-      <genome name="hordeum_vulgare_hid380" exclude="1"/>
-      <genome name="hordeum_vulgare_hockett" exclude="1"/>
-      <genome name="hordeum_vulgare_hor10096" exclude="1"/>
-      <genome name="hordeum_vulgare_hor10350" exclude="1"/>
-      <genome name="hordeum_vulgare_hor10892" exclude="1"/>
-      <genome name="hordeum_vulgare_hor1168" exclude="1"/>
-      <genome name="hordeum_vulgare_hor12184" exclude="1"/>
-      <genome name="hordeum_vulgare_hor12541" exclude="1"/>
-      <genome name="hordeum_vulgare_hor13594" exclude="1"/>
-      <genome name="hordeum_vulgare_hor13663" exclude="1"/>
-      <genome name="hordeum_vulgare_hor13821" exclude="1"/>
-      <genome name="hordeum_vulgare_hor13942" exclude="1"/>
-      <genome name="hordeum_vulgare_hor14061" exclude="1"/>
-      <genome name="hordeum_vulgare_hor14121" exclude="1"/>
-      <genome name="hordeum_vulgare_hor14273" exclude="1"/>
-      <genome name="hordeum_vulgare_hor1702" exclude="1"/>
-      <genome name="hordeum_vulgare_hor18321" exclude="1"/>
-      <genome name="hordeum_vulgare_hor19184" exclude="1"/>
-      <genome name="hordeum_vulgare_hor21256" exclude="1"/>
-      <genome name="hordeum_vulgare_hor21322" exclude="1"/>
-      <genome name="hordeum_vulgare_hor21595" exclude="1"/>
-      <genome name="hordeum_vulgare_hor21599" exclude="1"/>
-      <genome name="hordeum_vulgare_hor2180" exclude="1"/>
-      <genome name="hordeum_vulgare_hor2779" exclude="1"/>
-      <genome name="hordeum_vulgare_hor2830" exclude="1"/>
-      <genome name="hordeum_vulgare_hor3081" exclude="1"/>
-      <genome name="hordeum_vulgare_hor3365" exclude="1"/>
-      <genome name="hordeum_vulgare_hor3474" exclude="1"/>
-      <genome name="hordeum_vulgare_hor4224" exclude="1"/>
-      <genome name="hordeum_vulgare_hor495" exclude="1"/>
-      <genome name="hordeum_vulgare_hor6220" exclude="1"/>
-      <genome name="hordeum_vulgare_hor7172" exclude="1"/>
-      <genome name="hordeum_vulgare_hor7385" exclude="1"/>
-      <genome name="hordeum_vulgare_hor7552" exclude="1"/>
-      <genome name="hordeum_vulgare_hor8117" exclude="1"/>
-      <genome name="hordeum_vulgare_hor8148" exclude="1"/>
-      <genome name="hordeum_vulgare_hor9043" exclude="1"/>
-      <genome name="hordeum_vulgare_hor9972" exclude="1"/>
-      <genome name="hordeum_vulgare_igri" exclude="1"/>
-      <genome name="hordeum_vulgare_maximus" exclude="1"/>
-      <genome name="hordeum_vulgare_oun333" exclude="1"/>
-      <genome name="hordeum_vulgare_rgtplanet" exclude="1"/>
-      <genome name="hordeum_vulgare_tritex" exclude="1"/>
-      <genome name="hordeum_vulgare_wbdc078" exclude="1"/>
-      <genome name="hordeum_vulgare_wbdc103" exclude="1"/>
-      <genome name="hordeum_vulgare_wbdc133" exclude="1"/>
-      <genome name="hordeum_vulgare_wbdc184" exclude="1"/>
-      <genome name="hordeum_vulgare_wbdc199" exclude="1"/>
-      <genome name="hordeum_vulgare_wbdc207" exclude="1"/>
-      <genome name="hordeum_vulgare_wbdc237" exclude="1"/>
-      <genome name="hordeum_vulgare_wbdc348" exclude="1"/>
-      <genome name="hordeum_vulgare_wbdc349" exclude="1"/>
-      <genome name="hordeum_vulgare_zdm01467" exclude="1"/>
-      <genome name="hordeum_vulgare_zdm02064" exclude="1"/>
-      <genome name="oryza_sativa_arc" exclude="1"/>
-      <genome name="oryza_sativa_azucena" exclude="1"/>
-      <genome name="oryza_sativa_chaomeo" exclude="1"/>
-      <genome name="oryza_sativa_gobolsailbalam" exclude="1"/>
-      <genome name="oryza_sativa_ir64" exclude="1"/>
-      <genome name="oryza_sativa_ketannangka" exclude="1"/>
-      <genome name="oryza_sativa_khaoyaiguang" exclude="1"/>
-      <genome name="oryza_sativa_larhamugad" exclude="1"/>
-      <genome name="oryza_sativa_lima" exclude="1"/>
-      <genome name="oryza_sativa_liuxu" exclude="1"/>
-      <genome name="oryza_sativa_mh63" exclude="1"/>
-      <genome name="oryza_sativa_n22" exclude="1"/>
-      <genome name="oryza_sativa_natelboro" exclude="1"/>
-      <genome name="oryza_sativa_pr106" exclude="1"/>
-      <genome name="oryza_sativa_zs97" exclude="1"/>
+      <composable_collection name="non_ref_barley_cultivars" exclude="1"/>
+      <composable_collection name="non_ref_rice_cultivars" exclude="1"/>
     </collection>
     
     <!-- Rice species tree including nearest grass relative -->
@@ -241,6 +251,9 @@
 
     <!-- Rice Cultivars -->
     <collection name="rice_cultivars" strain_type="cultivar">
+      <!--Outgroup -->
+      <genome name="leersia_perrieri"/>
+      <!-- Rice genomes -->
       <genome name="oryza_glaberrima"/>
       <genome name="oryza_brachyantha"/>
       <genome name="oryza_sativa"/>
@@ -251,107 +264,17 @@
       <genome name="oryza_rufipogon"/>
       <genome name="oryza_meridionalis"/>
       <genome name="oryza_longistaminata"/>
-      <genome name="oryza_sativa_arc"/>
-      <genome name="oryza_sativa_azucena"/>
-      <genome name="oryza_sativa_chaomeo"/>
-      <genome name="oryza_sativa_gobolsailbalam"/>
-      <genome name="oryza_sativa_ir64"/>
-      <genome name="oryza_sativa_ketannangka"/>
-      <genome name="oryza_sativa_khaoyaiguang"/>
-      <genome name="oryza_sativa_larhamugad"/>
-      <genome name="oryza_sativa_lima"/>
-      <genome name="oryza_sativa_liuxu"/>
-      <genome name="oryza_sativa_mh63"/>
-      <genome name="oryza_sativa_n22"/>
-      <genome name="oryza_sativa_natelboro"/>
-      <genome name="oryza_sativa_pr106"/>
-      <genome name="oryza_sativa_zs97"/>
-      <!--Outgroup -->
-      <genome name="leersia_perrieri"/>
+      <composable_collection name="non_ref_rice_cultivars"/>
     </collection>
 
     <!-- Barley Cultivars -->
     <collection name="barley_cultivars" strain_type="cultivar">
-      <genome name="hordeum_vulgare"/>
-      <genome name="hordeum_vulgare_10tj18"/>
-      <genome name="hordeum_vulgare_aizu6"/>
-      <genome name="hordeum_vulgare_akashinriki"/>
-      <genome name="hordeum_vulgare_barke"/>
-      <genome name="hordeum_vulgare_bonus"/>
-      <genome name="hordeum_vulgare_bowman"/>
-      <genome name="hordeum_vulgare_chikurinibaraki1"/>
-      <genome name="hordeum_vulgare_foma"/>
-      <genome name="hordeum_vulgare_ft11"/>
-      <genome name="hordeum_vulgare_ft144"/>
-      <genome name="hordeum_vulgare_ft262"/>
-      <genome name="hordeum_vulgare_ft286"/>
-      <genome name="hordeum_vulgare_ft333"/>
-      <genome name="hordeum_vulgare_ft628"/>
-      <genome name="hordeum_vulgare_ft67"/>
-      <genome name="hordeum_vulgare_ft880"/>
-      <genome name="hordeum_vulgare_goldenmelon"/>
-      <genome name="hordeum_vulgare_goldenpromise"/>
-      <genome name="hordeum_vulgare_hid055"/>
-      <genome name="hordeum_vulgare_hid101"/>
-      <genome name="hordeum_vulgare_hid249"/>
-      <genome name="hordeum_vulgare_hid357"/>
-      <genome name="hordeum_vulgare_hid380"/>
-      <genome name="hordeum_vulgare_hockett"/>
-      <genome name="hordeum_vulgare_hor10096"/>
-      <genome name="hordeum_vulgare_hor10350"/>
-      <genome name="hordeum_vulgare_hor10892"/>
-      <genome name="hordeum_vulgare_hor1168"/>
-      <genome name="hordeum_vulgare_hor12184"/>
-      <genome name="hordeum_vulgare_hor12541"/>
-      <genome name="hordeum_vulgare_hor13594"/>
-      <genome name="hordeum_vulgare_hor13663"/>
-      <genome name="hordeum_vulgare_hor13821"/>
-      <genome name="hordeum_vulgare_hor13942"/>
-      <genome name="hordeum_vulgare_hor14061"/>
-      <genome name="hordeum_vulgare_hor14121"/>
-      <genome name="hordeum_vulgare_hor14273"/>
-      <genome name="hordeum_vulgare_hor1702"/>
-      <genome name="hordeum_vulgare_hor18321"/>
-      <genome name="hordeum_vulgare_hor19184"/>
-      <genome name="hordeum_vulgare_hor21256"/>
-      <genome name="hordeum_vulgare_hor21322"/>
-      <genome name="hordeum_vulgare_hor21595"/>
-      <genome name="hordeum_vulgare_hor21599"/>
-      <genome name="hordeum_vulgare_hor2180"/>
-      <genome name="hordeum_vulgare_hor2779"/>
-      <genome name="hordeum_vulgare_hor2830"/>
-      <genome name="hordeum_vulgare_hor3081"/>
-      <genome name="hordeum_vulgare_hor3365"/>
-      <genome name="hordeum_vulgare_hor3474"/>
-      <genome name="hordeum_vulgare_hor4224"/>
-      <genome name="hordeum_vulgare_hor495"/>
-      <genome name="hordeum_vulgare_hor6220"/>
-      <genome name="hordeum_vulgare_hor7172"/>
-      <genome name="hordeum_vulgare_hor7385"/>
-      <genome name="hordeum_vulgare_hor7552"/>
-      <genome name="hordeum_vulgare_hor8117"/>
-      <genome name="hordeum_vulgare_hor8148"/>
-      <genome name="hordeum_vulgare_hor9043"/>
-      <genome name="hordeum_vulgare_hor9972"/>
-      <genome name="hordeum_vulgare_igri"/>
-      <genome name="hordeum_vulgare_maximus"/>
-      <genome name="hordeum_vulgare_oun333"/>
-      <genome name="hordeum_vulgare_rgtplanet"/>
-      <genome name="hordeum_vulgare_tritex"/>
-      <genome name="hordeum_vulgare_wbdc078"/>
-      <genome name="hordeum_vulgare_wbdc103"/>
-      <genome name="hordeum_vulgare_wbdc133"/>
-      <genome name="hordeum_vulgare_wbdc184"/>
-      <genome name="hordeum_vulgare_wbdc199"/>
-      <genome name="hordeum_vulgare_wbdc207"/>
-      <genome name="hordeum_vulgare_wbdc237"/>
-      <genome name="hordeum_vulgare_wbdc348"/>
-      <genome name="hordeum_vulgare_wbdc349"/>
-      <genome name="hordeum_vulgare_zdm01467"/>
-      <genome name="hordeum_vulgare_zdm02064"/>
       <!-- Outgroups -->
       <genome name="secale_cereale"/>
       <genome name="triticum_aestivum"/>
+      <!-- Barley genomes -->
+      <genome name="hordeum_vulgare"/>
+      <composable_collection name="non_ref_barley_cultivars"/>
     </collection>
   </collections>
 

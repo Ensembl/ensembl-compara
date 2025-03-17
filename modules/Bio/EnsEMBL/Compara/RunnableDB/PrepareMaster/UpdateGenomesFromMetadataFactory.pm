@@ -33,6 +33,9 @@ use strict;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::MasterDatabase;
+use Bio::EnsEMBL::Compara::Utils::Registry;
+use Bio::EnsEMBL::MetaData::Base qw(fetch_and_set_release process_division_names);
+use Bio::EnsEMBL::MetaData::DBSQL::MetaDataDBAdaptor;
 use JSON qw( decode_json );
 
 use Data::Dumper;
@@ -44,6 +47,7 @@ sub fetch_input {
 
 	my $list_genomes_script = $self->param_required('list_genomes_script');
     my $meta_host = $self->param_required('meta_host');
+    my $meta_dbname = $self->param('meta_dbname') || 'ensembl_metadata';
 	my $release = $self->param_required('release');
 	my $division = $self->param_required('division');
 	my $metadata_script_options = "\$($meta_host details script) --release $release --division $division";
@@ -72,6 +76,9 @@ sub fetch_input {
         @release_genomes = grep { exists $allowed_species->{$_} } @release_genomes;
     }
 
+    # get default metadata for relevant genomes in current division
+    my $default_meta = _fetch_genome_metadata($meta_host, $meta_dbname, $division, $release, \@release_genomes);
+
     #if pan do not die because the list of species used in pan is
     #exclusively described in param('additional_species')
     if ($division ne "pan"){
@@ -97,6 +104,13 @@ sub fetch_input {
             # first, add them to the release_genomes
             my @add_species_for_div = @{$additional_species->{$additional_div}};
             push( @release_genomes, @add_species_for_div );
+
+            # get default metadata for relevant genomes in additional division
+            my $additional_metadata = _fetch_genome_metadata($meta_host, $meta_dbname, $additional_div, $release, \@add_species_for_div);
+            while (my ($genome_name, $genome_meta) = each %{$additional_metadata}) {
+                $default_meta->{$genome_name} = $genome_meta;
+            }
+
             # check for each additonal species in each division that the production name is correct
             $metadata_script_options = "\$($meta_host details script) --release $release --division $additional_div";
             $list_cmd = "perl $list_genomes_script $metadata_script_options";
@@ -154,9 +168,26 @@ sub fetch_input {
     foreach my $species_name ( @release_genomes ) {
         next if $g2update{$species_name}; # we already know these have changed
         next if $renamed_genomes->{$species_name}; # renamed genomes are checked in their own analysis
-        push @genomes_to_verify, {
-            'species_name'  => $species_name,
-        };
+        push @genomes_to_verify, $species_name;
+    }
+
+    if ($self->param_is_defined('force_retire_genomes') || $self->param_is_defined('force_update_genomes')) {
+
+        my $force_retire_genomes = $self->param('force_retire_genomes') // [];
+        my $force_update_genomes = $self->param('force_update_genomes') // [];
+
+        my %forced_genome_set = map { $_ => 1 } (@$force_retire_genomes, @$force_update_genomes);
+        _remove_genomes_from_output_lists(
+            \%forced_genome_set,
+            $genomes_to_update,
+            $updated_annotations,
+            \@to_retire,
+            \@genomes_to_verify,
+            $renamed_genomes,
+        );
+
+        push @$genomes_to_update, @$force_update_genomes;
+        push @to_retire, @$force_retire_genomes;
     }
 
     print "GENOME_LIST!! ";
@@ -179,10 +210,10 @@ sub fetch_input {
 
     if ($self->param_is_defined('compara_updates_file')) {
         my $compara_updates = {
-            'genomes_to_update'     => {map { $_ => $meta_report->{$_} } @{$genomes_to_update}},
+            'genomes_to_update'     => {map { $_ => ($meta_report->{$_} // $default_meta->{$_}) } @{$genomes_to_update}},
             'annotations_to_update' => {map { $_ => $meta_report->{$_} } @{$updated_annotations}},
             'genomes_to_rename'     => {map { $_ => $meta_report->{$_} } keys %{$renamed_genomes}},
-            'genomes_to_verify'     => [map { $_->{'species_name'} } @genomes_to_verify],
+            'genomes_to_verify'     => \@genomes_to_verify,
             'genomes_to_retire'     => \@to_retire,
         };
         $self->_spurt($self->param('compara_updates_file'), JSON->new->pretty->encode($compara_updates));
@@ -211,7 +242,8 @@ sub write_output {
     my @rename_genomes_dataflow = map { {new_name => $_, old_name => $renamed_genomes->{$_}} } keys %{ $renamed_genomes };
     $self->dataflow_output_id( \@rename_genomes_dataflow, 4 );
 
-    $self->dataflow_output_id( $self->param('genomes_to_verify'), 5);
+    my @verify_genomes_dataflow = map { {species_name => $_} } @{ $self->param('genomes_to_verify') };
+    $self->dataflow_output_id( \@verify_genomes_dataflow, 5);
 
     $self->_spurt(
         $self->param_required('annotation_file'),
@@ -263,6 +295,57 @@ sub fetch_genome_report {
     }
 
     return ([@new_genomes, @updated_assemblies], \%renamed_genomes, \@updated_annotations, $flattened_meta_report);
+}
+
+sub _fetch_genome_metadata {
+    my ($metadata_host, $metadata_dbname, $division, $release, $relevant_genomes) = @_;
+
+    my $meta_port =  Bio::EnsEMBL::Compara::Utils::Registry::get_port($metadata_host);
+    my $metadata_dba = Bio::EnsEMBL::MetaData::DBSQL::MetaDataDBAdaptor->new(
+        -host    => $metadata_host,
+        -port    => $meta_port,
+        -user    => 'ensro',
+        -dbname  => $metadata_dbname,
+        -group   => 'metadata',
+        -species => 'multi',
+    );
+
+    my $gdba = $metadata_dba->get_GenomeInfoAdaptor();
+    my $rdba = $metadata_dba->get_DataReleaseInfoAdaptor();
+    ($rdba, $gdba, $release) = fetch_and_set_release($release, $rdba, $gdba);
+    my ($division_short_name, $division_name) = process_division_names($division);
+
+    my %genome_details;
+    my $division_genomes = $gdba->fetch_all_by_division($division_name);
+    foreach my $genome (@{$division_genomes}) {
+        my $genome_name = $genome->name();
+
+        next unless grep { $genome_name eq $_ } @{$relevant_genomes};
+
+        $genome_details{$genome_name} = {
+            name        => $genome_name,
+            assembly    => $genome->assembly_default(),
+            genebuild   => $genome->genebuild(),
+            database    => $genome->dbname(),
+            strain      => $genome->organism()->strain(),
+            taxonomy_id => $genome->organism()->taxonomy_id(),
+        };
+    }
+    return \%genome_details;
+}
+
+sub _remove_genomes_from_output_lists {
+    my ($genome_name_set, $genomes_to_update, $updated_annotations, $genomes_to_retire, $genomes_to_verify, $renamed_genomes) = @_;
+
+    @{$genomes_to_update} = grep { !exists($genome_name_set->{$_}) } @{$genomes_to_update};
+    @{$updated_annotations} = grep { !exists($genome_name_set->{$_}) } @{$updated_annotations};
+    @{$genomes_to_retire} = grep { !exists($genome_name_set->{$_}) } @{$genomes_to_retire};
+    @{$genomes_to_verify} = grep { !exists($genome_name_set->{$_}) } @{$genomes_to_verify};
+
+    my @keys_to_delete = grep { exists($genome_name_set->{$_}) || exists($genome_name_set->{$renamed_genomes->{$_}}) } keys %{$renamed_genomes};
+    foreach my $key_to_delete (@keys_to_delete) {
+        delete $renamed_genomes->{$key_to_delete};
+    }
 }
 
 1;
