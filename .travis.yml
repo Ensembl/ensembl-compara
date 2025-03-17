@@ -60,6 +60,7 @@ before_install:
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-taxonomy/modules
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-io/modules
     - export PERL5LIB=$PERL5LIB:$PWD/ensembl-datacheck/lib
+    - export PERL5LIB=$PERL5LIB:$PWD/ensembl-metadata/modules
     - cp -f travisci/MultiTestDB.conf.travisci  modules/t/MultiTestDB.conf
     - cp -f ensembl-rest/travisci/MultiTestDB.conf.travisci ensembl-rest/t/MultiTestDB.conf
     - cp -f ensembl/travisci/MultiTestDB.conf.travisci.mysql  ensembl/modules/t/MultiTestDB.conf
