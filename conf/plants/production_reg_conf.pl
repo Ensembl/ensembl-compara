@@ -116,7 +116,7 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'        => [ 'mysql-ens-compara-prod-X', ''],
+    'compara_members'        => [ 'mysql-ens-compara-prod-5', 'twalsh_plants_load_members_115'],
     #'compara_ptrees'         => [ 'mysql-ens-compara-prod-X', '' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-6', 'thiagogenez_wheat_cultivars_plants_protein_trees_113' ],
     'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', 'twalsh_rice_cultivars_plants_protein_trees_lsf_112' ],
