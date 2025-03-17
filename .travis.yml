@@ -36,6 +36,7 @@ before_install:
     - git-ensembl --clone --branch $ENSEMBL_BRANCH --secondary_branch $SECONDARY_BRANCH --depth 1 ensembl-io
     - git-ensembl --clone --branch $ENSEMBL_BRANCH --secondary_branch $SECONDARY_BRANCH --depth 1 ensembl
     - git-ensembl --clone --branch $ENSEMBL_BRANCH --secondary_branch $SECONDARY_BRANCH --depth 1 ensembl-datacheck
+    - git-ensembl --clone --branch $ENSEMBL_BRANCH --secondary_branch $SECONDARY_BRANCH --depth 1 ensembl-metadata
     # yamllint enable rule:line-length
     - git-ensembl --clone --branch version/2.7.0 --depth 1 ensembl-hive
     - git-ensembl --clone --branch main --depth 1 ensembl-taxonomy
