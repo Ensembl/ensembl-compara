@@ -286,7 +286,11 @@ sub new_from_newick {
     my $genome_dbs = $mlss_id ? $compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id)->species_set->genome_dbs : $compara_dba->get_GenomeDBAdaptor->fetch_all();
     # We need to build a hash locally because # $gdb_a->fetch_by_name_assembly()
     # doesn't return non-default assemblies, which can be the case !
-    my %all_genome_dbs = map {(lc $_->name) => $_} (grep {not $_->genome_component} @$genome_dbs);
+    my %all_genome_dbs;
+    foreach my $gdb (@$genome_dbs) {
+        my $gdb_key = $gdb->genome_component ? lc($gdb->name) . '_' . $gdb->genome_component : lc($gdb->name);
+        $all_genome_dbs{$gdb_key} = $gdb;
+    }
 
     # First, we remove the extra species that the tree may contain
     foreach my $node (@{$species_tree_root->get_all_leaves}) {
@@ -295,20 +299,8 @@ sub new_from_newick {
         my $gdb = $all_genome_dbs{lc $name};
         if ((not $gdb) and ($name =~ m/^(.*)_([^_]*)$/)) {
             # Perhaps the node represents the component of a polyploid genome
-            my $species_name = $1;
-            my $component_name = $2;
-            my $pgdb = $all_genome_dbs{lc $species_name};
-            if ($pgdb and $pgdb->is_polyploid and ($component_name =~ /^[A-Z][0-9]?$/)) {
-                $gdb = $pgdb->component_genome_dbs($component_name);
-
-                # If this node appears to represent the component of a polyploid genome, it must be present in the genome_db table ...
-                if (!$gdb) {
-                    # ... unless the missing component genome is Triticum aestivum Sy Mattis (component U)
-                    unless ($species_name eq 'triticum_aestivum_mattis' && $component_name eq 'U') {
-                        die "No component named '$component_name' in '$species_name'\n";
-                    }
-                }
-            }
+            my $comp_gdb_key = lc($1) . '_' . $2;
+            $gdb = $all_genome_dbs{$comp_gdb_key};
         }
         if ($gdb) {
             $node->genome_db_id($gdb->dbID);

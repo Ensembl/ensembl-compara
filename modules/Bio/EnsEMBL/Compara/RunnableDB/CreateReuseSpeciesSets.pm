@@ -35,6 +35,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets;
 use strict;
 use warnings;
 
+use List::Compare;
+
 use Bio::EnsEMBL::Compara::SpeciesSet;
 use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet;
 
@@ -108,17 +110,56 @@ sub find_reusable_genomes {
         # Component GenomeDBs are missing, we need to add them
         map {$_->{is_reused} = $gdb->{is_reused}} @{$gdb->component_genome_dbs};
 
-        # If component genomes are used, they must *all* be there, no exceptions ...
-        my $components_in_core_db = $gdb->db_adaptor->get_GenomeContainer->get_genome_components;
-        my $components_in_compara = $gdb->component_genome_dbs;
-        if (scalar(@$components_in_core_db) != scalar(@$components_in_compara)) {
+        my $core_dba = $gdb->db_adaptor;
 
-            # ... unless the missing component genome is Triticum aestivum Sy Mattis (component U)
-            my %compara_component_set = map {$_->genome_component => 1} @$components_in_compara;
-            my @missing_components = grep {!exists $compara_component_set{$_}} @$components_in_core_db;
-            unless ($gdb->name eq 'triticum_aestivum_mattis' && scalar(@missing_components) == 1 && $missing_components[0] eq 'U') {
-                die sprintf("Some %s genome components are missing from the species set !\n", $gdb->name);
+        my $components_in_core_db = $core_dba->get_GenomeContainer->get_genome_components;
+        my $components_in_compara = [map {$_->genome_component} @{$gdb->component_genome_dbs}];
+
+        my $component_comparison = List::Compare->new({
+            lists    => [$components_in_core_db, $components_in_compara],
+            unsorted => 1,
+        });
+
+        # If component genomes are used, they must *all* be there,
+        # unless we are dealing with a truly exceptional case.
+        my @core_only_components = $component_comparison->get_Lonly();
+        if (@core_only_components) {
+
+            # One exceptional case would be if we are in a job with a 'whole_method_links' parameter
+            # including 'PROTEIN_TREES' or 'NC_TREES' and the given component subgenomes lack gene members.
+            # Such component subgenomes must currently be excluded from gene-tree collections.
+            my @components_without_members;
+            if ($self->param_is_defined('whole_method_links')) {
+                my $whole_method_links = $self->param('whole_method_links');
+                my @gene_tree_method_links = grep { $_->type eq 'NC_TREES' || $_->type eq 'PROTEIN_TREES' } @{$whole_method_links};
+
+                if (@gene_tree_method_links) {
+                    my $slice_dba = $core_dba->get_SliceAdaptor();
+                    my $gene_dba = $core_dba->get_GeneAdaptor();
+
+                    foreach my $core_only_component (@core_only_components) {
+                        my $slices = $slice_dba->fetch_all_by_genome_component($core_only_component);
+
+                        my $comp_gene_count = 0;
+                        foreach my $slice (@{$slices}) {
+                            $comp_gene_count += $gene_dba->count_all_by_Slice($slice);
+                        }
+
+                        if ($comp_gene_count == 0) {
+                            push(@components_without_members, $core_only_component);
+                        }
+                    }
+                }
             }
+
+            unless (scalar(@components_without_members) == scalar(@core_only_components)) {
+                $self->die_no_retry(sprintf("Some %s genome components are missing from the species set !", $gdb->name));
+            }
+        }
+
+        my @compara_only_components = $component_comparison->get_Ronly();
+        if (@compara_only_components) {
+            $self->die_no_retry(sprintf("Some %s genome components are not in the core database !", $gdb->name));
         }
     }
 
