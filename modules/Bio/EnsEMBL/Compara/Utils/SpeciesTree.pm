@@ -299,8 +299,18 @@ sub new_from_newick {
         my $gdb = $all_genome_dbs{lc $name};
         if ((not $gdb) and ($name =~ m/^(.*)_([^_]*)$/)) {
             # Perhaps the node represents the component of a polyploid genome
-            my $comp_gdb_key = lc($1) . '_' . $2;
-            $gdb = $all_genome_dbs{$comp_gdb_key};
+            my $species_name = $1;
+            my $component_name = $2;
+            my $pgdb = $all_genome_dbs{lc $species_name};
+            if ($pgdb and $pgdb->is_polyploid) {
+                my $comp_gdb_key = lc($species_name) . '_' . $component_name;
+                $gdb = $all_genome_dbs{$comp_gdb_key};
+
+                if (!$gdb) {
+                    warn "No component named '$component_name' in '$species_name'\n";
+                    next;
+                }
+            }
         }
         if ($gdb) {
             $node->genome_db_id($gdb->dbID);
