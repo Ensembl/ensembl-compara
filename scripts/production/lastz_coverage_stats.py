@@ -91,7 +91,7 @@ get_query_for_results = """
 
 def calculate_coverage_ratios(results):
     """
-    Calculate the coverage ratios from the query results and create a nested dictionary.
+    Calculate the coverage ratios from the query results.
 
     Args:
         results: The query results.
