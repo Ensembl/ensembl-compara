@@ -216,6 +216,9 @@ sub prepare_analysis {
     # precalculate the ancestor species_hash
     printf("Calculating ancestor species hash\n") if ($self->debug);
     $self->get_ancestor_species_hash($gene_tree);
+
+    my $unassigned_region_gdb_ids = $self->get_unassigned_region_genome_db_id_hash($gene_tree);
+    $self->param('unassigned_region_genome_db_ids', $unassigned_region_gdb_ids);
 }
 
 
@@ -373,6 +376,23 @@ sub get_ancestor_species_hash
     return $species_hash;
 }
 
+sub get_unassigned_region_genome_db_id_hash
+{
+    my $self = shift;
+    my $node = shift;
+
+    my $gdb_id_2_stn = $node->tree->species_tree->get_genome_db_id_2_node_hash();
+
+    my %unassigned_region_gdb_ids;
+    while (my ($genome_db_id, $species_tree_node) = each %{$gdb_id_2_stn}) {
+        my $is_unassigned_component = $species_tree_node->get_value_for_tag('unassigned_region_component', 0);
+        if ($is_unassigned_component) {
+            $unassigned_region_gdb_ids{$genome_db_id} = 1;
+        }
+    }
+
+    return \%unassigned_region_gdb_ids;
+}
 
 sub delete_old_homologies {
     my $self = shift;
@@ -509,13 +529,14 @@ sub store_gene_link_as_homology {
           $mlss_type = 'ENSEMBL_HOMOEOLOGUES';
           $type      =~ s/ortholog/homoeolog/;
           $gdbs      = [$gdb1];
-          #### temp fix triticum_aestivum
-          if ( (($gdb1->name =~ m/^(triticum_aestivum|triticum_turgidum).*$/) and ($gene1->genome_db->genome_component eq 'U')) or
-               (($gdb2->name =~ m/^(triticum_aestivum|triticum_turgidum).*$/) and ($gene2->genome_db->genome_component eq 'U')) ) {
+
+          # if either homologue is in an unassigned region component, we cannot determine that this is a homoeology
+          my $unassigned_region_gdb_id_set = $self->param('unassigned_region_genome_db_ids');
+          if (exists $unassigned_region_gdb_id_set->{$gene1->genome_db_id}
+                  || exists $unassigned_region_gdb_id_set->{$gene2->genome_db_id}) {
               $mlss_type = 'ENSEMBL_PARALOGUES';
               $type      = 'within_species_paralog';
           }
-          ####
       } else {
           $mlss_type = 'ENSEMBL_ORTHOLOGUES';
           $gdbs      = [$gdb1, $gdb2];

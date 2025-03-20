@@ -140,11 +140,19 @@ sub write_output {
 
     my $species_tree = $self->param('species_tree');
 
+    my $speciesTreeNode_adaptor = $self->compara_dba->get_SpeciesTreeNodeAdaptor();
     my $speciesTree_adaptor = $self->compara_dba->get_SpeciesTreeAdaptor();
 
     # To make sure we don't leave the database with a half-stored tree
     $self->call_within_transaction(sub {
         $speciesTree_adaptor->store($species_tree);
+
+        foreach my $species_tree_node (@{$species_tree->root->get_all_nodes}) {
+            my @species_tree_node_tags = $species_tree_node->get_all_tags();
+            if (@species_tree_node_tags) {
+                $speciesTreeNode_adaptor->sync_tags_to_database($species_tree_node);
+            }
+        }
     });
 
     $self->dataflow_output_id( {'species_tree_root_id' => $species_tree->root_id}, 2);
