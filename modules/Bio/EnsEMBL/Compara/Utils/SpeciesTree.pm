@@ -297,6 +297,7 @@ sub new_from_newick {
       my $name = $node->name;
       if ($name) {
         my $gdb = $all_genome_dbs{lc $name};
+        my $warning_message;
         if ((not $gdb) and ($name =~ m/^(.*)_([^_]*)$/)) {
             # Perhaps the node represents the component of a polyploid genome
             my $species_name = $1;
@@ -307,8 +308,7 @@ sub new_from_newick {
                 $gdb = $all_genome_dbs{$comp_gdb_key};
 
                 if (!$gdb) {
-                    warn "No component named '$component_name' in '$species_name'\n";
-                    next;
+                    $warning_message = "No component named '$component_name' in '$species_name'\n";
                 }
             }
         }
@@ -318,20 +318,23 @@ sub new_from_newick {
             $node->node_name($gdb->get_scientific_name('unique'));
             $node->{_tmp_gdb} = $gdb;
         } else {
-            warn "'" . $name, "' not found in the genome_db table.\n";
+            if (!$warning_message) {
+                $warning_message = "'" . $name . "' not found in the genome_db table.\n";
+            }
+            warn $warning_message;
         }
       } else {
         warn "Node number " . $node->node_id . " has no name. Discarding it.\n";
       }
 
-        unless ($node->{_tmp_gdb}) {
-            unless ($node->has_parent) {
-                # Not a single leaf is found in the genome_db table
-                return undef;
-            }
-            $node->disavow_parent();
-            $species_tree_root = $species_tree_root->minimize_tree;
+      unless ($node->{_tmp_gdb}) {
+        unless ($node->has_parent) {
+          # Not a single leaf is found in the genome_db table
+          return undef;
         }
+        $node->disavow_parent();
+        $species_tree_root = $species_tree_root->minimize_tree;
+      }
     }
 
     # Secondly, we can search the LCAs in the NCBI tree
