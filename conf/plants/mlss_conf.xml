@@ -379,13 +379,13 @@
       prefer_for_genomes="secale_cereale triticum_aestivum"
     />
     <protein_trees
-      collection="rice_cultivars"
-      homology_range_index="30"
+      collection="barley_cultivars"
+      homology_range_index="27"
+      prefer_for_genomes="hordeum_vulgare"
     />
     <protein_trees
-      collection="barley_cultivars"
-      homology_range_index="40"
-      prefer_for_genomes="hordeum_vulgare"
+      collection="rice_cultivars"
+      homology_range_index="30"
     />
   </gene_trees>
 
