@@ -48,11 +48,13 @@ my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
+# Ensure we are using the correct cores for species that overlap with vertebrates
+my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster saccharomyces_cerevisiae);
+Bio::EnsEMBL::Compara::Utils::Registry::suppress_overlap_species_warnings(\@overlap_species);
+
 # Use our mirror (which has all the databases)
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
-# Ensure we are using the correct cores for species that overlap with vertebrates
-my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 my $overlap_cores = {
     'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_282" ],
