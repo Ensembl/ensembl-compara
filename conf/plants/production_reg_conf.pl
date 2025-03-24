@@ -123,7 +123,7 @@ my $compara_dbs = {
     #'barley_cultivars_ptrees' => [ 'mysql-ens-compara-prod-X', '' ],
 
     # LASTZ dbs
-    #'lastz_batch_1'  => [ 'mysql-ens-compara-prod-X', '' ],
+    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch1_115' ],
 
     # other alignments
     #'barley_cactus' => [ 'mysql-ens-compara-prod-X', '' ],
