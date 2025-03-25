@@ -387,13 +387,40 @@ sub toJSON {
 }
 
 
+=head2 _unique_homology_key
+
+  Example    : my $key = $homology->_unique_homology_key;
+  Description: Internal method which returns a string uniquely identifying
+               this homology within an Ensembl Compara division.
+  Returntype : string
+
+=cut
+
+sub _unique_homology_key {
+    my $self = shift;
+
+    if (!defined($self->{'_unique_homology_key'})) {
+
+        my @gene_members = sort {
+            $a->genome_db_id <=> $b->genome_db_id
+            || $a->stable_id cmp $b->stable_id
+        } @{$self->get_all_GeneMembers};
+
+        my @gene_member_keys = map { $_->genome_db_id . '|' . $_->stable_id } @gene_members;
+
+        $self->{'_unique_homology_key'} = join('|', @gene_member_keys);
+    }
+
+    return $self->{'_unique_homology_key'};
+}
+
+
 =head2 homology_key
 
   Example    : my $key = $homology->homology_key;
-  Description: returns a string uniquely identifying this homology in world space.
-               uses the gene_stable_ids of the members and orders them by taxon_id
-               and concatenates them together.
-  Returntype : string
+  Description: returns a string that uniquely identifies this homology
+               within an Ensembl Compara division, provided that the
+               gene_stable_ids of its members are unique.
   Exceptions :
   Caller     :
 

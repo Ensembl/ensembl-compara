@@ -111,9 +111,7 @@ sub _fetch_and_map_previous_homologies_from_db {
 
     my %hash_previous_homologies;
     foreach my $prev_homology (@$previous_homologies) {
-        my @gene_members = @{ $prev_homology->get_all_GeneMembers() };
-        $hash_previous_homologies{$gene_members[0]->stable_id . '_' . $gene_members[1]->stable_id} = $prev_homology->dbID;
-        $hash_previous_homologies{$gene_members[1]->stable_id . '_' . $gene_members[0]->stable_id} = $prev_homology->dbID;
+        $hash_previous_homologies{$prev_homology->_unique_homology_key} = $prev_homology->dbID;
     }
     undef $previous_homologies;
 
@@ -125,8 +123,7 @@ sub _fetch_and_map_previous_homologies_from_db {
 
     my @homology_mapping;
     foreach my $curr_homology (@$current_homologies) {
-        my @gene_members        = @{ $curr_homology->get_all_GeneMembers() };
-        my $prev_homology_id    = $hash_previous_homologies{$gene_members[0]->stable_id . '_' . $gene_members[1]->stable_id};
+        my $prev_homology_id    = $hash_previous_homologies{$curr_homology->_unique_homology_key};
 
         push( @homology_mapping, [$mlss_id, $prev_homology_id, $curr_homology->dbID] ) if $prev_homology_id;
 
@@ -153,9 +150,8 @@ sub _fetch_and_map_previous_homologies_from_file {
     my @pff_head_cols = split(/\s+/, $pff_header);
     while ( my $line = <$p_hom_handle> ) {
         my $row = map_row_to_header($line, \@pff_head_cols);
-        my ( $homology_id, $sm1_stable_id, $sm2_stable_id ) = ( $row->{homology_id}, $row->{stable_id}, $row->{homology_stable_id} );
-        $hash_previous_homologies{sprintf('%s_%s', $sm1_stable_id, $sm2_stable_id)} = $homology_id;
-        $hash_previous_homologies{sprintf('%s_%s', $sm2_stable_id, $sm1_stable_id)} = $homology_id;
+        my $homology_key = $self->_unique_homology_key_from_rowhash($row);
+        $hash_previous_homologies{$homology_key} = $row->{homology_id};
     }
     close $p_hom_handle;
     
@@ -165,15 +161,32 @@ sub _fetch_and_map_previous_homologies_from_file {
     my @hff_head_cols = split(/\s+/, $hff_header);
     while ( my $line = <$hom_handle> ) {
         my $row = map_row_to_header($line, \@hff_head_cols);
-        my ( $curr_homology_id, $sm1_stable_id, $sm2_stable_id ) = ( $row->{homology_id}, $row->{stable_id}, $row->{homology_stable_id} );
-        my $stable_id_key = sprintf('%s_%s', $sm1_stable_id, $sm2_stable_id);
-        my $prev_homology_id = $hash_previous_homologies{$stable_id_key};
+        my $curr_homology_id = $row->{homology_id};
+        my $homology_key = $self->_unique_homology_key_from_rowhash($row);
+        my $prev_homology_id = $hash_previous_homologies{$homology_key};
         
         push( @homology_mapping, [$prev_homology_id, $curr_homology_id] ) if $prev_homology_id;
     }
     close $hom_handle;
         
     $self->param( 'homology_mapping', \@homology_mapping );
+}
+
+
+sub _unique_homology_key_from_rowhash {
+    my ($self, $row) = @_;
+
+    my $member = { genome_db_id => $row->{genome_db_id}, stable_id => $row->{stable_id} };
+    my $homology_member = { genome_db_id => $row->{homology_genome_db_id}, stable_id => $row->{homology_stable_id} };
+
+    my @seq_members = sort {
+        $a->{genome_db_id} <=> $b->{genome_db_id}
+        || $a->{stable_id} cmp $b->{stable_id}
+    } ($member, $homology_member);
+
+    my @seq_member_keys = map { $_->{genome_db_id} . '|' . $_->{stable_id} } @seq_members;
+
+    return join('|', @seq_member_keys);
 }
 
 
