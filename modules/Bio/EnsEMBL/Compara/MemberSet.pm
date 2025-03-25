@@ -468,7 +468,8 @@ sub get_all_GeneMembers {
         # The genome_db_id is not the one requested
         next if ((defined $genome_db_id) and ($member->genome_db_id != $genome_db_id));
 
-        $seen_gene_members{$member->stable_id} = $member->gene_member;
+        my $member_id = $member->dbID ? $member->dbID : $member->stable_id;
+        $seen_gene_members{$member_id} = $member->gene_member;
     }
 
     return [values %seen_gene_members];
