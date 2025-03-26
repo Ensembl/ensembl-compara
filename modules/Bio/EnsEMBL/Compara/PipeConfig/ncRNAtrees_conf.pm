@@ -1435,7 +1435,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'rib_fire_tree_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A' => [ 'gene_count_factory', 'store_member_type_tag' ],
+                '1->A' => [ 'gene_count_factory', 'store_member_biotype_group_tag' ],
                 'A->1' => 'gene_count_funnel_check',
             },
         },
