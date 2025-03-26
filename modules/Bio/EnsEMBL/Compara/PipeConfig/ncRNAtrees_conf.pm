@@ -479,21 +479,13 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'copy_table_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-            -flow_into  => [ 'offset_tables' ],
+            -flow_into  => [ 'offset_mlss_ss_tables' ],
             %hc_params,
-        },
-
-        {   -logic_name => 'offset_tables',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
-            -parameters => {
-                'range_index' => '#homology_range_index#',
-            },
-            -flow_into  => [ 'offset_more_tables' ],
         },
 
         # CreateReuseSpeciesSets/PrepareSpeciesSetsMLSS may want to create new
         # entries. We need to make sure they don't collide with the master database
-        {   -logic_name => 'offset_more_tables',
+        {   -logic_name => 'offset_mlss_ss_tables',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SqlCmd',
             -parameters => {
                 'sql'   => [
@@ -558,8 +550,16 @@ sub core_pipeline_analyses {
             },
             -rc_name   => '1Gb_job',
             -flow_into => {
-                1 => [ 'make_species_tree', 'load_members_factory' ],
+                1 => [ 'make_species_tree', 'offset_homology_tables' ],
             },
+        },
+
+        {   -logic_name => 'offset_homology_tables',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OffsetTables',
+            -parameters => {
+                'range_index' => '#homology_range_index#',
+            },
+            -flow_into  => [ 'load_members_factory' ],
         },
 
         {   -logic_name         => 'hc_members_per_genome',
