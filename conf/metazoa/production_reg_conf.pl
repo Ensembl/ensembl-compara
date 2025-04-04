@@ -103,7 +103,7 @@ my $compara_dbs = {
     #'insects_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
     #'pangenome_drosophila_ptrees_prev'  => [ 'mysql-ens-compara-prod-X', '' ],
 
-    #'drosophila_cactus'  => [ 'mysql-ens-compara-prod-X', '' ],
+    'drosophila_cactus'  => [ 'mysql-ens-compara-prod-6', 'sbotond_pangenome_drosophila_metazoa_load_cactus_115_take2' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
