@@ -542,7 +542,7 @@ process refineProtTree {
     script:
     if (params.dir == "")
     """
-    ${params.iqtree_exe} -s $aln --mem 100G -m LG+I+G $consNwk -t $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+I+G $consNwk -t $input_tree --fast -alrt 1000 -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
@@ -552,7 +552,7 @@ process refineProtTree {
     """
     else
     """
-    ${params.iqtree_exe} -s $aln --mem 100G -m LG+I+G $consNwk -t $input_tree --fast -T ${params.cores}
+    ${params.iqtree_exe} -s $aln --mem 100G -m LG+I+G $consNwk -t $input_tree --fast -alrt 1000 -T ${params.cores}
     mv *.treefile astral_species_tree_prot_bl.nwk
     mv *.iqtree astral_iqtree_report_prot_bl.txt
     mv *.log astral_iqtree_log_prot_bl.txt
