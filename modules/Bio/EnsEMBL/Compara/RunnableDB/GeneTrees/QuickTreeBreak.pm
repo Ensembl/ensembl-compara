@@ -93,6 +93,11 @@ sub fetch_input {
 
     my $gene_tree_id = $self->param_required('gene_tree_id');
     my $gene_tree    = $self->compara_dba->get_GeneTreeAdaptor->fetch_by_dbID($gene_tree_id) or $self->die_no_retry("Could not fetch gene_tree with gene_tree_id='$gene_tree_id'");
+
+    if ($gene_tree->tree_type eq 'supertree') {
+        $self->die_no_retry("Cannot break tree $gene_tree_id because it is already a supertree");
+    }
+
     $self->param('gene_tree', $gene_tree);
     Bio::EnsEMBL::Compara::Utils::Preloader::load_all_sequences($self->compara_dba->get_SequenceAdaptor, undef, $gene_tree);
 
@@ -220,7 +225,9 @@ sub post_cleanup {
 
     printf("QuickTreeBreak::post_cleanup releasing trees\n") if($self->debug);
 
-    $self->param('gene_tree')->release_tree;
+    if ($self->param_is_defined('gene_tree')) {
+        $self->param('gene_tree')->release_tree;
+    }
 
     $self->SUPER::post_cleanup if $self->can("SUPER::post_cleanup");
 }
