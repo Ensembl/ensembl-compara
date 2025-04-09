@@ -68,7 +68,7 @@ sub default_options {
         'species'       => [ ],
         'division'      => 'homology_annotation',
         # Mandatory server host for species homology databases
-        'homology_host' => 'mysql-ens-sta-6',
+        'homology_host' => 'mysql-ens-compara-prod-8',
         # registry_file compatibility so can be overridden if necessary
         'registry_file' => $self->o('reg_conf'),
 
@@ -94,7 +94,7 @@ sub default_options {
         'member_db'    => $self->o('compara_db'),
         'ncbi_db'      => 'ncbi_taxonomy',
         'rr_ref_db'    => 'compara_references',
-        'meta_host'    => 'mysql-ens-sta-6',
+        'meta_host'    => 'mysql-ens-compara-prod-8',
 
         # Member loading parameters - matches reference genome members
         'include_reference'           => 1,
@@ -126,7 +126,7 @@ sub default_options {
         'failures_fatal'   => 1, # no DC failure tolerance
         'old_server_uri'   => [$self->o('compara_db')],
         'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
-        'ref_dbname'       => 'ensembl_compara_references_mvp',
+        'ref_dbname'       => 'ensembl_compara_references_beta7',
 
         #Dump script location
         'dump_homologies_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/dump_homologies.py'),

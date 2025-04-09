@@ -72,7 +72,7 @@ sub shared_default_options {
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
         # NOTE: hps_dir and warehouse_dir are expected to be defined in the meadow JSON file
         'pipeline_dir'          => $self->o('hps_dir') . '/' . $self->o('dbowner') . '/' . $self->o('pipeline_name'),
-        'shared_hps_dir'        => $self->o('hps_dir') . '/shared_mvp',
+        'shared_hps_dir'        => $self->o('hps_dir') . '/shared_beta7',
 
         # Embassy IP for rapid release project
         'embassy_ip_rr' => '45.88.81.155',

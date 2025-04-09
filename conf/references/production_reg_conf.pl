@@ -37,38 +37,38 @@ my $prev_eg_release = $curr_eg_release - 1;
 
 # ---------------------- CURRENT CORE DATABASES---------------------------------
 
-Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-sta-5:4684/$curr_release");
+Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-compara-prod-8:4618/$curr_release");
 Bio::EnsEMBL::Compara::Utils::Registry::remove_multi();
 
-Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-sta-5',
-    -port   => 4684,
-    -user   => 'ensro',
-    -pass   => '',
-    -dbname => "fungi_ascomycota2_collection_core_${curr_eg_release}_${curr_release}_1",
-);
+#Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
+#    -host   => 'mysql-ens-compara-prod-8',
+#    -port   => 4618,
+#    -user   => 'ensro',
+#    -pass   => '',
+#    -dbname => "fungi_ascomycota2_collection_core_${curr_eg_release}_${curr_release}_1",
+#);
 
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-sta-5',
-    -port   => 4684,
+    -host   => 'mysql-ens-compara-prod-8',
+    -port   => 4618,
     -user   => 'ensro',
     -pass   => '',
     -dbname => "protists_choanoflagellida1_collection_core_${curr_eg_release}_${curr_release}_1",
 );
 Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
-    -host   => 'mysql-ens-sta-5',
-    -port   => 4684,
+    -host   => 'mysql-ens-compara-prod-8',
+    -port   => 4618,
     -user   => 'ensro',
     -pass   => '',
     -dbname => "protists_ichthyosporea1_collection_core_${curr_eg_release}_${curr_release}_1",
 );
 
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
-my $homology_reference_host = $ENV{'homology_reference_host'} || 'mysql-ens-sta-6';
+my $homology_reference_host = $ENV{'homology_reference_host'} || 'mysql-ens-compara-prod-8';
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
-    'compara_references' => [ $homology_reference_host, 'ensembl_compara_references_mvp' ],
+    'compara_references' => [ $homology_reference_host, 'ensembl_compara_references_beta7' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
@@ -77,7 +77,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-sta-5', "ncbi_taxonomy" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-compara-prod-8', "ncbi_taxonomy" ],
 });
 
 # -------------------------------------------------------------------

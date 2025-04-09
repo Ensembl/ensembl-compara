@@ -77,7 +77,7 @@ sub default_options {
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
         'report_genomes_script'  => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/report_genomes.pl'),
         'update_metadata_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
-        'meta_host' => 'mysql-ens-sta-6',
+        'meta_host' => 'mysql-ens-compara-prod-8',
         'rr_meta_name' => 'ensembl_metadata',
         'perc_threshold' => 20,
 
@@ -115,7 +115,7 @@ sub default_options {
         'output_dir_path'  => $self->o('pipeline_dir') . '/datachecks/',
         'overwrite_files'  => 1,
         'failures_fatal'   => 1, # no DC failure tolerance
-        'ref_dbname'       => 'ensembl_compara_references_mvp', # to be manually passed in init if differs
+        'ref_dbname'       => 'ensembl_compara_references_beta7', # to be manually passed in init if differs
 
         # individual dc options
         'dc_names' => ['CheckMemberIDRange'],
