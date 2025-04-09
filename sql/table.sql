@@ -51,8 +51,8 @@ CREATE TABLE IF NOT EXISTS meta (
   meta_value                  VARCHAR(255) DEFAULT NULL,
 
   PRIMARY   KEY (meta_id),
-  UNIQUE    KEY species_key_value_idx (species_id, meta_key, meta_value(255)),
-            KEY species_value_idx (species_id, meta_value(255))
+  UNIQUE    KEY species_key_value_idx (species_id, meta_key, meta_value),
+            KEY species_value_idx (species_id, meta_value)
 
 ) COLLATE=latin1_swedish_ci ENGINE=InnoDB;
 
