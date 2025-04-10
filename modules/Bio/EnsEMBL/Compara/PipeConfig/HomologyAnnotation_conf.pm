@@ -151,7 +151,7 @@ sub default_options {
 
         # DIAMOND runnable parameters
         'num_sequences_per_blast_job' => 200,
-        'blast_params'                => '--threads 4 -b1 -c1 --top 50 --dbsize 1000000 --sensitive',
+        'blast_params'                => '--threads 4 -b1 -c1 --top 50 --dbsize 1000000 --sensitive --ignore-warnings',
         'evalue_limit'                => '1e-5',
 
     };
