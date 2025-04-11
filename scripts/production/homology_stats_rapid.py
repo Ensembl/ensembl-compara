@@ -118,7 +118,7 @@ def query_rr_database(rr_dbc: DBConnection, genome_db_id: int, ref_db: str) -> T
             AND gdb.genome_db_id = {genome_db_id}
         """
         )
-        result1 = connection.execute(query1).fetchone()
+        result1 = connection.execute(query1).mappings().fetchone()
         nr_homologs = result1["nr_homologs"]
 
         # Query nr_genes
@@ -131,7 +131,7 @@ def query_rr_database(rr_dbc: DBConnection, genome_db_id: int, ref_db: str) -> T
             AND genome_db_id <= 100
         """
         )
-        result2 = connection.execute(query2).fetchone()
+        result2 = connection.execute(query2).mappings().fetchone()
         nr_genes = result2["nr_genes"]
 
     return nr_homologs, nr_genes
@@ -159,7 +159,7 @@ def get_meta_value(rr_dbc: DBConnection, key: str) -> str:
                 """
         )
         params = {"meta_key": key}
-        result = connection.execute(query, params).fetchone()
+        result = connection.execute(query, params).mappings().fetchone()
     return result["meta_value"]
 
 
