@@ -53,7 +53,7 @@ sub run {
     my $out_dir = $self->param('output_dir');
     my $filename = $self->param('filename');
     my $compara_db = $self->param_required('ref_dbname');
-    my $cmd = "python $dump_homologies_script -u $db_url -r $compara_db -o $out_dir/$filename";
+    my $cmd = "python $dump_homologies_script -u $db_url -r $compara_db -o \"$out_dir/$filename\"";
     my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
     print "Time for dumping the homologies... " . $run_cmd->runtime_msec . " msec\n" if $self->debug();
 }
