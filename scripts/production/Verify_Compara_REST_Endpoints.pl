@@ -127,7 +127,7 @@ elsif($division eq "plants"){
 
     $cactus_db_species        = 'triticum_aestivum';
     $cactus_db_region         = '3D:2585940-2634711';
-    $cactus_db_species_set    = 'collection-wheat_component_D';
+    $cactus_db_species_set    = 'collection-wheat_subgenome_D';
 
     $extra_params             = 'compara=plants';
 }
