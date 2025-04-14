@@ -223,7 +223,7 @@ def parse_yaml(file):
     for data in content:
         host = data["host"]
         port = data["port"]
-        include_gca_number = data["gca_number"]
+        include_gca_number = data.get("gca_number", False)
 
         for core_db in data["core_db"]:
             fasta_file_name = query_coredb(
