@@ -436,6 +436,7 @@ sub _find_homology_mlss_sets {
 
     my @ref_mlsses;
     foreach my $gene_tree_mlss (@{$ordered_gene_tree_mlsses}) {
+        next if $gene_tree_mlss->method->type ne $self->method->type;
         last if $gene_tree_mlss->dbID == $self->dbID;
         push(@ref_mlsses, $gene_tree_mlss);
     }
