@@ -69,6 +69,7 @@ use Getopt::Long;
 use Pod::Usage;
 
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 
 my ( $help, $url, $genome_db_id, $mlss_id );

@@ -63,6 +63,7 @@ sub default_options {
             'protein_db'    => 'compara_ptrees',
             'wheat_prot_db' => 'wheat_cultivars_ptrees',
             'rice_prot_db'  => 'rice_cultivars_ptrees',
+            'barley_prot_db' => 'barley_cultivars_ptrees',
             'members_db'    => 'compara_members',
         },
 
@@ -90,6 +91,7 @@ sub default_options {
             'protein_db'     => [qw(ortholog_quality datacheck_results)],
             'wheat_prot_db'  => [qw(ortholog_quality datacheck_results)],
             'rice_prot_db'   => [qw(ortholog_quality datacheck_results)],
+            'barley_prot_db' => [qw(ortholog_quality datacheck_results)],
         },
     };
 }

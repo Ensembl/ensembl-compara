@@ -258,6 +258,21 @@ sub iterate_over_lowcov_mlsss {
     unless (scalar(@$epolow_mlsss)) {
         die "Could not find an 'EPO_EXTENDED' MLSS in ".$self->param('epo_db')."\n";
     }
+
+    my $helper = $self->compara_dba->dbc->sql_helper;
+    my $genescaffold_sql = q/
+        SELECT DISTINCT
+            genome_db_id
+        FROM
+            genome_db
+        JOIN
+            dnafrag USING (genome_db_id)
+        WHERE
+            coord_system_name = 'genescaffold'
+    /;
+    my $results = $helper->execute_simple( -SQL => $genescaffold_sql );
+    my %all_low_gdb_id_set = map {$_ => 1} @{$results};
+
     my @gab_ids;
     $self->param('low_cov_leaves_to_delete', []);
     foreach my $epo_low_mlss (@$epolow_mlsss) {
@@ -265,9 +280,7 @@ sub iterate_over_lowcov_mlsss {
 
         my %hc_gdb_id;
         foreach my $gdb (@epo_low_mlss_gdbs) {
-            my $meta_container = $gdb->db_adaptor->get_MetaContainer;
-            my $asm_cov_depth = $meta_container->single_value_by_key('assembly.coverage_depth');
-            unless (defined $asm_cov_depth && $asm_cov_depth eq 'low') {
+            if (!exists $all_low_gdb_id_set{$gdb->dbID}) {
                 $hc_gdb_id{$gdb->dbID} = 1;
             }
         }

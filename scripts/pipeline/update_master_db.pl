@@ -164,6 +164,11 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
 
     my $master_genome_db = $genome_db_adaptor->fetch_by_name_assembly($that_species, $that_assembly, $c);
 
+    my $that_genome_name = defined $c
+                         ? "'$that_species' (assembly '$that_assembly', component '$c')"
+                         : "'$that_species' (assembly '$that_assembly')"
+                         ;
+
     # Time to test !
     if ($master_genome_db) {
         $found_genome_db_ids{$master_genome_db->dbID} = 1;
@@ -175,7 +180,7 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
             $proper_genome_db->first_release($master_genome_db->first_release);
             $proper_genome_db->is_good_for_alignment($master_genome_db->is_good_for_alignment);
             $proper_genome_db->adaptor($genome_db_adaptor);
-            warn "> Differences for '$that_species' (assembly '$that_assembly')\n\t".($proper_genome_db->toString)."\n\t".($master_genome_db->toString)."\n$diffs\n";
+            warn "> Differences for $that_genome_name\n\t".($proper_genome_db->toString)."\n\t".($master_genome_db->toString)."\n$diffs\n";
             $proper_genome_db->dbID($master_genome_db->dbID);
             if ($dry_run) {
                 $has_errors = 1;
@@ -184,13 +189,13 @@ foreach my $db_adaptor (@{Bio::EnsEMBL::Registry->get_all_DBAdaptors(-GROUP => '
                 warn "\t> Successfully updated the master database\n";
             }
         } elsif ($master_genome_db->is_current) {
-            print "> '$that_species' (assembly '$that_assembly') OK\n";
+            print "> $that_genome_name OK\n";
         } else {
-            warn "> '$that_species' (assembly '$that_assembly') is in the master database, but is not yet 'current' (i.e. first/last_release are not properly set). It should be fixed after running edit_collection.pl\n";
+            warn "> $that_genome_name is in the master database, but is not yet 'current' (i.e. first/last_release are not properly set). It should be fixed after running edit_collection.pl\n";
         }
     } elsif ($check_species_missing_from_compara) {
         $has_errors = 1;
-        warn "> Could not find the species '$that_species' (assembly '$that_assembly') in the genome_db table. You should probably add it.\n";
+        warn "> Could not find the species $that_genome_name in the genome_db table. You should probably add it.\n";
     }
 
     # Genome components loop

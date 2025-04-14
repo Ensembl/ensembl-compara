@@ -48,11 +48,13 @@ my ($prev_nv_host, $prev_nv_port) = $prev_release % 2 == 0
 
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
+# Ensure we are using the correct cores for species that overlap with vertebrates
+my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster saccharomyces_cerevisiae);
+Bio::EnsEMBL::Compara::Utils::Registry::suppress_overlap_species_warnings(\@overlap_species);
+
 # Use our mirror (which has all the databases)
 Bio::EnsEMBL::Registry->load_registry_from_url("mysql://ensro\@mysql-ens-vertannot-staging:4573/$curr_release");
 
-# Ensure we are using the correct cores for species that overlap with vertebrates
-my @overlap_species = qw(caenorhabditis_elegans drosophila_melanogaster);
 Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
 my $overlap_cores = {
     'caenorhabditis_elegans'  => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_${curr_eg_release}_${curr_release}_282" ],
@@ -89,11 +91,11 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'    => [ 'mysql-ens-compara-prod-X', 'sbhurji_metazoa_load_members_114' ],
+    'compara_members'    => [ 'mysql-ens-compara-prod-6', 'sbotond_metazoa_load_members_115' ],
     'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbhurji_default_metazoa_protein_trees_114' ],
     'protostomes_ptrees' => [ 'mysql-ens-compara-prod-10', 'sbhurji_protostomes_metazoa_protein_trees_114' ],
-    #'insects_ptrees'     => [ 'mysql-ens-compara-prod-X', '' ],
-    #'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-X', '' ],
+    'insects_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbotond_insects_metazoa_protein_trees_115' ],
+    'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-8', 'sbotond_pangenome_drosophila_metazoa_protein_trees_115' ],
 
     # prev homology dbs required for ReindexMembers
     #'default_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
@@ -101,7 +103,7 @@ my $compara_dbs = {
     #'insects_ptrees_prev'               => [ 'mysql-ens-compara-prod-X', '' ],
     #'pangenome_drosophila_ptrees_prev'  => [ 'mysql-ens-compara-prod-X', '' ],
 
-    #'drosophila_cactus'  => [ 'mysql-ens-compara-prod-X', '' ],
+    'drosophila_cactus'  => [ 'mysql-ens-compara-prod-6', 'sbotond_pangenome_drosophila_metazoa_load_cactus_115_take2' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

@@ -87,6 +87,13 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    if ($self->param_is_defined('shunt_to_branch')) {
+        my $shunt_branch = $self->param('shunt_to_branch');
+        $self->dataflow_output_id(undef, $shunt_branch);
+        $self->input_job->autoflow(0);
+        $self->complete_early("Shunting to branch #$shunt_branch");
+    }
+
     my $member_id_list = $self->param('member_id_list');
     my $members;
     if ($member_id_list) {

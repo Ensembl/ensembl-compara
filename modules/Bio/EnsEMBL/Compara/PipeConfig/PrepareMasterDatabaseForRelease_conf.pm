@@ -75,6 +75,7 @@ sub default_options {
         'xml_file'            => $self->check_file_in_ensembl('ensembl-compara/conf/' . $self->o('division') . '/mlss_conf.xml'),
         'report_file'         => $self->o( 'work_dir' ) . '/mlss_ids_' . $self->o('division') . '.list',
         'annotation_file'     => $self->o('work_dir') . '/annotation_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.list',
+        'compara_updates_file' => $self->o('work_dir') . '/compara_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.json',
         'master_backup_file'  => $self->o('backups_dir') . '/compara_master_' . $self->o('division') . '.post' . $self->o('ensembl_release') . '.sql',
 
         'patch_dir'   => $self->check_dir_in_ensembl('ensembl-compara/sql/'),

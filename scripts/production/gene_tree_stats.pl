@@ -370,7 +370,7 @@ sub stringify_stats {
         for my $i (1 .. $#$stats) {
             $output .= "<tr>\n" . html_tag_list($stats->[$i], 'td') . "\n</tr>\n";
         }
-        $output = "</table>\n\n";
+        $output .= "</table>\n\n";
     } else {
         foreach my $row (@$stats) {
             # Replace defined empty strings by zeros (but leave undef as such)

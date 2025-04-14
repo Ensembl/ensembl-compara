@@ -146,7 +146,8 @@ sub write_output {
         $self->dbc->do('DELETE FROM synteny_region');
 	my $sth1 = $self->dbc->prepare("INSERT INTO dnafrag_region VALUES (?,?,?,?,?)");
 	my $sth2 = $self->dbc->prepare("INSERT INTO synteny_region VALUES (?,?)");
-	foreach my $synteny_region_id(sort {$a <=> $b} keys %{ $self->param('synteny_regions') }){
+    my @ordered_synteny_region_ids = sort {$a <=> $b} keys %{ $self->param('synteny_regions') };
+	foreach my $synteny_region_id (@ordered_synteny_region_ids){
 		$sth2->execute($synteny_region_id,$self->param('mlss_id'));
 		foreach my $dnafrag_region(keys %{ $self->param('synteny_regions')->{$synteny_region_id} }){
 			my($species_name,$dnafrag_name,$start,$end,$strand)=split(":", $dnafrag_region);
@@ -169,7 +170,7 @@ sub write_output {
         $sth_mt->execute($self->param('mlss_id'));
         my @mt_dna_frag= @{ $sth_mt->fetchall_arrayref };
         if ( scalar   @mt_dna_frag > 1){
-            my $max_synteny_region_id = $synteny_region_ids[-1]->{'synteny_region_id'} + 1;
+            my $max_synteny_region_id = $ordered_synteny_region_ids[-1] + 1;
             $sth2->execute($max_synteny_region_id, $self->param('mlss_id'));
             foreach my $dnafrag_region ( @mt_dna_frag ) {
                 $sth1->execute($max_synteny_region_id, $dnafrag_region->[0], 1, $dnafrag_region->[1], 1);
