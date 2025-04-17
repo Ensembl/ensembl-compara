@@ -47,8 +47,6 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'division' => 'fungi',
-
-        'do_member_stats_fam' => 0,
     };
 }
 

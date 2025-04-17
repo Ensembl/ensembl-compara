@@ -46,8 +46,6 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'division'  => 'metazoa',
-
-        'do_member_stats_fam'   => 0,
     };
 }
 
