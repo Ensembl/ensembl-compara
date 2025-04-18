@@ -53,8 +53,6 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         'division'        => 'plants',
-
-        'do_member_stats_fam'   => 0,
     };
 }
 
