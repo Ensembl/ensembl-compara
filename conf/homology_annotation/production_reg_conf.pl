@@ -42,7 +42,7 @@ my $homology_reference_host = $ENV{'homology_reference_host'} || 'mysql-ens-sta-
 # FORMAT: alias name => [ host, db_name ]
 my $compara_dbs = {
     # necessary compara dbs
-    'compara_references' => [ $homology_reference_host, 'ensembl_compara_references_mvp' ],
+    'compara_references' => [ $homology_reference_host, 'ensembl_compara_references_beta7' ],
 
 };
 
@@ -50,7 +50,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
 
 # NCBI taxonomy database (also maintained by production team):
 Bio::EnsEMBL::Compara::Utils::Registry::add_taxonomy_dbas({
-    'ncbi_taxonomy' => [ 'mysql-ens-meta-prod-1', "ncbi_taxonomy" ],
+    'ncbi_taxonomy' => [ 'mysql-ens-sta-6', "ncbi_taxonomy" ],
 });
 
 # -------------------------------------------------------------------

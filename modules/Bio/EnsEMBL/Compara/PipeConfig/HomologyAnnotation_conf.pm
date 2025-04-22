@@ -68,7 +68,7 @@ sub default_options {
         'species'       => [ ],
         'division'      => 'homology_annotation',
         # Mandatory server host for species homology databases
-        'homology_host' => 'mysql-ens-compara-prod-8',
+        'homology_host' => 'mysql-ens-sta-6',
         # registry_file compatibility so can be overridden if necessary
         'registry_file' => $self->o('reg_conf'),
 
@@ -94,7 +94,7 @@ sub default_options {
         'member_db'    => $self->o('compara_db'),
         'ncbi_db'      => 'ncbi_taxonomy',
         'rr_ref_db'    => 'compara_references',
-        'meta_host'    => 'mysql-ens-compara-prod-8',
+        'meta_host'    => 'mysql-ens-sta-6',
 
         # Member loading parameters - matches reference genome members
         'include_reference'           => 1,
