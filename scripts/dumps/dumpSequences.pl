@@ -88,9 +88,16 @@ foreach my $tree ( sort keys %one2one ) {
     my @seq_members;
     my $gene_members = $gene_member_adaptor->fetch_all_by_stable_id_list( [ @{ $one2one{$tree} } ] ) || die "Could not fetch by stable_id_list";
 
+    my %gene_stable_id_counts;
     foreach my $gene_member ( @{$gene_members} ) {
+        $gene_stable_id_counts{$gene_member->stable_id} += 1;
         my $seq_member = $gene_member->get_canonical_SeqMember();
         push( @seq_members, $seq_member );
+    }
+
+    my @ambig_gene_stable_ids = grep { $gene_stable_id_counts{$_} > 1 } keys %gene_stable_id_counts;
+    if (@ambig_gene_stable_ids) {
+        die sprintf("Tree %d has ambiguous gene stable IDs: %s", $tree, join(',', @ambig_gene_stable_ids));
     }
 
     my $member_set = Bio::EnsEMBL::Compara::MemberSet->new( -members => \@seq_members );
