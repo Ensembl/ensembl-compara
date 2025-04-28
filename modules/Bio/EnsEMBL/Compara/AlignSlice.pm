@@ -384,7 +384,11 @@ sub sub_AlignSlice {
 
   foreach my $this_slice (@{$self->get_all_Slices}) {
     my $new_slice = $this_slice->sub_Slice($start, $end);
-    push(@{$sub_align_slice->{_slices}}, $new_slice) if ($new_slice);
+    if ($new_slice) {
+      push(@{$sub_align_slice->{_slices}}, $new_slice);
+
+      weaken($new_slice->{_align_slice} = $sub_align_slice);
+    }
   }
   return undef if (!$sub_align_slice->{_slices});
 
