@@ -36,7 +36,13 @@ Prints help message and exits.
 
 =item B<[--reg_conf PATH]>
 
-Registry config file.
+Compara FTP dump pipeline registry config file.
+Mutually exclusive with '--pipeline_url'.
+
+=item B<[--pipeline_url STR]>
+
+Compara FTP dump pipeline URL. If this option is specified, the dump registry is
+fetched from the Compara FTP dump pipeline. Mutually exclusive with '--reg_conf'.
 
 =item B<[--compara_db STR]>
 
@@ -97,7 +103,9 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
 use Bio::EnsEMBL::Compara::Utils::Test;
+use Bio::EnsEMBL::Hive::Utils qw(go_figure_dbc);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
+use Bio::EnsEMBL::Utils::IO qw(spurt);
 
 
 my %ftp_path_prefix_map = (
@@ -224,13 +232,44 @@ sub get_msa_part_names {
 }
 
 
-my ( $help, $reg_conf, $division, $release, $dump_dir, $outfile );
+sub load_registry_from_dump_pipeline {
+    my ($pipeline_url) = @_;
+
+    my $registry_sql = q/
+        SELECT
+            msg
+        FROM
+            msg
+        WHERE
+            logic_name = 'final_registry_backup'
+        AND
+            message_class = 'INFO'
+    /;
+
+    my $pipeline_dbc = go_figure_dbc($pipeline_url);
+    my $messages = $pipeline_dbc->sql_helper->execute_simple( -SQL => $registry_sql );
+
+    my $dump_reg_conf_text;
+    if (scalar(@$messages) == 1) {
+        $dump_reg_conf_text = $messages->[0];
+    } else {
+        throw("failed to load dump registry from pipeline [$pipeline_url]; multiple final_registry_backup log entries found");
+    }
+
+    my ($fh, $dump_reg_conf_file) = tempfile(UNLINK => 1);
+    spurt($dump_reg_conf_file, $dump_reg_conf_text);
+    Bio::EnsEMBL::Registry->load_all($dump_reg_conf_file, 0, 0, 0, 'throw_if_missing');
+}
+
+
+my ( $help, $reg_conf, $pipeline_url, $division, $release, $dump_dir, $outfile );
 my $compara_db = 'compara_curr';
 my $follow_symlinks = 0;
 my $include_mysql = 0;
 GetOptions(
     'help|?'          => \$help,
     'reg_conf=s'      => \$reg_conf,
+    'pipeline_url=s'  => \$pipeline_url,
     'compara_db=s'    => \$compara_db,
     'division=s'      => \$division,
     'release=i'       => \$release,
@@ -241,9 +280,19 @@ GetOptions(
 ) or pod2usage(-verbose => 2);
 
 pod2usage(-exitvalue => 0, -verbose => 1) if $help;
-pod2usage(-verbose => 1) if !$reg_conf or !$dump_dir or !$outfile;
+pod2usage(-verbose => 1) if !$dump_dir or !$outfile;
 
-Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, 'throw_if_missing');
+
+if ($pipeline_url && $reg_conf) {
+    throw("only one of parameters 'pipeline_url' or 'reg_conf' can be specified");
+} elsif ($pipeline_url) {
+    load_registry_from_dump_pipeline($pipeline_url);
+} elsif ($reg_conf) {
+    Bio::EnsEMBL::Registry->load_all($reg_conf, 0, 0, 0, 'throw_if_missing');
+} else {
+    throw("one of parameters 'pipeline_url' or 'reg_conf' must be specified");
+}
+
 
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($compara_db);
 
