@@ -48,7 +48,7 @@ Division name. By default, this is obtained from the Compara database.
 
 =item B<[--release INT]>
 
-Ensembl release. By default, this is obtained from the Compara database.
+Ensembl release. By default, this is obtained from the Ensembl software version.
 
 =item B<[--dump_dir PATH]>
 
@@ -92,6 +92,7 @@ use Text::CSV;
 use File::Temp qw(tempfile);
 use File::Spec::Functions qw(catdir catfile file_name_is_absolute splitpath);
 
+use Bio::EnsEMBL::ApiVersion qw(software_version);
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::Compara::Utils::RunCommand;
@@ -251,7 +252,7 @@ if (!defined $division) {
 }
 
 if (!defined $release) {
-    $release = $compara_dba->get_MetaContainer->get_schema_version();
+    $release = software_version();
 }
 
 my $mlss_dba = $compara_dba->get_MethodLinkSpeciesSetAdaptor();
