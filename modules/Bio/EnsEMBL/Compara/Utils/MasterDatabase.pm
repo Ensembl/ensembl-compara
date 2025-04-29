@@ -29,7 +29,7 @@ package Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
+use Bio::EnsEMBL::Utils::Exception qw(deprecate throw warning verbose);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::IO qw/:spurt/;
 
@@ -277,6 +277,11 @@ sub _check_is_good_for_alignment {
 
 sub find_overlapping_genome_db_ids {
     my ($compara_dba, $collection_name, $ref_collection_names) = @_;
+
+    deprecate(
+        "Bio::EnsEMBL::Compara::Utils::MasterDatabase::find_overlapping_genome_db_ids() is deprecated and will be removed in e116."
+        . "Use Bio::EnsEMBL::Compara::MethodLinkSpeciesSet::_find_homology_mlss_sets() instead."
+    );
 
     my $species_set_adaptor = $compara_dba->get_SpeciesSetAdaptor;
 
