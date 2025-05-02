@@ -15,16 +15,6 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::Production::Analysis::Mercator
@@ -35,7 +25,7 @@ Bio::EnsEMBL::Compara::Production::Analysis::Mercator
 
 =head1 DESCRIPTION
 
-Mercator expects to run the program Mercator (http://hanuman.math.berkeley.edu/~cdewey/mercator/)
+Mercator expects to run the program Mercator (https://www.biostat.wisc.edu/~cdewey/mercator/)
 given a input directory (containing the expected files) and an output directory, where output files
 are temporaly stored and parsed.
 

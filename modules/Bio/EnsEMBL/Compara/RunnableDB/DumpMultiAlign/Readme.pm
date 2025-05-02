@@ -333,7 +333,7 @@ sub _print_gerp_help {
     my ($self) = @_;
     $self->_print_paragraph("GERP scores the conservation of each position in the alignment and defines
 constrained elements based on these conservation scores.
-Read more about Gerp: http://mendel.stanford.edu/SidowLab/downloads/gerp/index.html");
+Read more about Gerp: https://doi.org/10.1371/journal.pcbi.1001025");
 }
 
 sub _print_file_grouping_help {
@@ -357,7 +357,7 @@ sub _print_header {
     my ($self, $title) = @_;
     my $schema_version = $self->compara_dba->get_MetaContainer->get_schema_version();
     $self->_print_paragraph("This directory contains all the $title corresponding
-to Release $schema_version of Ensembl (see http://www.ensembl.org for further details
+to Release $schema_version of Ensembl (see https://www.ensembl.org for further details
 and credits about the Ensembl project).");
 }
 
@@ -366,7 +366,7 @@ sub _print_format_helper {
     if ($self->param('format') eq 'emf') {
         $self->_print_paragraph("An emf2maf parser is available with the ensembl compara API, in the
 scripts/dumps directory. Alternatively you can download it using the GitHub frontend:
-https://github.com/Ensembl/ensembl-compara/raw/master/scripts/dumps/emf2maf.pl");
+https://github.com/Ensembl/ensembl-compara/raw/main/scripts/dumps/emf2maf.pl");
     } elsif ($self->param('format') eq 'maf') {
         my $txt = "The MAF format is described at https://genome.ucsc.edu/FAQ/FAQformat.html#format5";
         $txt .= "Please note that MAF format does not support conservation scores." if ($mlss->method->type eq 'EPO_EXTENDED') or ($mlss->method->type eq 'PECAN');

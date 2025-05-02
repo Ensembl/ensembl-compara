@@ -12,7 +12,7 @@ Import of the NCBI Taxonomy
    .. note: The following is only used by Compara and Production does not need to update them
 
     For the Compara analysis, the ancestral species must have an "ensembl timetree mya" tag,
-    which usually comes from the TimeTree database (http://www.timetree.org).
+    which usually comes from the TimeTree database (https://timetree.org).
     Unfortunately, the website is not able to give the age of an ancestral species directly.
     You will have to enter two extant species that have that ancestral species as their last common ancestor.
  

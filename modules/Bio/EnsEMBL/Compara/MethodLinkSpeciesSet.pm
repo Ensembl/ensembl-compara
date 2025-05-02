@@ -246,7 +246,7 @@ sub source {
 
   Arg [1]    : (opt.) string $url
   Example    : my $url = $method_link_species_set->url();
-  Example    : $method_link_species_set->url("http://hgdownload.cse.ucsc.edu/goldenPath/monDom1/vsHg17/");
+  Example    : $method_link_species_set->url("https://hgdownload.cse.ucsc.edu/goldenPath/monDom1/vsHg17/");
   Description: get/set for attribute url. Defines where the data come from if they
                have been imported. Note that some urls are defined with the prefix '#base_dir#' in the
                database to represent a part that has to be substituted with runtime configuration.

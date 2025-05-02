@@ -23,8 +23,8 @@ EnsEMBL and BioPerl software:
 
 Refer to the following pages for tips about installation and setting up the environment:
 
-- http://www.ensembl.org/info/docs/api/api_installation.html
-- http://www.ensembl.org/info/docs/eHive.html
+- https://www.ensembl.org/info/docs/api/api_installation.html
+- https://www.ensembl.org/info/docs/eHive.html
 
 .. warning:: Please ensure that your PERL5LIB includes all of these modules and $ENSEMBL_ROOT_DIR points to the location of the checkouts
 
@@ -45,14 +45,14 @@ Any compiled binaries mentioned in ``ensembl-compara/modules/Bio/EnsEMBL/Compara
 Here is the list of the versions that we used for the e78 production:
 
 * NCBI-blast 2.2.28+   - https://ftp.ncbi.nlm.nih.gov/blast/executables/blast+/2.2.28/
-* mcoffee 9.03.r1318   - http://www.tcoffee.org/Projects/mcoffee/
-* MAFFT 7.113          - http://mafft.cbrc.jp/alignment/software/
-* hcluster_sg          - http://treesoft.svn.sourceforge.net/viewvc/treesoft/branches/lh3/hcluster/
+* mcoffee 9.03.r1318   - https://tcoffee.org/Projects/mcoffee/index.html
+* MAFFT 7.113          - https://mafft.cbrc.jp/alignment/software/
+* hcluster_sg          - https://sourceforge.net/projects/treesoft/
 * treebest (tag e78)   - https://github.com/Ensembl/treebest
-* quicktree 1.1        - http://www.sanger.ac.uk/resources/software/quicktree/
-* hmmbuild 3.0         - (part of the HMMER package) http://hmmer.janelia.org/
-* codeml 4.3           - (part of the PAML package) http://abacus.gene.ucl.ac.uk/software/paml.html
-* Ktreedist 1.0        - http://molevol.cmima.csic.es/castresana/Ktreedist.html
+* quicktree 1.1        - https://www.sanger.ac.uk/tool/quicktree/
+* hmmbuild 3.0         - (part of the HMMER package) http://hmmer.org/
+* codeml 4.3           - (part of the PAML package) https://abacus.gene.ucl.ac.uk/software/paml.html
+* Ktreedist 1.0        - https://www.biologiaevolutiva.org/jcastresana/Ktreedist.html
 
 Except for CodeML, more recent versions probably still work (as long as the command line parameters haven't changed) but we only guarantee that the pipeline behaves with the advertised versions.
 

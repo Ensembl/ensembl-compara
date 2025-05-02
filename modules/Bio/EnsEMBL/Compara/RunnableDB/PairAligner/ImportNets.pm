@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ImportNets
@@ -36,10 +25,10 @@ Reads a Net file and imports the data into a compara database, saving the result
 genomic_align_block and genomic_align tables with a given method_link_species_set_id. Needs the
 presence of the corresponding Chain data already in the database.
 Download from:
-http://hgdownload.cse.ucsc.edu/downloads.html
+https://hgdownload.cse.ucsc.edu/downloads.html
 Choose reference species
 Choose Pairwise Alignments
-wget http://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.net.gz
+wget https://hgdownload.cse.ucsc.edu/goldenPath/hg19/vsSelf/hg19.hg19.net.gz
 
 =cut
 

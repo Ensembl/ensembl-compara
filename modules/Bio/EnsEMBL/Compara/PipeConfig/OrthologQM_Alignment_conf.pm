@@ -43,7 +43,7 @@ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
     The coverage is calculated on both exonic and intronic regions seperately and summarised using a quality_score calculation
     The average quality_score between both members of the homology will be written to the homology table (in compara_db option)
 
-    http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Quality+metrics+for+the+orthologs
+    https://www.ensembl.org/info/genome/compara/Ortholog_qc_manual.html
 
     Additional options:
     -compara_db         database containing relevant data (this is where final scores will be written)
@@ -66,14 +66,6 @@ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf
     # scores go to alignment db
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_Alignment_conf -host mysql-ens-compara-prod-1 -port 4485 \
         -compara_db mysql://user:pass@host/alignments -alt_homology_db homology_alias
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
 
 =cut
 

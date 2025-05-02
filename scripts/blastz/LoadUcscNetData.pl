@@ -19,14 +19,6 @@
 
 LoadUcscNetData.pl
 
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 AUTHORS
 
  Abel Ureta-Vidal
@@ -79,7 +71,7 @@ perl LoadUcscNetData.pl
 
 =head1 UCSC DATABASE TABLES
 
-NB: Part of this information is based on the help pages of the UCSC Genome Browser (http://genome.ucsc.edu/)
+NB: Part of this information is based on the help pages of the UCSC Genome Browser (https://genome.ucsc.edu/)
 
 =head2 chain[QUERY_SPECIES] or chrXXX_chain[QUERY_SPECIES]
 
