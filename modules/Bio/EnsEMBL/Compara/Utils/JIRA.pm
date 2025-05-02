@@ -193,7 +193,7 @@ sub create_tickets {
     # the JIRA server with an identical summary (for the same project, release
     # and division)
     my $ticket_key_list;
-    my $base_url = 'https://www.ebi.ac.uk/panda/jira/browse/';
+    my $base_url = 'https://embl.atlassian.net/rest/api/latest';
     foreach my $ticket ( @$jira_tickets ) {
         my $summary = $ticket->{fields}->{summary};
         if (exists $existing_tickets{$summary}) {
@@ -428,7 +428,7 @@ sub fetch_tickets {
 
 sub get_ticket {
     my ( $self, $key_or_id ) = @_;
-    my $url = "https://www.ebi.ac.uk/panda/jira/rest/api/latest/issue/$key_or_id";
+    my $url = "https://embl.atlassian.net/rest/api/latest/issue/$key_or_id";
     my $ticket = $self->_http_request('GET', $url);
     return $ticket->{fields};
 }
@@ -444,7 +444,7 @@ sub get_ticket {
   Example     : $jira_adaptor->link_tickets('Duplicate', 'ENCOMPARASW-1452', 'ENCOMPARASW-2145');
   Description : Creates an issue link of the given type between the two tickets.
                 For more information, go to
-                https://www.ebi.ac.uk/panda/jira/rest/api/latest/issueLinkType
+                https://embl.atlassian.net/rest/api/latest/issueLinkType
   Return type : none
   Exceptions  : none
 
@@ -866,7 +866,7 @@ sub _update_ticket {
     my ( $self, $ticket_key, $description, $dry_run ) = @_;
     $self->{_logger}->info(sprintf('Updating %s ... ', $ticket_key));
     # Get the "Reopen Issue" transition information for this JIRA ticket
-    my $url = "https://www.ebi.ac.uk/panda/jira/rest/api/latest/issue/$ticket_key/transitions";
+    my $url = "https://embl.atlassian.net/rest/api/latest/issue/$ticket_key/transitions";
     my $response = $self->_http_request('GET', $url);
     my @reopen_transition = grep { $_->{name} =~ /Reopen Issue/i } @{ $response->{transitions} };
     if (!@reopen_transition) {
@@ -913,7 +913,7 @@ sub _post_request {
         $self->{_logger}->error("Unexpected POST request '$action'! Allowed options:\n$action_list", 0, 0);
     }
     # Do the HTTP POST request and get the response for the given $action and $content_data
-    my $url = 'https://www.ebi.ac.uk/panda/jira/rest/api/latest/' . $action;
+    my $url = 'https://embl.atlassian.net/rest/api/latest/' . $action;
     return $self->_http_request('POST', $url, $content_data);
 }
 
@@ -940,7 +940,7 @@ sub _put_request {
         $self->{_logger}->error("Unexpected PUT request '$action'! Allowed options:\n$action_list", 0, 0);
     }
     # Do the HTTP PUT request
-    my $url = 'https://www.ebi.ac.uk/panda/jira/rest/api/latest/' . $action . '/' . $ticket_key;
+    my $url = 'https://embl.atlassian.net/rest/api/latest' . $action . '/' . $ticket_key;
     $self->_http_request('PUT', $url, $content_data);
 }
 
@@ -950,7 +950,7 @@ sub _put_request {
   Arg[2]      : string $url - URL to do the request to
   Arg[3]      : (optional) hashref $content_data - a request's content data
   Example     : my $response = $jira_adaptor->_http_request(
-                    'POST', 'https://www.ebi.ac.uk/panda/jira/rest/api/latest/issue',
+                    'POST', 'https://embl.atlassian.net/rest/api/latest/issue',
                     {'jql' => 'project=ENSCOMPARASW', 'maxResults' => 10});
   Description : Sends a request to the JIRA server and returns the decoded response
   Return type : arrayref or hashref (depending on $method and $url)
@@ -961,21 +961,30 @@ sub _put_request {
 sub _http_request {
     my ( $self, $method, $url, $content_data ) = @_;
     $content_data //= {};
+
     # Create the HTTP request and LWP objects to get the response for the given arguments
     $self->{_logger}->debug("$method Request on $url\n");
     my $request;
     if ( $self->{_auth_token} ) {
-        my $header = ['Authorization' => "Bearer " . $self->{_auth_token}, 'Content-Type' => 'application/json'];
+        my $header = ['Authorization' => "Basic " . $self->{_auth_token}, 'Accept' => 'application/json'];
+        # For POST/PUT/PATCH we must set Content-Type too
+        push @$header, ('Content-Type' => 'application/json') if $method =~ /^(POST|PUT|PATCH)$/i;
         $request = HTTP::Request->new($method, $url, $header);
     } else {
         my $header = ['Content-Type' => 'application/json'];
         $request = HTTP::Request->new($method, $url, $header);
         $request->authorization_basic($self->{_user}, $self->{_password});
     }
-    my $json_content = encode_json($content_data);
-    $request->content($json_content);
+
+    # Only set content for methods that expect a body
+    if ( $method =~ /^(POST|PUT|PATCH)$/i ) {
+        my $json_content = encode_json($content_data);
+        $request->content($json_content);
+    }
+
     my $agent    = LWP::UserAgent->new();
     my $response = $agent->request($request);
+
     # Check and report possible errors
     if ($response->code() == 401) {
         $self->{_logger}->error('Incorrect JIRA password. Please, try again.', 0, 0);
@@ -989,6 +998,7 @@ sub _http_request {
     } elsif (! $response->is_success()) {
         $self->{_logger}->error($response->as_string(), 0, 0);
     }
+
     # Return the response content
     return [] unless $response->content();
     return decode_json($response->content());
