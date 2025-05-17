@@ -1035,6 +1035,8 @@ my %ryo_modes = (
     'int_node_id' => '%{-n}%{o-}:%{d}',
     'full_web' => '%{n-}%{-n|p}%{"_"-s}%{":"d}',
     'phylip' => '%21{n}:%{d}',
+    'genome_gene_stable_id' => '%{-S"|"}%{-i}:%{d}',
+    'genome_product_stable_id' => '%{-S"|"}%{-n}:%{d}',
 );
 
 my $nhx0 = '%{-n|i|C(taxonomy_level)}:%{d}';
@@ -1053,6 +1055,8 @@ my %nhx_ryo_modes_1 = (
     'treebest_ortho' => '%{-m}%{"_"-x}'.$nhx0,
     'simple' => $ryo_modes{'simple'},
     'phylip' => $ryo_modes{'phylip'},
+    'genome_gene_stable_id' => '%{-S"|"}%{-i}:%{d}',
+    'genome_product_stable_id' => '%{-S"|"}%{-n}:%{d}',
 );
 
 my %nhx_ryo_modes_2 = (
@@ -1065,6 +1069,8 @@ my %nhx_ryo_modes_2 = (
     'display_label' => $nhx1.$nhx2,
     'display_label_composite' => $nhx1.$nhx2,
     'treebest_ortho' => $nhx1.$nhx2.':S=%{-x}%{C(species_tree_node,taxon_id)-}',
+    'genome_gene_stable_id' => $nhx1.'%{":G="-r}'.$nhx2,
+    'genome_product_stable_id' => $nhx1.'%{":G="-i}'.$nhx2,
 );
 
 
