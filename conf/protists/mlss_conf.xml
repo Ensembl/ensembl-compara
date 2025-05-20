@@ -39,7 +39,6 @@
         <genome name="paramecium_tetraurelia"/>
         <genome name="phaeodactylum_tricornutum"/>
         <genome name="tetrahymena_thermophila"/>
-        <genome name="trypanosoma_brucei"/>
       </species_set>
     </all_vs_all>
 
