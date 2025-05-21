@@ -309,7 +309,7 @@ sub _compute_gini_coefficient {
     my ($self) = @_;
 
     # The following code was initially based on a script implemented by Paul Kersey.
-    # But the following implementation is more efficient:  http://shlegeris.com/2016/12/29/gini
+    # But the following implementation is more efficient:  https://web.archive.org/web/20170822064227id_/https://shlegeris.com/2016/12/29/gini
     # ------------------------------------------------------------------------------
     my $sql = "SELECT b.root_id, count(seq_member_id) AS cni
                              FROM gene_tree_root a, gene_tree_node b

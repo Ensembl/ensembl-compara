@@ -120,7 +120,7 @@ my $compara_dbs = {
     'compara_ptrees'         => [ 'mysql-ens-compara-prod-9', 'twalsh_default_plants_protein_trees_115' ],
     'wheat_cultivars_ptrees' => [ 'mysql-ens-compara-prod-6', 'thiagogenez_wheat_cultivars_plants_protein_trees_113' ],
     'rice_cultivars_ptrees'  => [ 'mysql-ens-compara-prod-7', 'twalsh_rice_cultivars_plants_protein_trees_lsf_112' ],
-    #'barley_cultivars_ptrees' => [ 'mysql-ens-compara-prod-X', '' ],
+    'barley_cultivars_ptrees' => [ 'mysql-ens-compara-prod-5', 'twalsh_barley_cultivars_plants_protein_trees_take2_115' ],
 
     # LASTZ dbs
     'lastz_batch_1'  => [ 'mysql-ens-compara-prod-7', 'twalsh_plants_lastz_batch1_115' ],

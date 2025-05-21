@@ -140,6 +140,8 @@ sub fetch_all_by_stable_id {
   Example    : my $members = $ma->fetch_all_by_stable_id_list(["O93279", "O62806"]);
   Description: Fetches the members corresponding to all the $stable_id.
                This method des *not* accept versionned stable IDs (e.g. ENSG00000157764.12)
+               If multiple members of the given type match a given stable ID,
+               all of them will be returned.
   Returntype : arrayref Bio::EnsEMBL::Compara::Member object
   Caller     : 
 

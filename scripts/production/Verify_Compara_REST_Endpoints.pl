@@ -227,20 +227,20 @@ elsif ($division eq 'protists' ) {
     $skip_cactus_db           = 1;
 }
 elsif ($division eq 'fungi' ) {
-    $lastz_alignment_region   = 'I:529814-541420:1';
-    $gene_member_id           = 'SPBC23G7.12c';
-    $gene_tree_id             = 'EFGT01080000065287';
+    $lastz_alignment_region   = 'VII:780852-781718';
+    $gene_member_id           = 'YKR090W';
+    $gene_tree_id             = 'EFGT01080000065536';
 
-    $member_species           = "schizosaccharomyces_pombe";
-    $species_1                = 'schizosaccharomyces_pombe';
-    $species_2                = 'schizosaccharomyces_cryophilus';
+    $member_species           = 'saccharomyces_cerevisiae';
+    $species_1                = 'saccharomyces_cerevisiae';
+    $species_2                = 'trichoderma_virens';
     $species_3                = 'aspergillus_nidulans';
 
-    $taxon_1                  = 284812;#schizosaccharomyces_pombe
-    $taxon_2                  = 653667;#schizosaccharomyces_cryophilus
+    $taxon_1                  = 4932 ;#saccharomyces_cerevisiae
+    $taxon_2                  = 413071;#trichoderma_virens
     $taxon_3                  = 227321;#aspergillus_nidulans
 
-    $gene_symbol              = 'rpt6';
+    $gene_symbol              = 'PXL1';
     $homology_type            = 'orthologues';
     $homology_method_link     = 'ENSEMBL_ORTHOLOGUES';
 

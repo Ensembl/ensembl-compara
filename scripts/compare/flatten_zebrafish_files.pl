@@ -16,10 +16,10 @@
 
 =head1 DESCRIPTION
 
-This script fetches data for zebrafish from [http://zfin.org]:
-    homo_sapiens            = http://zfin.org/downloads/human_orthos.txt
-    drosophila_melanogaster = http://zfin.org/downloads/fly_orthos.txt
-    mus_musculus            = http://zfin.org/downloads/mouse_orthos.txt
+This script fetches data for zebrafish from [https://zfin.org]:
+    homo_sapiens            = https://zfin.org/downloads/human_orthos.txt
+    drosophila_melanogaster = https://zfin.org/downloads/fly_orthos.txt
+    mus_musculus            = https://zfin.org/downloads/mouse_orthos.txt
 
 =cut
 
@@ -40,9 +40,9 @@ my %input_files;
 
 my @species_to_get_ids = ( "homo_sapiens", "danio_rerio", "drosophila_melanogaster", "mus_musculus" );
 
-$input_files{'homo_sapiens'}            = 'human_orthos.txt';    #http://zfin.org/downloads/human_orthos.txt
-$input_files{'drosophila_melanogaster'} = 'fly_orthos.txt';      #http://zfin.org/downloads/fly_orthos.txt
-$input_files{'mus_musculus'}            = 'mouse_orthos.txt';    #http://zfin.org/downloads/mouse_orthos.txt
+$input_files{'homo_sapiens'}            = 'human_orthos.txt';    #https://zfin.org/downloads/human_orthos.txt
+$input_files{'drosophila_melanogaster'} = 'fly_orthos.txt';      #https://zfin.org/downloads/fly_orthos.txt
+$input_files{'mus_musculus'}            = 'mouse_orthos.txt';    #https://zfin.org/downloads/mouse_orthos.txt
 
 GetOptions( "user=s" => \$user, "database=s" => \$database, "hostname=s" => \$hostname, "port=s" => \$port, "pwd=s" => \$pwd, "release=s" => \$release );
 die "Usage: coverage.pl -user [you] -database [db] -hostname [mysql-ens-compara-prod-4] -port [1234] -pwd [123abc] -release [e85]"

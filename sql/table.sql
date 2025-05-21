@@ -1934,11 +1934,11 @@ CREATE TABLE hmm_curated_annot (
 @column method_link_species_set_id     External reference to method_link_species_set_id in the @link method_link_species_set table
 @column description                    A normalized, short description of the homology relationship
 @column is_tree_compliant              Whether the homology is fully compliant with the tree and the definition of orthology / paralogy
-@column dn                             The non-synonymous mutation rate
-@column ds                             The synonymous mutation rate
-@column n                              The estimated number of non-synonymous mutations
-@column s                              The estimated number of synonymous mutations
-@column lnl                            The negative log likelihood of the estimation
+@column dn                             The non-synonymous mutation rate. (currently unused)
+@column ds                             The synonymous mutation rate. (currently unused)
+@column n                              The estimated number of non-synonymous mutations. (currently unused)
+@column s                              The estimated number of synonymous mutations. (currently unused)
+@column lnl                            The negative log likelihood of the estimation. (currently unused)
 @column species_tree_node_id           The node_id of the species-tree node to which the homology is attached
 @column gene_tree_node_id              The node_id of the gene-tree node from which the homology is derived
 @column gene_tree_root_id              The root_id of the gene tree from which the homology is derived

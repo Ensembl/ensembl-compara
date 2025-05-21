@@ -8,6 +8,12 @@
 
 ----
 
+# Deprecated methods scheduled for deletion
+
+## Ensembl 116
+
+* `Bio::EnsEMBL::Compara::Utils::MasterDatabase::find_overlapping_genome_db_ids`
+
 # Deprecated methods not yet scheduled for deletion
 
 * `AlignedMember::get_cigar_array()`

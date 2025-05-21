@@ -163,7 +163,7 @@ sub core_pipeline_analyses {
                     'unexpected_nulls',
                 ],
             },
-            -hive_capacity => 10,
+            -hive_capacity => 50,
         },
 
         {   -logic_name => 'homology_dump_funnel_check',

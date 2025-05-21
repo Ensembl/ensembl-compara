@@ -212,7 +212,7 @@ $ cd ${BASEDIR}/ensembl-compara/scripts/synteny/
 $ javac BuildSynteny.java
 $ jar cfm BuildSynteny.jar SyntenyManifest.txt BuildSynteny.class `find apollo -iname "*.class"`
 
-The code used to depend on modules from Apollof (http://www.gmod.org/) but the relevant modules
+The code used to depend on modules from Apollo (https://www.gmod.org/) but the relevant modules
 have been extracted and edited so that there is no dependency any more.
 
 javac is used to compile the modules, and jar to package everything.

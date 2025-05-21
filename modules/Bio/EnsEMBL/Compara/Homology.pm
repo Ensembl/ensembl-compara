@@ -365,7 +365,7 @@ sub object_summary {
 sub toJSON {
     my $self = shift;
 
-    my %hash = {
+    my %hash = (
         'mlss_id'           => $self->method_link_species_set_id,
         'description'       => $self->description,
         'is_tree_compliant' => $self->is_tree_compliant,
@@ -373,7 +373,7 @@ sub toJSON {
         'gtn_id'            => $self->_gene_tree_node_id,
         'gtr_id'            => $self->_gene_tree_root_id,
         'members'           => [],
-    };
+    );
 
     foreach my $member ( @{$self->get_all_Members} ) {
         push @{$hash{'members'}}, {

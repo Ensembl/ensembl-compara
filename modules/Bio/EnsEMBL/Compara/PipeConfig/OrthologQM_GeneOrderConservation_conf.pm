@@ -30,7 +30,7 @@ Bio::EnsEMBL::Compara::PipeConfig::OrthologQM_GeneOrderConservation_conf;
 
 If a default threshold is not given the pipeline will use the genetic distance
 between the pair species to choose between a threshold of 50 and 75 percent.
-http://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Quality+metrics+for+the+orthologs
+https://www.ensembl.org/info/genome/compara/Ortholog_qc_manual.html
 
 Alternatively, set goc_taxlevels instead of goc_mlss_id to work on multiple taxa.
 

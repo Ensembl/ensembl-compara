@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-Please email comments or questions to the public Ensembl
-developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-Questions may also be sent to the Ensembl help desk at
-<http://www.ensembl.org/Help/Contact>.
-
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
@@ -237,7 +226,7 @@ sub _attr_to_copy_list {
   Arg [-FORMAT]     : (opt) string (default: undef)
                The format of the alignment. By default, BioPerl will try to
                guess it from the file extension.  Refer to
-               http://www.bioperl.org/wiki/HOWTO:AlignIO_and_SimpleAlign
+               https://bioperl.org/howtos/AlignIO_and_SimpleAlign_HOWTO.html
                for a list of the supported formats.
   Arg [-ID_TYPE] (opt) string (one of 'STABLE', 'SEQ', 'MEMBER'*)
                 : which identifier should be used as sequence names:

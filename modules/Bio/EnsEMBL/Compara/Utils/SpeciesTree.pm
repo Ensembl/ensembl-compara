@@ -411,7 +411,7 @@ sub get_timetree_estimate_for_node {
         return;
     }
 
-    my $url_template = 'http://www.timetree.org/search/pairwise/%s/%s';
+    my $url_template = 'https://timetree.org/search/pairwise/%s/%s';
     my $last_page;
 
     # For multifurcations, if a comparison fails, we can still try the other ones

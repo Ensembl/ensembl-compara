@@ -110,7 +110,7 @@ instructions above. Then run this makefile
 
 If you can't have hdf5 installed system-wide, install it manually from:
 
-* [hdf5](https://support.hdfgroup.org/HDF5/)
+* [hdf5](https://support.hdfgroup.org/downloads/)
 
 And run this makefile
 
