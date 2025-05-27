@@ -445,16 +445,15 @@ sub adaptor {
 
 sub get_all_Slices {
   my ( $self, @species_names ) = @_;
-  return $self->_get_pruned_Slices(\@species_names, 'no_prune_ancestral');
+  return $self->_get_filtered_Slices(\@species_names);
 }
 
-sub _get_pruned_Slices {
-  my ( $self, $species_names, $no_prune_ancestral) = @_;
+sub _get_filtered_Slices {
+  my ( $self, $species_names, $prune_ancestral) = @_;
   # This is much the same as 'get_all_Slices', but with two key differences:
   # 1) Arg[1] is an arrayref of species names;
   # 2) Arg[2] is a flag indicating whether to prune an ancestral slice having
-  #    a child for which all extant genomes have been removed. If false, such
-  #    ancestral slices are pruned. If true, no ancestral pruning is done.
+  #    a child for which all extant genomes have been removed.
 
   my $slices = [];
 
@@ -480,7 +479,7 @@ sub _get_pruned_Slices {
 
     if (scalar(keys %removed_species) > 0
           && exists $species_to_keep{'ancestral_sequences'}
-          && !$no_prune_ancestral) {
+          && $prune_ancestral) {
       my @filtered_slices = ();
       foreach my $slice ( @$slices ) {
         if ($slice->genome_db->name eq 'ancestral_sequences') {
@@ -686,16 +685,15 @@ sub summary_as_hash {
 
 sub get_SimpleAlign {
   my ($self, @species) = @_;
-  return $self->_get_pruned_SimpleAlign(\@species, 'no_prune_ancestral');
+  return $self->_get_filtered_SimpleAlign(\@species);
 }
 
-sub _get_pruned_SimpleAlign {
-  my ( $self, $species, $no_prune_ancestral) = @_;
+sub _get_filtered_SimpleAlign {
+  my ( $self, $species, $prune_ancestral) = @_;
   # This is much the same as 'get_SimpleAlign', but with two key differences:
   # 1) Arg[1] is an arrayref of species names;
   # 2) Arg[2] is a flag indicating whether to prune an ancestral sequence having
-  #    a child for which all extant genomes have been removed. If false, such
-  #    ancestral sequences are pruned. If true, no ancestral pruning is done.
+  #    a child for which all extant genomes have been removed.
 
   my $simple_align;
 
@@ -706,7 +704,7 @@ sub _get_pruned_SimpleAlign {
 
   my $genome_db_name_counter;
 
-  foreach my $slice (@{$self->_get_pruned_Slices($species, $no_prune_ancestral)}) {
+  foreach my $slice (@{$self->_get_filtered_Slices($species, $prune_ancestral)}) {
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $slice->seq,
             -START  => $slice->start,
