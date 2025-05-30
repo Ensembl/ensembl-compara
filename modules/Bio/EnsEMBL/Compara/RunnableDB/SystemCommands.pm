@@ -40,7 +40,7 @@ sub pre_cleanup {
 
     if ($self->param_is_defined('dataflow_file')) {
         my $cmd = sprintf('rm -f %s', $self->param('dataflow_file'));
-        $self->run_command($cmd, { die_on_failure => 1 });
+        $self->run_system_command($cmd, { die_on_failure => 1 });
     }
 }
 
