@@ -1270,9 +1270,8 @@ sub _add_GenomicAlign_to_a_Slice {
 
       foreach my $genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
         if ($this_genomic_align == $genomic_align) {
-          my $simple_tree = $genomic_align_node->newick_format('simple');
+          my $simple_tree = $genomic_align_node->newick_format('ryo', '%{^-n|i}'); # simple, without branch lengths
           $simple_tree =~ s/\_[^\_]+\_\d+\_\d+\[[\+\-]\]//g;
-          $simple_tree =~ s/\:[\d\.]+//g;
           $this_core_slice->{_tree} = $simple_tree;
           $this_core_slice->{_node_in_tree} = $genomic_align_node;
           weaken($this_core_slice->{_node_in_tree});
