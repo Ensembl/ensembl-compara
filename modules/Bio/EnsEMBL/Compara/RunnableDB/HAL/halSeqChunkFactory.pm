@@ -45,12 +45,17 @@ sub param_defaults {
 sub run {
     my $self = shift @_;
 
+    my $hal_genome_name = $self->param_required('hal_genome_name');
     my $hal_stats_exe = $self->param_required('hal_stats_exe');
 
-    my $mlss_id = $self->param_required('mlss_id');
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    my $hal_file_path = $mlss->url;
-    my $hal_genome_name = $self->param_required('hal_genome_name');
+    my $hal_file_path;
+    if ($self->param_is_defined('hal_file')) {
+        $hal_file_path = $self->param('hal_file');
+    } else {
+        my $mlss_id = $self->param_required('mlss_id');
+        my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+        $hal_file_path = $mlss->url;
+    }
 
     my $cmd = [
         $hal_stats_exe,
@@ -93,6 +98,7 @@ sub run {
 sub write_output {
     my $self = shift;
 
+    my $hal_chunk_index = 0;
     my $req_chunk_length = $self->param_required('chunk_size');
     foreach my $rec (@{$self->param('hal_regions')}) {
 
@@ -101,12 +107,14 @@ sub write_output {
         for (my $offset = $rec->{'hal_region_start'}; $offset < $rec->{'hal_region_end'}; $offset += $req_chunk_length) {
             my $chunk_length = min($req_chunk_length, $rec->{'hal_region_end'} - $offset);
             my $h = {
+                'hal_chunk_index'   => $hal_chunk_index,
                 'hal_sequence_index' => $rec->{'hal_sequence_index'},
                 'hal_sequence_name' => $rec->{'hal_sequence_name'},
                 'chunk_offset'      => $offset,
                 'chunk_length'      => $chunk_length,
             };
             $self->dataflow_output_id($h, 2);
+            $hal_chunk_index += 1;
         }
     }
 }

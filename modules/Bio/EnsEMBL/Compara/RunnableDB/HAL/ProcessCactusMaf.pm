@@ -60,12 +60,25 @@ sub pre_cleanup {
 sub fetch_input {
     my $self = shift;
 
-    my $mlss_id = $self->param_required('mlss_id');
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    my $species_map = destringify($mlss->get_value_for_tag('hal_mapping', '{}'));
+    if (!$self->param_is_defined('hal_file')) {
+        my $mlss_id = $self->param_required('mlss_id');
+        my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+        $self->param('hal_file', $mlss->url);
+    }
 
-    $self->param('target_genomes', [values %{$species_map}]);
-    $self->param('hal_file', $mlss->url);
+    if (!$self->param_is_defined('target_genomes')) {
+        my $mlss_id = $self->param_required('mlss_id');
+        my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+        my $species_map = destringify($mlss->get_value_for_tag('hal_mapping', '{}'));
+        $self->param('target_genomes', join(',', values %{$species_map}));
+    }
+    my %maf_genome_name_set = map { $_ => 1 } split(/,/, $self->param('target_genomes'));
+
+    if ($self->param_is_defined('hal_genome_name')) {
+        $maf_genome_name_set{$self->param('hal_genome_name')} = 1;
+    }
+
+    $self->param('maf_genomes', [sort keys %maf_genome_name_set]);
 }
 
 
@@ -77,7 +90,7 @@ sub run {
     my $taffy_exe = $self->require_executable('taffy_exe');
 
     my $hal_file = $self->param('hal_file');
-    my @target_genomes = @{$self->param('target_genomes')};
+    my @target_genomes = @{$self->param('maf_genomes')};
 
     my $dumped_maf_file = $self->param_required('dumped_maf_file');
     my $dumped_maf_block_count = $self->param_required('dumped_maf_block_count');
@@ -214,6 +227,7 @@ sub run {
 sub write_output {
     my $self = shift;
 
+    my $hal_chunk_index = $self->param_required('hal_chunk_index');
     my $maf_parent_dir = $self->param_required('maf_parent_dir');
     my $temp_proc_maf_file_path = $self->param_required('temp_proc_maf_file_path');
     my $proc_maf_file_path = $self->param_required('processed_maf_file');
@@ -230,6 +244,7 @@ sub write_output {
     }
 
     my $output_id = {
+        'hal_chunk_index' => $hal_chunk_index,
         'maf_block_count' => $maf_block_count,
         'maf_seq_count'   => $maf_seq_count,
         'maf_file'        => $proc_maf_file_path,
