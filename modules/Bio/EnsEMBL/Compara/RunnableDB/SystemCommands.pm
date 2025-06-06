@@ -25,6 +25,8 @@ A runnable inheriting from SystemCmd, with two key differences:
 1) it takes an arrayref of commands instead of a string; and
 2) it does pre-cleanup of the dataflow file, if specified.
 
+As in SystemCmd, parameters are shared across all commands.
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::SystemCommands;
