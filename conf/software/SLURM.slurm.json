@@ -75,6 +75,7 @@
     "semphy_exe"                : ["check_exe_in_cellar","semphy/2.0b3/bin/semphy"],
     "server_exe"                : ["check_exe_in_cellar", "exonerate24/2.4.0/bin/exonerate-server"],
     "taffy_exe"                 : "/hps/software/users/ensembl/compara/shared/build/cactus/2.9.7/taffy",
+    "textlint_exe"              : "/hps/software/users/ensembl/compara/shared/build/textlint/textlint",
     "treebest_exe"              : ["check_exe_in_compara","treebest/rc5/bin/treebest"],
     "treerecs_exe"              : "##warehouse_dir##/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs",
     "trimal_exe"                : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/trimal",
