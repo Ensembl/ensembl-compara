@@ -326,7 +326,7 @@ sub core_pipeline_analyses {
                 4 => [ 'DumpConservationScores_start'  ],
                 5 => [ 'DumpSpeciesTrees_start'        ],
                 6 => [ 'DumpAncestralAlleles_start'    ],
-                8 => [ 'create_ftp_skeleton'           ],
+                8 => [ 'check_prev_ftp_skeleton'       ],
             },
             -rc_name    => '1Gb_job',
         },
@@ -368,6 +368,14 @@ sub core_pipeline_analyses {
 
        #------------------------------------------------------------------#
 
+        {   -logic_name => 'check_prev_ftp_skeleton',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CheckFTPSkeleton',
+            -parameters => {
+                'dump_dir' => '#prev_rel_ftp_root#',
+            },
+            -rc_name    => '1Gb_job',
+            -flow_into  => [ { 'create_ftp_skeleton' => INPUT_PLUS() } ],
+        },
 
         {	-logic_name => 'create_ftp_skeleton',
         	-module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FTPSkeleton',
@@ -458,6 +466,32 @@ sub core_pipeline_analyses {
         {   -logic_name => 'final_registry_backup',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LogRegistry',
             -rc_name    => '1Gb_job',
+            -flow_into  => [ 'final_checks' ],
+        },
+
+        {   -logic_name => 'final_checks',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SystemCommands',
+            -parameters => {
+                'ftp_file_check_exe'   => $self->o('ftp_file_check_exe'),
+                'ftp_issues_file_path' => '#work_dir#/ftp_file_issues.tsv',
+                'commands'             => [
+                    'rm -f #ftp_issues_file_path#',
+                    join(' ',
+                        '#ftp_file_check_exe#',
+                        '--reg_conf',
+                         '#reg_conf#',
+                        '--division',
+                         '#division#',
+                        '--release',
+                         '#curr_release#',
+                        '--dump_dir',
+                         '#dump_dir#',
+                        '--outfile',
+                        '#ftp_issues_file_path#',
+                    ),
+                    '[[ ! -e #ftp_issues_file_path# ]]',  # If FTP issues file exists, issues have been encountered.
+                ],
+            },
             -flow_into  => [ { 'clean_files_decision' => { 'clean_intermediate_files' => $self->o('clean_intermediate_files') } } ],
         },
 

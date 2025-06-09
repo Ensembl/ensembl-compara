@@ -40,6 +40,21 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  # Allow this particular c
 
 sub pipeline_analyses_dump_trees {
     my ($self) = @_;
+
+    my %tree_dump_params = (
+        'dump_script'       => $self->o('dump_gene_tree_exe'),
+        'xmllint_exe'       => $self->o('xmlschema_validate_exe'),
+        'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
+        'hps_shared_dir'    => $self->o('shared_hps_dir'),
+        'base_filename'     => '#tree_hash_dir#/#hashed_tree_id#/tree.#tree_id#',
+        'commands'          => [
+            '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #tree_hash_dir#/#hashed_tree_id# --tree_id #tree_id# #tree_args#',
+            '[[ ! -e #base_filename#.orthoxml.xml ]] || #xmllint_exe# --noout --schema #hps_shared_dir#/xml_schema/orthoxml.xsd #base_filename#.orthoxml.xml',
+            '[[ ! -e #base_filename#.phyloxml.xml ]] || #xmllint_exe# --noout --schema #hps_shared_dir#/xml_schema/phyloxml.xsd #base_filename#.phyloxml.xml',
+            '[[ ! -e #base_filename#.cafe_phyloxml.xml ]] || #xmllint_exe# --noout --schema #hps_shared_dir#/xml_schema/phyloxml.xsd #base_filename#.cafe_phyloxml.xml',
+        ],
+    );
+
     return [
 
         {   -logic_name => 'dump_trees_pipeline_start',
@@ -335,15 +350,9 @@ sub pipeline_analyses_dump_trees {
         },
 
         {   -logic_name    => 'dump_a_tree',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters    => {
-                'dump_script'       => $self->o('dump_gene_tree_exe'),
-                'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
-                'dataflow_file'     => '#tree_hash_dir#/#hashed_tree_id#/tree.#tree_id#.dataflow.json',
-                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #tree_hash_dir#/#hashed_tree_id# --tree_id #tree_id# --dataflow_file #dataflow_file# #tree_args#',
-            },
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::SystemCommands',
+            -parameters    => \%tree_dump_params,
             -flow_into     => {
-                1  => [ 'validate_xml' ],
                 -1 => [ 'dump_a_tree_himem' ],
             },
             -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
@@ -352,30 +361,10 @@ sub pipeline_analyses_dump_trees {
         },
 
         {   -logic_name    => 'dump_a_tree_himem',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters    => {
-                'dump_script'       => $self->o('dump_gene_tree_exe'),
-                'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
-                'dataflow_file'     => '#tree_hash_dir#/#hashed_tree_id#/tree.#tree_id#.dataflow.json',
-                'cmd'               => '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #tree_hash_dir#/#hashed_tree_id# --tree_id #tree_id# --dataflow_file #dataflow_file# #tree_args#',
-            },
-            -flow_into     => {
-                1  => [ 'validate_xml' ],
-            },
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::SystemCommands',
+            -parameters    => \%tree_dump_params,
             -hive_capacity => $self->o('dump_trees_capacity'),       # allow several workers to perform identical tasks in parallel
             -rc_name       => '16Gb_job',
-        },
-
-        {   -logic_name    => 'validate_xml',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters    => {
-                'xmllint_exe'   => $self->o('xmlschema_validate_exe'),
-                'cmd'           => '#xmllint_exe# --noout --schema #schema_file# #filename#',
-                'schema_file'   => $self->o('shared_hps_dir') . '/xml_schema/#schema#.xsd',
-            },
-            -batch_size    => $self->o('batch_size'),
-            -analysis_capacity => $self->o('dump_trees_capacity'),
-            -rc_name       => '2Gb_24_hour_job',
         },
 
         {   -logic_name => 'generate_collations',
