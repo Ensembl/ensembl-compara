@@ -85,7 +85,7 @@ sub pipeline_analyses_dump_constrained_elems {
             -parameters     => {
                 'commands' => [
                     q/#dump_features_exe# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --lex_sort --reg_conf "#registry#" | tail -n+2 > #bed_file#/,
-                    q/#textlint_exe# null #bed_file#/,
+                    q/#textlint_exe# --threads 1 null #bed_file#/,
                     q/[[ $(grep -vc '^track\b' #bed_file#) -eq #exp_ce_line_count# ]]/,  # to keep it simple we do not count BED track lines
                 ],
                 'registry' => '#reg_conf#',
