@@ -118,15 +118,14 @@ sub core_pipeline_analyses {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'multifurcation_deletes_all_subnodes'} = $self->o('multifurcation_deletes_all_subnodes');
     $analyses_by_name->{'split_genes'}->{'-hive_capacity'} = 300;
-
-    # datacheck specific tweaks for pipelines
-    $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
-    $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
 
     # wire up strain-specific analyses
     $analyses_by_name->{'remove_blocklisted_genes'}->{'-flow_into'} = ['find_overlapping_genomes'];

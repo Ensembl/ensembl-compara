@@ -29,6 +29,9 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf
 
 The Vertebrates PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
+Selected funnel analyses are blocked on pipeline initialisation.
+These should be unblocked as needed during pipeline execution.
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ProteinTrees_conf;
@@ -118,7 +121,23 @@ sub tweak_analyses {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
     $analyses_by_name->{'CAFE_analysis'}->{'-parameters'}{'pvalue_lim'} = 1;
-    $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
+    $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;  # We have sub-species
+
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'create_mlss_ss',
+        'datacheck_funnel',
+        'exon_boundaries_prep',
+        'hc_cafe_results',
+        'hc_post_tree',
+        'hcluster_dump_input_all_pafs',
+        'ortholog_mlss_factory',
+        'panther_paralogs',
+        'store_tags',
+    );
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
 }
 
 

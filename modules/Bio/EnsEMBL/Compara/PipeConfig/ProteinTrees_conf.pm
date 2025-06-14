@@ -3097,6 +3097,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'final_tree_steps',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => [ 'ktreedist', 'consensus_cigar_line_prep' ],
+            %decision_analysis_params,
         },
 
         {   -logic_name    => 'ktreedist',
@@ -3840,8 +3841,8 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     # datacheck specific tweaks for pipelines
-    $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
-    $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
+    $analyses_by_name->{'datacheck_factory'}->{'-parameters'}{'dba'} = '#compara_db#';
+    $analyses_by_name->{'store_results'}->{'-parameters'}{'dbname'} = '#db_name#';
 }
 
 1;

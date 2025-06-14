@@ -28,6 +28,9 @@ Bio::EnsEMBL::Compara::PipeConfig::Fungi::ProteinTrees_conf
 
 The Fungi PipeConfig file for ProteinTrees pipeline automating execution of homology-specific analyses.
 
+Selected funnel analyses are blocked on pipeline initialisation.
+These should be unblocked as needed during pipeline execution.
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Fungi::ProteinTrees_conf;
@@ -92,6 +95,22 @@ sub tweak_analyses {
     $analyses_by_name->{'members_against_allspecies_factory'}->{'-parameters'}->{'num_sequences_per_blast_job'} = 5000;
 
     $analyses_by_name->{'make_treebest_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
+
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'create_mlss_ss',
+        'datacheck_funnel',
+        'exon_boundaries_prep',
+        'hc_cafe_results',
+        'hc_post_tree',
+        'hcluster_dump_input_all_pafs',
+        'ortholog_mlss_factory',
+        'panther_paralogs',
+        'store_tags',
+    );
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
 }
 
 1;
