@@ -102,6 +102,7 @@ sub default_options {
         'aligner_for_tree_break_capacity' => 200,
         'infernal_capacity'               => 200,
         'orthotree_capacity'              => 200,
+        'ktreedist_capacity'              => 150,
         'treebest_capacity'               => 400,
         'genomic_tree_capacity'           => 300,
         'genomic_alignment_capacity'      => 700,
@@ -1329,6 +1330,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name    => 'ktreedist',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::Ktreedist',
+            -analysis_capacity => $self->o('ktreedist_capacity'),
             -parameters => {
                             'treebest_exe'  => $self->o('treebest_exe'),
                             'ktreedist_exe' => $self->o('ktreedist_exe'),
@@ -1338,6 +1340,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name     => 'consensus_cigar_line_prep',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeAlnConsensusCigarLine',
+            -analysis_capacity => $self->o('ktreedist_capacity'),
             -rc_name        => '4Gb_job',
             -batch_size     => 20,
         },
@@ -1553,8 +1556,8 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     # datacheck specific tweaks for pipelines
-    $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
-    $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
+    $analyses_by_name->{'datacheck_factory'}->{'-parameters'}{'dba'} = '#compara_db#';
+    $analyses_by_name->{'store_results'}->{'-parameters'}{'dbname'} = '#db_name#';
 }
 
 1;
