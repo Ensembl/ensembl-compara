@@ -25,8 +25,12 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::ncRNAtrees_conf
 
 =head1 DESCRIPTION
 
-This is the Vertebrates PipeConfig for the ncRNAtrees pipeline. Please, refer
-to the parent class for further information.
+This is the Vertebrates PipeConfig for the ncRNAtrees pipeline.
+Further information on this PipeConfig may be obtained in the
+parent class documentation.
+
+Selected funnel analyses are blocked on pipeline initialisation.
+These should be unblocked as needed during pipeline execution.
 
 =head1 EXAMPLES
 
@@ -94,6 +98,16 @@ sub tweak_analyses {
 
     $analyses_by_name->{'make_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
     $analyses_by_name->{'make_full_species_tree'}->{'-parameters'}->{'allow_subtaxa'} = 1;
+
+    ## Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'hc_cafe_results',
+        'ortholog_mlss_factory',
+        'treebest_mmerge',
+    );
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
 }
 
 1;
