@@ -29,6 +29,9 @@ Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf
 
 The Plants PipeConfig file for ProteinTrees pipeline that should automate most of the pre-execution tasks.
 
+Selected funnel analyses are blocked on pipeline initialisation.
+These should be unblocked as needed during pipeline execution.
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Plants::ProteinTrees_conf;
@@ -131,6 +134,21 @@ sub tweak_analyses {
     $analyses_by_name->{'check_file_copy'}->{'-rc_name'}   = '1Gb_job';
 
 
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'create_mlss_ss',
+        'datacheck_funnel',
+        'exon_boundaries_prep',
+        'hc_cafe_results',
+        'hc_post_tree',
+        'hcluster_dump_input_all_pafs',
+        'ortholog_mlss_factory',
+        'panther_paralogs',
+        'store_tags',
+    );
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
 }
 
 
