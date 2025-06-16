@@ -102,6 +102,9 @@ sub core_pipeline_analyses {
 
 sub tweak_analyses {
     my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'insert_member_projections'}->{'-parameters'}->{'source_species_names'} = $self->o('projection_source_species_names');
@@ -112,10 +115,6 @@ sub tweak_analyses {
     # wire up strain-specific analyses
     $analyses_by_name->{'expand_clusters_with_projections'}->{'-flow_into'} = 'find_overlapping_genomes';
     push @{$analyses_by_name->{'fire_final_analyses'}->{'-flow_into'}}, 'remove_overlapping_homologies';
-
-    # datacheck specific tweaks for pipelines
-    $analyses_by_name->{'datacheck_factory'}->{'-parameters'} = {'dba' => '#compara_db#'};
-    $analyses_by_name->{'store_results'}->{'-parameters'} = {'dbname' => '#db_name#'};
 }
 
 
