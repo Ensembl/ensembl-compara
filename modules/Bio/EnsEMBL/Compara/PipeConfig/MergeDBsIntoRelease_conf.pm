@@ -151,9 +151,9 @@ sub hive_meta_table {
 }
 
 
-=head2 pipeline_analyses
+=head2 core_pipeline_analyses
 
-    Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
+    Description : Implements core_pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
                   Here it defines three analyses:
                     * 'generate_job_list'           generates a list of tables to be copied / merged
                     * 'copy_table'                  dumps tables from source_db and re-creates them in pipeline_db
@@ -163,7 +163,7 @@ sub hive_meta_table {
 
 =cut
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
     return [
 
