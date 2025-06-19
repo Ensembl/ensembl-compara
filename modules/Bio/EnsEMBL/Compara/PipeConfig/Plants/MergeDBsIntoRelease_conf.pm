@@ -40,6 +40,9 @@ The default parameters work well in the context of a Compara release for Plants 
 Registry file). If the list of source-databases is different, have a look at the bottom of the base file
 for alternative configurations.
 
+Selected funnel analyses are blocked on pipeline initialisation.
+These should be unblocked as needed during pipeline execution.
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Plants::MergeDBsIntoRelease_conf;
@@ -94,6 +97,23 @@ sub default_options {
             'barley_prot_db' => [qw(ortholog_quality datacheck_results)],
         },
     };
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    $self->SUPER::tweak_analyses(@_);
+    my $analyses_by_name = shift;
+
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'fire_post_merge_processing',
+        'enable_keys',
+    );
+
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
+
 }
 
 1;

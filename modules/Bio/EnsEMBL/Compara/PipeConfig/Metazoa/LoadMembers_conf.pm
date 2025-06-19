@@ -28,6 +28,9 @@ Bio::EnsEMBL::Compara::PipeConfig::Metazoa::LoadMembers_conf
 Specialized version of the LoadMembers pipeline for Metazoa. Please, refer
 to the parent class for further information.
 
+Selected funnel analyses are blocked on pipeline initialisation.
+These should be unblocked as needed during pipeline execution.
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Metazoa::LoadMembers_conf;
@@ -60,12 +63,29 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+    $self->SUPER::tweak_analyses(@_);
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'check_reusability'}->{'-parameters'}{'list_must_reuse_species_exe'} = $self->o('list_must_reuse_species_exe');
     $analyses_by_name->{'check_reusability'}->{'-parameters'}{'must_reuse_collection_file'} = catfile($self->o('config_dir'), 'must_reuse_collections.json');
     $analyses_by_name->{'check_reusability'}->{'-parameters'}{'mlss_conf_file'} = catfile($self->o('config_dir'), 'mlss_conf.xml');
     $analyses_by_name->{'check_reusability'}->{'-parameters'}{'ensembl_release'} = $self->o('ensembl_release');
+
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'offset_tables',
+        'load_all_genomedbs_from_registry',
+        'create_reuse_ss',
+        'polyploid_genome_reuse_factory',
+        'polyploid_genome_load_fresh_factory',
+        'nonpolyploid_genome_load_fresh_factory',
+        'hc_members_globally',
+    );
+
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
+
 }
 
 
