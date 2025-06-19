@@ -31,6 +31,9 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::Lastz_conf
 This is a Vertebrates configuration file for LastZ pipeline. Please, refer
 to the parent class for further information.
 
+Selected funnel analyses are blocked on pipeline initialisation.
+These should be unblocked as needed during pipeline execution.
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::Lastz_conf;
@@ -48,6 +51,29 @@ sub default_options {
 
         'division'  => 'vertebrates',
 	};
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    $self->SUPER::tweak_analyses(@_);
+    my $analyses_by_name = shift;
+
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'check_no_partial_gabs',
+        'update_max_alignment_length_after_FD',
+        'create_alignment_nets_jobs',
+        'remove_inconsistencies_after_chain',
+        'remove_inconsistencies_after_net',
+        'remove_inconsistencies_after_net_fd',
+        'run_healthchecks',
+        'pairaligner_stats',
+        'coding_exon_stats_summary',
+    );
+
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
 }
 
 
