@@ -26,6 +26,8 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsEPOwithExt_conf
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsEPOwithExt_conf.pm \
         -host mysql-ens-compara-prod-X -port XXXX
 
+=head1 DESCRIPTION
+
     Selected funnel analyses are blocked on pipeline initialisation.
     These should be unblocked as needed during pipeline execution.
 
@@ -65,13 +67,9 @@ sub tweak_analyses {
         'remove_overlaps',
         'missing_anchors_factory',
         'set_gerp_mlss_tag',
-        'set_mlss_tag',
         'setup_extended_alignment',
-        'alignment_funnel_check',
         'update_max_alignment_length',
         'multiplealigner_stats_factory',
-        'msa_stats_funnel_check',
-        'block_stats_funnel_check',
     );
 
     foreach my $logic_name (@unguarded_funnel_analyses) {
