@@ -292,7 +292,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
+            "description": "*GitHub*: [Synteny_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Synteny_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Synteny_conf -host mysql-ens-compara-prod-X -port XXXX -division <division> -tweak 'analysis[concat_files].analysis_capacity=0'{code}",
             "name_on_graph": "Synteny",
             "summary": "Run the Synteny pipeline"
          }
