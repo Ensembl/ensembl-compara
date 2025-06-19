@@ -66,6 +66,7 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+    $self->SUPER::tweak_analyses(@_);
     my $analyses_by_name = shift;
 
     # Genomes such as avena_sativa_ot3098 need a little more memory.

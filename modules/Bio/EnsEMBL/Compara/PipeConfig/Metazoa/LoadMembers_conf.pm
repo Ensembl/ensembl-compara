@@ -63,6 +63,7 @@ sub default_options {
 
 sub tweak_analyses {
     my $self = shift;
+    $self->SUPER::tweak_analyses(@_);
     my $analyses_by_name = shift;
 
     $analyses_by_name->{'check_reusability'}->{'-parameters'}{'list_must_reuse_species_exe'} = $self->o('list_must_reuse_species_exe');
