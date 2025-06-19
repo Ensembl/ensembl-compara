@@ -26,6 +26,11 @@ Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsEPOwithExt_conf
     init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsEPOwithExt_conf.pm \
         -host mysql-ens-compara-prod-X -port XXXX
 
+=head1 DESCRIPTION
+
+    Selected funnel analyses are blocked on pipeline initialisation.
+    These should be unblocked as needed during pipeline execution.
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsEPOwithExt_conf;
@@ -46,6 +51,31 @@ sub default_options {
         'method_type'            => 'EPO_EXTENDED',
         'species_set_name'       => 'pig_breeds',
     };
+}
+
+sub tweak_analyses {
+    my $self = shift;
+    $self->SUPER::tweak_analyses(@_);
+    my $analyses_by_name = shift;
+
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'reuse_anchor_align_factory',
+        'offset_tables',
+        'map_anchor_align_genome_factory',
+        'mlss_factory',
+        'remove_overlaps',
+        'missing_anchors_factory',
+        'set_gerp_mlss_tag',
+        'setup_extended_alignment',
+        'update_max_alignment_length',
+        'multiplealigner_stats_factory',
+    );
+
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
+
 }
 
 1;
