@@ -79,12 +79,7 @@ sub tweak_analyses {
     # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
     my @unguarded_funnel_analyses = (
         'check_no_partial_gabs',
-        'update_max_alignment_length_after_FD',
-        'create_alignment_nets_jobs',
         'remove_inconsistencies_after_chain',
-        'remove_inconsistencies_after_net',
-        'remove_inconsistencies_after_net_fd',
-        'run_healthchecks',
         'pairaligner_stats',
         'coding_exon_stats_summary',
     );
