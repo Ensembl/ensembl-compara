@@ -29,6 +29,9 @@ Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Lastz_conf
 This is a Metazoa configuration file for LastZ pipeline. Please, refer to the
 parent class for further information.
 
+Selected funnel analyses are blocked on pipeline initialisation.
+These should be unblocked as needed during pipeline execution.
+
 =cut
 
 package Bio::EnsEMBL::Compara::PipeConfig::Metazoa::Lastz_conf;
@@ -54,6 +57,7 @@ my ($self) = @_;
 
 sub tweak_analyses {
     my $self = shift;
+    $self->SUPER::tweak_analyses(@_);
     my $analyses_by_name = shift;
 
     ## Extend this section to redefine the resource names of some analysis
@@ -72,6 +76,19 @@ sub tweak_analyses {
     foreach my $logic_name (keys %overriden_rc_names) {
         $analyses_by_name->{$logic_name}->{'-rc_name'} = $overriden_rc_names{$logic_name};
     }
+
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'check_no_partial_gabs',
+        'remove_inconsistencies_after_chain',
+        'pairaligner_stats',
+        'coding_exon_stats_summary',
+    );
+
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
+
 }
 
 
