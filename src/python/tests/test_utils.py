@@ -221,11 +221,11 @@ class TestHalUtils:
         bed_file_name: str,
         flank_length: int,
         expectation: ContextManager,
-        tmp_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Tests :func:`utils.hal.make_src_region_file()` function."""
         with expectation:
-            out_file_path = tmp_dir / bed_file_name
+            out_file_path = tmp_path / bed_file_name
             make_src_region_file(*region_tuple, chrom_sizes, out_file_path, flank_length)
             ref_file_path = self.ref_file_dir / bed_file_name
             assert filecmp.cmp(out_file_path, ref_file_path)

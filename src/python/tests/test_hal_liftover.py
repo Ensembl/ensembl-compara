@@ -64,14 +64,14 @@ class TestHalLiftover:
         output_format: str,
         script_runner: ScriptRunner,
         mocker: MockerFixture,
-        tmp_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Tests ``hal-liftover`` console script."""
         mocker.patch("subprocess.run", side_effect=mock_two_bit_to_fa)
 
         hal_file_path = self.ref_file_dir / hal_file
         hal_cache_path = self.ref_file_dir / hal_cache
-        out_file_path = tmp_dir / output_file
+        out_file_path = tmp_path / output_file
 
         cmd_args = [
             "hal-liftover",

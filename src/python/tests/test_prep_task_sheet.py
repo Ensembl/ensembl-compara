@@ -49,13 +49,13 @@ class TestPrepTaskSheet:
         in_file_name: str,
         out_file_name: str,
         script_runner: ScriptRunner,
-        tmp_dir: Path,
+        tmp_path: Path,
     ) -> None:
         """Tests ``prep_task_sheet.py`` script."""
 
         in_file_path = self.ref_file_dir / "task_sheets" / in_file_name
         chrom_sizes_dir = self.ref_file_dir / "aln_cache" / "genome" / "chrom_sizes"
-        out_file_path = tmp_dir / out_file_name
+        out_file_path = tmp_path / out_file_name
 
         cmd_args = [
             # pylint: disable-next=no-member
