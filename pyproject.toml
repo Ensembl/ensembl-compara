@@ -77,6 +77,9 @@ test = [
     "mysqlclient",
 ]
 
+[project.scripts]
+hal-liftover = "ensembl.compara.cmd.hal_liftover:main"
+
 [project.urls]
 homepage = "https://www.ensembl.org"
 repository = "https://github.com/Ensembl/ensembl-compara"
