@@ -1,0 +1,3 @@
+source_genome	dest_genome
+genomeA	genomeB
+genomeB	genomeA
