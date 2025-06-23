@@ -90,11 +90,16 @@ sub write_output {
             my $mlss = $self->_write_mlss( $ss, $ml );
 
             if ($mlss->method->type eq 'PROTEIN_TREES' || $mlss->method->type eq 'NC_TREES') {
-                my $homology_range_index = $self->param('reference_dba')->dbc->sql_helper->execute_single_result(
+
+                my $tmp = $self->param('reference_dba')->dbc->sql_helper->execute_simple(
                     -SQL => 'SELECT value FROM method_link_species_set_tag WHERE method_link_species_set_id = ? AND tag = "homology_range_index"',
                     -PARAMS => [$mlss->dbID]
                 );
-                push(@homology_range_indices, $homology_range_index) if defined $homology_range_index;
+
+                if (defined $tmp && scalar(@$tmp) == 1) {
+                    my $homology_range_index = $tmp->[0];
+                    push(@homology_range_indices, $homology_range_index) if defined $homology_range_index;
+                }
             }
 
             # The last method_link listed in whole_method_links will make
