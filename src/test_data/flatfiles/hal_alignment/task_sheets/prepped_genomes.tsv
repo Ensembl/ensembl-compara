@@ -1,0 +1,3 @@
+source_genome	source_sequence	dest_genome	group_level	group_size	group_key	source_start	source_end	source_strand	liftover_level
+genomeA	chr1	genomeB	genome	1	genomeA|genomeB	1	33	1	sequence
+genomeB	chr1	genomeA	genome	1	genomeB|genomeA	1	40	1	sequence

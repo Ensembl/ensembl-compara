@@ -1,0 +1,3 @@
+source_genome	source_sequence	source_start	source_end	source_strand	dest_genome
+genomeA	chr1	1	33	1	genomeB
+genomeB	chr1	1	40	1	genomeA
