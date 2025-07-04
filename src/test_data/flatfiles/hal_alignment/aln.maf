@@ -1,0 +1,28 @@
+##maf version=1 scoring=N/A
+# hal (genomeA:1,genomeB:1)Anc0;
+
+a
+s	Anc0.chr1	0	8	+	36	ATTCCCGT
+s	genomeA.chr1	0	5	+	33	ATT---GT
+s	genomeB.chr1	0	8	+	40	ATTCCCGT
+
+a
+s	Anc0.chr1	8	4	+	36	AATC
+s	genomeA.chr1	5	4	+	33	AATC
+s	genomeB.chr1	16	4	+	40	AATC
+s	genomeB.chr1	8	4	+	40	AATC
+
+a
+s	Anc0.chr1	12	4	+	36	TACG
+s	genomeA.chr1	9	4	+	33	TACG
+s	genomeB.chr1	12	4	+	40	TACG
+
+a
+s	Anc0.chr1	16	12	+	36	ATTAAGTCACAA
+s	genomeA.chr1	13	12	+	33	ATTAAGTCACAA
+s	genomeB.chr1	20	12	+	40	ATTAAGGCACAA
+
+a
+s	Anc0.chr1	28	8	+	36	CCAAACCA
+s	genomeA.chr1	0	8	-	33	CCAAATCA
+s	genomeB.chr1	32	8	+	40	CCAAACCA

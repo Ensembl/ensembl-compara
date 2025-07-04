@@ -46,6 +46,8 @@ dependencies = [
     "ensembl-py>=2.1.0",
     "ensembl-utils>=0.4.4",
     "biopython>=1.76",
+    "click>=8.1.4",
+    "CrossMap>=0.6.5",
     "ete3>=3.1.1",
     "lxml>=4.9.2",
     "pandas>=0.24.2",
@@ -66,12 +68,17 @@ test = [
     "mypy",
     "pylint",
     "pytest",
+    "pytest-console-scripts",
     "pytest-dependency",
     "pytest-cov",
+    "pytest-mock",
     "types-PyYAML>=6.0.12.20240311",
     "yamllint",
     "mysqlclient",
 ]
+
+[project.scripts]
+hal-liftover = "ensembl.compara.cmd.hal_liftover:main"
 
 [project.urls]
 homepage = "https://www.ensembl.org"
@@ -89,6 +96,7 @@ addopts = [
     "-v",
     "--tb=native",
     "--server=mysql://ensadmin:${ENSADMIN_PSW}@mysql-ens-compara-prod-1:4485/",
+    "--ignore=src/python/tests/helpers.py",
     # CITest project is on hold and it needs to be updated before resuming its unit tests
     "--ignore=src/python/tests/test_citest.py",
 ]
@@ -114,4 +122,10 @@ disable = [
     "too-many-statements",
     "unspecified-encoding",
     "wildcard-import"
+]
+
+[tool.pylint.typecheck]
+signature-mutators = [
+    "click.decorators.argument",
+    "click.decorators.option",
 ]
