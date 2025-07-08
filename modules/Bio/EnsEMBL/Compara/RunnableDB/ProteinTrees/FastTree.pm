@@ -39,7 +39,7 @@ sub param_defaults {
     my $self = shift;
     return {
              %{$self->SUPER::param_defaults},
-             'cmd'                        => '#fasttree_exe# -nosupport -pseudo -noml -quiet -nopr -wag #alignment_file# > #output_file#',
+             'cmd'                        => '#fasttree_exe# -nosupport -pseudo -noml -quiet -nopr #seq_type_args# #alignment_file# > #output_file#',
              'runtime_tree_tag'           => 'fasttree_runtime',
              'remove_columns'             => 1,
              'run_treebest_sdi'           => 1,
@@ -50,6 +50,12 @@ sub param_defaults {
              'input_clusterset_id'        => 'default',
              'binarize'                   => 1,
     };
+}
+
+sub fetch_input {
+    my $self = shift;
+    $self->SUPER::fetch_input();
+    $self->param('seq_type_args', ($self->param('cdna') ? '-nt' : '-wag'));
 }
 
 1;
