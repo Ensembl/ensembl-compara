@@ -10,8 +10,8 @@ digraph test {
 	analysis_import_altalleles_as_homologies -> analysis_import_altalleles_as_homologies_himem [color="blue", fontcolor="blue", fontname="Helvetica", label="#-1\n"];
 	analysis_offset_tables -> analysis_altallele_species_factory [color="blue", fontcolor="blue", fontname="Helvetica", label="#1\n"];
 
-subgraph "cluster_vertebrates_alt_allele_import_114" {
-	label="vertebrates_alt_allele_import_114";
+subgraph "cluster_vertebrates_alt_allele_import_115" {
+	label="vertebrates_alt_allele_import_115";
 	style="bold,filled";
 	colorscheme="pastel19";
 	fillcolor="3";
