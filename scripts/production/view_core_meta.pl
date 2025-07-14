@@ -24,19 +24,19 @@ This script fetches core metadata and writes it to a TSV file.
 
 =head1 SYNOPSIS
 
-     ${ENSEMBL_ROOT_DIR}/ensembl/scripts/production/view_core_meta.pl \
+     ${ENSEMBL_ROOT_DIR}/ensembl-compara/scripts/production/view_core_meta.pl \
     --registry_url mysql://ensro@mysql-ens-vertannot-staging:4573/116 --outfile metadata.tsv
 
-    $ENSEMBL_ROOT_DIR/ensembl/scripts/production/view_core_meta.pl \
+    $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/production/view_core_meta.pl \
     --registry_file ${COMPARA_REG_PATH} --compara_division ${COMPARA_DIV} --outfile "${COMPARA_DIV}.tsv"
 
-    ${ENSEMBL_ROOT_DIR}/ensembl/scripts/production/view_core_meta.pl \
+    ${ENSEMBL_ROOT_DIR}/ensembl-compara/scripts/production/view_core_meta.pl \
     --registry_url mysql://ensro@mysql-ens-sta-1:4519/116 --ensembl_division EnsemblVertebrates --outfile EnsemblVertebrates.tsv
 
-    ${ENSEMBL_ROOT_DIR}/ensembl/scripts/production/view_core_meta.pl \
+    ${ENSEMBL_ROOT_DIR}/ensembl-compara/scripts/production/view_core_meta.pl \
     --registry_url mysql://ensro@mysql-ens-sta-3:4160/116 --ensembl_division EnsemblPlants --outfile EnsemblPlants.tsv
 
-    ${ENSEMBL_ROOT_DIR}/ensembl/scripts/production/view_core_meta.pl \
+    ${ENSEMBL_ROOT_DIR}/ensembl-compara/scripts/production/view_core_meta.pl \
     --registry_url mysql://ensro@mysql-ens-sta-4:4494/116 --ensembl_division EnsemblBacteria --outfile EnsemblBacteria.tsv
 
 =head1 OPTIONS
