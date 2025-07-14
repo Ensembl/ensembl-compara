@@ -127,7 +127,6 @@ our %META_KEY_PRESETS = (
         'strain.type',
         'species.strain',
         'species.strain_group',
-        'annotation.provider_name',
     ],
 );
 
