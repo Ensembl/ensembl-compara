@@ -17,6 +17,7 @@
     <!-- LastZ batch -->
     <all_vs_all method="LASTZ_NET">
       <species_set>
+        <genome name="globisporangium_ultimum"/>
         <genome name="phytophthora_infestans"/>
         <genome name="phytophthora_kernoviae"/>
         <genome name="phytophthora_lateralis"/>
@@ -26,10 +27,8 @@
         <genome name="pythium_arrhenomanes"/>
         <genome name="pythium_irregulare"/>
         <genome name="pythium_iwayamai"/>
-        <genome name="pythium_ultimum"/>
         <genome name="pythium_vexans"/>
 
-        <genome name="albugo_laibachii"/>
         <genome name="bigelowiella_natans"/>
         <genome name="emiliania_huxleyi"/>
         <genome name="entamoeba_histolytica"/>

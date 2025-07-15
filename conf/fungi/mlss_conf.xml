@@ -12,14 +12,14 @@
   <pairwise_alignments>
     <all_vs_all method="LASTZ_NET">
       <species_set>
-       <genome name="ashbya_gossypii"/>
+       <genome name="eremothecium_gossypii_fdag1_gca_000968835"/>
        <genome name="fusarium_oxysporum"/>
        <genome name="fusarium_solani"/>
        <genome name="fusarium_verticillioides"/>
-       <genome name="magnaporthe_oryzae"/>
        <genome name="magnaporthe_poae"/>
        <genome name="puccinia_graminis"/>
        <genome name="puccinia_triticina"/>
+       <genome name="pyricularia_oryzae"/>
        <genome name="saccharomyces_cerevisiae"/>
        <genome name="schizosaccharomyces_cryophilus"/>
        <genome name="schizosaccharomyces_japonicus"/>
