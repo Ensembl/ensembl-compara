@@ -1,6 +1,9 @@
 os: linux
 language: generic
 
+dist:
+  - xenial
+
 env:
   global:
     # yamllint disable-line rule:line-length
