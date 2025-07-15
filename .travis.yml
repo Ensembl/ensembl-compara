@@ -2,7 +2,7 @@ os: linux
 language: generic
 
 dist:
-  - xenial
+  - bionic
 
 env:
   global:
