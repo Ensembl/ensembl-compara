@@ -32,10 +32,10 @@
       <genome name="penaeus_chinensis_gca019202785v2rs"/>
       <genome name="penaeus_japonicus_gca017312705v1"/>
       <genome name="penaeus_monodon_gca015228065v1"/>
-      <genome name="penaeus_vannamei_gca003789085v1"/>
+      <genome name="penaeus_vannamei_gca042767895v1rs"/>
       <genome name="pollicipes_pollicipes_gca011947565v2"/>
       <genome name="portunus_trituberculatus_gca017591435v1"/>
-      <genome name="procambarus_clarkii_gca020424385v2"/>
+      <genome name="procambarus_clarkii_gca040958095v1rs"/>
       <genome name="spodoptera_frugiperda_gca023101765v3rs"/>
       <genome name="strigamia_maritima"/>
       <genome name="tigriopus_californicus_gca007210705"/>
@@ -50,10 +50,10 @@
       <genome name="clytia_hemisphaerica_gca902728285"/>
       <genome name="dendronephthya_gigantea_gca004324835v1"/>
       <genome name="exaiptasia_diaphana_gca001417965v1"/>
-      <genome name="hydra_vulgaris_gca022113875v1rs"/>
-      <genome name="nematostella_vectensis"/>
+      <genome name="hydra_vulgaris_gca038396675v1rs"/>
+      <genome name="nematostella_vectensis_gca932526225v1rs"/>
       <genome name="orbicella_faveolata_gca002042975v1"/>
-      <genome name="stylophora_pistillata_gca002571385v1"/>
+      <genome name="stylophora_pistillata_gca002571385v2"/>
       <genome name="thelohanellus_kitauei"/>
       <!-- Included species from Ctenophora -->
       <genome name="mnemiopsis_leidyi"/>
@@ -61,7 +61,7 @@
       <genome name="acanthaster_planci_gca001949145v1"/>
       <genome name="anneissia_japonica_gca011630105v1"/>
       <genome name="asterias_rubens_gca902459465v3"/>
-      <genome name="lytechinus_pictus_gca015342785v2rs"/>
+      <genome name="lytechinus_pictus_gca037042905v1rs"/>
       <genome name="lytechinus_variegatus_gca018143015v1"/>
       <genome name="strongylocentrotus_purpuratus"/>
       <!-- Included species from Hemichordata -->
@@ -126,7 +126,7 @@
       <genome name="halyomorpha_halys_gca000696795v2rs"/>
       <genome name="ixodes_scapularis_gca016920785v2"/>
       <genome name="macrobrachium_nipponense_gca015104395v2rs"/>
-      <genome name="parasteatoda_tepidariorum_gca000365465v3"/>
+      <genome name="parasteatoda_tepidariorum_gca043381705v1rs"/>
       <genome name="rhipicephalus_sanguineus_gca013339695v2rs"/>
       <genome name="spodoptera_frugiperda_gca023101765v3rs"/>
       <genome name="stegodyphus_dumicola_gca010614865v2rs"/>
@@ -146,7 +146,7 @@
       <genome name="liolophura_japonica_gca032854445v1rs"/>
       <genome name="lottia_gigantea"/>
       <genome name="magallana_gigas_gca963853765v1rs"/>
-      <genome name="mercenaria_mercenaria_gca014805675v2"/>
+      <genome name="mercenaria_mercenaria_gca021730395v1rs"/>
       <genome name="mizuhopecten_yessoensis_gca002113885v2"/>
       <genome name="octopus_bimaculoides_gca001194135v2rs"/>
       <genome name="octopus_sinensis_gca006345805v1"/>
@@ -159,9 +159,9 @@
       <genome name="caenorhabditis_briggsae"/>
       <genome name="caenorhabditis_elegans"/>
       <genome name="caenorhabditis_japonica"/>
-      <genome name="caenorhabditis_remanei"/>
+      <genome name="caenorhabditis_remanei_gca010183535v1rs"/>
       <genome name="loa_loa"/>
-      <genome name="necator_americanus"/>
+      <genome name="necator_americanus_gca031761385v1rs"/>
       <genome name="onchocerca_volvulus"/>
       <genome name="pristionchus_pacificus"/>
       <genome name="strongyloides_ratti"/>
