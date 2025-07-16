@@ -36,9 +36,9 @@ use Bio::EnsEMBL::Utils::Logger;
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 
 # JIRA identifiers of the custom field used in Compara (ENSCOMPARASW)
-use constant DIVISION_CUSTOM_FIELD_ID => 'customfield_11130';
-use constant CATEGORY_CUSTOM_FIELD_ID => 'customfield_11333';
-use constant EPIC_LINK_CUSTOM_FIELD_ID => 'customfield_10236';
+use constant DIVISION_CUSTOM_FIELD_ID => 'customfield_10080';
+use constant CATEGORY_CUSTOM_FIELD_ID => 'customfield_10082';
+use constant EPIC_LINK_CUSTOM_FIELD_ID => 'parent';
 
 # Used to automatically populate the category when none is given
 my %component_to_category = (
@@ -406,9 +406,9 @@ sub fetch_tickets {
     my $fixVersion = 'Ensembl\u0020' . $self->{_release};
     my $final_jql = sprintf('project=%s AND fixVersion=%s', $self->{_project}, $fixVersion);
     if ($self->{_division}) {
-        $final_jql .= sprintf(' AND cf[11130]=%s', $self->{_division});
+        $final_jql .= sprintf(' AND cf[10080]=%s', $self->{_division});
     } else {
-        $final_jql .= ' AND cf[11130] IS EMPTY';
+        $final_jql .= ' AND cf[10080] IS EMPTY';
     }
     $final_jql .= " AND $jql" if ($jql);
     # Send a search POST request for the given JQL query
@@ -616,7 +616,7 @@ sub _json_to_jira {
     # $jira_hash{'epic_link'}
     # NOTE: Sub-task tickets inherit the epic link from their parent task
     if ($epic_link && ($jira_hash{issuetype}->{name} ne 'Sub-task')) {
-        $jira_hash{EPIC_LINK_CUSTOM_FIELD_ID()} = $epic_link;
+        $jira_hash{EPIC_LINK_CUSTOM_FIELD_ID()} = { 'key' => $epic_link };
     }
     # Create JIRA ticket and return it
     my $ticket = { 'fields' => \%jira_hash };
@@ -742,8 +742,8 @@ sub _create_ticket_record {
         $rec{'Assignee'} = [];
     }
 
-    if (exists $ticket->{'fields'}{'customfield_11333'}) {
-        my @categories = map { $_->{'value'} } @{$ticket->{'fields'}{'customfield_11333'}};
+    if (exists $ticket->{'fields'}{'customfield_10082'}) {
+        my @categories = map { $_->{'value'} } @{$ticket->{'fields'}{'customfield_10082'}};
         $rec{'Category'} = [sort @categories];
     } else {
         $rec{'Category'} = [];
@@ -764,8 +764,8 @@ sub _create_ticket_record {
         $rec{'Description'} = [];
     }
 
-    if (exists $ticket->{'fields'}{'customfield_11130'}) {
-        $rec{'Division'} = [$ticket->{'fields'}{'customfield_11130'}{'value'}];
+    if (exists $ticket->{'fields'}{'customfield_10080'}) {
+        $rec{'Division'} = [$ticket->{'fields'}{'customfield_10080'}{'value'}];
     } else {
         $rec{'Division'} = [];
     }
