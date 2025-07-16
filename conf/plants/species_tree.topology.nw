@@ -18,9 +18,9 @@
                   actinidia_chinensis,
                   (
                     (
-                      cynara_cardunculus,
+                      cynara_cardunculus_gca001531365v2gb,
                       helianthus_annuus,
-                      lactuca_sativa
+                      lactuca_sativa_gca002870075v4gb
                     )Asteraceae,
                     daucus_carota
                   )campanulids,
@@ -40,7 +40,7 @@
                           capsicum_annuum,
                           nicotiana_attenuata,
                           (
-                            solanum_lycopersicum,
+                            solanum_lycopersicum_gca000188115v5cm,
                             solanum_tuberosum
                           )Solanum
                         )Solanoideae
@@ -49,7 +49,7 @@
                   )lamiids
                 )asterids,
                 (
-                  beta_vulgaris,
+                  beta_vulgaris_gca026745355v1rs,
                   chenopodium_quinoa
                 )Chenopodiaceae,
                 kalanchoe_fedtschenkoi,
@@ -84,7 +84,7 @@
                     )Eucalypteae,
                     (
                       corchorus_capsularis,
-                      gossypium_raimondii,
+                      gossypium_raimondii_gca025698545v1rs,
                       theobroma_cacao
                     )Malvaceae,
                     (
@@ -98,7 +98,7 @@
                       juglans_regia,
                       (
                         quercus_lobata,
-                        quercus_suber
+                        quercus_suber_gca002906115v3rs
                       )Quercus
                     )Fagales,
                     (
@@ -106,7 +106,7 @@
                       populus_trichocarpa
                     )Malpighiales,
                     (
-                      cannabis_sativa_female,
+                      cannabis_sativa_gca029168945v1rs,
                       ficus_carica,
                       (
                         (
@@ -132,7 +132,7 @@
                       lupinus_angustifolius,
                       (
                         (
-                          cajanus_cajan,
+                          cajanus_cajan_gca000340665v2gb,
                           (
                             glycine_max,
                             glycine_soja
@@ -143,7 +143,7 @@
                           (
                             vigna_angularis,
                             vigna_radiata,
-                            vigna_unguiculata
+                            vigna_unguiculata_gca004118075v2rs
                           )Vigna
                         )Phaseoleae,
                         (
@@ -179,15 +179,194 @@
                           brachypodium_distachyon,
                           (
                             (
-                              avena_sativa_ot3098,
-                              avena_sativa_sang,
+                              avena_atlantica_gca910589765v1cm,
+                              avena_byzantina_gca910574625v1cm,
                               (
-                                avena_sativa_sang_A,
-                                avena_sativa_sang_C,
-                                avena_sativa_sang_D,
-                                avena_sativa_sang_U[&&NHX:unassigned_region_component=1]
-                              )
-                            )Avena_sativa,
+                                avena_byzantina_gca910574625v1cm_A,
+                                avena_byzantina_gca910574625v1cm_C,
+                                avena_byzantina_gca910574625v1cm_D
+                              ),
+                              avena_eriantha_gca910589775v1cm,
+                              avena_insularis_gca910574615v1cm,
+                              (
+                                avena_insularis_gca910574615v1cm_C,
+                                avena_insularis_gca910574615v1cm_D
+                              ),
+                              avena_longiglumis_gca910589755v1cm,
+                              avena_occidentalis_gca947310975v1cm,
+                              (
+                                avena_occidentalis_gca947310975v1cm_A,
+                                avena_occidentalis_gca947310975v1cm_C,
+                                avena_occidentalis_gca947310975v1cm_D
+                              ),
+                              (
+                                avena_sativa_gca947310255v1cm,
+                                (
+                                  avena_sativa_gca947310255v1cm_A,
+                                  avena_sativa_gca947310255v1cm_C,
+                                  avena_sativa_gca947310255v1cm_D
+                                ),
+                                avena_sativa_gca947310285v1cm,
+                                (
+                                  avena_sativa_gca947310285v1cm_A,
+                                  avena_sativa_gca947310285v1cm_C,
+                                  avena_sativa_gca947310285v1cm_D
+                                ),
+                                avena_sativa_gca947310875v1cm,
+                                (
+                                  avena_sativa_gca947310875v1cm_A,
+                                  avena_sativa_gca947310875v1cm_C,
+                                  avena_sativa_gca947310875v1cm_D
+                                ),
+                                avena_sativa_gca947311775v1cm,
+                                (
+                                  avena_sativa_gca947311775v1cm_A,
+                                  avena_sativa_gca947311775v1cm_C,
+                                  avena_sativa_gca947311775v1cm_D
+                                ),
+                                avena_sativa_gca947311525v1cm,
+                                (
+                                  avena_sativa_gca947311525v1cm_A,
+                                  avena_sativa_gca947311525v1cm_C,
+                                  avena_sativa_gca947311525v1cm_D
+                                ),
+                                avena_sativa_gca947311085v1cm,
+                                (
+                                  avena_sativa_gca947311085v1cm_A,
+                                  avena_sativa_gca947311085v1cm_C,
+                                  avena_sativa_gca947311085v1cm_D
+                                ),
+                                avena_sativa_gca947311555v1cm,
+                                (
+                                  avena_sativa_gca947311555v1cm_A,
+                                  avena_sativa_gca947311555v1cm_C,
+                                  avena_sativa_gca947311555v1cm_D
+                                ),
+                                avena_sativa_gca947311355v1cm,
+                                (
+                                  avena_sativa_gca947311355v1cm_A,
+                                  avena_sativa_gca947311355v1cm_C,
+                                  avena_sativa_gca947311355v1cm_D
+                                ),
+                                avena_sativa_gca947311365v1cm,
+                                (
+                                  avena_sativa_gca947311365v1cm_A,
+                                  avena_sativa_gca947311365v1cm_C,
+                                  avena_sativa_gca947311365v1cm_D
+                                ),
+                                avena_sativa_gca947311235v1cm,
+                                (
+                                  avena_sativa_gca947311235v1cm_A,
+                                  avena_sativa_gca947311235v1cm_C,
+                                  avena_sativa_gca947311235v1cm_D
+                                ),
+                                avena_sativa_gca947311915v1cm,
+                                (
+                                  avena_sativa_gca947311915v1cm_A,
+                                  avena_sativa_gca947311915v1cm_C,
+                                  avena_sativa_gca947311915v1cm_D
+                                ),
+                                avena_sativa_gca947311225v1cm,
+                                (
+                                  avena_sativa_gca947311225v1cm_A,
+                                  avena_sativa_gca947311225v1cm_C,
+                                  avena_sativa_gca947311225v1cm_D
+                                ),
+                                avena_sativa_gca947311165v1cm,
+                                (
+                                  avena_sativa_gca947311165v1cm_A,
+                                  avena_sativa_gca947311165v1cm_C,
+                                  avena_sativa_gca947311165v1cm_D
+                                ),
+                                avena_sativa_gca951802355v1cm,
+                                (
+                                  avena_sativa_gca951802355v1cm_A,
+                                  avena_sativa_gca951802355v1cm_C,
+                                  avena_sativa_gca951802355v1cm_D
+                                ),
+                                avena_sativa_gca947311155v1cm,
+                                (
+                                  avena_sativa_gca947311155v1cm_A,
+                                  avena_sativa_gca947311155v1cm_C,
+                                  avena_sativa_gca947311155v1cm_D
+                                ),
+                                avena_sativa_gca951802365v1cm,
+                                (
+                                  avena_sativa_gca951802365v1cm_A,
+                                  avena_sativa_gca951802365v1cm_C,
+                                  avena_sativa_gca951802365v1cm_D
+                                ),
+                                avena_sativa_gca947311135v1cm,
+                                (
+                                  avena_sativa_gca947311135v1cm_A,
+                                  avena_sativa_gca947311135v1cm_C,
+                                  avena_sativa_gca947311135v1cm_D
+                                ),
+                                avena_sativa_gca947311925v1cm,
+                                (
+                                  avena_sativa_gca947311925v1cm_A,
+                                  avena_sativa_gca947311925v1cm_C,
+                                  avena_sativa_gca947311925v1cm_D
+                                ),
+                                avena_sativa_gca947311345v1cm,
+                                (
+                                  avena_sativa_gca947311345v1cm_A,
+                                  avena_sativa_gca947311345v1cm_C,
+                                  avena_sativa_gca947311345v1cm_D
+                                ),
+                                avena_sativa_gca947312425v1cm,
+                                (
+                                  avena_sativa_gca947312425v1cm_A,
+                                  avena_sativa_gca947312425v1cm_C,
+                                  avena_sativa_gca947312425v1cm_D
+                                ),
+                                avena_sativa_gca947311295v1cm,
+                                (
+                                  avena_sativa_gca947311295v1cm_A,
+                                  avena_sativa_gca947311295v1cm_C,
+                                  avena_sativa_gca947311295v1cm_D
+                                ),
+                                avena_sativa_gca947311595v1cm,
+                                (
+                                  avena_sativa_gca947311595v1cm_A,
+                                  avena_sativa_gca947311595v1cm_C,
+                                  avena_sativa_gca947311595v1cm_D
+                                ),
+                                avena_sativa_gca951802345v1cm,
+                                (
+                                  avena_sativa_gca951802345v1cm_A,
+                                  avena_sativa_gca951802345v1cm_C,
+                                  avena_sativa_gca951802345v1cm_D
+                                ),
+                                avena_sativa_ot3098,
+                                (
+                                  avena_sativa_ot3098_A,
+                                  avena_sativa_ot3098_C,
+                                  avena_sativa_ot3098_D
+                                ),
+                                avena_sativa_sang,
+                                (
+                                  avena_sativa_sang_A,
+                                  avena_sativa_sang_C,
+                                  avena_sativa_sang_D,
+                                  avena_sativa_sang_U[&&NHX:unassigned_region_component=1]
+                                )
+                              )Avena_sativa,
+                              (
+                                avena_sterilis_gca947313225v1cm,
+                                (
+                                  avena_sterilis_gca947313225v1cm_A,
+                                  avena_sterilis_gca947313225v1cm_C,
+                                  avena_sterilis_gca947313225v1cm_D
+                                ),
+                                avena_sterilis_gca947313515v1cm,
+                                (
+                                  avena_sterilis_gca947313515v1cm_A,
+                                  avena_sterilis_gca947313515v1cm_C,
+                                  avena_sterilis_gca947313515v1cm_D
+                                )
+                              )Avena_sterilis,
+                            )Avena,
                             lolium_perenne
                           )Poeae,
                           (
@@ -436,7 +615,7 @@
                 papaver_somniferum
               )Petrosaviidae
             )Mesangiospermae,
-            nymphaea_colorata
+            nymphaea_colorata_gca008831285v2rs
           )Magnoliopsida,
           selaginella_moellendorffii
         )Tracheophyta
