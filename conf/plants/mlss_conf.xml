@@ -546,14 +546,6 @@
       </species_set>
     </one_vs_all>
 
-    <!-- Reference species for specific clades -->
-    <one_vs_all method="LASTZ_NET" ref_genome="medicago_truncatula" against="Fabids"/>
-    <one_vs_all method="LASTZ_NET" ref_genome="oryza_sativa">
-      <species_set in_collection="default">
-        <taxonomic_group taxon_name="Liliopsida"/>
-      </species_set>
-    </one_vs_all>
-
     <!-- Reference wheat vs all wheat cultivars and related species -->
     <one_vs_all method="LASTZ_NET" ref_genome="triticum_aestivum">
       <species_set in_collection="wheat_cultivars">
@@ -642,7 +634,7 @@
     />
     <protein_trees
       collection="oat_cultivars"
-      homology_range_index="40"
+      homology_range_index="34"
     />
     <protein_trees
       collection="rice_cultivars"
