@@ -453,6 +453,7 @@
         <genome name="mus_spretus"/>
         <genome name="mus_spicilegus"/>
         <genome name="rattus_norvegicus"/>
+        <genome name="mus_musculus_molossinusjf1msj"/>
       </species_set>
     </multiple_alignment>
 
