@@ -23,7 +23,7 @@ HALXS - Compara XS HAL module
 
 package HALXS;
 
-use v5.26.2;
+use v5.24.3;
 use strict;
 use warnings;
 
