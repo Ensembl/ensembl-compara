@@ -2,47 +2,47 @@
     {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division-agnostic+work",
+      "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104440/Division-agnostic+work",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-Releasedependencygraph",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104693/Pre-release+checks#Pre-releasechecks-Releasedependencygraph",
             "summary": "Set up the release dependency graph"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-DeclarationofIntentions",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104693/Pre-release+checks#Pre-releasechecks-DeclarationofIntentions",
             "summary": "Create the intentions page"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-ChecktheLinuxbrewinstallation",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104693/Pre-release+checks#Pre-releasechecks-ChecktheLinuxbrewinstallation",
             "summary": "Check the Linuxbrew installation"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Pre-release+checks#Pre-releasechecks-MakesomespaceontheMySQLservers",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104693/Pre-release+checks#Pre-releasechecks-MakesomespaceontheMySQLservers",
             "summary": "Make some space on the MySQL servers"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Schema+finalization",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27099810/Schema+finalization",
             "summary": "Schema finalization"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Code+branching",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103418/Code+branching",
             "summary": "Code branching"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Ensembl+repositories+configuration#Ensemblrepositoriesconfiguration-Preparingeverythingforarelease",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103940/Ensembl+repositories+configuration#Ensemblrepositoriesconfiguration-Preparingeverythingforarelease",
             "summary": "Prepare the shared repositories"
          }
       ],
@@ -51,11 +51,11 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Mid-production+tasks",
+      "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104435/Mid-production+tasks",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Mid-production+tasks#Midproductiontasks-Preliminarystaging-sitecheckcoordination",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104435/Mid-production+tasks#Midproductiontasks-Preliminarystaging-sitecheckcoordination",
             "summary": "Preliminary staging-site check coordination"
          }
       ],
@@ -64,53 +64,53 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Division-agnostic+work",
+      "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104440/Division-agnostic+work",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Static+documentation+update#Staticdocumentationupdate-Comparastaticdocumentation",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104072/Static+documentation+update#Staticdocumentationupdate-Comparastaticdocumentation",
             "summary": "Update Compara static documentation"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Static+documentation+update#Staticdocumentationupdate-Schemadocumentation",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104072/Static+documentation+update#Staticdocumentationupdate-Schemadocumentation",
             "summary": "Update Compara schema documentation in Ensembl plugins"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103101/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
             "summary": "Fungi data dump server usage"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103101/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
             "summary": "Metazoa data dump server usage"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103101/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
             "summary": "Pan data dump server usage"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103101/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
             "summary": "Plants data dump server usage"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103101/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
             "summary": "Protists data dump server usage"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103101/Flat+file+dumps#Flatfiledumps-Trackingdatadumpserverusage",
             "summary": "Vertebrates data dump server usage"
          }
       ],
