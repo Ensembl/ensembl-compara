@@ -14,7 +14,7 @@ addons:
       - graphviz
 
 services:
-  - mysql
+  - mysql: "5.7"
 
 cache:
   pip: true
