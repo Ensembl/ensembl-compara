@@ -54,7 +54,7 @@ sub pipeline_analyses_dump_constrained_elems {
                 'extra_parameters'      => [ 'name' ],
             },
             -flow_into      => {
-                '2->A' => [ 'dump_constrained_elements' ],
+                '2->A' => [ 'fetch_exp_ce_line_count' ],
                 'A->1' => [ 'ce_funnel_check' ],
             },
         },
@@ -65,24 +65,34 @@ sub pipeline_analyses_dump_constrained_elems {
             -flow_into  => [ { 'md5sum_ce' => INPUT_PLUS() } ],
         },
 
-        {   -logic_name     => 'dump_constrained_elements',
-            -module         => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters     => {
-                'cmd'   => '#dump_features_exe# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --lex_sort --reg_conf "#registry#" | tail -n+2 > #bed_file#',
-                'registry' => '#reg_conf#',
+        {   -logic_name => 'fetch_exp_ce_line_count',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'db_conn'    => '#compara_db#',
+                'inputquery' => q/
+                    SELECT COUNT(DISTINCT dnafrag_id, dnafrag_start, dnafrag_end) AS exp_ce_line_count
+                    FROM constrained_element
+                    JOIN dnafrag USING (dnafrag_id)
+                    WHERE method_link_species_set_id = #mlss_id#
+                    AND genome_db_id = #genome_db_id#
+                /,
             },
-            -rc_name        => '4Gb_24_hour_job',
-            -hive_capacity => $self->o('dump_ce_capacity'),
-            -flow_into      => [ 'check_not_empty' ],
+            -flow_into  => { 2 => { 'dump_constrained_elements' => INPUT_PLUS() } },
         },
 
-        {   -logic_name     => 'check_not_empty',
-            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::CheckNotEmpty',
-            -rc_name        => '1Gb_job',
+        {   -logic_name     => 'dump_constrained_elements',
+            -module         => 'Bio::EnsEMBL::Compara::RunnableDB::SystemCommands',
             -parameters     => {
-                'min_number_of_lines'   => 1,   # The header is always present
-                'filename'              => '#bed_file#',
+                'commands' => [
+                    q/#dump_features_exe# --feature ce_#mlss_id# --compara_db #compara_db# --species #name# --lex_sort --reg_conf "#registry#" | tail -n+2 > #bed_file#/,
+                    q/#textlint_exe# --threads 1 null #bed_file#/,
+                    q/[[ $(grep -vc '^track\b' #bed_file#) -eq #exp_ce_line_count# ]]/,  # to keep it simple we do not count BED track lines
+                ],
+                'registry' => '#reg_conf#',
+                'textlint_exe' => $self->o('textlint_exe'),
             },
+            -rc_name        => '4Gb_24_hour_job',
+            -hive_capacity  => $self->o('dump_ce_capacity'),
             -flow_into      => [ 'convert_to_bigbed' ],
         },
 

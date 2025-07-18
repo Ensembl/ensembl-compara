@@ -445,13 +445,23 @@ sub adaptor {
 
 sub get_all_Slices {
   my ( $self, @species_names ) = @_;
+  return $self->_get_filtered_Slices(\@species_names);
+}
+
+sub _get_filtered_Slices {
+  my ( $self, $species_names, $prune_ancestral) = @_;
+  # This is much the same as 'get_all_Slices', but with two key differences:
+  # 1) Arg[1] is an arrayref of species names;
+  # 2) Arg[2] is a flag indicating whether to prune an ancestral slice having
+  #    a child for which all extant genomes have been removed.
+
   my $slices = [];
 
-  if (@species_names) {
+  if (@{$species_names}) {
 
     #Substitute _ for spaces & check if the current GenomeDB matches with any of them
     my %species_to_keep = ();
-    foreach my $this_species_name (@species_names) {
+    foreach my $this_species_name (@{$species_names}) {
       ( my $space_species_name = $this_species_name ) =~ s/_/ /g;
       $species_to_keep{$this_species_name} = 1;
       $species_to_keep{$space_species_name} = 1;
@@ -465,6 +475,29 @@ sub get_all_Slices {
       } else {
         $removed_species{$slice->genome_db->name} = 1;
       }
+    }
+
+    if (scalar(keys %removed_species) > 0
+          && exists $species_to_keep{'ancestral_sequences'}
+          && $prune_ancestral) {
+      my @filtered_slices = ();
+      foreach my $slice ( @$slices ) {
+        if ($slice->genome_db->name eq 'ancestral_sequences') {
+          my $underlying_slices = $slice->get_all_underlying_Slices;
+          my $ga_node = $underlying_slices->[0]->{_node_in_tree};
+          if ($ga_node) {
+            # The current slice has to be discarded if it is an ancestral
+            # node that fully maps to removed species on one of its sides
+            my $c1 = scalar(grep {not $removed_species{$_->genomic_align_group->genome_db->name} } @{$ga_node->children->[0]->get_all_leaves});
+            my $c2 = scalar(grep {not $removed_species{$_->genomic_align_group->genome_db->name} } @{$ga_node->children->[1]->get_all_leaves});
+            if (!($c1 and $c2)) {
+              next;
+            }
+          }
+        }
+        push @filtered_slices, $slice;
+      }
+      $slices = \@filtered_slices;
     }
   }
   else {
@@ -632,10 +665,9 @@ sub summary_as_hash {
 
 =head2 get_SimpleAlign
 
-  Arg[1]      : (optional) reference to an array of species to restrict the alignment to
-  Arg[2]      : (optional) What detail to use for the ID field
-                "full" => $species_name.$seq_region/$seq_region_start-$seq_region_end
-                none => $slice->genome_db->name + counter/
+  Arg[1]     : [optional] string $species_name1
+  Arg[2]     : [optional] string $species_name2
+  Arg[...]   : [optional] string $species_nameN
   Example     : use Bio::AlignIO;
                 my $out = Bio::AlignIO->newFh(-fh=>\*STDOUT, -format=> "clustalw");
                 print $out $align_slice->get_SimpleAlign();
@@ -645,12 +677,24 @@ sub summary_as_hash {
                 describes the alignment where the first sequence
                 corresponds to the reference Slice and the remaining
                 correspond to the other species.
+                If a list of species is specified, returns
+                a Bio::SimpleAlign for these species.
   Returntype  : Bio::SimpleAlign object
 
 =cut
 
 sub get_SimpleAlign {
   my ($self, @species) = @_;
+  return $self->_get_filtered_SimpleAlign(\@species);
+}
+
+sub _get_filtered_SimpleAlign {
+  my ( $self, $species, $prune_ancestral) = @_;
+  # This is much the same as 'get_SimpleAlign', but with two key differences:
+  # 1) Arg[1] is an arrayref of species names;
+  # 2) Arg[2] is a flag indicating whether to prune an ancestral sequence having
+  #    a child for which all extant genomes have been removed.
+
   my $simple_align;
 
   ## Create a single Bio::SimpleAlign for the projection  
@@ -660,7 +704,7 @@ sub get_SimpleAlign {
 
   my $genome_db_name_counter;
 
-  foreach my $slice (@{$self->get_all_Slices(@species)}) {
+  foreach my $slice (@{$self->_get_filtered_Slices($species, $prune_ancestral)}) {
     my $seq = Bio::LocatableSeq->new(
             -SEQ    => $slice->seq,
             -START  => $slice->start,
@@ -1226,9 +1270,8 @@ sub _add_GenomicAlign_to_a_Slice {
 
       foreach my $genomic_align (@{$genomic_align_group->get_all_GenomicAligns}) {
         if ($this_genomic_align == $genomic_align) {
-          my $simple_tree = $genomic_align_node->newick_format('simple');
+          my $simple_tree = $genomic_align_node->newick_format('ryo', '%{^-n|i}'); # simple, without branch lengths
           $simple_tree =~ s/\_[^\_]+\_\d+\_\d+\[[\+\-]\]//g;
-          $simple_tree =~ s/\:[\d\.]+//g;
           $this_core_slice->{_tree} = $simple_tree;
           $this_core_slice->{_node_in_tree} = $genomic_align_node;
           weaken($this_core_slice->{_node_in_tree});

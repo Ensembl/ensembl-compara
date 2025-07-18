@@ -53,6 +53,7 @@ sub param_defaults {
     return {
         %{ $self->SUPER::param_defaults() },
         'cmd'   => '#emf2maf_program# #output_file#',   # Cannot use the array form becasue #output_file# may contain wildcard characters
+        'store_healthcheck_results' => 1,
     }
 }
 
@@ -107,7 +108,7 @@ sub _healthcheck {
     chomp $num_blocks;
     if ($num_blocks != $self->param_required('num_blocks')) {
 	die("Number of block dumped is $num_blocks but should be " . $self->param('num_blocks'));
-    } else {
+    } elsif ($self->param('store_healthcheck_results')) {
 	print "Wrote " . $self->param('num_blocks') . " blocks\n";
 	#Store results in table. Not really necessary but good to have 
 	#visual confirmation all is well
