@@ -146,7 +146,6 @@ jobs:
       script: ./travisci/perl-linter_harness.sh
 
     - language: python
-      dist: bionic
       python: "3.10"
       name: "Python unit tests on the minimum version"
       install:
@@ -156,7 +155,6 @@ jobs:
         - pytest --server=mysql://travis@127.0.0.1:3306/
 
     - language: python
-      dist: bionic
       python: "3.11"
       name: "Python unit tests on the latest version, with code coverage"
       install:
@@ -171,7 +169,6 @@ jobs:
         - codecov
 
     - language: python
-      dist: bionic
       python: "3.10"
       name: "Python linter"
       install:
