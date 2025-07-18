@@ -55,7 +55,7 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift;
     $self->SUPER::fetch_input();
-    $self->param('seq_type_args', ($self->param('cdna') ? '-nt' : '-wag'));
+    $self->param('seq_type_args', ($self->param('cdna') ? '-nt -gtr' : '-wag'));
 }
 
 1;
