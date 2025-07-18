@@ -164,6 +164,7 @@
       <genome name="necator_americanus_gca031761385v1rs"/>
       <genome name="onchocerca_volvulus"/>
       <genome name="pristionchus_pacificus"/>
+      <genome name="steinernema_hermaphroditum_gca030435675v2gb"/>
       <genome name="strongyloides_ratti"/>
       <genome name="trichinella_spiralis"/>
       <genome name="trichuris_muris"/>
@@ -174,6 +175,7 @@
       <genome name="hymenolepis_microstoma"/>
       <genome name="schistosoma_haematobium_gca000699445v3rs"/>
       <genome name="schistosoma_mansoni"/>
+      <genome name="schmidtea_mediterranea_gca045838265v1cm"/>
       <!-- Included species from Priapulida -->
       <genome name="priapulus_caudatus_gca000485595v2"/>
       <!-- Included species from Rotifera -->
