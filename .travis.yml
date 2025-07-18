@@ -1,6 +1,8 @@
 os: linux
 language: generic
 
+dist: bionic
+
 env:
   global:
     # yamllint disable-line rule:line-length
@@ -69,7 +71,7 @@ before_install:
 jobs:
   include:
     - language: perl
-      perl: 5.30
+      perl: 5.32
       name: "Housekeeping (all languages)"
       install:
         - sudo apt-get -y install shellcheck
@@ -82,7 +84,7 @@ jobs:
       script: prove -rv ./travisci/all-housekeeping/
 
     - language: perl
-      perl: 5.30
+      perl: 5.32
       name: "SQL unit tests"
       install:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .
@@ -90,7 +92,7 @@ jobs:
       script: prove -r ./travisci/sql-unittest/
 
     - language: perl
-      perl: 5.26
+      perl: 5.24
       name: "Perl unit tests on the minimum version"
       env:
         - COVERAGE=true
@@ -103,7 +105,7 @@ jobs:
       script: ./travisci/perl-unittest_harness.sh
 
     - language: perl
-      perl: 5.30
+      perl: 5.32
       name: "Perl unit tests on the latest version, with code coverage"
       env:
         - COVERAGE=true
@@ -118,7 +120,7 @@ jobs:
         - cover --nosummary -report codecov
 
     - language: perl
-      perl: 5.30
+      perl: 5.32
       name: "Perl external unit tests on the latest version, with code coverage"
       env:
         - COVERAGE=true
@@ -135,7 +137,7 @@ jobs:
         - cover --nosummary -report codecov
 
     - language: perl
-      perl: 5.30
+      perl: 5.32
       name: "Perl linter"
       install:
         - cpanm --quiet --installdeps --notest --cpanfile ensembl/cpanfile .

@@ -14,7 +14,7 @@
 # See the License for the specific language governing permissions and
 # limitations under the License.
 
-use v5.26.2;
+use v5.24.3;
 use ExtUtils::MakeMaker;
 
 # Version of Makefile.pl that assumes that all the dependencies can be found via linuxbrew
