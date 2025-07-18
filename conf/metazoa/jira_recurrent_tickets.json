@@ -2,11 +2,11 @@
     {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Relco+setup",
+      "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104285/Relco+setup",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Relco+setup#Relcosetup-Patchthereuseddatabasestothelatestschema",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104285/Relco+setup#Relcosetup-Patchthereuseddatabasestothelatestschema",
             "summary": "Patch the reused databases"
          }
       ],
@@ -15,43 +15,43 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup",
+      "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104771/Production+setup",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Registryconfigurationfile",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104771/Production+setup#Productionsetup-Registryconfigurationfile",
             "summary": "Registry Configuration file"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-ReviewMLSSsconfigurationfile",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104771/Production+setup#Productionsetup-ReviewMLSSsconfigurationfile",
             "summary": "Review MLSSs configuration file"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Checkcoredatabases",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104771/Production+setup#Productionsetup-Checkcoredatabases",
             "summary": "Check the core databases"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/pages/viewpage.action?pageId=97126141\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-6 -port 4616{code}",
+            "description": "*Confluence*: https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104139/Preparation+of+the+Master+database+with+pipeline\n*GitHub*: [<Division>/PrepareMasterDatabaseForRelease_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/PrepareMasterDatabaseForRelease_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::PrepareMasterDatabaseForRelease_conf -host mysql-ens-compara-prod-6 -port 4616{code}",
             "summary": "Prepare the master database",
             "name_on_graph": "Prepare master DB"
          },
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Genomedumps\n*GitHub*: [DumpGenomes_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
+            "description": "*Confluence*: https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104771/Production+setup#Productionsetup-Genomedumps\n*GitHub*: [DumpGenomes_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/DumpGenomes_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpGenomes_conf -host mysql-ens-compara-prod-X -port XXXX -division <division>{code}",
             "summary": "Run the genome dumping pipeline",
             "name_on_graph": "Genome dumps"
          },
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "*Confluence*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "description": "*Confluence*: https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104771/Production+setup#Productionsetup-Members\n*GitHub*: [<Division>/LoadMembers_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/<Division>/LoadMembers_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::<Division>::LoadMembers_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
             "summary": "Run the member loading pipeline",
             "name_on_graph": "Member loading"
          }
@@ -61,7 +61,7 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "*Intentions for release*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Intentions+for+release+<version>\n*Production pipelines brief*: https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Production+Pipelines+Brief",
+      "description": "*Intentions for release*: https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27119028/Release+plans\n*Production pipelines brief*: https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103912/Production+Pipelines+Brief",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Production tasks",
@@ -140,7 +140,7 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Add+CACTUS+HAL+Alignment+to+Compara",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27101483/Add+CACTUS+HAL+Alignment+to+Compara",
             "summary": "Process Cactus data",
             "name_on_graph": "Process Cactus data"
          },
@@ -165,11 +165,11 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Mid-production+division+tasks",
+      "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104609/Mid-production+division+tasks",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Mid-production+division+tasks#Midproductiondivisiontasks-Preliminarystaging-sitecheck",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104609/Mid-production+division+tasks#Midproductiondivisiontasks-Preliminarystaging-sitecheck",
             "summary": "Preliminary staging-site check"
          }
       ],
@@ -178,45 +178,45 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Construction+of+the+release+database",
+      "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27073301/Construction+of+the+release+database",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Creation+of+a+new+release+database",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104891/Creation+of+a+new+release+database",
             "summary": "Create Release Database",
             "name_on_graph": "Create Release DB"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+DNA+data",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104181/Merge+the+DNA+data",
             "summary": "Merge DNA data",
             "name_on_graph": "Merge all for OrthWGA"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-Preliminaries",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103173/Merge+the+homology+pipelines#Mergethehomologypipelines-Preliminaries",
             "summary": "Backup release database",
             "name_on_graph": "Backup release DB"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103173/Merge+the+homology+pipelines",
             "summary": "Merge the homology pipelines",
             "name_on_graph": "Merge homologies"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Merge+the+homology+pipelines#Mergethehomologypipelines-PostHomologyMergepipeline",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103173/Merge+the+homology+pipelines#Mergethehomologypipelines-PostHomologyMergepipeline",
             "summary": "Run the PostHomologyMerge_conf pipeline"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Final+healthchecking+and+testing",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103893/Final+healthchecking+and+testing",
             "summary": "Run the datachecks"
          },
          {
@@ -227,31 +227,31 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27105027/Testing+the+staging+website#Testingthestagingwebsite-DNAside",
             "summary": "Test the DNA data"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27105027/Testing+the+staging+website#Testingthestagingwebsite-Homologyside",
             "summary": "Test the homologies data"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27105027/Testing+the+staging+website#Testingthestagingwebsite-Downloads",
             "summary": "Test the downloads"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27105027/Testing+the+staging+website#Testingthestagingwebsite-Documentation&Statistics",
             "summary": "Test the documentation and statistics"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "[https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisionswithoutanancestraldatabase(e.g.Pan,Metazoa)]",
+            "description": "[https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104621/Handover+the+database+and+the+Age+of+Base+file#HandoverthedatabaseandtheAgeofBasefile-Non-vertebratesdivisionswithoutanancestraldatabase(e.g.Pan,Metazoa)]",
             "labels": ["Handover_anchor"],
             "summary": "Handover of release DB"
          }
@@ -262,7 +262,7 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks",
+      "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104242/Post-handover+tasks",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
@@ -272,13 +272,13 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks#Posthandovertasks-MovepipelinedirectoriestoNFS",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104242/Post-handover+tasks#Posthandovertasks-MovepipelinedirectoriestoNFS",
             "summary": "Move pipeline directories to NFS"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Post-handover+tasks#Posthandovertasks-Cleanupgenomedumps",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104242/Post-handover+tasks#Posthandovertasks-Cleanupgenomedumps",
             "summary": "Clean up genome dumps"
          },
          {
@@ -299,17 +299,17 @@
    {
       "assignee": "<RelCo>",
       "component": "Relco tasks",
-      "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites",
+      "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103946/Test+the+test+sites",
       "subtasks": [{
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-Website",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103946/Test+the+test+sites#Testthetestsites-Website",
             "summary": "Test the web site"
          },
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
-            "description": "https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Test+the+test+sites#Testthetestsites-RESTserver",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27103946/Test+the+test+sites#Testthetestsites-RESTserver",
             "summary": "Test the REST server"
          }
       ],
