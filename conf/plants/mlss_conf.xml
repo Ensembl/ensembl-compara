@@ -606,9 +606,9 @@
     <multiple_alignment collection="wheat_subgenome_B" method="CACTUS_DB" ref_genome="triticum_aestivum"/>
     <multiple_alignment collection="wheat_subgenome_D" method="CACTUS_DB" ref_genome="triticum_aestivum"/>
     <multiple_alignment collection="barley_cultivars" method="CACTUS_DB" ref_genome="hordeum_vulgare"/>
-    <multiple_alignment collection="oat_subgenome_A" method="CACTUS_DB" ref_genome="avena_sativa_sang"/>
-    <multiple_alignment collection="oat_subgenome_C" method="CACTUS_DB" ref_genome="avena_sativa_sang"/>
-    <multiple_alignment collection="oat_subgenome_D" method="CACTUS_DB" ref_genome="avena_sativa_sang"/>
+    <multiple_alignment collection="oat_subgenome_A" method="CACTUS_DB" ref_genome="avena_sativa_ot3098"/>
+    <multiple_alignment collection="oat_subgenome_C" method="CACTUS_DB" ref_genome="avena_sativa_ot3098"/>
+    <multiple_alignment collection="oat_subgenome_D" method="CACTUS_DB" ref_genome="avena_sativa_ot3098"/>
   </multiple_alignments>
 
   <!-- DFW work -->
