@@ -137,9 +137,9 @@ sub pvalue_avg {
 
 =head2 lca_id
 
-    Arg[1]      : (opt.) <int> taxonomy id
+    Arg[1]      : (opt.) <int> Internal ID
     Example     : my $lca = $tree->lca_id
-    Description : Getter/Setter for the lowest common ancestor's taxonomy ID
+    Description : Getter/Setter for the lowest common ancestor's species tree node ID
     ReturnType  : scalar
     Exceptions  : none
     Caller      : general
