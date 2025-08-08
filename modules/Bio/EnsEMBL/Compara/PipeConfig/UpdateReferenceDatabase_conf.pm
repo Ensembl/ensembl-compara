@@ -70,8 +70,6 @@ sub default_options {
 
         # shared locations to symlink and copy fastas for orthofinder
         'shared_fasta_dir' => $self->o('shared_hps_dir') . '/reference_fasta_symlinks/',
-        'ssh_ip_loc' => $self->o('embassy_ip_rr'),
-        'ref_bucket' => $self->o('embassy_ref_bucket'),
 
         # update from metadata options
         'list_genomes_script'    => $self->check_exe_in_ensembl('ensembl-metadata/misc_scripts/get_list_genomes_for_division.pl'),
@@ -394,8 +392,7 @@ sub core_pipeline_analyses {
                     },
                 },
                 'A->1'  => [ 'backup_ref_db_again' ],
-                'B->1'  => [ 'copy_to_bucket' ],
-                '1->B'  => [ 'fasta_dumps_per_collection_factory' ],
+                1       => [ 'fasta_dumps_per_collection_factory' ],
             },
             -rc_name    => '2Gb_job',
         },
@@ -417,16 +414,6 @@ sub core_pipeline_analyses {
             -language   => 'python3',
             -parameters => {
                 'symlink_fasta_exe' => $self->o('symlink_fasta_exe'),
-            },
-        },
-
-        {   -logic_name => 'copy_to_bucket',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'ssh_ip_loc'  => $self->o('ssh_ip_loc'),
-                'ref_bucket'  => $self->o('ref_bucket'),
-                'symlink_dir' => $self->o('shared_fasta_dir'),
-                'cmd'         => 'cd #symlink_dir#; tar cfhp - * | ssh ${USER}@#ssh_ip_loc# \'(cd #ref_bucket#; tar xfp - )\'',
             },
         },
 
