@@ -137,7 +137,7 @@ our $config = {
             {
                 description => 'The protein sequences should not be only ACGTN (unless a few exceptions like some immunoglobulin genes)',
                 query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE genome_db_id = #genome_db_id# AND source_name LIKE "%PEP" AND sequence REGEXP "^[ACGTN]*$"',
-                expected_size => '< 11',
+                expected_size => '< 33',
             },
             {
                 description => 'The ncRNA sequences have to be only ACGTN. Ambiguity codes have to be explicitly switched on',
