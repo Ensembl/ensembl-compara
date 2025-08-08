@@ -217,7 +217,7 @@ process linkAnnoCache {
 *@output tuple of path to annotation GTF and genome fasta
 */
 process buscoAnnot {
-    label 'retry_with_128gb_mem_c32'
+    label 'retry_with_256gb_mem_c32'
 
     publishDir "${params.results_dir}/anno_cache/$genome", pattern: "annotation.gtf", mode: "copy",  overwrite: true
 
@@ -229,13 +229,15 @@ process buscoAnnot {
     script:
     if (params.use_anno == "")
     """
+        set -o pipefail
         SENS=""
         if [ "${params.sensitive}" != "" ];
         then
             SENS="-M0 -k5"
         fi
-        ${params.miniprot_exe} \$SENS -t ${params.cores} -d genome.mpi $genome
-        ${params.miniprot_exe} -N 0 -Iu -t ${params.cores} --gff genome.mpi $busco_prot | grep -v '##PAF' \
+        # Note that we are using 30 cores on purpose to avoid SLURM issues.
+        ${params.miniprot_exe} \$SENS -t 30 -d genome.mpi $genome
+        ${params.miniprot_exe} -N 0 -Iu -t 30 --gff genome.mpi $busco_prot | grep -v '##PAF' \
         | awk -F "\t" 'BEGIN{OFS="\t"} \$3=="mRNA" {match(\$9, /Target=([^; ]+)/, m)} {attribs=gensub(/(ID|Parent)=[^; ]+/, sprintf("\\\\1=%s", m[1]), "g", \$9); \$9=attribs; print}' > annotation.gtf
         rm -f genome.mpi
     """
@@ -263,7 +265,7 @@ process buscoAnnot {
 *@output path to cDNA fasta
 */
 process runGffread {
-    label 'rc_4Gb'
+    label 'retry_with_4gb_mem_c1'
     input:
         tuple path(busco_annot), path(genome)
     output:
