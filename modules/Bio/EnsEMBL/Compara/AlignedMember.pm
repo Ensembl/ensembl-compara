@@ -169,17 +169,18 @@ sub cigar_line {
   return $self->{'_cigar_line'};
 }
 
-
-sub get_cigar_breakout{
+sub get_cigar_breakout {  ## DEPRECATED
   my $self = shift;
-  deprecate('AlignedMember::get_cigar_breakout is deprecated and will be removed in e102. Use Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout instead');
+  deprecate('AlignedMember::get_cigar_breakout is deprecated, and may be removed in a future release.'
+            . ' Use Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout instead');
   return Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_breakout($self->{'_cigar_line'});
 }
 
 
-sub get_cigar_array{
+sub get_cigar_array {  ## DEPRECATED
   my $self = shift;
-  deprecate('AlignedMember::get_cigar_array is deprecated and will be removed in e102. Use Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array instead');
+  deprecate('AlignedMember::get_cigar_array is deprecated, and may be removed in a future release.'
+            . ' Use Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array instead');
   return Bio::EnsEMBL::Compara::Utils::Cigars::get_cigar_array($self->{'_cigar_line'});
 }
 

@@ -271,42 +271,18 @@ sub get_all_genomic_aligns_for_node {
   return $self->genomic_align_group->get_all_GenomicAligns;
 }
 
-=head2 genomic_align_array (DEPRECATED)
-
-  Arg [1]     : -none-
-  Example     : $genomic_aligns = $object->genomic_align_array
-  Description : Alias for get_all_genomic_aligns_for_node. TO BE DEPRECATED
-  Returntype  : listref of Bio::EnsEMBL::Compara::GenomicAlign objects
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub genomic_align_array {
+sub genomic_align_array {  ## DEPRECATED
     my $self = shift(@_);
-
-    deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignTree->get_all_genomic_aligns_for_node() method instead");
+    deprecate('GenomicAlignTree::genomic_align_array is deprecated, and may be removed in a future release.'
+              . ' Use Bio::EnsEMBL::Compara::GenomicAlignTree->get_all_genomic_aligns_for_node() instead');
     return($self->get_all_genomic_aligns_for_node);
 
 }
 
-=head2 get_all_GenomicAligns (DEPRECATED)
-
-  Arg [1]     : -none-
-  Example     : $genomic_aligns = $object->get_all_GenomicAligns
-  Description : Alias for get_all_genomic_aligns_for_node. TO BE DEPRECATED
-  Returntype  : listref of Bio::EnsEMBL::Compara::GenomicAlign objects
-  Exceptions  : none
-  Caller      : general
-  Status      : Stable
-
-=cut
-
-sub get_all_GenomicAligns {
+sub get_all_GenomicAligns {  ## DEPRECATED
     my $self = shift(@_);
-
-    deprecate("Use Bio::EnsEMBL::Compara::GenomicAlignTree->get_all_genomic_aligns_for_node() method instead");
+    deprecate('GenomicAlignTree::get_all_GenomicAligns is deprecated, and may be removed in a future release.'
+              . ' Use Bio::EnsEMBL::Compara::GenomicAlignTree->get_all_genomic_aligns_for_node() instead');
     return($self->get_all_genomic_aligns_for_node);
 
 }

@@ -1546,32 +1546,6 @@ sub get_GenomicAlignTree {
 }
 
 
-sub _print {    ## DEPRECATED
-  my ($self, $FILEH) = @_;
-
-  $FILEH ||= \*STDOUT;
-  print $FILEH
-"Bio::EnsEMBL::Compara::GenomicAlignBlock object ($self)
-  dbID = ", ($self->dbID or "-undef-"), "
-  adaptor = ", ($self->adaptor or "-undef-"), "
-  method_link_species_set = ", ($self->method_link_species_set or "-undef-"), "
-  method_link_species_set_id = ", ($self->method_link_species_set_id or "-undef-"), "
-  genomic_aligns = ", (scalar(@{$self->genomic_align_array}) or "-undef-"), "
-  score = ", ($self->score or "-undef-"), "
-  length = ", ($self->length or "-undef-"), "
-  alignments: \n";
-  foreach my $this_genomic_align (@{$self->genomic_align_array()}) {
-    my $species_name = $this_genomic_align->genome_db->name;
-    if ($self->reference_genomic_align and $self->reference_genomic_align == $this_genomic_align) {
-      print $FILEH "    * ", $this_genomic_align->toString, "\n";
-    } else {
-      print $FILEH "    - ", $this_genomic_align->toString, "\n";
-    }
-  }
-
-}
-
-
 =head2 get_mapper_coordinates
 
 Arg [1]    : start coordinates

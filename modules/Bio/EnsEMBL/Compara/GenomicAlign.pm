@@ -1014,58 +1014,6 @@ sub _get_fake_aligned_sequence_from_cigar_line {
 }
 
 
-sub _print {    ## DEPRECATED
-  my ($self, $FILEH) = @_;
-
-  my $verbose = verbose;
-  verbose(0);
-  
-  $FILEH ||= \*STDOUT;
-
-#   print $FILEH
-# "Bio::EnsEMBL::Compara::GenomicAlign object ($self)
-#   dbID = ".($self->dbID or "-undef-")."
-#   adaptor = ".($self->adaptor or "-undef-")."
-#   genomic_align_block = ".($self->genomic_align_block or "-undef-")."
-#   genomic_align_block_id = ".($self->genomic_align_block_id or "-undef-")."
-#   method_link_species_set = ".($self->method_link_species_set or "-undef-")."
-#   method_link_species_set_id = ".($self->method_link_species_set_id or "-undef-")."
-#   dnafrag = ".($self->dnafrag or "-undef-")."
-#   dnafrag_id = ".($self->dnafrag_id or "-undef-")."
-#   dnafrag_start = ".($self->dnafrag_start or "-undef-")."
-#   dnafrag_end = ".($self->dnafrag_end or "-undef-")."
-#   dnafrag_strand = ".($self->dnafrag_strand or "-undef-")."
-#   cigar_line = ".($self->cigar_line or "-undef-")."
-#   visible = ".($self->visible or "-undef-")."
-#   original_sequence = ".($self->original_sequence or "-undef-")."
-#   aligned_sequence = ".($self->aligned_sequence or "-undef-")."
-  
-# ";
-    print $FILEH
-"Bio::EnsEMBL::Compara::GenomicAlign object ($self)
-  dbID = ".($self->dbID or "-undef-")."
-  adaptor = ".($self->adaptor or "-undef-")."
-  genomic_align_block = ".($self->genomic_align_block or "-undef-")."
-  genomic_align_block_id = ".($self->genomic_align_block_id or "-undef-")."
-  method_link_species_set = ".($self->method_link_species_set or "-undef-")."
-  method_link_species_set_id = ".($self->method_link_species_set_id or "-undef-")."
-  dnafrag_start = ".($self->dnafrag_start or "-undef-")."
-  dnafrag_end = ".($self->dnafrag_end or "-undef-")."
-  dnafrag_strand = ".($self->dnafrag_strand or "-undef-")."
-  dnafrag_name = ".($self->dnafrag->name)."
-  genome_db_name = ".($self->dnafrag->genome_db->name)."
-  cigar_line = ".($self->cigar_line or "-undef-")."
-  visible = ".($self->visible or "-undef-")."
-  original_sequence = ".($self->original_sequence or "-undef-")."
-  aligned_sequence = ".($self->aligned_sequence or "-undef-")."
-  
-";
-
-  verbose($verbose);
-
-}
-
-
 =head2 toString
 
   Example    : print $genomic_align->toString();
@@ -1316,7 +1264,6 @@ sub get_Mapper {
     } else {
       my $cigar_line = $self->cigar_line;
       if (!$cigar_line) {
-        $self->_print;
         throw("[$self] has no cigar_line and cannot be retrieved by any means");
       }
       my $alignment_position = (eval{$self->genomic_align_block->start} or 1);

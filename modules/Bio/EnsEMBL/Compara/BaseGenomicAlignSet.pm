@@ -79,7 +79,7 @@ sub slice {
   Arg [1]    : (optional) Bio::EnsEMBL::Slice $reference_slice
   Example    : my $reference_slice = $genomic_align_block->reference_slice;
   Example    : $genomic_align_block->reference_slice($slice);
-  Description: Alias for slice method. TO BE DEPRECATED.
+  Description: Alias for slice method.
   Returntype : Bio::EnsEMBL::Slice object
   Exceptions : 
   Caller     : general
