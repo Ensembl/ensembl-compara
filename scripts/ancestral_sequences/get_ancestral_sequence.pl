@@ -43,6 +43,10 @@ The script creates a directory with a pair of BED+FASTA files for each
 chromosome of the query species. The FASTA file contains the actual sequence,
 while the BED file contains the phylogenetic tree associated with each region.
 
+Note that coordinates in the BED file are 1-based, so that an interval spanning
+the full extent of a chromosome of length 1000 bp would have a start position of
+1 in the chromStart column and an end position of 1000 in the chromEnd column.
+
 =head1 SYNOPSIS
 
 perl get_ancestral_sequence.pl --help
@@ -513,6 +517,10 @@ actg : low-confidence call, ancestral state supported by one sequence only
 N    : failure, the ancestral state is not supported by any other sequence
 -    : the extant species contains an insertion at this postion
 .    : no coverage in the alignment
+
+The convention for the ancestral sequence region coordinates is 1-based,
+so that in a chromosome of length 1000 bp, the first position would be 1
+and the final position would be 1000.
 
 You should find a summary.txt file, which contains statistics about the quality
 of the calls.
