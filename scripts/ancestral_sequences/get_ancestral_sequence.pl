@@ -56,6 +56,7 @@ perl get_ancestral_sequence.pl
     [--ancestral_db   url/registry alias for ancestral core ]
     [--reg_conf       registry config file                  ]
     [--species        name of query species                 ]
+    [--target_species name of target species                ]
     [--alignment_set  name of species set                   ]
     [--mlss_id        mlss id                               ]
     [--dir            directory name for output             ]
@@ -108,6 +109,11 @@ a matching MLSS name
 
 The name for the species to get the ancestral sequence of (default: "Homo sapiens")
 
+=item B<[--target_species name_of_target_species]>
+
+The name of a target species whose most recent common ancestor
+with the query species is taken as the ancestral sequence.
+
 =item B<[--alignment_set name_of_query_species]>
 
 The name of the species set of the alignment (default: "primates")
@@ -150,6 +156,7 @@ perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/ancestral_sequences/get_ancestral
 
 use Data::Dumper;
 use Getopt::Long;
+use List::Util qw/min/;
 use Pod::Usage;
 
 use Bio::EnsEMBL::Registry;
@@ -163,6 +170,7 @@ no warnings 'uninitialized';
 my $reg = "Bio::EnsEMBL::Registry";
 
 my $species_name = "homo_sapiens";
+my $target_species_name;
 my $alignment_set = "primates";
 my $dir = '';
 my $debug = 0;
@@ -179,6 +187,7 @@ GetOptions(
   "ancestral_db=s" => \$ancestral_db,
   "conf|reg_conf=s" => \$registry_file,
   "species=s" => \$species_name,
+  "target_species=s" => \$target_species_name,
   "alignment_set=s" => \$alignment_set,
   "mlss_id=i" => \$mlss_id,
   "dir=s" => \$dir,
@@ -379,16 +388,47 @@ sub dump_ancestral_sequence {
     my $ref_gat = $this_genomic_align_tree->reference_genomic_align_node;
     next if (!$ref_gat); # This should not happen as we get the GAT using a query Slice
     my $ref_aligned_sequence = $ref_gat->aligned_sequence;
-    my $ancestral_sequence = $ref_gat->parent->aligned_sequence;
-    my $sister_sequence;
-    foreach my $child (@{$ref_gat->parent->children}) {
-      if ($child ne $ref_gat) {
-        $sister_sequence = $child->aligned_sequence;
+
+    my @ref_ancestors = @{$ref_gat->get_all_ancestors};
+
+    my $anc_gat;
+    my $ref_lineage_root;
+    if ($target_species_name) {
+      my @leaf_nodes = @{$this_genomic_align_tree->get_all_leaves};
+      my @non_ref_nodes = grep { $_->node_id != $ref_gat->node_id } @leaf_nodes;
+      my @target_nodes = grep { $_->get_genome_db_for_node->name eq $target_species_name } @non_ref_nodes;
+
+      next if (!scalar(@target_nodes));
+
+      my @ref_anc_nodes = @{$ref_gat->get_all_ancestors};
+      my @ref_anc_idxs = (0 .. scalar(@ref_anc_nodes) - 1);
+
+      my $mrca_idx = $ref_anc_idxs[-1];
+      foreach my $target_node (@target_nodes) {
+        my $shared_anc_node = $ref_gat->find_first_shared_ancestor($target_node);
+
+        foreach my $ref_anc_idx (@ref_anc_idxs) {
+          my $ref_anc_node = $ref_anc_nodes[$ref_anc_idx];
+          if ($ref_anc_node->node_id == $shared_anc_node->node_id) {
+            $mrca_idx = $ref_anc_idx if ($ref_anc_idx < $mrca_idx);
+            last;
+          }
+        }
       }
+
+      $anc_gat = $ref_anc_nodes[$mrca_idx];
+      $ref_lineage_root = $mrca_idx > 0 ? $ref_anc_nodes[$mrca_idx-1] : $ref_gat;
+
+    } else {
+      $anc_gat = $ref_gat->parent;
+      $ref_lineage_root = $ref_gat;
     }
+
+    my $ancestral_sequence = $anc_gat->aligned_sequence;
+    my $sister_sequence = $ref_lineage_root->siblings->[0]->aligned_sequence;
     my $older_sequence;
-    if ($ref_gat->parent->parent) {
-      $older_sequence = $ref_gat->parent->parent->aligned_sequence;
+    if ($anc_gat->parent) {
+      $older_sequence = $anc_gat->parent->aligned_sequence;
     }
 #    print $ref_aligned_sequence, "\n\n", "$ancestral_sequence\n\n\n\n";
     my $ref_ga = $ref_gat->genomic_align_group->get_all_GenomicAligns->[0];
