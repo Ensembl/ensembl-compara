@@ -374,10 +374,15 @@ sub dump_ancestral_sequence {
     }
 #    print $ref_aligned_sequence, "\n\n", "$ancestral_sequence\n\n\n\n";
     my $ref_ga = $ref_gat->genomic_align_group->get_all_GenomicAligns->[0];
-    my $tree = $this_genomic_align_tree->newick_format("simple");
-    $tree =~ s/\:[\d\.]+//g;
-    $tree =~ s/_\w+//g;
-    $tree =~ s/\[[\+\-]\]//g;
+
+    foreach my $node (@{$this_genomic_align_tree->get_all_leaves}) {
+      # Species-name prefix of subsitution regex adapted from:
+      # https://github.com/Ensembl/ensembl-datacheck/blob/6b3d185/lib/Bio/EnsEMBL/DataCheck/Checks/MetaKeyFormat.pm#L59
+      my $node_name = $node->name =~ s/^(_?[a-z0-9]+_[a-z0-9_]+)_.+?_\d+_\d+\[[-+]\]$/$1/r;
+      $node->name($node_name);
+    }
+
+    my $tree = $this_genomic_align_tree->newick_format('ryo', '%{^-n|i}'); # simple, without branch lengths
     print $bed_fh join("\t", $ref_ga->dnafrag->name, $ref_ga->dnafrag_start,
         $ref_ga->dnafrag_end, $tree), "\n";
     $num_of_blocks++;
