@@ -126,7 +126,7 @@ sub default_options {
         'failures_fatal'   => 1, # no DC failure tolerance
         'old_server_uri'   => [$self->o('compara_db')],
         'db_name'          => $self->o('dbowner') . '_' . $self->o('pipeline_name'),
-        'ref_dbname'       => 'ensembl_compara_references_beta7',
+        'ref_dbname'       => 'ensembl_compara_references_202502',
 
         #Dump script location
         'dump_homologies_script' => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/dump_homologies.py'),

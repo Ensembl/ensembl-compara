@@ -68,7 +68,7 @@ my $homology_reference_host = $ENV{'homology_reference_host'} || 'mysql-ens-comp
 
 # FORMAT: species/alias name => [ host, db_name ]
 my $compara_dbs = {
-    'compara_references' => [ $homology_reference_host, 'ensembl_compara_references_beta7' ],
+    'compara_references' => [ $homology_reference_host, 'ensembl_compara_references_202502' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

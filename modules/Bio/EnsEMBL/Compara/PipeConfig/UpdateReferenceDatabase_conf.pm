@@ -61,7 +61,7 @@ sub default_options {
         # at which id should genome_db start?
         'genome_db_offset' => 101,
 
-        'pipeline_name' => 'update_references_mvp_' . $self->o('rel_with_suffix'),
+        'pipeline_name' => 'update_references_mvp_202502_' . $self->o('rel_with_suffix'),
         'backups_dir'   => $self->o('pipeline_dir') . '/reference_db_backups/',
 
         # stored records in filesystem to keep track or RR queries to each reference genoem
@@ -113,7 +113,7 @@ sub default_options {
         'output_dir_path'  => $self->o('pipeline_dir') . '/datachecks/',
         'overwrite_files'  => 1,
         'failures_fatal'   => 1, # no DC failure tolerance
-        'ref_dbname'       => 'ensembl_compara_references_beta7', # to be manually passed in init if differs
+        'ref_dbname'       => 'ensembl_compara_references_202502', # to be manually passed in init if differs
 
         # individual dc options
         'dc_names' => ['CheckMemberIDRange'],

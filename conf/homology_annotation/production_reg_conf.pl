@@ -42,7 +42,7 @@ my $homology_reference_host = $ENV{'homology_reference_host'} || 'mysql-ens-sta-
 # FORMAT: alias name => [ host, db_name ]
 my $compara_dbs = {
     # necessary compara dbs
-    'compara_references' => [ $homology_reference_host, 'ensembl_compara_references_beta7' ],
+    'compara_references' => [ $homology_reference_host, 'ensembl_compara_references_202502' ],
 
 };
 

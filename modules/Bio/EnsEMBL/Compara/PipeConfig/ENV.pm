@@ -72,7 +72,7 @@ sub shared_default_options {
         # TODO: make a $self method that checks whether this already exists, to prevent clashes like in the LastZ pipeline
         # NOTE: hps_dir and warehouse_dir are expected to be defined in the meadow JSON file
         'pipeline_dir'          => $self->o('hps_dir') . '/' . $self->o('dbowner') . '/' . $self->o('pipeline_name'),
-        'shared_hps_dir'        => $self->o('hps_dir') . '/shared_beta7',
+        'shared_hps_dir'        => $self->o('hps_dir') . '/shared_202502',
 
         # Where to find the linuxbrew installation
         'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'} || $self->o('linuxbrew_home'),
