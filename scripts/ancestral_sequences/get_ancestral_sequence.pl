@@ -156,7 +156,6 @@ perl $ENSEMBL_ROOT_DIR/ensembl-compara/scripts/ancestral_sequences/get_ancestral
 
 use Data::Dumper;
 use Getopt::Long;
-use List::Util qw/min/;
 use Pod::Usage;
 
 use Bio::EnsEMBL::Registry;
