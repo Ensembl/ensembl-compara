@@ -311,6 +311,20 @@ my %karyo_slices = map {$_->seq_region_name => 1} @{ $slice_adaptor->fetch_all_k
 # partition the files into subdirs if this is the case
 # my $partition_files = ( scalar @$slices >= $max_files_per_dir ) ? 1 : 0;
 
+# We need to remove any previously written non-chromosomal
+# files at the outset, to enable a cleaner rerun if needed.
+my %non_karyo_coord_systems;
+foreach my $slice (@$slices) {
+    next if ($karyo_slices{$slice->seq_region_name});
+    $non_karyo_coord_systems{$slice->coord_system_name} = 1;
+}
+foreach my $coord_system_name (keys %non_karyo_coord_systems) {
+    foreach my $file_ext ('.bed', '.fa') {
+        my $file_path = sprintf('%s/%s_ancestor_%s.%s', $dir, $species_production_name, $coord_system_name, $file_ext);
+        unlink($file_path) if (-f $file_path);
+    }
+}
+
 foreach my $slice (@$slices) {
   next unless (!$ARGV[0] or $slice->seq_region_name eq $ARGV[0] or
       $slice->coord_system_name eq $ARGV[0]);
