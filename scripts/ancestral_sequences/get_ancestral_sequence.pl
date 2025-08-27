@@ -111,8 +111,14 @@ The name for the species to get the ancestral sequence of (default: "Homo sapien
 
 =item B<[--target_species name_of_target_species]>
 
-The name of a target species whose most recent common ancestor
-with the query species is taken as the ancestral sequence.
+If specified, this should be the name of a target species whose most recent
+common ancestor with the query species is to be taken as the ancestral sequence.
+
+If the target species is present in multiple nodes of the genomic alignment tree,
+the ancestral sequence of the query genome is taken from the closest node of the
+alignment tree that is also ancestral to a region of the target genome.
+
+A genomic alignment tree is skipped if the target species is not present.
 
 =item B<[--alignment_set name_of_query_species]>
 
@@ -390,21 +396,32 @@ sub dump_ancestral_sequence {
 
     my @ref_ancestors = @{$ref_gat->get_all_ancestors};
 
+    # From the reference genomic alignment tree node, we aim to obtain:
+    # an ancestral sequence;
+    # an older ancestral sequence, if available; and
+    # whichever one of its children is not an ancestor of the reference node (i.e. the sister sequence).
+
     my $anc_gat;
     my $ref_lineage_root;
     if ($target_species_name) {
       my @leaf_nodes = @{$this_genomic_align_tree->get_all_leaves};
       my @non_ref_nodes = grep { $_->node_id != $ref_gat->node_id } @leaf_nodes;
-      my @target_nodes = grep { $_->get_genome_db_for_node->name eq $target_species_name } @non_ref_nodes;
+      my @target_leaves = grep { $_->get_genome_db_for_node->name eq $target_species_name } @non_ref_nodes;
 
-      next if (!scalar(@target_nodes));
+      # If the target species is not represented in this GenomicAlignTree,
+      # then we cannot find a shared ancestral sequence, so we skip it.
+      next if (!scalar(@target_leaves));
 
+      # From this point, we assume that the genomic alignment tree contains
+      # a sequence ancestral to both the query and target species. We are
+      # trying to find the index of the most recent such sequence in the
+      # array of ancestors of the reference genomic alignment tree node.
       my @ref_anc_nodes = @{$ref_gat->get_all_ancestors};
       my @ref_anc_idxs = (0 .. scalar(@ref_anc_nodes) - 1);
 
       my $mrca_idx = $ref_anc_idxs[-1];
-      foreach my $target_node (@target_nodes) {
-        my $shared_anc_node = $ref_gat->find_first_shared_ancestor($target_node);
+      foreach my $target_leaf (@target_leaves) {
+        my $shared_anc_node = $ref_gat->find_first_shared_ancestor($target_leaf);
 
         foreach my $ref_anc_idx (@ref_anc_idxs) {
           my $ref_anc_node = $ref_anc_nodes[$ref_anc_idx];
