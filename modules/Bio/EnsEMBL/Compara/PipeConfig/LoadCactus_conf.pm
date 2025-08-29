@@ -382,7 +382,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'multiplealigner_stats_decision',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into => {
-                1 => WHEN( 'not #skip_multiplealigner_stats#' => 'set_multiplealigner_stats_table', ELSE 'end_pipeline' ),
+                1 => WHEN( 'not #skip_multiplealigner_stats#' => 'set_multiplealigner_stats_table', ELSE 'compress_intermediate_files' ),
             },
         },
 
@@ -420,12 +420,20 @@ sub core_pipeline_analyses {
                 'stats_exe'            => $self->o('msa_stats_report_exe'),
                 'msa_stats_shared_dir' => $self->o('msa_stats_shared_dir'),
             },
+            -flow_into  => [ 'compress_intermediate_files' ],
         },
 
-        {   -logic_name  => 'end_pipeline',
-            -module      => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {   -logic_name  => 'compress_intermediate_files',
+            -module      => 'Bio::EnsEMBL::Compara::RunnableDB::SystemCommands',
+            -rc_name     => '1Gb_24_hour_job',
+            -parameters => {
+                'commands' => [
+                    q/find #bed_dir# -type f -name '*.bed' -exec gzip --force {} '+'/,
+                    q/find #dump_dir# -type f -name '*.maf' -exec gzip --force {} '+'/,
+                    q/find #feature_dir# -type f -name '*.bed' -exec gzip --force {} '+'/,
+                ],
+            },
         },
-
      ];
 }
 
