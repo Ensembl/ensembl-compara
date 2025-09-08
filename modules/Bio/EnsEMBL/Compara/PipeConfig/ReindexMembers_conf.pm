@@ -182,7 +182,7 @@ sub core_pipeline_analyses {
             -input_ids  => [ {} ],
             -flow_into  => {
                 '2->A' => 'copy_table_from_master',
-                'A->1' => 'load_mlss_id',
+                'A->1' => 'copy_table_funnel_check',
             },
         },
 
@@ -196,6 +196,11 @@ sub core_pipeline_analyses {
         },
 
 # -------------------------------------------[load GenomeDB entries and copy the other tables]------------------------------------------
+
+        {   -logic_name => 'copy_table_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => 'load_mlss_id',
+        },
 
         {   -logic_name => 'load_mlss_id',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids',
@@ -216,13 +221,18 @@ sub core_pipeline_analyses {
             },
             -flow_into => {
                 '2->A' => { 'load_genomedb' => { 'master_dbID' => '#genome_db_id#', 'locator' => '#locator#' }, }, # fan
-                'A->1' => 'create_mlss_ss',
+                'A->1' => 'load_genomedb_funnel_check',
             },
         },
 
         {   -logic_name => 'load_genomedb',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadOneGenomeDB',
             -analysis_capacity => $self->o('copy_capacity'),
+        },
+
+        {   -logic_name => 'load_genomedb_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => 'create_mlss_ss',
         },
 
         {   -logic_name => 'create_mlss_ss',
@@ -241,7 +251,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
                 '2->A' => { 'genome_member_copy' => INPUT_PLUS },
-                'A->1' => 'fire_gene_tree_table_copy',
+                'A->1' => 'load_members_funnel_check',
             },
         },
 
@@ -254,8 +264,8 @@ sub core_pipeline_analyses {
             -analysis_capacity => $self->o('copy_capacity'),
         },
 
-        {   -logic_name    => 'fire_gene_tree_table_copy',
-            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {   -logic_name    => 'load_members_funnel_check',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into     => WHEN(
                 '#do_genome_reindexing#' => 'prep_genome_reindexing',
                 ELSE 'gene_tree_tables_factory',
@@ -275,7 +285,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::TableFactory',
             -flow_into  => {
                 '2->A' => 'copy_table_from_prev_db',
-                'A->1' => 'map_members_factory',
+                'A->1' => 'gene_tree_tables_funnel_check',
             },
         },
 
@@ -298,6 +308,11 @@ sub core_pipeline_analyses {
         },
 
 # ---------------------------------------------[Update the gene-tree tables]---------------------------------------------
+
+        {   -logic_name => 'gene_tree_tables_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => 'map_members_factory',
+        },
 
         {   -logic_name => 'map_members_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
@@ -372,7 +387,7 @@ sub core_pipeline_analyses {
             },
             -flow_into  => {
                 '2->A' => 'delete_tree',
-                'A->1' => 'hc_deletion',
+                'A->1' => 'tree_deletion_funnel_check',
             },
         },
 
@@ -380,7 +395,14 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into     => {
                 '1->A' => { 'delete_flat_trees_factory' => INPUT_PLUS },
-                'A->1' => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef }},
+                'A->1' => 'member_post_processing_funnel_check',
+            }
+        },
+
+        {   -logic_name => 'member_post_processing_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => {
+                1 => { 'datacheck_factory' => { 'datacheck_groups' => $self->o('datacheck_groups'), 'db_type' => $self->o('db_type'), 'compara_db' => $self->pipeline_url(), 'registry_file' => undef }},
             }
         },
 
@@ -391,9 +413,15 @@ sub core_pipeline_analyses {
             },
             -flow_into      => {
                 '2->A' => 'exon_boundaries_prep',
-                'A->1' => 'pipeline_entry',
+                'A->1' => 'exon_boundaries_prep_funnel_check',
             },
         },
+
+        {   -logic_name => 'tree_deletion_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => 'hc_deletion',
+        },
+
         {   -logic_name     => 'hc_deletion',
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::DeletionHealthcheck',
             -parameters     => {
@@ -416,6 +444,11 @@ sub core_pipeline_analyses {
             -rc_name        => '2Gb_job',
             -hive_capacity  => 100,
             -batch_size     => 20,
+        },
+
+        {   -logic_name => 'exon_boundaries_prep_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => 'pipeline_entry',
         },
 
         @$hc_analyses,
