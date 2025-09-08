@@ -258,7 +258,7 @@ sub core_pipeline_analyses {
             -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into     => WHEN(
                 '#do_genome_reindexing#' => 'prep_genome_reindexing',
-                ELSE 'assert_mlsses_match',
+                ELSE 'gene_tree_tables_factory',
             ),
         },
 
@@ -269,14 +269,6 @@ sub core_pipeline_analyses {
                 'genome_dumps_dir' => $self->o('genome_dumps_dir'),
             },
             -flow_into  => 'gene_tree_tables_factory',
-        },
-
-        {   -logic_name    => 'assert_mlsses_match',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::AssertNumericParamsEqual',
-            -parameters        => {
-                'param_names' => ['mlss_id', 'prev_mlss_id'],
-            },
-            -flow_into     => 'gene_tree_tables_factory',
         },
 
         {   -logic_name => 'gene_tree_tables_factory',
