@@ -64,6 +64,15 @@ sub tweak_analyses {
     $analyses_by_name->{'copy_table_from_prev_db'}->{'-rc_name'} = '1Gb_24_hour_job';
 
     $analyses_by_name->{'hc_members_per_genome'}->{'-parameters'}->{'allow_ambiguity_codes'} = 1;
+
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'reindex_member_ids',
+        'datacheck_funnel',
+    );
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
 }
 
 

@@ -84,4 +84,21 @@ sub default_options {
     };
 }
 
+sub tweak_analyses {
+    my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
+    my $analyses_by_name = shift;
+
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'reindex_member_ids',
+        'datacheck_funnel',
+    );
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
+}
+
 1;
