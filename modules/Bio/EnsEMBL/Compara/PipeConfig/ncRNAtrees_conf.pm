@@ -360,7 +360,13 @@ sub core_pipeline_analyses {
             {   -logic_name => 'classify_genes_funnel_check',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
                 -flow_into  => [ 'backbone_fire_tree_building' ],
+                WHEN( '#skip_epo#' => 'backbone_fire_tree_building', ELSE 'store_lowcov_species_set' )
                 %hc_params,
+            },
+
+            {   -logic_name => 'store_lowcov_species_set',
+                -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::StoreLowCovSpeciesSet',
+                -flow_into  => [ 'backbone_fire_tree_building' ],
             },
 
             {   -logic_name => 'backbone_fire_tree_building',

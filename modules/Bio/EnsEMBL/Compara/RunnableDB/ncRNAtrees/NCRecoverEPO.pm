@@ -72,6 +72,12 @@ sub fetch_input {
   my $epo_dba = $self->get_cached_compara_dba('epo_db');
   $self->param('epo_gab_adaptor', $epo_dba->get_GenomicAlignBlockAdaptor);
   $self->param('epo_mlss_adaptor', $epo_dba->get_MethodLinkSpeciesSetAdaptor);
+
+  my $species_set_adaptor = $self->compara_dba->get_SpeciesSetAdaptor;
+  my ($epo_ss) = @{$species_set_adaptor->fetch_all_by_name('low-coverage-assembly')};
+  $self->die_no_retry("Could not fetch a SpeciesSet named 'low-coverage-assembly' from the database") unless $epo_ss;
+  my %epo_gdb = map { $_->dbID => 1 } @{$epo_ss->genome_dbs};
+  $self->param('epo_gdb', \%epo_gdb);
 }
 
 sub run {
@@ -103,7 +109,7 @@ sub run_ncrecoverepo {
   my %absent_gdbs      = ();
   my %present_epo_gdbs = ();
   
-  # NOTE: 'epo_gdb' used to be a hash { genome_db_id => 1 } containing all the low-coverage species
+  # NOTE: 'epo_gdb' is a hash { genome_db_id => 1 } containing all the low-coverage species
   # Find absent gdbs
   foreach my $leaf (@{$self->param('nc_tree')->get_all_leaves}) {
       $present_gdbs{$leaf->genome_db_id}++;
@@ -259,19 +265,7 @@ sub iterate_over_lowcov_mlsss {
         die "Could not find an 'EPO_EXTENDED' MLSS in ".$self->param('epo_db')."\n";
     }
 
-    my $helper = $self->compara_dba->dbc->sql_helper;
-    my $genescaffold_sql = q/
-        SELECT DISTINCT
-            genome_db_id
-        FROM
-            genome_db
-        JOIN
-            dnafrag USING (genome_db_id)
-        WHERE
-            coord_system_name = 'genescaffold'
-    /;
-    my $results = $helper->execute_simple( -SQL => $genescaffold_sql );
-    my %all_low_gdb_id_set = map {$_ => 1} @{$results};
+    my %all_low_gdb_id_set = %{$self->param('epo_gdb')};
 
     my @gab_ids;
     $self->param('low_cov_leaves_to_delete', []);
