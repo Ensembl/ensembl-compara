@@ -340,8 +340,8 @@ sub run {
                     # Pipelines with collections can be merged per homology MLSS and member type.
                     # This allows for merging protein and ncRNA homologies in the same MLSS from
                     # a protein-tree and ncRNA-tree pipeline database, respectively.
-                    foreach my $mlss_id (@{$mlss_info->{'complementary_mlss_ids'}}) {
-                        my $hom_mlss_key = $member_type . ' homology MLSS ' . $mlss_id;
+                    foreach my $hom_mlss_id (@{$mlss_info->{'complementary_mlss_ids'}}) {
+                        my $hom_mlss_key = $member_type . ' homology MLSS ' . $hom_mlss_id;
                         if (exists $hom_mlss_key_to_db{$hom_mlss_key}) {
                             $self->die_no_retry(
                                 sprintf(
@@ -351,8 +351,10 @@ sub run {
                             );
                         }
                         $hom_mlss_key_to_db{$hom_mlss_key} = $db;
-                        push(@{$mlss_id_to_dbs{$mlss_id}}, $db);
+                        push(@{$mlss_id_to_dbs{$hom_mlss_id}}, $db);
                     }
+
+                    $mlss_info->{'gene_tree_mlss_id'} = $mlss_id;
 
                 } else {  # database lacks collection info
 
@@ -505,11 +507,25 @@ sub run {
                         # Per-MLSS merge of the peptide_align_feature table requires
                         # that there is no overlap between peptide_align_feature_ids.
                         $self->die_no_retry(" -ERROR- ranges of the key '$key' overlap, so cannot merge table 'peptide_align_feature' per MLSS");
-                    }
+                    } elsif ($table eq 'method_link_species_set_tag') {
 
-                    # With the current per-MLSS merge implementation, a key clash is not possible when merging
-                    # any of the hmm_annot, method_link_species_set_attr or method_link_species_set_tag tables.
-                    print " -INFO- merging $table by MLSS, skipping range check of key '$key'\n" if $self->debug;
+                        my @gene_tree_mlss_ids;
+                        foreach my $db (@dbs) {
+                            if (exists $src_db_to_mlss_info{$db} && exists $src_db_to_mlss_info{$db}{'gene_tree_mlss_id'}) {
+                                push(@gene_tree_mlss_ids, $src_db_to_mlss_info{$db}{'gene_tree_mlss_id'});
+                            }
+                        }
+
+                        my $gene_tree_mlss_id_str = '(' . join(',', @gene_tree_mlss_ids) . ')';
+                        my $keys = join(",", @$full_key);
+                        $sql = qq/SELECT $keys FROM $table WHERE method_link_species_set_id IN $gene_tree_mlss_id_str/;
+                        $self->_check_primary_keys(\@dbs, $dbconnections, $table, $keys, $sql);
+
+                    } else {
+                        # With the current per-MLSS merge implementation, a key clash is not possible when merging
+                        # either of the hmm_annot or method_link_species_set_attr tables.
+                        print " -INFO- merging $table by MLSS, skipping range check of key '$key'\n" if $self->debug;
+                    }
 
                 } elsif (grep { $table_size->{$_}->{$table} <= $self->param('max_nb_elements_to_fetch') } @dbs) {
 
@@ -517,19 +533,7 @@ sub run {
                     my $keys = join(",", @$full_key);
                     # We really make sure that no value is shared between the tables
                     $sql = "SELECT $keys FROM $table";
-                    my %all_values = ();
-                    foreach my $db (@dbs) {
-                        my $sth = $dbconnections->{$db}->prepare($sql, { 'mysql_use_result' => 1 });
-                        $sth->execute;
-                        while (my $cols = $sth->fetchrow_arrayref()) {
-                            my $value = join(",", map {$_ // '<NULL>'} @$cols);
-                            die sprintf(" -ERROR- for the key %s(%s), the value '%s' is present in '%s' and '%s'\n", $table, $keys, $value, $db, $all_values{$value}) if exists $all_values{$value};
-                            #push(@error_list, sprintf(" -ERROR- for the key %s(%s), the value '%s' is present in '%s' and '%s'\n", $table, $keys, $value, $db, $all_values{$value})) if exists $all_values{$value};
-                            #my @tok = split(/\,/,$value);
-                            #$error_list{$tok[0]} = 1 if exists $all_values{$value};
-                            $all_values{$value} = $db;
-                        }
-                    }
+                    $self->_check_primary_keys(\@dbs, $dbconnections, $table, $keys, $sql);
 
                 } else {
                     die " -ERROR- ranges of the key '$key' overlap, and there are too many elements to perform an extensive check\n", Dumper($min_max);
@@ -614,6 +618,33 @@ sub _assert_same_table_schema {
     die sprintf("'%s' has a different schema in '%s' and '%s'\n", $table, $src_dbc->dbname, $dest_dbc->dbname) if stringify($src_schema) ne stringify($dest_schema);
 }
 
+
+sub _check_primary_keys {
+    my ($self, $dbnames, $dbconnections, $table, $keys, $sql) = @_;
+
+    my %all_values = ();
+    foreach my $dbname (@{$dbnames}) {
+        my $sth = $dbconnections->{$dbname}->prepare($sql, { 'mysql_use_result' => 1 });
+        $sth->execute;
+        while (my $cols = $sth->fetchrow_arrayref()) {
+            my $value = join(",", map {$_ // '<NULL>'} @$cols);
+            if (exists $all_values{$value}) {
+                $self->die_no_retry(
+                    sprintf(
+                        " -ERROR- for the key %s(%s), the value '%s' is present in '%s' and '%s'\n",
+                        $table,
+                        $keys,
+                        $value,
+                        $dbname,
+                        $all_values{$value},
+                    )
+                );
+            }
+            $all_values{$value} = $dbname;
+        }
+    }
+}
+
 sub _get_effective_table_size {
     my ($self, $src_dbc, $table_name, $mlss_info) = @_;
     my $helper = $src_dbc->sql_helper;
@@ -647,7 +678,14 @@ sub _get_effective_table_size {
             my $mlss_query_results = $helper->execute( -SQL => $sql, -USE_HASHREFS => 1 );
             my %mlss_to_row_count = map { $_->{'mlss_id'} => $_->{'n_rows'} } @$mlss_query_results;
 
-            $n_rows = sum map { $mlss_to_row_count{$_} // 0 } @{$mlss_info->{'complementary_mlss_ids'}};
+            my @rel_mlss_ids = @{$mlss_info->{'complementary_mlss_ids'}};
+            # If a source database has gene-tree MLSS tags, we
+            # should count them towards the effective table size.
+            if ($table_name eq 'method_link_species_set_tag' && exists $mlss_info->{'gene_tree_mlss_id'}) {
+                push(@rel_mlss_ids, $mlss_info->{'gene_tree_mlss_id'});
+            }
+
+            $n_rows = sum map { $mlss_to_row_count{$_} // 0 } @rel_mlss_ids;
             $n_rows *= $multiplier;
 
         } elsif ($table_name eq 'hmm_annot') {
