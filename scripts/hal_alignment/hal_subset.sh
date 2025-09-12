@@ -28,7 +28,7 @@ output_hal="$4"
 output_basename=$(basename "${output_hal}" .hal)
 
 tmp_dir=$(mktemp -d "${output_basename}.tmp.XXXXXXXXXX")
-trap "rm -fr $tmp_dir" EXIT
+trap 'rm -fr $tmp_dir' EXIT
 
 subtree_root_genome=$(head -1 "$subtree_root_file")
 subset_hal_path="${tmp_dir}/${output_basename}.subset.hal"
