@@ -344,7 +344,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'work_dir'        => $self->o('work_dir'),
                 'shared_hps_dir'  => $self->o('shared_hps_dir'),
-                'cmd'             => 'install -C --mode=664 -t #shared_hps_dir#/genome_reports/ #work_dir#/report_updates.*.json',
+                'cmd'             => 'install -C --mode=664 -t #shared_hps_dir#/genome_reports/ #work_dir#/*_updates.*.json',
             },
         },
     ];
