@@ -51,6 +51,8 @@ sub default_options {
         #'do_not_reuse_list'     => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
         'do_not_reuse_list'     => [ ],
 
+        'do_nonblocking_checks' => 0,
+
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
         'allow_missing_coordinates' => 0,
@@ -66,12 +68,7 @@ sub default_options {
         # Store other genes
         'store_others'              => 1,
 
-    #load uniprot members for family pipeline
-        'load_uniprot_members'      => 0,
         'work_dir'        => $self->o('pipeline_dir'),
-        'uniprot_dir'     => $self->o('work_dir').'/uniprot',
-        'uniprot_rel_url' => 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/reldate.txt',
-        'uniprot_ftp_url' => 'https://ftp.uniprot.org/pub/databases/uniprot/current_release/knowledgebase/taxonomic_divisions/uniprot_#uniprot_source#_#tax_div#.dat.gz',
 
     # hive_capacity values for some analyses:
         'reuse_capacity'            =>   3,
@@ -132,9 +129,8 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         # Database connection
         'master_db'             => $self->o('master_db'),
         'reuse_member_db'       => $self->o('reuse_member_db'),
-        'load_uniprot_members'  => $self->o('load_uniprot_members'),
         'work_dir'              => $self->o('work_dir'),
-        'uniprot_dir'           => $self->o('uniprot_dir'),
+        'do_nonblocking_checks' => $self->o('do_nonblocking_checks'),
     };
 }
 
@@ -509,10 +505,7 @@ sub core_pipeline_analyses {
                 mode            => 'members_globally',
             },
             %hc_analysis_params,
-            -flow_into          => {
-                '2->A' => WHEN( '#load_uniprot_members#' => 'save_uniprot_release_date' ),
-                'A->1' => [ 'datachecks' ],
-            },
+            -flow_into          => [ 'datachecks' ],
         },
 
         {   -logic_name      => 'datachecks',
@@ -527,62 +520,45 @@ sub core_pipeline_analyses {
                 'registry_file'    => $self->o('reg_conf'),
                 'dbtype'           => 'compara',
             },
+            -flow_into       => WHEN( '#do_nonblocking_checks#' => 'fire_nonblocking_checks' ),
             -max_retry_count => 0,
         },
 
-# ---------------------------------------------[load UNIPROT members for Family pipeline]------------------------------------------------------------
+# ---------------------------------------------[non-blocking checks]------------------------------------------------------------
 
-        {   -logic_name => 'save_uniprot_release_date',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtReleaseVersion',
-            -parameters => {
-                'uniprot_rel_url'   => $self->o('uniprot_rel_url'),
-            },
-            -flow_into  => [ 'download_uniprot_factory' ],
+        {   -logic_name    => 'fire_nonblocking_checks',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into     => [ 'translation_healthcheck_factory' ],
         },
 
-        {   -logic_name => 'download_uniprot_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -parameters => {
-                'column_names'    => [ 'uniprot_source', 'tax_div' ],
-                'inputlist'       => [
-                    [ 'sprot', 'fungi' ],
-                    [ 'sprot', 'human' ],
-                    [ 'sprot', 'mammals' ],
-                    [ 'sprot', 'rodents' ],
-                    [ 'sprot', 'vertebrates' ],
-                    [ 'sprot', 'invertebrates' ],
-
-                    [ 'trembl',  'fungi' ],
-                    [ 'trembl',  'human' ],
-                    [ 'trembl',  'mammals' ],
-                    [ 'trembl',  'rodents' ],
-                    [ 'trembl',  'vertebrates' ],
-                    [ 'trembl',  'invertebrates' ],
-                ],
+        {   -logic_name    => 'translation_healthcheck_factory',
+            -module        => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters    => {
+                'inputquery' => q/
+                    SELECT DISTINCT genome_db_id
+                    FROM gene_member
+                    JOIN genome_db USING (genome_db_id)
+                    WHERE genome_db.name IN (
+                        SELECT
+                            gdb.name
+                        FROM
+                            genome_db gdb
+                        JOIN
+                            species_set ss USING (genome_db_id)
+                        JOIN
+                            species_set_header ssh USING (species_set_id)
+                        WHERE
+                            ssh.name = 'reuse'
+                    )
+                /,
             },
-            -flow_into => {
-                '2' => [ 'download_and_chunk_uniprot' ],
-            },
+            -flow_into  => [ 'hc_translations' ],
         },
 
-        {   -logic_name    => 'download_and_chunk_uniprot',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::DownloadAndChunkUniProtFile',
-            -parameters => {
-                'uniprot_ftp_url'   => $self->o('uniprot_ftp_url'),
-            },
-            -flow_into => {
-                2 => { 'load_uniprot' => INPUT_PLUS() },
-            },
-        },
-        
-        {   -logic_name    => 'load_uniprot',
-            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::Families::LoadUniProtEntries',
-            -parameters => {
-                'seq_loader_name'   => 'file', # {'pfetch' x 20} takes 1.3h; {'mfetch' x 7} takes 2.15h; {'pfetch' x 14} takes 3.5h; {'pfetch' x 30} takes 3h;
-            },
-            -analysis_capacity => 5,
-            -batch_size    => 100,
-            -rc_name => '2Gb_job',
+        {   -logic_name    => 'hc_translations',
+            -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::TranslationHealthcheck',
+            -hive_capacity => $self->o('loadmembers_capacity'),
+            -rc_name       => '1Gb_24_hour_job',
         },
 
     ];

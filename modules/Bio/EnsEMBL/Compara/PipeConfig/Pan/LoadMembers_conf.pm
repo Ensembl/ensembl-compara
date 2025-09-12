@@ -51,6 +51,8 @@ sub default_options {
 
         'division'    => 'pan',
 
+        'do_nonblocking_checks' => 1,
+
     # names of species we don't want to reuse this time
         'do_not_reuse_list' => [ ],
 
