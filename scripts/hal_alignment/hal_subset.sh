@@ -32,7 +32,7 @@ trap 'rm -fr $tmp_dir' EXIT
 
 subtree_root_genome=$(head -1 "$subtree_root_file")
 subset_hal_path="${tmp_dir}/${output_basename}.subset.hal"
-halExtract --root ${subtree_root_genome} ${input_hal} "${subset_hal_path}"
+halExtract --root "${subtree_root_genome}" "${input_hal}" "${subset_hal_path}"
 
 while read -r genome
 do halRemoveGenome "$subset_hal_path" "$genome"
