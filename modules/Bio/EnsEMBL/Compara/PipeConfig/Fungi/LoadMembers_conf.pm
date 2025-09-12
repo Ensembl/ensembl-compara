@@ -50,6 +50,8 @@ sub default_options {
 
         'division' => 'fungi',
 
+        'do_nonblocking_checks' => 1,
+
         # Names of species we do not want to reuse this time
         'do_not_reuse_list' => [],
 

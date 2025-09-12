@@ -51,6 +51,8 @@ sub default_options {
 
         'division'  => 'metazoa',
 
+        'do_nonblocking_checks' => 1,
+
         # Names of species we do not want to reuse this time
         # 'do_not_reuse_list' => [ 'oryza_indica', 'vitis_vinifera' ],
         'do_not_reuse_list' => [],

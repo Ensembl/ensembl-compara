@@ -51,6 +51,8 @@ sub default_options {
 
         'division'    => 'plants',
 
+        'do_nonblocking_checks' => 1,
+
     # names of species we don't want to reuse this time
         #'do_not_reuse_list' => [ 'oryza_indica', 'vitis_vinifera' ],
         'do_not_reuse_list' => [ ],
