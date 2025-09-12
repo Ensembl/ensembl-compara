@@ -71,7 +71,14 @@ sub run {
 
     if ($table_name =~ /^(homology|homology_member|method_link_species_set_attr|method_link_species_set_tag)$/) {
 
-        foreach my $mlss_id (@{$mlss_info->{'complementary_mlss_ids'}}) {
+        my @rel_mlss_ids = @{$mlss_info->{'complementary_mlss_ids'}};
+        # If a source database has gene-tree MLSS tags, we
+        # should merge them into the destination database.
+        if ($table_name eq 'method_link_species_set_tag' && exists $mlss_info->{'gene_tree_mlss_id'}) {
+            push(@rel_mlss_ids, $mlss_info->{'gene_tree_mlss_id'});
+        }
+
+        foreach my $mlss_id (@rel_mlss_ids) {
             $self->warning("Copying data for MLSS $mlss_id") if $self->debug;
 
             my $query;
