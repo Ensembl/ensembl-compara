@@ -110,6 +110,15 @@ sub core_pipeline_analyses {
         {   -logic_name => 'summarise_wga_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::SummariseWGAStats',
             -input_ids  => [ {} ],
+            -flow_into  => 'sync_taxon_ids',
+        },
+
+        {   -logic_name => 'sync_taxon_ids',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SyncTaxa',
+            -parameters => {
+                'from_table' => 'genome_db',
+                'to_tables'  => ['gene_member', 'seq_member', 'species_tree_node'],
+            },
             -flow_into  => 'check_homology_ranges',
         },
 
