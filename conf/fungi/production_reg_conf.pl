@@ -137,20 +137,17 @@ foreach my $group ( @collection_groups ) {
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-4', 'ensembl_compara_master_fungi' ],
-    'compara_curr'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${curr_eg_release}_${curr_release}" ],
+    #'compara_curr'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-4', "ensembl_compara_fungi_${prev_eg_release}_${prev_release}" ],
 
     # LASTZ dbs
-    'lastz_batch_1'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch1_114' ],
-    #'lastz_batch_2'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch2_110' ],
-    #'lastz_batch_3'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch3_110' ],
-    #'lastz_batch_4'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_lastz_batch4_110' ],
+    #'lastz_batch_1'  => [ '', '' ],
     #Synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-4', 'sbhurji_sbhurji_fungi_synteny_take2_110' ],
+    #'compara_syntenies' => [ '', '' ],
 
     # homology dbs
-    'compara_members' => [ 'mysql-ens-compara-prod-4', 'sbhurji_fungi_load_members_114' ],
-    'compara_ptrees'  => [ 'mysql-ens-compara-prod-4', 'sbhurji_default_fungi_protein_trees_114' ],
+    #'compara_members' => [ 'mysql-ens-compara-prod-4', '' ],
+    #'compara_ptrees'  => [ 'mysql-ens-compara-prod-4', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
