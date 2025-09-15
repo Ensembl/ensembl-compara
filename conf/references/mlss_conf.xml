@@ -15,7 +15,7 @@
       <genome name="saccharomyces_cerevisiae"/>
       <!-- Plants -->
       <genome name="arabidopsis_thaliana"/>
-      <genome name="oryza_sativa"/>
+      <genome name="oryza_sativa_gca001433935v1cm"/>
       <!-- Protists -->
       <genome name="plasmodium_falciparum"/>
     </collection>
@@ -44,7 +44,7 @@
       <genome name="mnemiopsis_leidyi"/>
       <!-- Plants -->
       <genome name="glycine_max"/>
-      <genome name="solanum_lycopersicum"/>
+      <genome name="solanum_lycopersicum_gca000188115v5cm"/>
       <genome name="triticum_aestivum"/>
       <genome name="marchantia_polymorpha"/>
       <genome name="physcomitrium_patens"/>
@@ -292,7 +292,7 @@
       <genome name="noctua_janthe_gca910589295v1"/>
       <genome name="danaus_plexippus_gca018135715v1"/>
       <genome name="bombyx_mori_gcf030269925v1rs"/>
-      <genome name="ennomos_quercinarius_gca910589525v1"/>
+      <genome name="ennomos_quercinarius_gca910589525v2"/>
     </collection>
 
     <collection name="arthropoda">
@@ -320,7 +320,7 @@
       <genome name="homarus_americanus_gca018991925v1rs"/>
       <genome name="portunus_trituberculatus_gca017591435v1rs"/>
       <genome name="eurytemora_affinis_gca000591075v2rs"/>
-      <genome name="hyalella_azteca_gca000764305v2rs"/>
+      <genome name="hyalella_azteca_gcf000764305v2rs"/>
       <genome name="daphnia_pulex_gca021134715v1rs"/>
       <!-- Hexapoda -->
       <genome name="sipha_flava_gca003268045v1rs"/>
@@ -350,7 +350,7 @@
 
       <!-- Annelida -->
       <genome name="helobdella_robusta"/>
-      <genome name="owenia_fusiformis_gca903813345v1gb"/>
+      <genome name="owenia_fusiformis_gca903813345v2gb"/>
       <!-- Brachiopoda -->
       <genome name="lingula_anatina_gca001039355v2rs"/>
       <!-- Mollusca -->
@@ -413,7 +413,7 @@
       <genome name="xenopus_tropicalis"/>
       <!-- Annelida -->
       <genome name="helobdella_robusta"/>
-      <genome name="owenia_fusiformis_gca903813345v1gb"/>
+      <genome name="owenia_fusiformis_gca903813345v2gb"/>
       <!-- Brachiopoda -->
       <genome name="lingula_anatina_gca001039355v2rs"/>
       <!-- Mollusca -->
@@ -446,7 +446,7 @@
       <!-- Outgroups -->
       <genome name="chlamydomonas_reinhardtii"/>
       <genome name="marchantia_polymorpha"/>
-      <genome name="solanum_lycopersicum"/>
+      <genome name="solanum_lycopersicum_gca000188115v5cm"/>
       <!-- Asparagales -->
       <genome name="asparagus_officinalis_gca001876935v1"/>
       <!-- Dioscoreales -->
@@ -513,14 +513,14 @@
       <!-- Myrtales -->
       <genome name="eucalyptus_grandis_gca000612305v1"/>
       <!-- Rosales -->
-      <genome name="malus_domestica_gca002114115v1"/>
+      <genome name="malus_domestica_gca002114115v1cm"/>
       <genome name="prunus_avium_gca002207925v1"/>
       <!-- Sapindales -->
       <genome name="pistacia_vera_gca008641045v1"/>
       <!-- Solanales -->
       <genome name="ipomoea_triloba_gca003576645v1"/>
       <genome name="nicotiana_attenuata_gca001879085v1"/>
-      <genome name="solanum_lycopersicum"/>
+      <genome name="solanum_lycopersicum_gca000188115v5cm"/>
       <genome name="solanum_tuberosum"/>
       <!-- Vitales -->
       <genome name="vitis_vinifera"/>
