@@ -346,7 +346,17 @@ sub core_pipeline_analyses {
                 'reuse_db'          => '#reuse_member_db#',
             },
             -hive_capacity => $self->o('reuse_capacity'),
-            -flow_into => [ 'hc_members_per_genome' ],
+            -flow_into => [ 'sync_member_taxon_ids' ],
+        },
+
+        {   -logic_name => 'sync_member_taxon_ids',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SyncTaxa',
+            -parameters => {
+                'from_table' => 'genome_db',
+                'to_tables'  => ['gene_member', 'seq_member'],
+            },
+            -hive_capacity => $self->o('reuse_capacity'),
+            -flow_into  => [ 'hc_members_per_genome' ],
         },
 
         {   -logic_name => 'dnafrag_table_reuse',

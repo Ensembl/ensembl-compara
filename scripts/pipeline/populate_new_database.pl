@@ -165,6 +165,11 @@ instead of the range of genomic_align_id
 
 Do not store Conservation Score or Constrained Element data.
 
+=item B<--sync_taxa>
+
+When copying species trees, synchronise species_tree_node
+taxon_id values with the genome_db table.
+
 =back
 
 =head2 OLD DATA
@@ -181,6 +186,7 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Utils::Exception qw(throw warning);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert);
 use Bio::EnsEMBL::Compara::Utils::CopyData qw(:table_copy);
+use Bio::EnsEMBL::Compara::Utils::NCBITaxa qw(sync_taxon_ids_by_genome_db_id);
 use Getopt::Long;
 use JSON;
 
@@ -201,6 +207,7 @@ my $filter_by_mlss = 0;
 my $alignments_only = 0;
 my $skip_gerp = 0;
 my $skip_mlsses = [];
+my $sync_taxa = 0;
 
 GetOptions(
     "help" => \$help,
@@ -220,6 +227,7 @@ GetOptions(
     'alignments_only' => \$alignments_only,
     'skip_gerp' => \$skip_gerp,
     'skip_mlss=s@' => \$skip_mlsses,
+    'sync_taxa' => \$sync_taxa,
   );
 
 
@@ -358,6 +366,8 @@ if ($old_dba and !$skip_data) {
   copy_all_mlss_tags($old_dba, $new_dba, $all_default_method_link_species_sets);
 ## Copy all the SpecieTree entries
   copy_all_species_tres($old_dba, $new_dba, $all_default_method_link_species_sets);
+  print "Synchronising species_tree_node taxon_ids ...\n";
+  sync_taxon_ids_by_genome_db_id($new_dba, 'genome_db', 'species_tree_node') if ($sync_taxa);
 
 ## Copy DNA-DNA alignments
   copy_dna_to_dna_alignments($old_dba, $new_dba, $all_default_method_link_species_sets);
