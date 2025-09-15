@@ -37,6 +37,8 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 sub run {
     my $self = shift;
 
+    $self->warning("RunnableDB::FTPDumps::AddHMMLib is deprecated, and may be removed in a future release");
+
     # Get the name of the current library
     my $hmm_library_basedir = $self->param_required('hmm_library_basedir');
     chop $hmm_library_basedir if $hmm_library_basedir =~ /\/$/; # otherwise basename returns an empty string

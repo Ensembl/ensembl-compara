@@ -485,7 +485,7 @@ sub get_all_GeneMembers {
 
 =cut
 
-sub gene_list {  # DEPRECATED ?
+sub gene_list {
     my $self = shift;
     return $self->get_all_GeneMembers
 }
