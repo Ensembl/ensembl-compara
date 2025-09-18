@@ -468,6 +468,14 @@ sub tag_orthologues
     my $count1 = $species_hash->{$pep1->genome_db_id};
     my $count2 = $species_hash->{$pep2->genome_db_id};
 
+    return $self->_classify_orthologues($count1, $count2);
+}
+
+
+sub _classify_orthologues
+{
+    my ( $self, $count1, $count2 ) = @_;
+
     if ($count1 == 1 and $count2 == 1) {
         return 'ortholog_one2one';
     } elsif ($count1 == 1 or $count2 == 1) {
