@@ -187,10 +187,10 @@ if ($jira_off) {
     # Get the parent JIRA ticket key, i.e. the production pipelines JIRA ticket for
     # the given division and release
     my $jql = 'labels=Production_anchor';
-    my $existing_tickets = $jira_adaptor->fetch_tickets($jql);
+    my $existing_tickets = $jira_adaptor->fetch_tickets( -JQL => $jql, -FIELDS => ['key', 'labels', 'summary'] );
     # Check that we have actually found the ticket (and only one)
-    die 'Cannot find any ticket with the label "Production_anchor"' if (! $existing_tickets->{total});
-    die 'Found more than one ticket with the label "Production_anchor"' if ($existing_tickets->{total} > 1);
+    die 'Cannot find any ticket with the label "Production_anchor"' if (scalar(@{$existing_tickets->{issues}}) == 0);
+    die 'Found more than one ticket with the label "Production_anchor"' if (scalar(@{$existing_tickets->{issues}}) > 1);
     my $jira_prod_key = $existing_tickets->{issues}->[0]->{key};
     # Create the subtask JIRA ticket template
     %ticket_tmpl = (
