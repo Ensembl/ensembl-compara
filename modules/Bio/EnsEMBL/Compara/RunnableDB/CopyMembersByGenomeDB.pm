@@ -69,7 +69,18 @@ sub run {
     $self->_copy_data_wrapper('gene_member', 'SELECT * FROM gene_member');
     $self->_copy_data_wrapper('sequence', 'SELECT sequence.* FROM seq_member JOIN sequence USING (sequence_id)');
     $self->_copy_data_wrapper('seq_member', 'SELECT * FROM seq_member');
-    $self->_copy_data_wrapper('other_member_sequence', 'SELECT other_member_sequence.* FROM seq_member JOIN other_member_sequence USING (seq_member_id)');
+
+    # We exclude 'filtered' and 'seq_with_flanking' sequences from member
+    # reuse, to facilitate their inclusion from ncRNAtrees data sources.
+    my $other_member_sequence_sql = q/
+        SELECT other_member_sequence.*
+        FROM seq_member
+        JOIN other_member_sequence USING (seq_member_id)
+        WHERE seq_type NOT LIKE "%filtered"
+        AND seq_type != "seq_with_flanking"
+    /;
+    $self->_copy_data_wrapper('other_member_sequence', $other_member_sequence_sql);
+
     $self->_copy_data_wrapper('exon_boundaries', 'SELECT exon_boundaries.* FROM seq_member JOIN exon_boundaries USING (seq_member_id)');
     $self->_copy_data_wrapper('hmm_annot', 'SELECT hmm_annot.* FROM seq_member JOIN hmm_annot USING (seq_member_id)');
     $self->_copy_data_wrapper('seq_member_projection_stable_id', 'SELECT seq_member_projection_stable_id.* FROM seq_member JOIN seq_member_projection_stable_id ON seq_member_id = target_seq_member_id');

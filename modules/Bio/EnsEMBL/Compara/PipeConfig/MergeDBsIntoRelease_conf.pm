@@ -107,6 +107,9 @@ sub default_options {
         # Tables to merge per MLSS
         'per_mlss_merge_tables' => [],
 
+        # Tables to merge by priority
+        'priority_merge_tables' => [],
+
         # Dump directory
         'work_dir'      => $self->o('pipeline_dir'),
         'mlss_info_dir' => $self->o('work_dir') . '/' . 'mlsses',
@@ -175,6 +178,7 @@ sub core_pipeline_analyses {
                 'only_tables'       => $self->o('only_tables'),
                 'src_db_aliases'    => [ref($self->o('src_db_aliases')) ? keys %{$self->o('src_db_aliases')} : ()],
                 'per_mlss_merge_tables' => $self->o('per_mlss_merge_tables'),
+                'priority_merge_tables' => $self->o('priority_merge_tables'),
                 'die_if_unknown_table'  => $self->o('die_if_unknown_table'),
             },
             -rc_name    => '2Gb_24_hour_job',
