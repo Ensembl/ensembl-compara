@@ -185,7 +185,7 @@ sub create_tickets {
     $self->{_logger}->info(Dumper($jira_tickets) . "\n");
     # Get all the tickets on the JIRA server for the same project, release and
     # division
-    my $division_tickets = $self->fetch_tickets();
+    my $division_tickets = $self->fetch_tickets( -FIELDS => ['key', 'summary'] );
     # Create a hash with the summary of each ticket and its corresponding
     # JIRA key
     my %existing_tickets = map {$_->{fields}->{summary} => $_->{key}} @{$division_tickets->{issues}};
@@ -387,7 +387,9 @@ sub create_ticket_csv {
   Arg[-JQL]         : (optional) string - JQL (JIRA Query Language) query
   Arg[-MAX_RESULTS] : (optional) int - maximum number of matching tickets to
                       return. By default, 300.
-  Example     : my $tickets = $jira_adaptor->fetch_tickets('priority=Major');
+  Arg[-FIELDS]      : (optional) arrayref of strings - a list of fields
+                      we will need to access.
+  Example     : my $tickets = $jira_adaptor->fetch_tickets( -JQL => 'priority=Major' );
   Description : Returns up to $max_results tickets that match the given JQL
                 query for the given project, release and division
   Return type : arrayref of JIRA tickets
@@ -397,14 +399,14 @@ sub create_ticket_csv {
 
 sub fetch_tickets {
     my $self = shift;
-    my ( $jql, $max_results ) = rearrange([qw(JQL MAX_RESULTS)], @_);
+    my ( $jql, $max_results, $fields ) = rearrange([qw(JQL MAX_RESULTS FIELDS)], @_);
     # Set default values for optional arguments
     $max_results ||= 300;
     # Add the restrictions to fetch only tickets for the given project, release
     # and division
     # NOTE: JQL queries require whitespaces to be in their Unicode equivalent
-    my $fixVersion = 'Ensembl\u0020' . $self->{_release};
-    my $final_jql = sprintf('project=%s AND fixVersion=%s', $self->{_project}, $fixVersion);
+    my $fixVersion = 'Ensembl ' . $self->{_release};
+    my $final_jql = sprintf('project=%s AND fixVersion="%s"', $self->{_project}, $fixVersion);
     if ($self->{_division}) {
         $final_jql .= sprintf(' AND cf[10080]=%s', $self->{_division});
     } else {
@@ -412,7 +414,7 @@ sub fetch_tickets {
     }
     $final_jql .= " AND $jql" if ($jql);
     # Send a search POST request for the given JQL query
-    my $tickets = $self->_post_request('search', {'jql' => $final_jql, 'maxResults' => $max_results});
+    my $tickets = $self->_post_request('search', {'jql' => $final_jql, 'maxResults' => $max_results, 'fields' => $fields});
     return $tickets;
 }
 
@@ -914,6 +916,11 @@ sub _post_request {
     }
     # Do the HTTP POST request and get the response for the given $action and $content_data
     my $url = 'https://embl.atlassian.net/rest/api/latest/' . $action;
+
+    if ($action eq 'search') {
+        $url .= '/jql';
+    }
+
     return $self->_http_request('POST', $url, $content_data);
 }
 
