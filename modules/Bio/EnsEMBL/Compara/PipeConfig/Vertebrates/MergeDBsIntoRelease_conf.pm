@@ -117,7 +117,7 @@ sub tweak_analyses {
     $self->SUPER::tweak_analyses(@_);
     my $analyses_by_name = shift;
 
-    analyses_by_name->{'generate_job_list'}->{'-rc_name'} = '4Gb_job';
+    $analyses_by_name->{'generate_job_list'}->{'-rc_name'} = '4Gb_job';
 
     # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
     my @unguarded_funnel_analyses = (
