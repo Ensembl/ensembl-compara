@@ -352,11 +352,35 @@ sub _is_rank_within_species {
     my $node = $self;
 
     # Go past the rankless nodes
-    while (($node->rank eq 'no rank') && $node->has_parent) {
+    while (($node->rank eq 'clade' || $node->rank eq 'no rank') && $node->has_parent) {
         $node = $node->parent;
     }
-    # SELECT DISTINCT n2.rank FROM ncbi_taxa_node n1 JOIN ncbi_taxa_node n2 ON n2.parent_id=n1.taxon_id WHERE n1.rank = "species";
-    if (($node->rank eq 'species') or ($node->rank eq 'subspecies') or ($node->rank eq 'forma') or ($node->rank eq 'varietas')) {
+
+    # Rank order info as described in
+    # Schoch et al. (2020) NCBI Taxonomy: a comprehensive update on curation, resources and tools.
+    # <https://europepmc.org/article/MED/32761142>.
+    # This hard-coded subspeciation rank list is not an ideal solution,
+    # but if we must use it, we may as well try to keep it current.
+    my @subspeciation_ranks = (
+        'isolate',
+        'strain',
+        'serotype',
+        'biotype',
+        'genotype',
+        'serogroup',
+        'pathogroup',
+        'forma',
+        'subvariety',
+        'varietas',
+        'form',
+        'morph',
+        'subspecies',
+        'forma specialis',
+        'special form',
+        'species',
+    );
+
+    if (grep { $node->rank eq $_ } @subspeciation_ranks) {
         return 1;
     }
     return 0;
