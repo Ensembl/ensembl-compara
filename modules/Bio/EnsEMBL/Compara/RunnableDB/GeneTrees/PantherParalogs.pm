@@ -74,10 +74,10 @@ sub rec_add_paralogs {
     my $ngenepairlinks = 0;
 
     # Iterate over all pairs of children
-    # while identifying orthologous subclades.
+    # while identifying orthologous subtrees.
     my @children = @{$ancestor->children};
-    my @subclade_graph_links;
-    my %subclade_graph_nodes;
+    my @subtree_graph_links;
+    my %subtree_graph_nodes;
     my %subtree_nodes_by_id;
     while (@children) {
         my $child1 = shift @children;
@@ -90,32 +90,32 @@ sub rec_add_paralogs {
             # When checking all the genome_db_ids we should find some paralogues
             unless ($n_para or $self->param('genome_db_id')) {
                 # If not, the sub-families are across different parts of the taxonomy and we are missing some orthologs.
-                # Let's add these orthologous subtrees to the subclade graph !
+                # Let's add these orthologous subtrees to the subtree graph !
 
                 foreach my $child ($child1, $child2) {
                     my $child_node_id = $child->node_id;
-                    if (!exists $subclade_graph_nodes{$child_node_id}) {
-                        my $subclade_node = Bio::EnsEMBL::Compara::Graph::Node->new();
-                        $subclade_node->node_id($child_node_id);
-                        $subclade_graph_nodes{$child_node_id} = $subclade_node;
+                    if (!exists $subtree_graph_nodes{$child_node_id}) {
+                        my $subtree_graph_node = Bio::EnsEMBL::Compara::Graph::Node->new();
+                        $subtree_graph_node->node_id($child_node_id);
+                        $subtree_graph_nodes{$child_node_id} = $subtree_graph_node;
                         $subtree_nodes_by_id{$child_node_id} = $child;
                     }
                 }
 
-                my $subclade1_node = $subclade_graph_nodes{$child1->node_id};
-                my $subclade2_node = $subclade_graph_nodes{$child2->node_id};
-                my $subclade_link = $subclade1_node->create_link_to_node($subclade2_node);
-                push(@subclade_graph_links, $subclade_link);
+                my $subtree_graph_node1 = $subtree_graph_nodes{$child1->node_id};
+                my $subtree_graph_node2 = $subtree_graph_nodes{$child2->node_id};
+                my $subtree_graph_link = $subtree_graph_node1->create_link_to_node($subtree_graph_node2);
+                push(@subtree_graph_links, $subtree_graph_link);
             }
         }
     }
 
     {  # <-- These braces were placed here only to minimise the diff between versions; please feel free to remove them.
-        if (@subclade_graph_links) {
-            foreach my $subclade_link (@subclade_graph_links) {
-                my ($subclade1, $subclade2) = $subclade_link->get_nodes();
-                my $child1 = $subtree_nodes_by_id{$subclade1->node_id};
-                my $child2 = $subtree_nodes_by_id{$subclade2->node_id};
+        if (@subtree_graph_links) {
+            foreach my $subtree_graph_link (@subtree_graph_links) {
+                my ($subtree_graph_node1, $subtree_graph_node2) = $subtree_graph_link->get_nodes();
+                my $child1 = $subtree_nodes_by_id{$subtree_graph_node1->node_id};
+                my $child2 = $subtree_nodes_by_id{$subtree_graph_node2->node_id};
                 # The sub-families are across different parts of the taxonomy and we are missing some orthologs. Let's add them !
                 my $gene_hash1 = $child1->get_value_for_tag('gene_hash');
                 my $gene_hash2 = $child2->get_value_for_tag('gene_hash');
@@ -129,7 +129,7 @@ sub rec_add_paralogs {
                             foreach my $gene2 (@{$gene_hash2->{$gdb_id2}}) {
                                 my $genepairlink = new Bio::EnsEMBL::Compara::Graph::Link($gene1, $gene2);
                                 $genepairlink->add_tag("ancestor", $ancestor);
-                                $genepairlink->add_tag("subclade_link", $subclade_link);
+                                $genepairlink->add_tag("subtree_graph_link", $subtree_graph_link);
                                 $genepairlink->add_tag("subtrees", \%subtree_nodes_by_id);
                                 $genepairlink->add_tag("subtree1", $child1);
                                 $genepairlink->add_tag("subtree2", $child2);
@@ -159,36 +159,36 @@ sub tag_orthologues
     my $gdb_id1 = $pep1->genome_db_id;
     my $gdb_id2 = $pep2->genome_db_id;
 
-    my $subclade_link = $genepairlink->get_value_for_tag('subclade_link');
+    my $subtree_graph_link = $genepairlink->get_value_for_tag('subtree_graph_link');
     my $subtree_nodes_by_id = $genepairlink->get_value_for_tag('subtrees');
 
-    # We take the first linked subclade node as our entry point
-    # to the subclade graph, though either one would be OK.
-    my ($subclade_node) = $subclade_link->get_nodes();
+    # We take the first linked subtree node as our entry point
+    # to the subtree graph, though either one would be OK.
+    my ($subtree_graph_start_node) = $subtree_graph_link->get_nodes();
 
-    # We need orthologue counts by subclade and genome for
+    # We need orthologue counts by subtree and genome for
     # each of the genomes linked by this orthology relationship.
-    my %subclade_counts;
-    foreach my $subclade (@{$subclade_node->all_nodes_in_graph()}) {
-        my $subtree = $subtree_nodes_by_id->{$subclade->node_id};
+    my %subtree_counts;
+    foreach my $subtree_graph_node (@{$subtree_graph_start_node->all_nodes_in_graph()}) {
+        my $subtree = $subtree_nodes_by_id->{$subtree_graph_node->node_id};
         my $species_hash = $self->get_ancestor_species_hash($subtree);
-        $subclade_counts{$subclade->node_id}{$gdb_id1} = $species_hash->{$gdb_id1} // 0;
-        $subclade_counts{$subclade->node_id}{$gdb_id2} = $species_hash->{$gdb_id2} // 0;
+        $subtree_counts{$subtree->node_id}{$gdb_id1} = $species_hash->{$gdb_id1} // 0;
+        $subtree_counts{$subtree->node_id}{$gdb_id2} = $species_hash->{$gdb_id2} // 0;
     }
 
-    # From the current subclade graph node representing a set of orthologues, we identify
+    # From the current subtree graph node representing a set of orthologues, we identify
     # the local subgraph within which every node has genes in one of the two genomes
     # involved in this orthology. All the genes in this subgraph are linked, directly
     # or indirectly, by orthology relationships with the current orthologue pair.
-    my @nodes_to_check = ($subclade_node);
-    my @connected_subclades;
+    my @nodes_to_check = ($subtree_graph_start_node);
+    my @connected_subtrees;
     my %node_visited;
     while (@nodes_to_check) {
         my $node = pop @nodes_to_check;
         $node_visited{$node->node_id} = 1;
-        if ($subclade_counts{$node->node_id}{$gdb_id1} > 0
-                || $subclade_counts{$node->node_id}{$gdb_id2} > 0) {
-            push(@connected_subclades, $node);
+        if ($subtree_counts{$node->node_id}{$gdb_id1} > 0
+                || $subtree_counts{$node->node_id}{$gdb_id2} > 0) {
+            push(@connected_subtrees, $node);
             foreach my $neighbor (@{$node->neighbors}) {
                 if (!$node_visited{$neighbor->node_id}) {
                     push(@nodes_to_check, $neighbor);
@@ -198,8 +198,8 @@ sub tag_orthologues
     }
 
     # We sum up counts of homologues from each genome from across the local subgraph.
-    my $count1 = sum map { $subclade_counts{$_->node_id}{$gdb_id1} } @connected_subclades;
-    my $count2 = sum map { $subclade_counts{$_->node_id}{$gdb_id2} } @connected_subclades;
+    my $count1 = sum map { $subtree_counts{$_->node_id}{$gdb_id1} } @connected_subtrees;
+    my $count2 = sum map { $subtree_counts{$_->node_id}{$gdb_id2} } @connected_subtrees;
 
     return $self->_classify_orthologues($count1, $count2);
 }
