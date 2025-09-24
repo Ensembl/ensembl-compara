@@ -97,7 +97,6 @@
     <one_vs_all method="LASTZ_NET" ref_genome="monodelphis_domestica">
       <species_set in_collection="vertebrate_species">
         <taxonomic_group taxon_name="Metatheria"/>
-        <taxonomic_group taxon_name="Prototheria"/>
       </species_set>
     </one_vs_all>
 
@@ -131,15 +130,24 @@
     <one_vs_all method="LASTZ_NET" ref_genome="oryzias_latipes">
       <species_set>
         <taxonomic_group taxon_name="Actinopterygii"/>
+        <!-- We exclude danio_rerio to prevent creation of "Drer-Olat LastZ (on Olat)". -->
+        <!-- The current alignment of these two species is "Drer-Olat LastZ (on Drer)". -->
+        <genome name="danio_rerio" exclude="1"/>
       </species_set>
     </one_vs_all>
 
-    <!-- Early vertebrates and other chordates -->
-    <one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona" ref_amongst="Cyclostomata"/>
+    <!-- Early vertebrates and other chordates, including "Cint-Pmar LastZ (on Pmar)". -->
     <one_vs_all method="LASTZ_NET" ref_genome="petromyzon_marinus" against="Cyclostomata" ref_amongst="Ciona"/>
+    <one_vs_all method="LASTZ_NET" ref_genome="ciona_intestinalis" against="Ciona" ref_amongst="Cyclostomata"/>
 
     <!-- Chicken vs Human LastZ (on Human) -->
     <pairwise_alignment method="LASTZ_NET" ref_genome="homo_sapiens" target_genome="gallus_gallus"/>
+
+    <!-- Japanese medaka vs Zebrafish LastZ (on Zebrafish) -->
+    <pairwise_alignment method="LASTZ_NET" ref_genome="danio_rerio" target_genome="oryzias_latipes"/>
+
+    <!-- Opossum vs Platypus LastZ (on Platypus) -->
+    <pairwise_alignment method="LASTZ_NET" ref_genome="ornithorhynchus_anatinus" target_genome="monodelphis_domestica"/>
 
     <!-- Tasmanian devil vs Human LastZ (on Human) -->
     <pairwise_alignment method="LASTZ_NET" ref_genome="homo_sapiens" target_genome="sarcophilus_harrisii"/>    
