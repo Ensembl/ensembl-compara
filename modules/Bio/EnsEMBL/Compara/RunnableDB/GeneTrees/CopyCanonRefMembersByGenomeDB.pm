@@ -75,15 +75,24 @@ sub run {
     $self->_copy_data_wrapper_join('gene_member');
     $self->_copy_data_wrapper_join('sequence', 'sequence USING (sequence_id)');
     $self->_copy_data_wrapper_join('seq_member');
-    $self->_copy_data_wrapper_join('other_member_sequence', 'other_member_sequence USING (seq_member_id)');
+
+    # We exclude 'filtered' and 'seq_with_flanking' sequences from member
+    # reuse, to facilitate their inclusion from ncRNAtrees data sources.
+    $self->_copy_data_wrapper_join(
+        'other_member_sequence',
+        'other_member_sequence USING (seq_member_id)',
+        'seq_type NOT LIKE "%filtered" AND seq_type != "seq_with_flanking"',
+    );
+
     $self->_copy_data_wrapper_join('exon_boundaries', 'exon_boundaries USING (seq_member_id)');
     $self->_copy_data_wrapper_join('hmm_annot', 'hmm_annot USING (seq_member_id)');
     $self->_copy_data_wrapper_join('seq_member_projection_stable_id', 'seq_member_projection_stable_id ON seq_member_id = target_seq_member_id');
 }
 
 
+
 sub _copy_data_wrapper_join {
-    my ($self, $table, $extra_join) = @_;
+    my ($self, $table, $extra_join, $extra_condition) = @_;
 
     #If the parameter exclude_tables is defined in the pipeline configuration, the tables defined there will be excluded from the copy.
     return if ((defined $self->param('exclude_tables')) and exists( $self->param('exclude_tables')->{$table} ));
@@ -93,7 +102,8 @@ sub _copy_data_wrapper_join {
     my $input_query     = 'SELECT ' . $table . '.* FROM gene_member JOIN dnafrag USING (dnafrag_id) JOIN seq_member ON canonical_member_id = seq_member_id'
                           . ($extra_join ? ' JOIN '.$extra_join : '')
                           . ' WHERE is_reference = 1 AND has_translation_edits = 0'
-                          . ($biotype_filter ? ' AND '.$biotype_filter : '');
+                          . ($biotype_filter ? ' AND '.$biotype_filter : '')
+                          . ($extra_condition ? ' AND '.$extra_condition : '');
 
     $self->_copy_data_wrapper($table, $input_query, 'gene_member.');
 }

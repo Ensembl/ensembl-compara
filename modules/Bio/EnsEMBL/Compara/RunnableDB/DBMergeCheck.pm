@@ -71,6 +71,10 @@ database, nor can it be used for incremental merging of homology data into the c
 since a release database could have homologies involving genes of various member types and collections,
 and the current implementation of per-MLSS merge does not have a mechanism for disentangling them.
 
+To facilitate merge of ncRNA alignment sequence data, it is possible to merge the 'other_member_sequence'
+table by priority, such that this table's data is merged from each source database in turn. In this merge
+mode, primary-key collisions are tolerated if the corresponding rows contain essentially identical data.
+
 The Runnable will complain if:
  - no primary key is defined / can be found for a table that needs to be merged
  - the primary key is not INT or CHAR
@@ -78,7 +82,9 @@ The Runnable will complain if:
  - the tables refered by the "exclusive_tables" parameter should all be non-empty
  - all the non-production and non-eHive tables of the source databases should
    exist in the target database
- - some tables that need to be merged share a value of their primary key
+ - some tables that need to be merged share a value of their primary key,
+   or when merging by priority, multiple tables have a row with an identical
+   primary-key value but inconsistent data
  - the constraints of a per-MLSS merge are violated (if using per-MLSS merge)
 
 =cut
@@ -89,7 +95,7 @@ use strict;
 use warnings;
 use Data::Dumper;
 use File::Spec::Functions;
-use JSON ('encode_json');
+use JSON ('decode_json', 'encode_json');
 use List::Util ('sum');
 
 use Bio::EnsEMBL::DBSQL::DBConnection;
@@ -133,6 +139,9 @@ sub param_defaults {
         # Configurable list of tables to merge per MLSS
         'per_mlss_merge_tables' => [],
 
+        # Configurable list of tables to merge by priority
+        'priority_merge_tables' => [],
+
         # Do we want to be very picky and die if a table hasn't been listed
         # above / isn't in the target database ?
         'die_if_unknown_table'      => 1,
@@ -159,6 +168,7 @@ sub fetch_input {
     my $src_db_aliases = $self->param_required('src_db_aliases');
     my $exclusive_tables = $self->param_required('exclusive_tables');
     my $ignored_tables = $self->param_required('ignored_tables');
+    my $priority_merge_tables = $self->param_required('priority_merge_tables');
 
     my $dbconnections = { map {$_ => go_figure_dbc( $self->param_required($_) ) } (@$src_db_aliases, 'curr_rel_db') };
 
@@ -247,11 +257,19 @@ sub run {
     my $src_db_aliases = $self->param_required('src_db_aliases');
     my $dbconnections = $self->param('dbconnections');
     my $per_mlss_merge_tables = $self->param('per_mlss_merge_tables') // [];
+    my $priority_merge_tables = $self->param('priority_merge_tables') // {};
 
     my $master_dba = $self->get_cached_compara_dba('master_db');
 
     # Structures the information per table
     my $all_tables = {};
+
+    # We take src_db_aliases directly from priority-merge table
+    # configuration so that we merge them in the specified order.
+    foreach my $table (keys %{$priority_merge_tables}) {
+        $all_tables->{$table} = $priority_merge_tables->{$table};
+    }
+
     foreach my $db (@{$src_db_aliases}) {
 
         my @ok_tables;
@@ -271,6 +289,7 @@ sub run {
         }
 
         foreach my $table (@ok_tables) {
+            next if exists $priority_merge_tables->{$table};
             $all_tables->{$table} = [] unless exists $all_tables->{$table};
             push @{$all_tables->{$table}}, $db;
         }
@@ -428,6 +447,10 @@ sub run {
         my %error_list;
 
         my $merging_table_per_mlss = scalar(grep {$_ eq $table} @{$per_mlss_merge_tables}) ? 1 : 0;
+        my $merging_table_by_priority = exists $priority_merge_tables->{$table} ? 1 : 0;
+        if ($merging_table_per_mlss && $merging_table_by_priority) {
+            $self->die_no_retry("Cannot merge table '$table' simultaneously by priority and per MLSS");
+        }
 
         unless (exists $table_size->{'curr_rel_db'}->{$table} or exists $exclusive_tables->{$table}) {
             if ($self->param('die_if_unknown_table')) {
@@ -454,7 +477,10 @@ sub run {
 
             # Multiple source -> merge (possibly with the target db)
             my @dbs = @{$all_tables->{$table}};
-            push @dbs, 'curr_rel_db' if $table_size->{'curr_rel_db'}->{$table};
+            # curr_rel_db always has maximum priority when merging by priority, while
+            # in other merge modes the order of databases doesn't matter, so if it
+            # has data for this table, we put it first in the list of databases.
+            unshift @dbs, 'curr_rel_db' if $table_size->{'curr_rel_db'}->{$table};
             print "$table is merged from ", join(" and ", @dbs), "\n" if $self->debug;
 
             my $sql = "SELECT MIN($key), MAX($key) FROM $table";
@@ -527,6 +553,23 @@ sub run {
                         print " -INFO- merging $table by MLSS, skipping range check of key '$key'\n" if $self->debug;
                     }
 
+                } elsif ($merging_table_by_priority) {
+
+                    print " -INFO- comparing the actual primary key and row values\n" if $self->debug;
+                    # We make sure that there are no primary key conflicts, allowing
+                    # tables in different source databases to have rows with identical
+                    # keys only if the rows themselves are essentially identical.
+                    my $keys = join(",", @$full_key);
+                    $sql = "SELECT $keys FROM $table";
+                    my $updated_table_sizes = $self->_check_primary_keys(\@dbs, $dbconnections, $table, $keys, $sql, 'allow_identical_rows');
+
+                    # Now that we've checked the primary keys, we can update the effective size of
+                    # the current table in each database, taking account of those rows that will be
+                    # skipped due to sharing a primary key with a row in a higher-priority database.
+                    while (my ($dbname, $n_rows) = each %{$updated_table_sizes}) {
+                        $table_size->{$dbname}->{$table} = $n_rows;
+                    }
+
                 } elsif (grep { $table_size->{$_}->{$table} <= $self->param('max_nb_elements_to_fetch') } @dbs) {
 
                     print " -INFO- comparing the actual values of the primary key\n" if $self->debug;
@@ -559,6 +602,7 @@ sub write_output {
     my $table_size = $self->param('table_size');
     my $primary_keys = $self->param('primary_keys');
 
+    my $priority_merge_tables = $self->param('priority_merge_tables') // {};
     my $per_mlss_merge_tables = $self->param('per_mlss_merge_tables') // [];
     my $src_db_to_mlss_info = $self->param('src_db_to_mlss_info');
 
@@ -581,12 +625,19 @@ sub write_output {
 
     while ( my ($table, $dbs) = each(%{$self->param('merge')}) ) {
         my $merging_table_per_mlss = scalar(grep {$_ eq $table} @{$per_mlss_merge_tables}) ? 1 : 0;
+        my $merging_table_by_priority = exists $priority_merge_tables->{$table} ? 1 : 0;
         my $n_total_rows = $table_size->{'curr_rel_db'}->{$table} || 0;
         # my @inputlist = ();
         my @input_id_list = ();
         foreach my $db (@$dbs) {
             # push @inputlist, [ "#$db#" ];
-            push @input_id_list, { src_db_conn => "#$db#" };
+            my $input_id = { src_db_conn => "#$db#" };
+            if ($merging_table_by_priority) {
+                # Mode must be set to 'ignore' when merging by priority,
+                # regardless of the parameters of the 'merge_table' analysis.
+                $input_id->{mode} = 'ignore';
+            }
+            push @input_id_list, $input_id;
             $n_total_rows += $table_size->{$db}->{$table};
         }
         warn "ACTION: merge '$table' from ".join(", ", map {"'$_'"} @$dbs)."\n" if $self->debug;
@@ -620,14 +671,16 @@ sub _assert_same_table_schema {
 
 
 sub _check_primary_keys {
-    my ($self, $dbnames, $dbconnections, $table, $keys, $sql) = @_;
+    my ($self, $dbnames, $dbconnections, $table, $keys, $sql, $allow_identical_rows) = @_;
 
     my %all_values = ();
+    my %row_counts = ();
     foreach my $dbname (@{$dbnames}) {
+        my $n_rows = 0;
         my $sth = $dbconnections->{$dbname}->prepare($sql, { 'mysql_use_result' => 1 });
         $sth->execute;
         while (my $cols = $sth->fetchrow_arrayref()) {
-            my $value = join(",", map {$_ // '<NULL>'} @$cols);
+            my $value = encode_json($cols);
             if (exists $all_values{$value}) {
                 $self->die_no_retry(
                     sprintf(
@@ -636,13 +689,76 @@ sub _check_primary_keys {
                         $keys,
                         $value,
                         $dbname,
-                        $all_values{$value},
+                        $all_values{$value}->[0],
                     )
-                );
+                ) unless $allow_identical_rows;
+            } else {
+                $n_rows += 1;
             }
-            $all_values{$value} = $dbname;
+
+            push(@{$all_values{$value}}, $dbname);
+        }
+
+        $row_counts{$dbname} = $n_rows;
+    }
+
+    if ($allow_identical_rows) {
+
+        my $row_sql;
+        if ($table eq 'other_member_sequence') {
+
+            # ncRNA member 'seq_with_flanking' sequence is taken from genomic sequence. Because
+            # genomic sequences can have different capitalisation in the source databases, we
+            # uppercase the sequence to ensure we can compare consistent representations of it.
+            $row_sql = qq/
+                SELECT seq_member_id, seq_type, length, UPPER(sequence)
+                FROM other_member_sequence
+                WHERE seq_member_id = ? AND seq_type = ?
+            /;
+
+        } else {
+            $self->die_no_retry("Collision-tolerant primary-key check has not been implemented for table $table");
+        }
+
+        # From this point, we only need to deal with colliding primary key values.
+        my @clashing_keys = grep { scalar(@{$all_values{$_}}) > 1 } keys %all_values;
+        %all_values = map { $_ => $all_values{$_} } @clashing_keys;
+
+        while (my ($clashing_key, $clash_dbs) = each %all_values) {
+            my $full_key = decode_json($clashing_key);
+            my $comparand_json;
+            foreach my $dbname (@{$clash_dbs}) {
+
+                my $row_json = $dbconnections->{$dbname}->sql_helper->execute_single_result(
+                    -SQL => $row_sql,
+                    -PARAMS => $full_key,
+                    -CALLBACK => sub {
+                        my ($row) = @_;
+                        return encode_json($row);
+                    },
+                );
+
+                if (defined $comparand_json) {
+                    if ($row_json ne $comparand_json) {
+                        $self->die_no_retry(
+                            sprintf(
+                                " -ERROR- data mismatch between '%s' and '%s' for the value '%s' of key %s(%s)\n",
+                                $dbname,
+                                $clash_dbs->[0],
+                                $clashing_key,
+                                $table,
+                                $keys,
+                            )
+                        );
+                    }
+                } else {
+                    $comparand_json = $row_json;
+                }
+            }
         }
     }
+
+    return \%row_counts;
 }
 
 sub _get_effective_table_size {
