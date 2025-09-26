@@ -204,8 +204,16 @@ our $config = {
                 query => 'SELECT gene_member_id FROM gene_member WHERE genome_db_id IS NULL',
             },
             {
+                description => 'All the gene_members have a taxon_id consistent with the genome_db table',
+                query => 'SELECT DISTINCT genome_db_id FROM gene_member gm JOIN genome_db gdb USING (genome_db_id) WHERE gdb.taxon_id IS NOT NULL AND gm.taxon_id != gdb.taxon_id',
+            },
+            {
                 description => 'All the seq_members should have a genome_db_id',
                 query => 'SELECT seq_member_id FROM seq_member WHERE genome_db_id IS NULL AND source_name NOT LIKE "Uniprot%"',
+            },
+            {
+                description => 'All the seq_members have a taxon_id consistent with the genome_db table',
+                query => 'SELECT DISTINCT genome_db_id FROM seq_member gm JOIN genome_db gdb USING (genome_db_id) WHERE gdb.taxon_id IS NOT NULL AND gm.taxon_id != gdb.taxon_id AND source_name NOT LIKE "Uniprot%"',
             },
         ],
     },

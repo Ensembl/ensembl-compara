@@ -94,6 +94,11 @@ sub write_output {
             $dbc->do('UPDATE hmm_annot             SET seq_member_id = ?        WHERE seq_member_id = ?',        undef, @$r);
             $dbc->do('UPDATE peptide_align_feature SET qmember_id = ?           WHERE qmember_id = ?',           undef, @$r);
             $dbc->do('UPDATE peptide_align_feature SET hmember_id = ?           WHERE hmember_id = ?',           undef, @$r);
+
+            # Assuming that 'filtered' and 'seq_with_flanking' ncRNA alignment sequences have been successfully excluded from
+            # the 'genome_member_copy' step and consequently included in 'copy_table_from_prev_db', we should reindex them.
+            $dbc->do('UPDATE other_member_sequence SET seq_member_id = ? WHERE seq_member_id = ?'
+                     .' AND (seq_type LIKE "%filtered" OR seq_type = "seq_with_flanking")',                      undef, @$r);
         }
 
         $dbc->do('ALTER TABLE peptide_align_feature DROP KEY qmember_id');

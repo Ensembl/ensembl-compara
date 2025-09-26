@@ -79,7 +79,7 @@ sub slice {
   Arg [1]    : (optional) Bio::EnsEMBL::Slice $reference_slice
   Example    : my $reference_slice = $genomic_align_block->reference_slice;
   Example    : $genomic_align_block->reference_slice($slice);
-  Description: Alias for slice method. TO BE DEPRECATED.
+  Description: Alias for slice method.
   Returntype : Bio::EnsEMBL::Slice object
   Exceptions : 
   Caller     : general
@@ -362,7 +362,7 @@ sub is_restricted {
                object
                It might be the case that the restricted region coincide with a gap
                in one or several GenomicAligns. By default these GenomicAligns are
-               returned with a dnafrag_end equals to its dnafrag_start + 1. For instance,
+               returned with a dnafrag_end equals to its dnafrag_start - 1. For instance,
                a GenomicAlign with dnafrag_start = 12345 and dnafrag_end = 12344
                correspond to a block which goes on this region from before 12345 to
                after 12344, ie just between 12344 and 12345. You can choose to remove

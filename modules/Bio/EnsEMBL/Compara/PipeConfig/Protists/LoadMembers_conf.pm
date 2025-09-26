@@ -50,6 +50,8 @@ sub default_options {
 
         'division'  => 'protists',
 
+        'do_nonblocking_checks' => 1,
+
         # Names of species we do not want to reuse this time
         # 'do_not_reuse_list' => [ 'bigelowiella_natans', 'emiliania_huxleyi' ],
         'do_not_reuse_list' => [],

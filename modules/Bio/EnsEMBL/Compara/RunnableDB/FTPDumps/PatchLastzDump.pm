@@ -25,6 +25,10 @@ Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump
 	2. untar/gz the old dump to tmp dir (because the new and old dir names will be the same - avoid clashes or uncertainty)
 	3. copy everything to patch dump dir, md5sum, re-tar/gz
 
+=head1 DEPRECATION NOTICE
+
+This runnable is deprecated, and may be removed in a future release.
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump;
@@ -70,7 +74,7 @@ sub fetch_input {
 sub run {
 	my $self = shift;
 
-    $self->warning("RunnableDB::FTPDumps::PatchLastzDump is deprecated");
+    $self->warning("RunnableDB::FTPDumps::PatchLastzDump is deprecated, and may be removed in a future release");
 
 	my $prev_rel_tarball = $self->param('prev_rel_tarball');
 	my $patch_dump_dir = $self->param('patch_dump_dir');

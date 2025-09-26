@@ -95,49 +95,6 @@ my $mlss = $mlssa->fetch_by_dbID(835); # all strains
 # $mu->dump();
 
 ############################################################
-#               GenomicAlignBlock tests                    #
-############################################################
-# my ( $start, $end ) = ( 5000000, 5100000 ); # 5000000, 5100000
-# print "\n-----------SLICE GABS---------------\n\n";
-# my $sliceAdaptor = $registry->get_adaptor('mus_castaneus', 'Core', 'Slice');
-# my $slice = $sliceAdaptor->fetch_by_region('chromosome', '5', $start, $end);
-
-# my $slice_gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_Slice( $mlss->[0], $slice, $limit_number );
-
-# my $c = 0;
-# foreach my $gab ( @$slice_gabs ) {
-# 	print "$c : ";
-# 	$gab->_print;
-# 	$c++;
-# }
-
-# print "-----------DNAFRAG GABS-------------\n";
-# my $dnafrag_adaptor = $registry->get_adaptor( 'mouse_master', 'compara', 'DnaFrag' );
-# my $dnafrag = $dnafrag_adaptor->fetch_by_Slice( $slice );
-
-# my $dnafrag_gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag( $mlss->[0], $dnafrag, $start, $end, $limit_number );
-
-# $c = 0;
-# foreach my $gab ( @$dnafrag_gabs ) {
-# 	print "$c : ";
-# 	$gab->_print;
-# 	$c++;
-# }
-
-# print "-----------DNA_DNA GABS-------------\n";
-# my $gdba = $registry->get_adaptor( 'mouse_master', 'compara', 'GenomeDB' );
-# my $nonref_gdb = $gdba->fetch_by_name_assembly( 'mus_spretus', 'CURRENT' );
-# my $nonref_dnafrag = $dnafrag_adaptor->fetch_by_GenomeDB_and_name( $nonref_gdb, '5' );
-# my $dna_dna_gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag( $mlss->[0], $dnafrag, $start, $end, $nonref_dnafrag, $limit_number );
-
-# $c = 0;
-# foreach my $gab ( @$dna_dna_gabs ) {
-# 	print "$c : ";
-# 	$gab->_print;
-# 	$c++;
-# }
-
-############################################################
 #                   Sandbox Testing                        #
 ############################################################
 
@@ -178,20 +135,6 @@ my $c = 0;
 # #    print Dumper $projection;
 # }
 
-
-# #print "\n\n------------BLOCKS-------------\n";
-# #for my $gblock ( @{ $alignSlice->get_all_GenomicAlignBlocks } ){
-# #	$gblock->_print;
-# #	#print ">>>>>>>\n\n";
-# #	#for my $g ( @{ $gblock->genomic_align_array } ) {
-# #	#      $g->_print;
-# #	#}
-# #	#print "<<<<<<<\n\n";
-# #}
-# #$c++;
-# print "\n-----------------------------------\n\n";
-
-#}
 
 my $slice_gabs = $gaba->fetch_all_by_MethodLinkSpeciesSet_Slice( $mlss, $slice, $limit_number );
 

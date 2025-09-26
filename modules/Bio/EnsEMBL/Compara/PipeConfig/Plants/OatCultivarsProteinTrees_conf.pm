@@ -17,16 +17,16 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Plants::BarleyCultivarsProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Plants::OatCultivarsProteinTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::BarleyCultivarsProteinTrees_conf \
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::OatCultivarsProteinTrees_conf \
     -host mysql-ens-compara-prod-X -port XXXX
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Plants::BarleyCultivarsProteinTrees_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Plants::OatCultivarsProteinTrees_conf;
 
 use strict;
 use warnings;
@@ -41,20 +41,20 @@ sub default_options {
         %{$self->SUPER::default_options},
 
         # Parameters to allow merging different protein-tree collections
-        'collection'       => 'barley_cultivars',
-        'label_prefix'     => 'barley_cultivars_',
+        'collection'       => 'oat_cultivars',
+        'label_prefix'     => 'oat_cultivars_',
 
-        # Flatten all the genomes under species 'Hordeum vulgare'
-        'multifurcation_deletes_all_subnodes' => [4513],
+        # Flatten all the genomes under species 'Avena sativa'
+        'multifurcation_deletes_all_subnodes' => [4498],
 
         # Clustering parameters:
         'mapped_gene_ratio_per_taxon' => {
             '2759' => 0.5,  # eukaryotes
-            '4513' => 0.9,  # hordeum vulgare
+            '4498' => 0.9,  # avena sativa
         },
 
         # GOC parameters
-        'goc_taxlevels' => ['Hordeum'],
+        'goc_taxlevels' => ['Avena'],
     };
 }
 

@@ -618,32 +618,6 @@ sub _reverse_score {
 }
 
 
-sub _print {    ## DEPRECATED
-  my ($self, $FILEH) = @_;
-
-#  my $verbose = verbose;
-#  verbose(0);
-  my $exp_score = 0;
-  if ($self->expected_score) {
-      $exp_score = $self->expected_score;
-  }
-  
-  $FILEH ||= \*STDOUT;
-  
-  print $FILEH
-
-"Bio::EnsEMBL::Compara::GenomicAlignBlock object ($self)
-  genomic_align_block = " . ($self->genomic_align_block) . "
-  genomic_align_block_id = " . ($self->genomic_align_block_id) . "
-  window_size = " . ($self->window_size) . "
-  position = " . ($self->position) . "
-  seq_region_pos = " . ($self->seq_region_pos) . "
-  diff_score = " . ($self->diff_score) . "
-  expected_score = $exp_score \n";
-
-}
-
-
 =head2 toString
 
   Example    : print $conservation_score->toString();

@@ -19,6 +19,10 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::SymlinkPreviousDumps
 
+=head1 DEPRECATION NOTICE
+
+This runnable is deprecated, and may be removed in a future release.
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::SymlinkPreviousDumps;
@@ -85,7 +89,7 @@ sub fetch_input {
 sub run {
 	my $self = shift;
 
-    $self->warning("RunnableDB::FTPDumps::SymlinkPreviousDumps is deprecated");
+    $self->warning("RunnableDB::FTPDumps::SymlinkPreviousDumps is deprecated, and may be removed in a future release");
 
 	my @symlink_cmds = @{ $self->param('symlink_cmds') };
 	foreach my $this_cmd ( @symlink_cmds ) {

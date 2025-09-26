@@ -207,11 +207,10 @@ sub find_labeled_ticket {
     my ($jira_adaptor, $label) = @_;
 
     my $jql = "labels=$label";
-    my $labeled_ticket = $jira_adaptor->fetch_tickets($jql);
-
+    my $labeled_ticket = $jira_adaptor->fetch_tickets( -JQL => $jql, -FIELDS => ['key'] );
     # Check that we have actually found the ticket (and only one)
-    die "Cannot find any ticket with the label '$label'" if (! $labeled_ticket->{total});
-    die "Found more than one ticket with the label '$label'" if ($labeled_ticket->{total} > 1);
+    die "Cannot find any ticket with the label '$label'" if (scalar(@{$labeled_ticket->{issues}}) == 0);
+    die "Found more than one ticket with the label '$label'" if (scalar(@{$labeled_ticket->{issues}}) > 1);
     print "Found ticket key '" . $labeled_ticket->{issues}->[0]->{key} . "'\n";
 
     return $labeled_ticket->{issues}->[0]->{key};

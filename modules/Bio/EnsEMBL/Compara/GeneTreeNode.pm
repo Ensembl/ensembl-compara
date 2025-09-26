@@ -454,7 +454,7 @@ sub get_AlignedMemberSet {
   Returntype  : Bio::SimpleAlign
   Exceptions  :
   Caller      : general
-  Status      : At risk (may become deprecated soon)
+  Status      : At risk
 
 =cut
 
@@ -471,7 +471,7 @@ sub get_SimpleAlign {
                sub-tree. See Bio::EnsEMBL::Compara::AlignedMemberSet
   Returntype : string
   Caller     : general
-  Status     : At risk (may become deprecated soon)
+  Status     : At risk
 
 =cut
 

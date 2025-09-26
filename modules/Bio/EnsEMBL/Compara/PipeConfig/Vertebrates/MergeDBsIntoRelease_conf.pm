@@ -88,7 +88,6 @@ sub default_options {
             'hmm_annot'             => 'protein_db',
             'gene_member'           => 'members_db',
             'seq_member'            => 'members_db',
-            'other_member_sequence' => 'members_db',
             'sequence'              => 'members_db',
             'exon_boundaries'       => 'members_db',
             'seq_member_projection_stable_id' => 'members_db',
@@ -106,6 +105,10 @@ sub default_options {
             'pig_prot_db'    => [qw(ortholog_quality datacheck_results)],
             'pig_ncrna_db'   => [qw(ortholog_quality datacheck_results method_link_species_set_attr)],
         },
+
+        'priority_merge_tables' => {
+            'other_member_sequence' => ['members_db', 'ncrna_db', 'mouse_ncrna_db', 'pig_ncrna_db'],
+        }
    };
 }
 
@@ -113,6 +116,8 @@ sub tweak_analyses {
     my $self = shift;
     $self->SUPER::tweak_analyses(@_);
     my $analyses_by_name = shift;
+
+    $analyses_by_name->{'generate_job_list'}->{'-rc_name'} = '4Gb_job';
 
     # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
     my @unguarded_funnel_analyses = (

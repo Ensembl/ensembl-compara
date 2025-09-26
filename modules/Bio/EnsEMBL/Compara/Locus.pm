@@ -465,16 +465,26 @@ sub get_sequence {
     } else {
         # If there is no file, query the database via the Core API
         $self->genome_db->db_adaptor->dbc->prevent_disconnect( sub {
-            if ($mask) {
+            my $slice = $self->get_Slice();
+
+            if (!defined $slice) {
+                if ($self->dnafrag_end == $self->dnafrag_start - 1) {
+                    # We may end up here if a slice coincides with a gap in a GenomicAlign, leaving us with an empty sequence.
+                    # See: https://github.com/Ensembl/ensembl-compara/blob/release/115/modules/Bio/EnsEMBL/Compara/BaseGenomicAlignSet.pm#L365
+                    $seq = '';
+                } else {
+                    throw(sprintf("Failed to get slice for locus '%s'", $self->toString));
+                }
+            } elsif ($mask) {
                 if ($mask =~ /^soft/i) {
-                    $seq = $self->get_Slice()->get_repeatmasked_seq(undef, 1)->seq;
+                    $seq = $slice->get_repeatmasked_seq(undef, 1)->seq;
                 } elsif ($mask =~ /^hard/i) {
-                    $seq = $self->get_Slice()->get_repeatmasked_seq()->seq;
+                    $seq = $slice->get_repeatmasked_seq()->seq;
                 } else {
                     throw("Unknown masking option '$mask'");
                 }
             } else {
-                $seq = $self->get_Slice()->seq;
+                $seq = $slice->seq;
             }
         });
     }

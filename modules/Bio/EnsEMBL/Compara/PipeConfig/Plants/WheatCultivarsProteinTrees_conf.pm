@@ -76,8 +76,6 @@ sub tweak_analyses {
 
     my $analyses_by_name = shift;
 
-    $analyses_by_name->{'fasttree'}->{'-parameters'}->{'cmd'} = '#fasttree_exe# -nosupport -pseudo -quiet -nopr -wag #alignment_file# > #output_file#';
-
     # Flow "examl_32_cores" #-2 to "fasttree"
     $analyses_by_name->{'examl_32_cores'}->{'-flow_into'}->{-2} = [ 'fasttree' ];
 }

@@ -63,6 +63,14 @@ Output metadata file.
 
 (Optional) Preset meta key list name (default: 'compara').
 
+=item B<[--exclude_meta_keys STR]>
+
+(Optional) Comma-delimited string of meta keys to exclude (e.g. 'species.strain,species.strain_group').
+
+=item B<[--include_meta_keys STR]>
+
+(Optional) Comma-delimited string of meta keys to include (e.g. 'ploidy,species.division').
+
 =item B<[--ensembl_division STR]>
 
 (Optional) Fetch metadata for cores in this division (e.g. 'EnsemblFungi'). Mutually exclusive with '--compara_division'.
@@ -136,6 +144,8 @@ my $registry_file;
 my $registry_url;
 my $outfile;
 my $preset = 'compara';
+my $exclude_meta_keys;
+my $include_meta_keys;
 my $ensembl_division;
 my $compara_division;
 my $verbose = 0;
@@ -146,6 +156,8 @@ GetOptions(
     'registry_url=s' => \$registry_url,
     'o|outfile=s' => \$outfile,
     'preset=s' => \$preset,
+    'exclude_meta_keys=s' => \$exclude_meta_keys,
+    'include_meta_keys=s' => \$include_meta_keys,
     'ensembl_division=s' => \$ensembl_division,
     'compara_division=s' => \$compara_division,
 );
@@ -210,7 +222,34 @@ my $temp_meta_file_path = catfile($temp_dir, $output_file_name);
 
 my $csv = Text::CSV->new ({ escape_char => "\\", quote_char => "'", sep_char => "\t", undef_str => '<NA>' });
 open my $fh, '>', $temp_meta_file_path or throw("Failed to open [$temp_meta_file_path]: $!");
-my @rel_meta_keys = @{$META_KEY_PRESETS{$preset}};
+
+my %rel_meta_key_set = map { $_ => 1 } @{$META_KEY_PRESETS{$preset}};
+
+my %excluded_meta_key_set;
+if (defined $exclude_meta_keys) {
+    %excluded_meta_key_set = map { $_ => 1 } split(/,/, $exclude_meta_keys);
+}
+
+my %included_meta_key_set;
+if (defined $include_meta_keys) {
+    %included_meta_key_set = map { $_ => 1 } split(/,/, $include_meta_keys);
+}
+
+my @conflicting_keys = grep { exists($included_meta_key_set{$_}) } keys %excluded_meta_key_set;
+if (@conflicting_keys) {
+    throw(sprintf("cannot simultaneously include and exclude meta key(s): %s", join(',', @conflicting_keys)));
+}
+
+foreach my $included_meta_key (keys %included_meta_key_set) {
+    $rel_meta_key_set{$included_meta_key} = 1;
+}
+
+foreach my $excluded_meta_key (keys %excluded_meta_key_set) {
+    delete $rel_meta_key_set{$excluded_meta_key};
+}
+
+my @rel_meta_keys = sort keys %rel_meta_key_set;
+
 my @out_col_names = ('host', 'dbname', @rel_meta_keys);
 $csv->say($fh, \@out_col_names);
 

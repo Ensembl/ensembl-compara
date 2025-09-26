@@ -44,6 +44,8 @@ sub param_defaults {
                     'UPDATE gene_tree_root SET clusterset_id = "#clusterset_id#" WHERE clusterset_id = "default"',
                     'UPDATE gene_tree_root SET stable_id = CONCAT("#label_prefix#", stable_id) WHERE stable_id IS NOT NULL AND stable_id NOT LIKE "#label_prefix#%"',
                     'UPDATE hmm_profile SET type = CONCAT("#label_prefix#", type) WHERE type NOT LIKE "#label_prefix#%"',
+                    'UPDATE other_member_sequence SET seq_type = CONCAT("#label_prefix#", seq_type) WHERE "#clusterset_id#" != "default" AND seq_type = "filtered"',
+                    'UPDATE gene_align SET seq_type = CONCAT("#label_prefix#", seq_type) WHERE "#clusterset_id#" != "default" AND seq_type = "filtered"',
                 ],
     }
 }

@@ -51,12 +51,11 @@ sub default_options {
 
         'division'   => 'vertebrates',
 
+        'do_nonblocking_checks' => 1,
+
     # names of species we don't want to reuse this time
         #'do_not_reuse_list' => [ 'homo_sapiens', 'mus_musculus', 'rattus_norvegicus', 'mus_spretus_spreteij', 'danio_rerio', 'sus_scrofa' ],
         'do_not_reuse_list' => [ ],
-
-    #load uniprot members for family pipeline
-        'load_uniprot_members'      => 1,
 
         # Load non reference sequences and patches for fresh members
         'include_nonreference' => 1,
@@ -69,6 +68,9 @@ sub tweak_analyses {
     my $self = shift;
     $self->SUPER::tweak_analyses(@_);
     my $analyses_by_name = shift;
+
+    # Genomes such as homo_sapiens need a little more memory.
+    $analyses_by_name->{'check_reusability'}->{'-rc_name'} = '4Gb_job';
 
     # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
     my @unguarded_funnel_analyses = (

@@ -106,6 +106,13 @@
          {
             "assignee": "<RelCo>",
             "component": "Production tasks",
+            "description": "*GitHub*: [OatCultivarsProteinTrees_conf.pm|https://github.com/Ensembl/ensembl-compara/blob/release/<version>/modules/Bio/EnsEMBL/Compara/PipeConfig/Plants/OatCultivarsProteinTrees_conf.pm]\n{code}isrun init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Plants::OatCultivarsProteinTrees_conf -host mysql-ens-compara-prod-X -port XXXX{code}",
+            "summary": "Run the oat cultivars Protein-trees pipeline",
+            "name_on_graph": "Protein-trees:Oat cultivars"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Production tasks",
             "description": "Review the gene-tree stats for each gene-tree pipeline, and address any issues.",
             "summary": "Check gene-tree stats"
          },
