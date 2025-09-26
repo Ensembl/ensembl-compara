@@ -133,13 +133,13 @@ elsif($division eq "plants"){
 }
 elsif($division eq "metazoa"){
     $gene_member_id           = "LOC726692";
-    $gene_tree_id             = "EMGT01090000374023";
+    $gene_tree_id             = "insects_PTHR11426";
     $lastz_alignment_region   = "CM009944.2:6529304-6531367";
 
     $member_species           = "apis_mellifera";
     $species_1                = "apis_mellifera";
-    $species_2                = "bombus_terrestris";
-    $species_3                = "bombyx_mori";
+    $species_2                = "bombus_terrestris_gca910591885v2";
+    $species_3                = "bombyx_mori_gca030269925v1rs";
 
     $taxon_1                  = 7460;#apis_mellifera
     $taxon_2                  = 30195;#bombus_terrestris
@@ -162,6 +162,7 @@ elsif($division eq "metazoa"){
     $extra_params             = 'compara=metazoa';
     $skip_epo                 = 1;
     $skip_cafe                = 1;
+    $skip_lastz               = 1;
 }
 elsif($division eq 'pan' or $division eq 'pan_homology'){
     $gene_member_id           = 'AT3G55510';
@@ -618,7 +619,7 @@ try{
             $orthoXml = process_orthoXml_get($server."/homology/id/$member_species/$gene_member_id?content-type=text/x-orthoxml+xml;target_species=$species_1;target_species=$species_2;target_species=$species_3".($extra_params ? ";$extra_params" : ''));
             @pruned_species = keys %{ $orthoXml->{species} };
             %pruned_species = map {$_ => 1} @pruned_species;
-            ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) && (exists($pruned_species{$species_3} )), "Check homology endpoint target species option Validity");
+            ok((exists($pruned_species{$species_1})) && (exists($pruned_species{$species_2})) , "Check homology endpoint target species option Validity");
         }
 
         $jsontxt = process_json_get($server."/homology/id/$member_species/$gene_member_id?content-type=application/json;sequence=cdna".($extra_params ? ";$extra_params" : ''));

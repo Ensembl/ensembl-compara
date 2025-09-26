@@ -56,6 +56,7 @@ perl get_ancestral_sequence.pl
     [--ancestral_db   url/registry alias for ancestral core ]
     [--reg_conf       registry config file                  ]
     [--species        name of query species                 ]
+    [--target_species name of target species                ]
     [--alignment_set  name of species set                   ]
     [--mlss_id        mlss id                               ]
     [--dir            directory name for output             ]
@@ -107,6 +108,17 @@ a matching MLSS name
 =item B<[--species name_of_query_species]>
 
 The name for the species to get the ancestral sequence of (default: "Homo sapiens")
+
+=item B<[--target_species name_of_target_species]>
+
+If specified, this should be the name of a target species whose most recent
+common ancestor with the query species is to be taken as the ancestral sequence.
+
+If the target species is present in multiple nodes of the genomic alignment tree,
+the ancestral sequence of the query genome is taken from the closest node of the
+alignment tree that is also ancestral to a region of the target genome.
+
+A genomic alignment tree is skipped if the target species is not present.
 
 =item B<[--alignment_set name_of_query_species]>
 
@@ -163,6 +175,7 @@ no warnings 'uninitialized';
 my $reg = "Bio::EnsEMBL::Registry";
 
 my $species_name = "homo_sapiens";
+my $target_species_name;
 my $alignment_set = "primates";
 my $dir = '';
 my $debug = 0;
@@ -179,6 +192,7 @@ GetOptions(
   "ancestral_db=s" => \$ancestral_db,
   "conf|reg_conf=s" => \$registry_file,
   "species=s" => \$species_name,
+  "target_species=s" => \$target_species_name,
   "alignment_set=s" => \$alignment_set,
   "mlss_id=i" => \$mlss_id,
   "dir=s" => \$dir,
@@ -311,6 +325,20 @@ my %karyo_slices = map {$_->seq_region_name => 1} @{ $slice_adaptor->fetch_all_k
 # partition the files into subdirs if this is the case
 # my $partition_files = ( scalar @$slices >= $max_files_per_dir ) ? 1 : 0;
 
+# We need to remove any previously written non-chromosomal
+# files at the outset, to enable a cleaner rerun if needed.
+my %non_karyo_coord_systems;
+foreach my $slice (@$slices) {
+    next if ($karyo_slices{$slice->seq_region_name});
+    $non_karyo_coord_systems{$slice->coord_system_name} = 1;
+}
+foreach my $coord_system_name (keys %non_karyo_coord_systems) {
+    foreach my $file_ext ('.bed', '.fa') {
+        my $file_path = sprintf('%s/%s_ancestor_%s.%s', $dir, $species_production_name, $coord_system_name, $file_ext);
+        unlink($file_path) if (-f $file_path);
+    }
+}
+
 foreach my $slice (@$slices) {
   next unless (!$ARGV[0] or $slice->seq_region_name eq $ARGV[0] or
       $slice->coord_system_name eq $ARGV[0]);
@@ -365,16 +393,58 @@ sub dump_ancestral_sequence {
     my $ref_gat = $this_genomic_align_tree->reference_genomic_align_node;
     next if (!$ref_gat); # This should not happen as we get the GAT using a query Slice
     my $ref_aligned_sequence = $ref_gat->aligned_sequence;
-    my $ancestral_sequence = $ref_gat->parent->aligned_sequence;
-    my $sister_sequence;
-    foreach my $child (@{$ref_gat->parent->children}) {
-      if ($child ne $ref_gat) {
-        $sister_sequence = $child->aligned_sequence;
+
+    my @ref_ancestors = @{$ref_gat->get_all_ancestors};
+
+    # From the reference genomic alignment tree node, we aim to obtain:
+    # an ancestral sequence;
+    # an older ancestral sequence, if available; and
+    # whichever one of its children is not an ancestor of the reference node (i.e. the sister sequence).
+
+    my $anc_gat;
+    my $ref_lineage_root;
+    if ($target_species_name) {
+      my @leaf_nodes = @{$this_genomic_align_tree->get_all_leaves};
+      my @non_ref_nodes = grep { $_->node_id != $ref_gat->node_id } @leaf_nodes;
+      my @target_leaves = grep { $_->get_genome_db_for_node->name eq $target_species_name } @non_ref_nodes;
+
+      # If the target species is not represented in this GenomicAlignTree,
+      # then we cannot find a shared ancestral sequence, so we skip it.
+      next if (!scalar(@target_leaves));
+
+      # From this point, we assume that the genomic alignment tree contains
+      # a sequence ancestral to both the query and target species. We are
+      # trying to find the index of the most recent such sequence in the
+      # array of ancestors of the reference genomic alignment tree node.
+      my @ref_anc_nodes = @{$ref_gat->get_all_ancestors};
+      my @ref_anc_idxs = (0 .. scalar(@ref_anc_nodes) - 1);
+
+      my $mrca_idx = $ref_anc_idxs[-1];
+      foreach my $target_leaf (@target_leaves) {
+        my $shared_anc_node = $ref_gat->find_first_shared_ancestor($target_leaf);
+
+        foreach my $ref_anc_idx (@ref_anc_idxs) {
+          my $ref_anc_node = $ref_anc_nodes[$ref_anc_idx];
+          if ($ref_anc_node->node_id == $shared_anc_node->node_id) {
+            $mrca_idx = $ref_anc_idx if ($ref_anc_idx < $mrca_idx);
+            last;
+          }
+        }
       }
+
+      $anc_gat = $ref_anc_nodes[$mrca_idx];
+      $ref_lineage_root = $mrca_idx > 0 ? $ref_anc_nodes[$mrca_idx-1] : $ref_gat;
+
+    } else {
+      $anc_gat = $ref_gat->parent;
+      $ref_lineage_root = $ref_gat;
     }
+
+    my $ancestral_sequence = $anc_gat->aligned_sequence;
+    my $sister_sequence = $ref_lineage_root->siblings->[0]->aligned_sequence;
     my $older_sequence;
-    if ($ref_gat->parent->parent) {
-      $older_sequence = $ref_gat->parent->parent->aligned_sequence;
+    if ($anc_gat->parent) {
+      $older_sequence = $anc_gat->parent->aligned_sequence;
     }
 #    print $ref_aligned_sequence, "\n\n", "$ancestral_sequence\n\n\n\n";
     my $ref_ga = $ref_gat->genomic_align_group->get_all_GenomicAligns->[0];
