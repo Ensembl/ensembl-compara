@@ -562,7 +562,9 @@ sub core_pipeline_analyses {
                     )
                 /,
             },
-            -flow_into  => [ 'hc_translations' ],
+            -flow_into  => {
+                2 => [ 'hc_translations' ],
+            },
         },
 
         {   -logic_name    => 'hc_translations',
