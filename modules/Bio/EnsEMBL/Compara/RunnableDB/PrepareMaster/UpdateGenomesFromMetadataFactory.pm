@@ -24,6 +24,14 @@ Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromMetadataFacto
 Returns the list of species/genomes to update, rename and retire in the master
 database, obtained from ensembl-metadata
 
+=head1 DESCRIPTION
+
+Sometimes a change such as an assembly update may be misidentified as a
+genome rename (e.g. when the predecessor and successor assemblies have
+the same display name). In such cases, you can force predecessor genomes
+to be retired with the 'force_retire_genomes' parameter, and force
+successor genomes to be added with the 'force_update_genomes' parameter.
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromMetadataFactory;
