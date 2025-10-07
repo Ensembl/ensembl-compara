@@ -373,6 +373,20 @@
     <multiple_alignment method="CACTUS_DB" collection="pangenome_drosophila"
                         ref_genome="drosophila_melanogaster"/>
 
+    <multiple_alignment method="CACTUS_HAL" url="#base_dir#/multi/hal_files/nematode_wormbase_ws268.hal">
+      <species_set name="collection-nematodes">
+        <genome name="brugia_malayi"/>
+        <genome name="caenorhabditis_brenneri"/>
+        <genome name="caenorhabditis_briggsae"/>
+        <genome name="caenorhabditis_elegans"/>
+        <genome name="caenorhabditis_japonica"/>
+        <genome name="onchocerca_volvulus"/>
+        <genome name="pristionchus_pacificus"/>
+        <genome name="strongyloides_ratti"/>
+        <genome name="trichuris_muris"/>
+      </species_set>
+    </multiple_alignment>
+
   </multiple_alignments>
 
   <gene_trees>
