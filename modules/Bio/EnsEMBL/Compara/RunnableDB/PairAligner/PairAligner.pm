@@ -346,6 +346,13 @@ sub get_gabs {
     foreach my $fp (@{$self->param('output')}) {
         if ($fp->isa('Bio::EnsEMBL::FeaturePair')) {
             my $gab = $self->convert_featurePair_to_genomicAlignBlock($fp);
+
+            if (!defined $gab) {
+                # We should skip this feature pair if it could
+                # not be converted to a GenomicAlignBlock.
+                next;
+            }
+
             push @gabs, $gab;
         }
     }
