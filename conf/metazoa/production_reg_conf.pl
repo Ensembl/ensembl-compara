@@ -87,11 +87,11 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-6', 'ensembl_compara_master_metazoa' ],
-    #'compara_curr'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'    => [ 'mysql-ens-compara-prod-6', '' ],
+    'compara_members'    => [ 'mysql-ens-compara-prod-6', 'sbotond_metazoa_load_members_116' ],
     #'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', '' ],
     #'protostomes_ptrees' => [ 'mysql-ens-compara-prod-X', '' ],
     'insects_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbotond_insects_metazoa_protein_trees_115' ],
