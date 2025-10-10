@@ -1163,6 +1163,7 @@ sub core_pipeline_analyses {
              -module     => 'Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassifyPantherScore',
              -parameters => {
                              'blast_bin_dir'       => $self->o('blast_bin_dir'),
+                             'blast_fix_dir'       => $self->o('blast_fix_dir'),
                              'pantherScore_path'   => $self->o('pantherScore_path'),
                              'hmmer_path'          => $self->o('hmmer2_home'),
                             },

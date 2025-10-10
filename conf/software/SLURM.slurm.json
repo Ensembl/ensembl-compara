@@ -12,6 +12,7 @@
     "blast_bin_dir"             : ["check_dir_in_cellar", "blast/2.2.30/bin"],
     "blastn_exe"                : ["check_exe_in_cellar", "blast/2.2.30/bin/blastn"],
     "blat_exe"                  : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/blat",
+    "blast_fix_dir"             : ["check_dir_in_compara","blast_fix"],
     "cactus_hal2maf_exe"        : "/hps/software/users/ensembl/compara/shared/build/cactus/2.9.7/hal2maf",
     "cafe_shell"                : "/hps/software/users/ensembl/compara/shared/build/cafe/4.2.1/bin/cafe",
     "cdhit_exe"                 : ["check_exe_in_cellar","cd-hit/4.8.1/bin/cd-hit"],
