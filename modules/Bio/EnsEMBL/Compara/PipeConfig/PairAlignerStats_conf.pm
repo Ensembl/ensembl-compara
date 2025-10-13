@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf
@@ -34,28 +23,18 @@ Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf
 
 Pipeline that computes and stores statistics for a pairwise alignment.
 
+This pipeline requires three arguments: a compara database (to read the alignment
+and store the stats), the division name and a list of mlss_ids.
+
 Note: This is usually embedded in all the pairwise-alignment pipelines, but
 is also available as a standalone pipeline in case the stats have to be
 rerun or the alignment has been imported
 
 =head1 SYNOPSIS
 
-This pipeline requires two arguments: a compara database (to read the alignment
-and store the stats) and a mlss_id.
-
-The first analysis ("pairaligner_stats") can be re-seeded with extra parameters to
-compute stats on other alignments.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
-
-example : init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf -compara_db <> -mlss_id <> -host <> -port <> --reg_conf
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf \
+        -compara_db compara_curr -division $COMPARA_DIV -mlss_id_list '[1234,5678]' \
+        -host mysql-ens-compara-prod-X -port XXXX
 
 =cut
 
@@ -64,12 +43,16 @@ package Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
+
+        'pipeline_name' => $self->o('division') . '_pairaligner_stats_' . $self->o('rel_with_suffix'),
 
         # Dump location
         'dump_dir'      => $self->o('pipeline_dir'),
@@ -120,10 +103,24 @@ sub pipeline_wide_parameters {
 }
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     return [
+
+        {   -logic_name => 'pairaligner_stats_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -input_ids  => [
+                {
+                    'inputlist' => destringify($self->o('mlss_id_list')),
+                    'column_names' => [ 'mlss_id' ],
+                }
+            ],
+            -flow_into => {
+                2 => [ 'pairaligner_stats' ],
+            },
+        },
+
         {   -logic_name => 'pairaligner_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerStats',
             -parameters => {
@@ -131,24 +128,18 @@ sub pipeline_analyses {
                 'compare_beds'              => $self->o('compare_beds_exe'),
                 'create_pair_aligner_page'  => $self->o('create_pair_aligner_page_exe'),
                 'bed_dir'                   => $self->o('bed_dir'),
-                'ensembl_release'           => $self->o('ensembl_release'),
                 'output_dir'                => $self->o('output_dir'),
             },
-            -input_ids  => [
-                {
-                    'mlss_id'       => $self->o('mlss_id'),
-                }
-            ],
             -flow_into  => {
                 'A->1' => [ 'coding_exon_stats_summary' ],
                 '2->A' => [ 'coding_exon_stats' ],
             },
-            -rc_name    => '1Gb_job',
+            -rc_name    => '2Gb_job',
         },
         {   -logic_name => 'coding_exon_stats',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats',
-            -rc_name    => '1Gb_job',
-            -analysis_capacity  => 100,
+            -rc_name    => '2Gb_job',
+            -hive_capacity => 5,
         },
         {   -logic_name => 'coding_exon_stats_summary',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSummary',
