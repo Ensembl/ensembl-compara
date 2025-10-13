@@ -31,10 +31,22 @@ use warnings;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    my ($self) = @_;
+    return {
+        %{$self->SUPER::param_defaults},
+
+        'seq_member_skip_list' => undef,
+    }
+}
+
+
 sub run {
     my $self = shift;
 
     my $genome_db_id = $self->param_required('genome_db_id');
+    my $seq_member_skip_list = $self->param('seq_member_skip_list') // [];
+    my %seq_member_skip_set = map { $_ => 1 } @{$seq_member_skip_list};
 
     my $compara_dba = $self->compara_dba;
     my $genome_dba = $compara_dba->get_GenomeDBAdaptor();
@@ -53,6 +65,7 @@ sub run {
 
             my $seq_member = $gene_member->get_canonical_SeqMember();
             next unless defined $seq_member;
+            next if exists $seq_member_skip_set{$seq_member->seq_member_id};
 
             my $translation = $translation_adaptor->fetch_by_stable_id($seq_member->stable_id);
 
