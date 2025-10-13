@@ -570,7 +570,7 @@ sub core_pipeline_analyses {
         {   -logic_name    => 'hc_translations',
             -module        => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::TranslationHealthcheck',
             -hive_capacity => $self->o('loadmembers_capacity'),
-            -rc_name       => '1Gb_24_hour_job',
+            -rc_name       => '2Gb_24_hour_job',
         },
 
     ];
