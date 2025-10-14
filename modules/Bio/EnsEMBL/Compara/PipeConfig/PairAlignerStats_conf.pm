@@ -56,8 +56,8 @@ sub default_options {
 
         # Dump location
         'dump_dir'      => $self->o('pipeline_dir'),
-        'bed_dir'       => $self->o('dump_dir').'bed_dir',
-        'output_dir'    => $self->o('dump_dir').'output_dir',
+        'bed_dir'       => $self->o('dump_dir') . '/' . 'bed_dir',
+        'output_dir'    => $self->o('dump_dir') . '/' . 'output_dir',
     };
 }
 
