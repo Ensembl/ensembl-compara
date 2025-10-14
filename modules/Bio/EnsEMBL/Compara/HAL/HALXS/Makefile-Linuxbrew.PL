@@ -25,7 +25,7 @@ my $lib_location = $linuxbrew_home.'/lib';
 # We need hdf5 1.10 because Linuxbrew's HAL has been compilied using hdf5@1.10
 my $hdf5_location = $linuxbrew_home.'/opt/hdf5@1.10';
 
-print "! Using linuxbrew installation at $ENV{LINUXBREW_HOME}\n";
+print "! Using linuxbrew installation at $linuxbrew_home\n";
 # See lib/ExtUtils/MakeMaker.pm for details of how to influence
 # the contents of the Makefile that is written.
 WriteMakefile(
