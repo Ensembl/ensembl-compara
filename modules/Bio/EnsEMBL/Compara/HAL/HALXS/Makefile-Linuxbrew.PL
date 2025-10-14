@@ -37,12 +37,11 @@ WriteMakefile(
        AUTHOR         => 'Ensembl Compara') : ()),
     DEFINE  => '', # e.g., '-DHAVE_SOMETHING'
     PL_FILES          => {},
-
     # Since we don't use the default hdf5, we need to give the full paths
     # here for 1) the header files and 2) the library.
     # The headers from the version 1.10 seem to work, but I want to make
     # sure the correct ones are in the path
-    INC => "-I$hdf5_location/include",
+    INC => "-I${hdf5_location}/include -I${linuxbrew_home}/include",
     # Somehow, it needs both -L and -rpath !
     LIBS => [ "-L$hdf5_location/lib -Wl,-rpath,$hdf5_location/lib -lhdf5 -lhdf5_cpp" ],
     # HAL and sonLib .a files all are in linuxbrew's lib/
