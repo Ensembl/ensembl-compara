@@ -39,6 +39,9 @@ Finally, you need to define the environment variable `COMPARA_HAL_DIR` to
 the latter.
 export COMPARA_HAL_DIR="path_to_file/data_files/"
 
+Selected funnel analyses are blocked on pipeline initialisation.
+These should be unblocked as needed during pipeline execution.
+
 =head1 EXAMPLES
 
     # default execution for Vertebrates
@@ -97,7 +100,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 }
 
 
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
 
     return [
@@ -135,7 +138,7 @@ sub pipeline_analyses {
                 '2->A'  => {
                     'load_component_genomedb' => { 'master_dbID' => '#genome_db_id#' },
                 },
-                'A->1'  => [ 'copy_dnafrag_genomedb_factory' ],
+                'A->1'  => [ 'load_component_genomedb_funnel_check' ],
             },
         },
 
@@ -146,12 +149,18 @@ sub pipeline_analyses {
             -max_retry_count => 2,
         },
 
+
+        {   -logic_name => 'load_component_genomedb_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'copy_dnafrag_genomedb_factory' ],
+        },
+
         {   -logic_name => 'copy_dnafrag_genomedb_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -rc_name    => '4Gb_job',
             -flow_into  => {
                 '2->A'  => [ 'genome_dnafrag_copy' ],
-                'A->1'  => [ 'fire_hal_file_registration' ],
+                'A->1'  => [ 'genome_dnafrag_copy_funnel_check' ],
             },
         },
 
@@ -159,11 +168,16 @@ sub pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CopyDnaFragsByGenomeDB',
         },
 
+        {   -logic_name => 'genome_dnafrag_copy_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'fire_hal_file_registration' ],
+        },
+
         {   -logic_name => 'fire_hal_file_registration',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
                 '1->A' => [ 'hal_registration_entry_point' ],
-                'A->1' => [ 'fire_hal_coverage' ],
+                'A->1' => [ 'hal_registration_funnel_check' ],
             },
         },
 
@@ -261,6 +275,11 @@ sub pipeline_analyses {
 	    -rc_name    => '1Gb_job',
         },
 
+        {   -logic_name => 'hal_registration_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'fire_hal_coverage' ],
+        },
+
         {   -logic_name => 'fire_hal_coverage',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => [ 'pairwise_coverage_factory', 'per_genome_coverage_factory' ],
@@ -321,6 +340,25 @@ sub pipeline_analyses {
         },
 
      ];
+}
+
+
+sub tweak_analyses {
+    my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
+    my $analyses_by_name = shift;
+
+    # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
+    my @unguarded_funnel_analyses = (
+        'aggregate_synonyms',
+        'aggregate_per_genome_coverage',
+    );
+
+    foreach my $logic_name (@unguarded_funnel_analyses) {
+        $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
+    }
 }
 
 1;
