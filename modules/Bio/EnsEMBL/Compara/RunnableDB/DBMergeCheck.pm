@@ -139,8 +139,8 @@ sub param_defaults {
         # Configurable list of tables to merge per MLSS
         'per_mlss_merge_tables' => [],
 
-        # Configurable list of tables to merge by priority
-        'priority_merge_tables' => [],
+        # Configuration of tables to merge by priority
+        'priority_merge_tables' => {},
 
         # Do we want to be very picky and die if a table hasn't been listed
         # above / isn't in the target database ?
