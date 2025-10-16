@@ -92,8 +92,8 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members'    => [ 'mysql-ens-compara-prod-6', 'sbotond_metazoa_load_members_116' ],
-    #'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', '' ],
-    #'protostomes_ptrees' => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbotond_default_metazoa_protein_trees_116' ],
+    'protostomes_ptrees' => [ 'mysql-ens-compara-prod-4', 'sbotond_protostomes_metazoa_protein_trees_116' ],
     'insects_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbotond_insects_metazoa_protein_trees_115' ],
     'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-8', 'sbotond_pangenome_drosophila_metazoa_protein_trees_115' ],
 
