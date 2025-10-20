@@ -131,7 +131,7 @@ sub find_reusable_genomes {
             my @components_without_members;
             if ($self->param_is_defined('whole_method_links')) {
                 my $whole_method_links = $self->param('whole_method_links');
-                my @gene_tree_method_links = grep { $_->type eq 'NC_TREES' || $_->type eq 'PROTEIN_TREES' } @{$whole_method_links};
+                my @gene_tree_method_links = grep { $_ eq 'NC_TREES' || $_ eq 'PROTEIN_TREES' } @{$whole_method_links};
 
                 if (@gene_tree_method_links) {
                     my $slice_dba = $core_dba->get_SliceAdaptor();
