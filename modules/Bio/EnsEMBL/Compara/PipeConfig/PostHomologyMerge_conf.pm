@@ -56,6 +56,7 @@ sub default_options {
         'master_db'       => 'compara_master',
         'compara_db'      => 'compara_curr',
 
+        'gene_tree_method_types'     => ['PROTEIN_TREES', 'NC_TREES'],
         'homology_method_types'      => ['ENSEMBL_ORTHOLOGUES', 'ENSEMBL_PARALOGUES', 'ENSEMBL_HOMOEOLOGUES'],
         'per_mlss_homology_dump_dir' => $self->o('pipeline_dir') . '/' . 'homologies',
 
@@ -94,6 +95,7 @@ sub pipeline_wide_parameters {
         'compara_db'            => $self->o('compara_db'),
         'db_conn'               => $self->o('compara_db'),
 
+        'gene_tree_method_types' => $self->o('gene_tree_method_types'),
         'homology_method_types'      => $self->o('homology_method_types'),
         'per_mlss_homology_dump_dir' => $self->o('per_mlss_homology_dump_dir'),
 
@@ -183,7 +185,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'hom_stats_genome_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
-                'all_in_current_gene_trees' => 1,
+                'all_in_current_mlsses_of_types' => '#gene_tree_method_types#',
             },
             -rc_name    => '4Gb_job',
             -flow_into  => { 2 => 'update_genome_hom_stats' },

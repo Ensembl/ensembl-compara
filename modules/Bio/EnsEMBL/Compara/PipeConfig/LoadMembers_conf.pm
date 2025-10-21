@@ -53,6 +53,8 @@ sub default_options {
 
         'do_nonblocking_checks' => 0,
 
+        'gene_tree_method_types' => ['PROTEIN_TREES', 'NC_TREES'],
+
     # "Member" parameters:
         'allow_ambiguity_codes'     => 1,
         'allow_missing_coordinates' => 0,
@@ -131,6 +133,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'reuse_member_db'       => $self->o('reuse_member_db'),
         'work_dir'              => $self->o('work_dir'),
         'do_nonblocking_checks' => $self->o('do_nonblocking_checks'),
+        'gene_tree_method_types' => $self->o('gene_tree_method_types'),
     };
 }
 
@@ -200,7 +203,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'compara_db'        => '#master_db#',   # that's where genome_db_ids come from
-                'all_in_current_gene_trees' => 1,
+                'all_in_current_mlsses_of_types' => '#gene_tree_method_types#',
                 'extra_parameters'  => [ 'locator' ],
             },
             -rc_name => '2Gb_job',
@@ -259,6 +262,9 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'create_reuse_ss',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::CreateReuseSpeciesSets',
+            -parameters => {
+                'whole_method_links' => '#gene_tree_method_types#',
+            },
             -rc_name    => '2Gb_job',
             -flow_into  => [ 'compare_non_reused_genome_list' ],
         },
