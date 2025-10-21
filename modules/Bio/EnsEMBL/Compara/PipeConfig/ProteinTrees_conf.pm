@@ -3513,7 +3513,7 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'rib_fire_tree_stats',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
-            -flow_into  => [ 'gene_count_factory', 'store_member_biotype_group_tag' ],
+            -flow_into  => [ 'gene_count_factory' ],
         },
 
         {   -logic_name => 'rib_fire_hmm_build',
@@ -3764,10 +3764,6 @@ sub core_pipeline_analyses {
             -parameters => {
                 'gene_count_exe' => $self->o('count_genes_in_tree_exe'),
             },
-        },
-
-        {   -logic_name => 'store_member_biotype_group_tag',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreMemberBiotypeGroupTag',
         },
 
         {   -logic_name => 'homology_stats_factory',

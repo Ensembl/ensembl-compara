@@ -130,6 +130,29 @@ sub core_pipeline_analyses {
                 'datacheck_names' => [ 'HomologyRanges' ],
                 'registry_file'   => $self->o('reg_conf'),
             },
+            -flow_into  => 'gene_tree_mlss_id_factory',
+        },
+
+        {   -logic_name => 'gene_tree_mlss_id_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
+            -parameters => {
+                'methods' => {
+                    'PROTEIN_TREES' => 2,
+                    'NC_TREES' => 2,
+                },
+            },
+            -flow_into => {
+                '2->A' => ['store_member_biotype_group_tag'],
+                'A->1' => ['member_biotype_funnel_check'],
+            },
+        },
+
+        {   -logic_name => 'store_member_biotype_group_tag',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreMemberBiotypeGroupTag',
+        },
+
+        {   -logic_name => 'member_biotype_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => 'homology_dumps_mlss_id_factory',
         },
 
