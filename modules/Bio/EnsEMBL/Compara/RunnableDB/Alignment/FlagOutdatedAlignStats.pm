@@ -107,7 +107,7 @@ sub run {
                         && exists $gdb_id_2_node_hash->{$gdb_id}
                         && $gdb_id_2_node_hash->{$gdb_id}->has_tag($tag)) {
                     $gdb_stats{$tag} = $gdb_id_2_node_hash->{$gdb_id}->get_value_for_tag($tag);
-                } elsif (defined $mlss->has_tag("${tag}_${gdb_id}")) {
+                } elsif ($mlss->has_tag("${tag}_${gdb_id}")) {
                     $gdb_stats{$tag} = $mlss->get_value_for_tag("${tag}_${gdb_id}");
                 }
             }
