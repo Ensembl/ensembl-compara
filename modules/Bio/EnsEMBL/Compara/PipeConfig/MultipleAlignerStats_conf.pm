@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf
@@ -34,28 +23,19 @@ Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf
 
 Pipeline that computes and stores statistics for a multiple alignment.
 
+This pipeline requires two arguments: a 'compara_db' (to read the alignment
+and store the stats) and an 'mlss_id_list' indicating the alignment MLSSes
+for which stats should be updated. It is recommended to specify a 'division'.
+
 Note: This is usually embedded in all the multiple-alignment pipelines, but
 is also available as a standalone pipeline in case the stats have to be
 rerun or the alignment has been imported
 
 =head1 SYNOPSIS
 
-This pipeline requires two arguments: a compara database (to read the alignment
-and store the stats) and a mlss_id.
-
-The first analysis ("multiplealigner_stats_factory") can be re-seeded with extra parameters to
-compute stats on other alignments.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-Example init : init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf -host mysql-ens-compara-prod-2.ebi.ac.uk:4522 -pipeline_name <> -compara_db <> -mlss_id <>
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf \
+        -compara_db compara_curr -division $COMPARA_DIV -mlss_id_list '[1234,5678]' \
+        -host mysql-ens-compara-prod-X -port XXXX
 
 =cut
 
@@ -64,19 +44,30 @@ package Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
+
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
+
+    my $pipeline_name = 'msa_stats_' . $self->o('rel_with_suffix');
+
+    if ($self->o('division')) {
+        $pipeline_name = $self->o('division') . '_' . $pipeline_name;
+    }
+
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        'pipeline_name' => $pipeline_name,
+
         # Dump location
         'dump_dir'      => $self->o('pipeline_dir'),
-        'bed_dir'       => $self->o('dump_dir').'bed_dir',
-        'output_dir'    => $self->o('dump_dir').'feature_dumps',
+        'bed_dir'       => $self->o('dump_dir') . '/' . 'bed_dir',
+        'output_dir'    => $self->o('dump_dir') . '/' . 'feature_dumps',
 
         'msa_stats_shared_dir' => undef,
     };
@@ -116,14 +107,23 @@ sub pipeline_wide_parameters {
 sub core_pipeline_analyses {
     my ($self) = @_;
 
-    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self);
-    $pipeline_analyses->[0]->{'-input_ids'} = [
-        {
-            'mlss_id'       => $self->o('mlss_id'),
-        }
-    ];
+    return [
 
-    return $pipeline_analyses;
+        {   -logic_name => 'msa_stats_mlss_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -input_ids  => [
+                {
+                    'inputlist' => destringify($self->o('mlss_id_list')),
+                    'column_names' => [ 'mlss_id' ],
+                }
+            ],
+            -flow_into => {
+                2 => [ 'multiplealigner_stats_factory' ],
+            },
+        },
+
+        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
+    ];
 }
 
 sub tweak_analyses {
