@@ -194,6 +194,12 @@
          {
             "assignee": "<RelCo>",
             "component": "Relco tasks",
+            "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104891/Creation+of+a+new+release+database#Check-genomic-alignment-stats",
+            "summary": "Check alignment stats"
+         },
+         {
+            "assignee": "<RelCo>",
+            "component": "Relco tasks",
             "description": "https://embl.atlassian.net/wiki/spaces/EnsCom/pages/27104181/Merge+the+DNA+data",
             "summary": "Merge DNA data",
             "name_on_graph": "Merge all for OrthWGA"
