@@ -104,6 +104,11 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::DnaFragFactory',
             -rc_name    => '4Gb_24_hour_job',
             -hive_capacity => 50,
+            -parameters => {
+                'filters' => {
+                    -IS_REFERENCE => 1,
+                },
+            },
             -flow_into  => {
                 2 => [ 'coding_exon_length_stats' ],
             },
