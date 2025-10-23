@@ -236,7 +236,6 @@ sub pipeline_analyses_prep_master_db_for_release {
                     '--retire_unmatched_of_type ENSEMBL_ORTHOLOGUES',
                     '--retire_unmatched_of_type ENSEMBL_PARALOGUES',
                     '--retire_unmatched_of_type ENSEMBL_HOMOEOLOGUES',
-                    '--retire_unmatched_of_type CACTUS_HAL',
                 ),
             },
             -flow_into  => [ 'tag_alignments_being_patched' ],
