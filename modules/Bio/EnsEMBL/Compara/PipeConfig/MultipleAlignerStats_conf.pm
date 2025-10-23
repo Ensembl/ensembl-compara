@@ -70,11 +70,20 @@ sub no_compara_schema {}    # Tell the base class not to create the Compara tabl
 
 sub pipeline_create_commands {
     my ($self) = @_;
-    return [
+
+    my $pipeline_create_commands = [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
         $self->pipeline_create_commands_rm_mkdir(['output_dir', 'bed_dir']),
-        $self->pipeline_create_commands_rm_mkdir(['msa_stats_shared_dir'], undef, 'do not rm'),
     ];
+
+    if (defined $self->o('msa_stats_shared_dir')) {
+        push(
+            @{$pipeline_create_commands},
+            $self->pipeline_create_commands_rm_mkdir(['msa_stats_shared_dir'], undef, 'do not rm')
+        );
+    }
+
+    return $pipeline_create_commands;
 }
 
 
