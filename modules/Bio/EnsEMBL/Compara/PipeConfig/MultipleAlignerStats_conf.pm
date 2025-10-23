@@ -108,23 +108,23 @@ sub pipeline_wide_parameters {
 sub core_pipeline_analyses {
     my ($self) = @_;
 
-    return [
+    my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self);
 
-        {   -logic_name => 'msa_stats_mlss_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -input_ids  => [
-                {
-                    'inputlist' => destringify($self->o('mlss_id_list')),
-                    'column_names' => [ 'mlss_id' ],
-                }
-            ],
-            -flow_into => {
-                2 => [ 'multiplealigner_stats_factory' ],
-            },
+    unshift(@{$pipeline_analyses}, {
+        -logic_name => 'msa_stats_mlss_factory',
+        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        -input_ids  => [
+            {
+                'inputlist' => destringify($self->o('mlss_id_list')),
+                'column_names' => [ 'mlss_id' ],
+            }
+        ],
+        -flow_into  => {
+            2 => [ 'set_multiplealigner_stats_table' ],
         },
+    });
 
-        @{ Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self) },
-    ];
+    return $pipeline_analyses;
 }
 
 sub tweak_analyses {
