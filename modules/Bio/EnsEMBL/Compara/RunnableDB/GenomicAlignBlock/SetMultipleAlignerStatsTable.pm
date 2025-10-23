@@ -44,7 +44,7 @@ sub run {
     my $mlss = $mlss_adaptor->fetch_by_dbID($mlss_id);
 
     my %species_tree_gdb_id_set = map { $_->genome_db_id => 1 } @{$mlss->species_tree->root->get_all_leaves()};
-    my @species_set_gdb_ids = @{$mlss->species_set->genome_dbs};
+    my @species_set_gdb_ids = map { $_->dbID } @{$mlss->species_set->genome_dbs};
 
     if (grep { ! exists $species_tree_gdb_id_set{$_} } @species_set_gdb_ids) {
         $self->param('multiplealigner_stats_table', 'method_link_species_set_tag');
