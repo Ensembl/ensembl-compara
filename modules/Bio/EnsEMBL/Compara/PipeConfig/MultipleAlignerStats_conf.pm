@@ -23,9 +23,9 @@ Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf
 
 Pipeline that computes and stores statistics for a multiple alignment.
 
-This pipeline requires two arguments: a 'compara_db' (to read the alignment
-and store the stats) and an 'mlss_id_list' indicating the alignment MLSSes
-for which stats should be updated. It is recommended to specify a 'division'.
+This pipeline requires three arguments: a 'compara_db' (to read the
+alignment and store the stats), a 'division' name, and an 'mlss_id_list'
+indicating the alignment MLSSes for which stats should be updated.
 
 Note: This is usually embedded in all the multiple-alignment pipelines, but
 is also available as a standalone pipeline in case the stats have to be
@@ -52,17 +52,10 @@ use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
-
-    my $pipeline_name = 'msa_stats_' . $self->o('rel_with_suffix');
-
-    if ($self->o('division')) {
-        $pipeline_name = $self->o('division') . '_' . $pipeline_name;
-    }
-
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
-        'pipeline_name' => $pipeline_name,
+        'pipeline_name' => $self->o('division') . '_msa_stats_' . $self->o('rel_with_suffix'),
 
         # Dump location
         'dump_dir'      => $self->o('pipeline_dir'),
