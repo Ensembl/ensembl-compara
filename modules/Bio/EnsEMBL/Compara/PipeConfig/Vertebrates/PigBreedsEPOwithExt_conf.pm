@@ -69,7 +69,7 @@ sub tweak_analyses {
         'set_gerp_mlss_tag',
         'setup_extended_alignment',
         'update_max_alignment_length',
-        'multiplealigner_stats_factory',
+        'set_multiplealigner_stats_table',
     );
 
     foreach my $logic_name (@unguarded_funnel_analyses) {
