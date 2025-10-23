@@ -49,8 +49,15 @@ sub run {
     if (grep { ! exists $species_tree_gdb_id_set{$_} } @species_set_gdb_ids) {
         $self->param('multiplealigner_stats_table', 'method_link_species_set_tag');
     }
+}
 
-    $self->add_or_update_pipeline_wide_parameter('multiplealigner_stats_table', $self->param('multiplealigner_stats_table'));
+
+sub write_output {
+    my $self = shift;
+
+    my $mlss_id = $self->param('mlss_id');
+    my $multiplealigner_stats_table = $self->param('multiplealigner_stats_table');
+    $self->dataflow_output_id({ 'mlss_id' => $mlss_id, 'multiplealigner_stats_table' => $multiplealigner_stats_table }, 1);
 }
 
 
