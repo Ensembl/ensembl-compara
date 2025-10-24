@@ -107,7 +107,7 @@ sub run {
                         && exists $gdb_id_2_node_hash->{$gdb_id}
                         && $gdb_id_2_node_hash->{$gdb_id}->has_tag($tag)) {
                     $gdb_stats{$tag} = $gdb_id_2_node_hash->{$gdb_id}->get_value_for_tag($tag);
-                } elsif (defined $mlss->has_tag("${tag}_${gdb_id}")) {
+                } elsif ($mlss->has_tag("${tag}_${gdb_id}")) {
                     $gdb_stats{$tag} = $mlss->get_value_for_tag("${tag}_${gdb_id}");
                 }
             }
@@ -124,7 +124,11 @@ sub run {
     } else {
         my ($ref_gdb, $non_ref_gdb) = $mlss->find_pairwise_reference();
 
-        my @non_ref_tags = ('non_ref_coding_exon_length', 'non_ref_genome_length');
+        if (!defined $non_ref_gdb) {
+            $non_ref_gdb = $ref_gdb;
+        }
+
+        my @non_ref_tags = grep { $mlss->has_tag($_) } ('non_ref_coding_exon_length', 'non_ref_genome_length');
         my %non_ref_stats = map { $_ => $mlss->get_value_for_tag($_) } @non_ref_tags;
 
         if (exists $non_ref_stats{'non_ref_coding_exon_length'}) {
@@ -135,7 +139,7 @@ sub run {
             $stored_genome_lengths{$non_ref_gdb->dbID} = $non_ref_stats{'non_ref_genome_length'};
         }
 
-        my @ref_tags = ('ref_coding_exon_length', 'ref_genome_length');
+        my @ref_tags = grep { $mlss->has_tag($_) } ('ref_coding_exon_length', 'ref_genome_length');
         my %ref_stats = map { $_ => $mlss->get_value_for_tag($_) } @ref_tags;
 
         if (exists $ref_stats{'ref_coding_exon_length'}) {
