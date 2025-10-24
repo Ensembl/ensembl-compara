@@ -141,6 +141,7 @@ sub tweak_analyses {
     $analyses_by_name->{'extended_genome_alignment_hugemem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'gerp'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'gerp_himem'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
+    $analyses_by_name->{'set_multiplealigner_stats_table'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'multiplealigner_stats_factory'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'multiplealigner_stats'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';
     $analyses_by_name->{'gab_factory'}->{'-parameters'}->{'mlss_id'} = '#ext_mlss_id#';

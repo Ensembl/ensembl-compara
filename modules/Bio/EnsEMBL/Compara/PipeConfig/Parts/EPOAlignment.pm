@@ -324,7 +324,7 @@ sub pipeline_analyses_healthcheck {
                         {'test' => 'conservation_scores'},
                     ],
                 }),
-                'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'multiplealigner_stats_factory' ],
+                'A->1' => WHEN( 'not #skip_multiplealigner_stats#' => [ 'set_multiplealigner_stats_table' ],
                           ELSE [ 'end_pipeline' ]),
             },
         },

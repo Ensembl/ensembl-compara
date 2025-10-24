@@ -388,7 +388,10 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'set_multiplealigner_stats_table',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetMultipleAlignerStatsTable',
-            -flow_into  => 'multiplealigner_stats_factory',
+            -flow_into  => {
+                '1->A' => [ 'multiplealigner_stats_factory' ],
+                'A->1' => [ 'generate_msa_stats_report' ],
+            },
         },
 
         {   -logic_name => 'multiplealigner_stats_factory',
@@ -411,7 +414,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'block_size_distribution',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
-            -flow_into  => [ 'generate_msa_stats_report' ],
         },
 
         {   -logic_name => 'generate_msa_stats_report',
