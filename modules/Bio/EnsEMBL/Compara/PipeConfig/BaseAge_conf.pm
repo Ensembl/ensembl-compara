@@ -164,6 +164,7 @@ sub pipeline_analyses {
             {   -logic_name => 'base_age_funnel_check',
                 -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
                 -flow_into  => { 1 => { 'big_bed' => INPUT_PLUS() } },
+                -rc_name    => '16Gb_job',
             },
 
              { -logic_name => 'big_bed',

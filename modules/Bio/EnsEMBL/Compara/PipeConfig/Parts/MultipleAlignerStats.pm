@@ -154,6 +154,7 @@ sub pipeline_analyses_multiple_aligner_stats {
         {   -logic_name => 'block_stats_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => { 1 => { 'block_stats_aggregator' => INPUT_PLUS() } },
+            -rc_name    => '16Gb_job',
         },
 
         {   -logic_name => 'block_stats_aggregator',
