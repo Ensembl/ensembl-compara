@@ -1,4 +1,4 @@
-#!/usr/bin/env python2
+#!/usr/bin/env python3
 
 # See the NOTICE file distributed with this work for additional information
 # regarding copyright ownership.
@@ -66,6 +66,6 @@ with open(os.path.join(ref_fasta_dir, 'output.%d.tree' % pid), 'r') as fh:
 ref_tmpdir = os.path.dirname(tl[1].split()[0])
 with open(output_tree_path, 'w') as fh:
     # The first line is the tree and should remain the same
-    print >> fh, tl[0],
+    print(tl[0], file=fh)
     # The second line has paths, which have to be edited
-    print >> fh, tl[1].replace(ref_tmpdir, expected_tmpdir),
+    print(tl[1].replace(ref_tmpdir, expected_tmpdir), file=fh)

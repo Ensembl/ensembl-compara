@@ -162,6 +162,12 @@ sub check_dir_in_ensembl {
     return $self->o('ensembl_root_dir').'/'.$dir_path;
 }
 
+sub check_exe_in_venv {
+    my ($self, $exe_file_name) = @_;
+    push @{$self->{'_venv_exe_file_names'}}, $exe_file_name;
+    return $self->o('virtual_env_path').'/bin/'.$exe_file_name;
+}
+
 sub check_all_executables_exist {
     my $self = shift;
    if (exists $self->root()->{'linuxbrew_home'}) {
@@ -195,6 +201,14 @@ sub check_all_executables_exist {
        }
        foreach my $p (@{$self->{'_compara_exe_paths'}}) {
            _assert_exe( $compara_software_home.'/'.$self->substitute(\$p) );
+       }
+   }
+   if (exists $self->root()->{'virtual_env_path'}) {
+       my $virtual_env_path = $self->root()->{'virtual_env_path'};
+       die "'virtual_env_path' is not set.\n" unless $virtual_env_path;
+       my $venv_exe_file_names = $self->{'_venv_exe_file_names'} // [];
+       foreach my $n (@{$venv_exe_file_names}) {
+           _assert_exe( $virtual_env_path.'/bin/'.$self->substitute(\$n) );
        }
    }
 }
