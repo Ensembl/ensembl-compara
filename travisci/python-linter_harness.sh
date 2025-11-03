@@ -27,7 +27,6 @@ run_pylint() {
 
   # Run pylint, excluding specific files and directories
   find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \
-    \! -name "Ortheus.py" \
     \! -name "*citest*.py" \
     \! -path "*/citest/*" -print0 |
     xargs -0 pylint --rcfile=pyproject.toml --verbose \
@@ -47,7 +46,6 @@ run_pylint() {
 # Function to run mypy, excluding certain files and paths, and capturing the outcome
 run_mypy() {
   find "${PYTHON_SOURCE_LOCATIONS[@]}" -type f -name "*.py" \
-    \! -name "Ortheus.py" \
     \! -name "*citest*.py" \
     \! -path "*/citest/*" -print0 |
     xargs -0 mypy --config-file pyproject.toml --namespace-packages --explicit-package-bases

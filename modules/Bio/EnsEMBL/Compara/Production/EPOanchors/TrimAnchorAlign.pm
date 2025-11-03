@@ -96,13 +96,13 @@ sub fetch_input {
 sub run {
   my $self = shift;
   
-  my @ortheus_cmd = ($self->param('ortheus_c_exe'));
-  push @ortheus_cmd, '-A', $self->param_required('fasta_files_hub');
-  push @ortheus_cmd, '-B', $self->param_required('tree_file');
+  my @ortheus_cmd = ($self->require_executable('ortheus_c_exe'));
+  push @ortheus_cmd, '-F', $self->param_required('fasta_files_hub');
+  push @ortheus_cmd, '-T', $self->param_required('tree_file');
   push @ortheus_cmd, '-h'; # output leaves only
 
   my $cmd = $self->run_command(\@ortheus_cmd, { 'use_bash_errexit' => 0 });
-  if ($cmd->exit_code == 137 or $cmd->exit_code == 265) {
+  if (grep { $cmd->exit_code == $_ } (137, 247, 265)) {
       # OOM Killer in action
       # Let's first wait to check whether the worker itself is going to be killed
       sleep(30);
