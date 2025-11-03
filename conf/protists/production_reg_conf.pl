@@ -127,7 +127,7 @@ foreach my $group ( @collection_groups ) {
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-8', 'ensembl_compara_master_protists' ],
-    #'compara_curr'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
@@ -138,7 +138,7 @@ my $compara_dbs = {
     'lastz_batch_1' => [ 'mysql-ens-compara-prod-8', 'sbotond_protists_lastz_batch1_116' ],
 
     # synteny
-    #'compara_syntenies' => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'sbotond_protists_synteny_116' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
