@@ -614,7 +614,7 @@ sub core_pipeline_analyses {
                 '2->A' => [ 'coding_exon_stats' ],
                 'A->1' => [ 'coding_exon_stats_summary' ],
             },
-            -rc_name    => '2Gb_job',
+            -rc_name    => '4Gb_24_hour_job',
         },
 
         {   -logic_name    => 'coding_exon_stats',
