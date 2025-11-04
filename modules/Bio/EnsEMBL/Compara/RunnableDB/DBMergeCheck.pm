@@ -589,6 +589,10 @@ sub run {
         if (%error_list){
             die "Errors: \n" . join("\n", keys(%error_list)) . "\n";
         }
+
+        foreach my $dbc (values %{$dbconnections}) {
+            $dbc->disconnect_if_idle();
+        }
     }
     $self->param('copy', \%copy);
     $self->param('merge', \%merge);
