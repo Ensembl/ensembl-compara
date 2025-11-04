@@ -103,7 +103,7 @@ sub run {
         $self->die_no_retry(
             sprintf(
                 "GenomeDB %s has %d gene members with a canonical protein sequence mismatch.",
-                $genome_db->name,
+                $genome_db->get_distinct_name,
                 $num_mismatches,
             )
         );
