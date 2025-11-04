@@ -461,10 +461,15 @@ sub run {
             }
         }
 
+        foreach my $db (@{$all_tables->{$table}}) {
+            $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
+        }
+
+        my ($full_key, $is_string_type) = $self->_find_primary_key($dbconnections->{$all_tables->{$table}->[0]}, $table);
+
         if (not $table_size->{'curr_rel_db'}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
 
             my $db = $all_tables->{$table}->[0];
-            $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
 
             # Single source -> copy
             print "$table is copied over from $db\n" if $self->debug;
@@ -472,7 +477,6 @@ sub run {
 
         } else {
 
-            my ($full_key, $is_string_type) = $self->_find_primary_key($dbconnections->{$all_tables->{$table}->[0]}, $table);
             my $key = $full_key->[0];
 
             # Multiple source -> merge (possibly with the target db)
@@ -498,10 +502,6 @@ sub run {
             }
             # and re-filter the list of databases
             @dbs = grep {$table_size->{$_}->{$table}} @dbs;
-
-            foreach my $db (@dbs) {
-                $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
-            }
 
             my $sql_overlap = "SELECT COUNT(*) FROM $table WHERE $key BETWEEN ? AND ?";
 
