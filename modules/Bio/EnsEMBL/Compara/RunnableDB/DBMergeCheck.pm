@@ -101,6 +101,7 @@ use List::Util ('sum');
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'go_figure_dbc', 'stringify');
+use Bio::EnsEMBL::Utils::Scalar ('assert_ref');
 use Bio::EnsEMBL::Compara::Utils::Database ('table_exists');
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -258,6 +259,8 @@ sub run {
     my $dbconnections = $self->param('dbconnections');
     my $per_mlss_merge_tables = $self->param('per_mlss_merge_tables') // [];
     my $priority_merge_tables = $self->param('priority_merge_tables') // {};
+    my $override_table_sizes = $self->param('override_table_sizes') // {};
+    assert_ref($override_table_sizes, 'HASH', 'override_table_sizes');
 
     my $master_dba = $self->get_cached_compara_dba('master_db');
 
@@ -474,6 +477,18 @@ sub run {
             # Single source -> copy
             print "$table is copied over from $db\n" if $self->debug;
             $copy{$table} = $db;
+
+        } elsif (exists $override_table_sizes->{$table}) {
+
+            my @src_db_names = keys %{$override_table_sizes->{$table}};
+
+            foreach my $db_name (@src_db_names) {
+                my $overridden_table_size = $override_table_sizes->{$table}{$db_name};
+                print " -INFO- overriding size of table '$table' in database '$db_name' to $overridden_table_size\n" if $self->debug;
+                $table_size->{$db_name}->{$table} = $overridden_table_size;
+            }
+
+            $merge{$table} = \@src_db_names;
 
         } else {
 
