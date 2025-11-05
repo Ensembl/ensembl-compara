@@ -131,7 +131,7 @@ my $compara_dbs = {
     'primates_epo_anchors'  => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
     ## pig strains
-    #'pig_breeds_epo_w_ext'     => [ 'mysql-ens-compara-prod-X', '' ],
+    'pig_breeds_epo_w_ext'     => [ 'mysql-ens-compara-prod-7', 'twalsh_pig_breeds_epo_with_ext_take2_116' ],
     'pig_breeds_epo_prev'      => [ 'mysql-ens-compara-prod-4', 'sbhurji_mammals_epo_with_ext_115' ],  # Pig breeds are reused from mammals of the *same release* (same anchors and subset of species) - not needed.
     'pig_breeds_epo_anchors'   => [ 'mysql-ens-compara-prod-2', 'waakanni_generate_anchors_mammals_93' ],
 
