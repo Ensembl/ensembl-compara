@@ -15,20 +15,19 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf -host mysql-ens-compara-prod-X -port XXXX \
-        -division $COMPARA_DIV
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf \
+        -compara_db compara_curr -division $COMPARA_DIV -mlss_id_list '[1234,5678]' \
+        -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION  
 
-Calculate synteny coverage statistics across a whole division (or any Registry alias).
+Calculate synteny coverage statistics for the specified MLSSes.
 
 =cut
 
@@ -37,12 +36,16 @@ package Bio::EnsEMBL::Compara::PipeConfig::SyntenyStats_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::ComparaGeneric_conf');
 
 sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
+
+        'pipeline_name' => $self->o('division') . '_synteny_stats_' . $self->o('rel_with_suffix'),
 
         'compara_db'    => 'compara_curr',
     };
@@ -63,16 +66,16 @@ sub pipeline_analyses {
   
   return [
     {
-      -logic_name      => 'FetchMLSS',
-      -module          => 'Bio::EnsEMBL::Compara::RunnableDB::MLSSIDFactory',
-      -parameters      => {
-          'methods' => {
-              'SYNTENY' => 1,
-          },
-      },
+      -logic_name      => 'FlowMLSS',
+      -module          => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
       -max_retry_count => 0,
-      -input_ids       => [ {} ],
-      -flow_into       => ['SyntenyStats'],
+      -input_ids  => [
+          {
+              'inputlist' => destringify($self->o('mlss_id_list')),
+              'column_names' => [ 'mlss_id' ],
+          }
+      ],
+      -flow_into       => { 2 => 'SyntenyStats'},
     },
     
     {
