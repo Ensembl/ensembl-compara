@@ -333,6 +333,12 @@ sub run_gerp_v2 {
         if ($cmd_status->err =~ /The matrix is too big .* and is causing an integer overflow. Aborting/) {
             # gerpelem cannot run, but we still have the scores
             $self->param('no_constrained_elements', 1);
+        } elsif ($cmd_status->exit_code == 265) {
+            # The command has probably been stopped by OOM killer, but we
+            # should wait in case the worker itself is going to be killed.
+            sleep(30);
+            $self->dataflow_output_id(undef, -1);
+            $self->complete_early("$gerpelem_path was killed because it was using too much memory.");
         } else {
             $cmd_status->die_with_log;
         }
