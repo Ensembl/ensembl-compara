@@ -40,6 +40,7 @@ sub param_defaults {
         #    'EPO_EXTENDED' => 2,
         #    'LASTZ_NET' => 2,
         #    'PECAN' => 2,
+        #    'SYNTENY' => 2,
         },
     }
 }
@@ -64,14 +65,26 @@ sub run {
                               : $num_blocks_tag
                               ;
 
-        my $num_blocks_sql = q/
-            SELECT
-                COUNT(*)
-            FROM
-                genomic_align_block
-            WHERE
-                method_link_species_set_id = ?
-        /;
+        my $num_blocks_sql;
+        if ($mlss->method->class eq 'SyntenyRegion.synteny') {
+            $num_blocks_sql = q/
+                SELECT
+                    COUNT(*)
+                FROM
+                    synteny_region
+                WHERE
+                    method_link_species_set_id = ?
+            /;
+        } else {
+            $num_blocks_sql = q/
+                SELECT
+                    COUNT(*)
+                FROM
+                    genomic_align_block
+                WHERE
+                    method_link_species_set_id = ?
+            /;
+        }
 
         my $actual_num_blocks = $self->compara_dba->dbc->sql_helper->execute_single_result(
             -SQL => $num_blocks_sql,

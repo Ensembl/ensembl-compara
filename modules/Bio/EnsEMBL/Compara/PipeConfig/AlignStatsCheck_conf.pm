@@ -47,7 +47,7 @@ sub default_options {
 
         # List of methods for which coding exon stats are calculated.
         # Currently used in coding_exon_genome_factory and coding_exon_length_stats analyses.
-        'coding_exon_method_types' => ['CACTUS_DB', 'EPO', 'EPO_EXTENDED', 'LASTZ_NET', 'PECAN'],
+        'coding_exon_method_types' => ['CACTUS_DB', 'EPO', 'EPO_EXTENDED', 'LASTZ_NET', 'PECAN', 'SYNTENY'],
     };
 }
 
@@ -135,6 +135,7 @@ sub core_pipeline_analyses {
                     'EPO_EXTENDED' => 2,
                     'LASTZ_NET' => 2,
                     'PECAN' => 2,
+                    'SYNTENY' => 2,
                 },
             },
             -flow_into  => {
@@ -154,12 +155,14 @@ sub core_pipeline_analyses {
                     'EPO_EXTENDED' => 3,
                     'LASTZ_NET' => 2,
                     'PECAN' => 3,
+                    'SYNTENY' => 5,
                 },
             },
             -flow_into  => {
                 2 => [ 'outdated_pwa_mlsses' ],
                 3 => [ 'outdated_msa_mlsses' ],
                 4 => [ 'outdated_cactus_hal_mlsses' ],
+                5 => [ 'outdated_synteny_mlsses' ],
             },
         },
 
@@ -172,6 +175,10 @@ sub core_pipeline_analyses {
         },
 
         {   -logic_name => 'outdated_cactus_hal_mlsses',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        },
+
+        {   -logic_name => 'outdated_synteny_mlsses',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
         },
     ];
