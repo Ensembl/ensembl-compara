@@ -144,7 +144,8 @@ my $compara_dbs = {
     'amniotes_pecan'      => [ 'mysql-ens-compara-prod-2', 'sbotond_amniotes_pecan_update_114' ],
     'amniotes_pecan_prev' => [ 'mysql-ens-compara-prod-2', 'sbotond_amniotes_pecan_update_114' ],
 
-    #'compara_syntenies'   => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_syntenies_1'   => [ 'mysql-ens-compara-prod-7', 'twalsh_vertebrates_synteny_116' ],
+    'compara_syntenies_2'   => [ 'mysql-ens-compara-prod-7', 'twalsh_vertebrates_synteny_take2_116' ],
 
     # miscellaneous
     'alt_allele_projection' => [ 'mysql-ens-compara-prod-9', 'twalsh_vertebrates_alt_allele_import_116' ],
