@@ -289,7 +289,7 @@ sub pipeline_analyses {
                                    mlss_id  => '#synteny_mlss_id#',
                                   },
               -flow_into => {
-                              2 => WHEN( '(#avg_genomic_coverage# < #min_genome_coverage#)' => 'delete_synteny',
+                              2 => WHEN( '(#species_set_size# > 1 && #avg_genomic_coverage# < #min_genome_coverage#)' => 'delete_synteny',
                                          ELSE 'update_mlss_tag_table',
                                         ),
                             },
