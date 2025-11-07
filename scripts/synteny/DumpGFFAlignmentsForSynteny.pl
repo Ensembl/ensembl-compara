@@ -105,14 +105,15 @@ if ($mlss_id) {
     $mlss = $mlssa->fetch_by_dbID($mlss_id);
     my $found_query = 0;
     #find target gdb from mlss
-    foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {
-        if ($qy_gdb->name ne $genome_db->name) {
-            $tg_gdb = $genome_db;
-        } else {
-            $found_query = 1;
-        }
+    my ($mlss_qy_gdb, $mlss_tg_gdb) = $mlss->find_pairwise_reference();
+
+    if (defined $mlss_tg_gdb) {
+        $tg_gdb = $mlss_tg_gdb;
+    } else {  # self-alignment
+        $tg_gdb = $mlss_qy_gdb;
     }
-    unless ($found_query) {
+
+    unless ($mlss_qy_gdb->name eq $qy_gdb->name) {
         die "Unable to find query species $qy_species in this method_link_species_set $mlss_id " . $mlss->name;
     }
 } else {

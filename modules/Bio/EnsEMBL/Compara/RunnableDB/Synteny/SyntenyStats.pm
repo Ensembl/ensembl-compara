@@ -204,7 +204,7 @@ sub calculate_stats {
   }
 
   my $avg_genomic_coverage = ($tags{'ref_genome_coverage'}/$tags{'ref_genome_length'}+$tags{'non_ref_genome_coverage'}/$tags{'non_ref_genome_length'}) / 2;
-  $self->dataflow_output_id( {'avg_genomic_coverage' => $avg_genomic_coverage}, 2);
+  $self->dataflow_output_id( {'avg_genomic_coverage' => $avg_genomic_coverage, 'species_set_size' => $mlss->species_set->size}, 2);
 
 }
 
