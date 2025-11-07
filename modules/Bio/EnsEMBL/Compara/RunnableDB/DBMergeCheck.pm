@@ -87,6 +87,12 @@ The Runnable will complain if:
    primary-key value but inconsistent data
  - the constraints of a per-MLSS merge are violated (if using per-MLSS merge)
 
+The 'override_table_sizes' parameter can be used to bypass primary-key checks and set table sizes directly.
+If provided, this parameter is expected to be a hash of hashes in which the first-level key is the table name,
+the second-level key is the database name, and each value represents the size of the specified table in the
+given database. You should only use this parameter if you know the effective table size of the specified
+table in each of the source databases and have verified that there are no unexpected primary-key clashes.
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::DBMergeCheck;
