@@ -78,6 +78,7 @@ sub run {
             $dbc->do('DELETE FROM seq_member_projection           WHERE target_seq_member_id = ?',  undef, $self->param('seq_member_id'));
             $dbc->do('DELETE FROM peptide_align_feature           WHERE qmember_id = ?',            undef, $self->param('seq_member_id'));
             $dbc->do('DELETE FROM peptide_align_feature           WHERE hmember_id = ?',            undef, $self->param('seq_member_id'));
+            $dbc->do('DELETE FROM other_member_sequence           WHERE seq_member_id = ?',         undef, $self->param('seq_member_id'));
             $dbc->do('DELETE FROM hmm_annot                       WHERE seq_member_id = ?',         undef, $self->param('seq_member_id'));
     } );
 
