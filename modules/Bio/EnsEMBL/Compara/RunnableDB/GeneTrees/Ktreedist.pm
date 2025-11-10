@@ -239,6 +239,12 @@ sub run_ktreedist {
       if ($runCmd->err =~ /Substitution loop at.*ktreedist line 1777/) {
           # The tree is too big for ktreedist
           $self->complete_early('Ktreedist is not able to compute distances');
+      } elsif ($runCmd->exit_code == 265) {
+          # The command has probably been stopped by OOM killer, but we
+          # should wait in case the worker itself is going to be killed.
+          sleep(30);
+          $self->dataflow_output_id(undef, -1);
+          $self->complete_early("$ktreedist_exe was killed because it was using too much memory.");
       }
       $runCmd->die_with_log;
   }
