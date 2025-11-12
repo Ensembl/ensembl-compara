@@ -70,8 +70,9 @@ sub run {
             my $translation = $translation_adaptor->fetch_by_stable_id($seq_member->stable_id);
 
             if (defined $translation) {
+                my $transl_seq = $translation->seq =~ s/[*]/X/gr;
 
-                if ($seq_member->sequence ne $translation->seq) {
+                if ($seq_member->sequence ne $transl_seq) {
                     $num_mismatches += 1;
                     if ($self->debug) {
                         $self->warning(
