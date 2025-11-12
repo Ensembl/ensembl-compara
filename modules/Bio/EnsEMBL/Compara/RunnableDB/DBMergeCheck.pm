@@ -474,8 +474,6 @@ sub run {
             $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
         }
 
-        my ($full_key, $is_string_type) = $self->_find_primary_key($dbconnections->{$all_tables->{$table}->[0]}, $table);
-
         if (not $table_size->{'curr_rel_db'}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
 
             my $db = $all_tables->{$table}->[0];
@@ -485,6 +483,10 @@ sub run {
             $copy{$table} = $db;
 
         } elsif (exists $override_table_sizes->{$table}) {
+
+            # This method has the side effect of populating the 'primary_keys' parameter,
+            # which we need later to include primary-key information in the output dataflow.
+            $self->_find_primary_key($dbconnections->{$all_tables->{$table}->[0]}, $table);
 
             my @src_db_names = keys %{$override_table_sizes->{$table}};
 
@@ -498,6 +500,7 @@ sub run {
 
         } else {
 
+            my ($full_key, $is_string_type) = $self->_find_primary_key($dbconnections->{$all_tables->{$table}->[0]}, $table);
             my $key = $full_key->[0];
 
             # Multiple source -> merge (possibly with the target db)
