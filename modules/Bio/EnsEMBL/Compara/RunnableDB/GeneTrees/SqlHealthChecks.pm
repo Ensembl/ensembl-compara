@@ -215,6 +215,10 @@ our $config = {
                 description => 'All the seq_members have a taxon_id consistent with the genome_db table',
                 query => 'SELECT DISTINCT genome_db_id FROM seq_member gm JOIN genome_db gdb USING (genome_db_id) WHERE gdb.taxon_id IS NOT NULL AND gm.taxon_id != gdb.taxon_id AND source_name NOT LIKE "Uniprot%"',
             },
+            {
+                description => 'protein sequences should not contain internal stop symbols',
+                query => 'SELECT seq_member_id FROM seq_member JOIN sequence USING (sequence_id) WHERE source_name LIKE "%PEP" AND (sequence REGEXP "[*]+[^*]")',
+            },
         ],
     },
 
