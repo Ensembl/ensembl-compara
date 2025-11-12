@@ -265,7 +265,12 @@ sub run {
     my $dbconnections = $self->param('dbconnections');
     my $per_mlss_merge_tables = $self->param('per_mlss_merge_tables') // [];
     my $priority_merge_tables = $self->param('priority_merge_tables') // {};
-    my $override_table_sizes = $self->param('override_table_sizes') // {};
+
+    my $override_table_sizes = $self->param_is_defined('override_table_sizes')
+                             ? $self->param('override_table_sizes')
+                             : {}
+                             ;
+
     assert_ref($override_table_sizes, 'HASH', 'override_table_sizes');
 
     my $master_dba = $self->get_cached_compara_dba('master_db');
