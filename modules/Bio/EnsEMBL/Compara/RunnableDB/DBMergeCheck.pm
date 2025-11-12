@@ -87,6 +87,12 @@ The Runnable will complain if:
    primary-key value but inconsistent data
  - the constraints of a per-MLSS merge are violated (if using per-MLSS merge)
 
+The 'override_table_sizes' parameter can be used to bypass primary-key checks and set table sizes directly.
+If provided, this parameter is expected to be a hash of hashes in which the first-level key is the table name,
+the second-level key is the database name, and each value represents the size of the specified table in the
+given database. You should only use this parameter if you know the effective table size of the specified
+table in each of the source databases and have verified that there are no unexpected primary-key clashes.
+
 =cut
 
 package Bio::EnsEMBL::Compara::RunnableDB::DBMergeCheck;
@@ -101,6 +107,7 @@ use List::Util ('sum');
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Hive::HivePipeline;
 use Bio::EnsEMBL::Hive::Utils ('destringify', 'go_figure_dbc', 'stringify');
+use Bio::EnsEMBL::Utils::Scalar ('assert_ref');
 use Bio::EnsEMBL::Compara::Utils::Database ('table_exists');
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -258,6 +265,13 @@ sub run {
     my $dbconnections = $self->param('dbconnections');
     my $per_mlss_merge_tables = $self->param('per_mlss_merge_tables') // [];
     my $priority_merge_tables = $self->param('priority_merge_tables') // {};
+
+    my $override_table_sizes = $self->param_is_defined('override_table_sizes')
+                             ? $self->param('override_table_sizes')
+                             : {}
+                             ;
+
+    assert_ref($override_table_sizes, 'HASH', 'override_table_sizes');
 
     my $master_dba = $self->get_cached_compara_dba('master_db');
 
@@ -461,14 +475,33 @@ sub run {
             }
         }
 
+        foreach my $db (@{$all_tables->{$table}}) {
+            $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
+        }
+
         if (not $table_size->{'curr_rel_db'}->{$table} and scalar(@{$all_tables->{$table}}) == 1) {
 
             my $db = $all_tables->{$table}->[0];
-            $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
 
             # Single source -> copy
             print "$table is copied over from $db\n" if $self->debug;
             $copy{$table} = $db;
+
+        } elsif (exists $override_table_sizes->{$table}) {
+
+            # This method has the side effect of populating the 'primary_keys' parameter,
+            # which we need later to include primary-key information in the output dataflow.
+            $self->_find_primary_key($dbconnections->{$all_tables->{$table}->[0]}, $table);
+
+            my @src_db_names = keys %{$override_table_sizes->{$table}};
+
+            foreach my $db_name (@src_db_names) {
+                my $overridden_table_size = $override_table_sizes->{$table}{$db_name};
+                print " -INFO- overriding size of table '$table' in database '$db_name' to $overridden_table_size\n" if $self->debug;
+                $table_size->{$db_name}->{$table} = $overridden_table_size;
+            }
+
+            $merge{$table} = \@src_db_names;
 
         } else {
 
@@ -498,10 +531,6 @@ sub run {
             }
             # and re-filter the list of databases
             @dbs = grep {$table_size->{$_}->{$table}} @dbs;
-
-            foreach my $db (@dbs) {
-                $self->_assert_same_table_schema($dbconnections->{$db}, $dbconnections->{'curr_rel_db'}, $table);
-            }
 
             my $sql_overlap = "SELECT COUNT(*) FROM $table WHERE $key BETWEEN ? AND ?";
 
@@ -589,6 +618,10 @@ sub run {
         if (%error_list){
             die "Errors: \n" . join("\n", keys(%error_list)) . "\n";
         }
+
+        foreach my $dbc (values %{$dbconnections}) {
+            $dbc->disconnect_if_idle();
+        }
     }
     $self->param('copy', \%copy);
     $self->param('merge', \%merge);
@@ -666,7 +699,16 @@ sub _assert_same_table_schema {
     if (! @$dest_schema){
         return;
     }
-    die sprintf("'%s' has a different schema in '%s' and '%s'\n", $table, $src_dbc->dbname, $dest_dbc->dbname) if stringify($src_schema) ne stringify($dest_schema);
+    if (stringify($src_schema) ne stringify($dest_schema)) {
+        $self->die_no_retry(
+            sprintf(
+                "'%s' has a different schema in '%s' and '%s'\n",
+                $table,
+                $src_dbc->dbname,
+                $dest_dbc->dbname,
+            )
+        );
+    }
 }
 
 
