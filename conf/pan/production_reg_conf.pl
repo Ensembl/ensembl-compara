@@ -142,7 +142,7 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'twalsh_pan_load_members_116' ],
     #'compara_ptrees'   => [ 'mysql-ens-compara-prod-x', ''],
 };
 
