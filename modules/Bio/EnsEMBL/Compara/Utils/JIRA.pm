@@ -947,7 +947,7 @@ sub _put_request {
         $self->{_logger}->error("Unexpected PUT request '$action'! Allowed options:\n$action_list", 0, 0);
     }
     # Do the HTTP PUT request
-    my $url = 'https://embl.atlassian.net/rest/api/latest' . $action . '/' . $ticket_key;
+    my $url = 'https://embl.atlassian.net/rest/api/latest/' . $action . '/' . $ticket_key;
     $self->_http_request('PUT', $url, $content_data);
 }
 
