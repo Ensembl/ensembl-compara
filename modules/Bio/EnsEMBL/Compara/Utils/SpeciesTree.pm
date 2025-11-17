@@ -47,7 +47,7 @@ use warnings;
 use List::Util qw(max);
 use Scalar::Util qw(weaken);
 
-use LWP::Simple;
+use LWP::UserAgent;
 use URI::Escape;
 
 use Bio::EnsEMBL::Utils::Argument;
@@ -411,8 +411,11 @@ sub get_timetree_estimate_for_node {
         return;
     }
 
-    my $url_template = 'https://timetree.org/search/pairwise/%s/%s';
+    my $url_template = 'https://timetree.org/ajax/pairwise/%s/%s';
+
     my $last_page;
+
+    my $ua = LWP::UserAgent->new();
 
     # For multifurcations, if a comparison fails, we can still try the other ones
     while (my $child1 = shift @children) {
@@ -428,12 +431,24 @@ sub get_timetree_estimate_for_node {
                     #return 0 if $child1_rep->taxon_id == $child2_rep->taxon_id;
             my $url = sprintf($url_template, $child1_rep->taxon_id, $child2_rep->taxon_id);
             $last_page = $url;
-            my $timetree_page = get($url);
+
+            my $response = $ua->get($url);
+            next unless $response->is_success;
+            my $timetree_page = $response->decoded_content;
             next unless $timetree_page;
-            $timetree_page =~ /<h1 style="margin-bottom: 0px;">(.*)<\/h1> Million Years Ago/;
-            return $1 if $1;
-                #}
-            #}
+            $timetree_page =~ s/<[^>]+>//g;
+            # We try to retrieve the adjusted time first, then the median time.
+            # From Kumar et al. (2022) <https://doi.org/10.1093/molbev/msac174>:
+            # 'In addition to median times and their confidence intervals, we
+            # present "adjusted times" when a node is older than its parent in
+            # the global timetree reconstructed from individual timetrees. ...
+            # In the pairwise and timetree displays, we show adjusted times if
+            # it is not the same as the median time.'
+            foreach my $estimate_type ('Adjusted Time', 'Median Time') {
+                if ($timetree_page =~ /${estimate_type}:\s*?(?<timetree_mya>[\S]+)\s+MYA/s) {
+                    return $+{'timetree_mya'};
+                }
+            }
         }
     }
     if ($last_page) {
