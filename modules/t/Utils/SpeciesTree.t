@@ -393,9 +393,9 @@ subtest 'Ultrametrisation and consensus from gene-trees' => sub {
 subtest 'get_timetree_estimate_for_node' => sub {
     #ok(1); return;
 
-    my $cet_taxon = $nt_a->fetch_by_dbID(91561);
-    my $timetree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate_for_node($cet_taxon);
-    is($timetree, 64);  # Artiodactyla
+    my $ape_taxon = $nt_a->fetch_by_dbID(9604);
+    my $timetree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate_for_node($ape_taxon);
+    is($timetree, 15.2);
 
     my $hum_taxon = $nt_a->fetch_by_dbID(9606);  # Human has no subspecies in the test database
     $timetree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate_for_node($hum_taxon);
@@ -407,9 +407,9 @@ subtest 'get_timetree_estimate_for_node' => sub {
     } qr/'Folivora' has a single child. Cannot estimate the divergence time of a non-furcating node/;
     is($timetree, undef);
 
-    my $cet_node = $stn_a->fetch_by_dbID(40101049);  # Cetartiodactyla
-    $timetree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate_for_node($cet_node);
-    is($timetree, 58);
+    my $can_node = $stn_a->fetch_by_dbID(9608);  # Canidae
+    $timetree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate_for_node($can_node);
+    is($timetree, 12.2);
 
     my $laur_node = $stn_a->fetch_by_dbID(40101163);    # Laurasiatheria
     $timetree = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate_for_node($laur_node);
