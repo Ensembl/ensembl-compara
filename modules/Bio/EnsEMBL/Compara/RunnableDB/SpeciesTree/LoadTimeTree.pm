@@ -39,6 +39,16 @@ use Bio::EnsEMBL::Compara::Utils::SpeciesTree;
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    my $self = shift @_;
+    return {
+        %{$self->SUPER::param_defaults()},
+
+        'min_node_coverage' => 0.9,
+    }
+}
+
+
 sub fetch_input {
     my $self = shift @_;
 
@@ -54,6 +64,7 @@ sub run {
     my $self = shift @_;
 
     my @timetree_data;
+    my $num_internal_nodes = 0;
     my $species_tree_root = $self->param('species_tree_root');
     foreach my $node (@{$species_tree_root->get_all_nodes}) {
         next if $node->is_leaf;
@@ -61,6 +72,24 @@ sub run {
         my $mya = Bio::EnsEMBL::Compara::Utils::SpeciesTree->get_timetree_estimate_for_node($node);
         printf(" %s mya\n", $mya // 'N/A') if $self->debug;
         push @timetree_data, [$node, $mya] if defined $mya;
+        $num_internal_nodes += 1;
+    }
+
+    my $min_node_coverage = $self->param_required('min_node_coverage');
+    my $node_coverage = scalar(@timetree_data) / $num_internal_nodes;
+
+    my $node_cov_msg = sprintf(
+        "Fetched divergence times from timetree.org for %d of %d (%.3f) species tree nodes (min_node_coverage=%.3f)",
+        scalar(@timetree_data),
+        $num_internal_nodes,
+        $node_coverage,
+        $min_node_coverage,
+    );
+
+    if ($node_coverage < $min_node_coverage) {
+        $self->die_no_retry($node_cov_msg);
+    } elsif ($self->debug) {
+        $self->warning($node_cov_msg);
     }
     $self->param('timetree_data', \@timetree_data);
 }
@@ -69,8 +98,9 @@ sub run {
 sub write_output {
     my $self = shift @_;
 
-    foreach my $a (@{$self->param('timetree_data')}) {
-        $a->[0]->store_tag('ensembl timetree mya', $a->[1]) if defined $a->[1];
+    foreach my $row (@{$self->param('timetree_data')}) {
+        my ($node, $mya) = @{$row};
+        $node->store_tag('ensembl timetree mya', $mya) if defined $mya;
     }
 }
 
