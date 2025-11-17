@@ -440,7 +440,7 @@ sub get_timetree_estimate_for_node {
             # We try to retrieve the adjusted time first, then the median time.
             # From Kumar et al. (2022) <https://doi.org/10.1093/molbev/msac174>:
             # 'In addition to median times and their confidence intervals, we
-            # present “adjusted times” when a node is older than its parent in
+            # present "adjusted times" when a node is older than its parent in
             # the global timetree reconstructed from individual timetrees. ...
             # In the pairwise and timetree displays, we show adjusted times if
             # it is not the same as the median time.'
