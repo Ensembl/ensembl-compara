@@ -91,6 +91,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -parameters => {
                 'all_in_current_mlsses_of_types' => '#coding_exon_method_types#',
+                'component_genomes' => 0,
             },
             -input_ids  => [ {} ],
             -rc_name    => '2Gb_job',
