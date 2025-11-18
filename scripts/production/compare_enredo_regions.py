@@ -75,12 +75,12 @@ def main() -> None:
     with TemporaryDirectory() as tmp_dir:
         tmp_dir_path = Path(tmp_dir)
 
-        bed_file_maps = [None] * len(enredo_out_file_paths)
+        bed_file_maps = []
         for dataset_idx, enredo_out_file_path in enumerate(enredo_out_file_paths):
             bed_dir_path = tmp_dir_path / str(dataset_idx)
             bed_dir_path.mkdir()
             dataset_bed_file_map = extract_enredo_regions(enredo_out_file_path, bed_dir_path)
-            bed_file_maps[dataset_idx] = dataset_bed_file_map
+            bed_file_maps.append(dataset_bed_file_map)
 
         bed_file_map1, bed_file_map2 = bed_file_maps
         prod_names = sorted(bed_file_map1.keys() | bed_file_map2.keys())
