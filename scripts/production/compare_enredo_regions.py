@@ -63,9 +63,9 @@ def main() -> None:
     """Main function of script."""
 
     parser = ArgumentParser(description=__doc__)
-    parser.add_argument("-a", dest="file1", help="First Enredo output file to compare.")
-    parser.add_argument("-b", dest="file2", help="Second Enredo output file to compare.")
-    parser.add_argument("-o", "--output-file", help="Output TSV file of comparison results.")
+    parser.add_argument("-a", dest="file1", required=True, help="First Enredo output file to compare.")
+    parser.add_argument("-b", dest="file2", required=True, help="Second Enredo output file to compare.")
+    parser.add_argument("-o", "--output-file", required=True, help="Output TSV file of comparison results.")
 
     args = parser.parse_args()
 
