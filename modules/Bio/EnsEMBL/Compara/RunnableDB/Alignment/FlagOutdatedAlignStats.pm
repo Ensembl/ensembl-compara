@@ -106,12 +106,14 @@ sub run {
         }
     }
 
+    my @mlss_gdbs = grep { !defined $_->genome_component } @{$mlss->species_set->genome_dbs};
+
     my %stored_genome_lengths;
     my %stored_coding_exon_lengths;
     if ($mlss->species_set->size > 2) {
 
         my $gdb_id_2_node_hash = $mlss->species_tree && $mlss->species_tree->get_genome_db_id_2_node_hash;
-        foreach my $gdb (@{$mlss->species_set->genome_dbs}) {
+        foreach my $gdb (@mlss_gdbs) {
             my $gdb_id = $gdb->dbID;
 
             my %gdb_stats;
@@ -164,7 +166,7 @@ sub run {
         }
     }
 
-    my %id_to_gdb = map { $_->dbID => $_ } @{$mlss->species_set->genome_dbs};
+    my %id_to_gdb = map { $_->dbID => $_ } @mlss_gdbs;
     my %gdb_id_to_name = map { $_ => $id_to_gdb{$_}->name } keys %id_to_gdb;
 
     if (%stored_genome_lengths) {
