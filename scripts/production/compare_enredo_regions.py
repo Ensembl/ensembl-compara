@@ -82,13 +82,13 @@ def main() -> None:
             dataset_bed_file_map = extract_enredo_regions(enredo_out_file_path, bed_dir_path)
             bed_file_maps.append(dataset_bed_file_map)
 
-        bed_file_map1, bed_file_map2 = bed_file_maps
+        bed_file_map1, bed_file_map2 = bed_file_maps  # pylint: disable=unbalanced-tuple-unpacking
         prod_names = sorted(bed_file_map1.keys() | bed_file_map2.keys())
         for prod_name in prod_names:
             bed_file_path1 = bed_file_map1[prod_name]
             bed_file_path2 = bed_file_map2[prod_name]
             bedtool = BedTool(bed_file_path1)
-            rec = bedtool.jaccard(str(bed_file_path2))
+            rec = bedtool.jaccard(str(bed_file_path2))  # pylint: disable=too-many-function-args
             rec["genome_name"] = prod_name
             recs.append(rec)
 
