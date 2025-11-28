@@ -61,17 +61,14 @@ sub run_ortheus {
 
   my $tmp_dir = $self->param('tmp_work_dir') ? $self->param('tmp_work_dir') : $self->worker_temp_directory;
 
-  local $ENV{'PATH'} = $self->param_required('ortheus_bin_dir') . ':' . $ENV{'PATH'};
   local $ENV{'CLASSPATH'}  = $self->param_required('pecan_exe_dir');
-  local $ENV{'PYTHONPATH'} = $self->param_required('ortheus_lib_dir');
 
-  my $ORTHEUS = $self->param('ortheus_bin_dir') . '/Ortheus.py';
+  my $ORTHEUS = $self->require_executable('ortheus_py');
   #my @debug = qw(-a -b);
 
   throw("Ortheus [$ORTHEUS] does not exist") unless ($ORTHEUS && -e $ORTHEUS);
 
-  # Ortheus.py is executable but calls "python", which may be python3 on some systems
-  my @command = ('python2', $ORTHEUS);
+  my @command = ($ORTHEUS);
 
   #add debugging
   #push @command, @debug;

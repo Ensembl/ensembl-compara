@@ -107,8 +107,8 @@ sub default_options {
         # Tables to merge per MLSS
         'per_mlss_merge_tables' => [],
 
-        # Tables to merge by priority
-        'priority_merge_tables' => [],
+        # Configuration of tables to merge by priority
+        'priority_merge_tables' => {},
 
         # Dump directory
         'work_dir'      => $self->o('pipeline_dir'),

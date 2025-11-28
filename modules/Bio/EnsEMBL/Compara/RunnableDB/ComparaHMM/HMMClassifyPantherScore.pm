@@ -154,12 +154,13 @@ sub run_HMM_search {
     my $pantherScore_exe  = "$pantherScore_path/bin/pantherScore.pl";
     my $hmmLibrary        = $self->param('hmmLibrary');
     my $blast_bin_dir     = $self->param('blast_bin_dir');
+    my $blast_fix_dir     = $self->param('blast_fix_dir');
     my $hmmer_path        = $self->param('hmmer_path');
     my $hmmer_cutoff      = $self->param('hmmer_cutoff'); ## Not used for now!!
     my $library_path      = $hmmLibrary->libDir();
 
     my $worker_temp_directory = $self->worker_temp_directory;
-    my $cmd = "PATH=$blast_bin_dir:$hmmer_path:\$PATH; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -T $worker_temp_directory -V";
+    my $cmd = "PATH=$blast_fix_dir:$blast_bin_dir:$hmmer_path:\$PATH; $pantherScore_exe -l $library_path -i $fastafile -D I -b $blast_bin_dir -T $worker_temp_directory -V";
     my $cmd_out = $self->run_command($cmd, { die_on_failure => 1 });
 
     # Detection of issues in the error log

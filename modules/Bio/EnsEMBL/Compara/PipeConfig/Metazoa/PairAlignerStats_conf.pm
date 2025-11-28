@@ -19,39 +19,41 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsEPOwithExt_conf
+Bio::EnsEMBL::Compara::PipeConfig::Metazoa::PairAlignerStats_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsEPOwithExt_conf.pm \
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::Metazoa::PairAlignerStats_conf \
+        -compara_db compara_curr -mlss_id_list '[1234,5678]' \
         -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
-    Selected funnel analyses are blocked on pipeline initialisation.
-    These should be unblocked as needed during pipeline execution.
+This is a Metazoa configuration file for the PairAlignerStats pipeline.
+Please refer to the parent class for further information.
+
+Selected funnel analyses are blocked on pipeline initialisation.
+These should be unblocked as needed during pipeline execution.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::Vertebrates::PigBreedsEPOwithExt_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::Metazoa::PairAlignerStats_conf;
 
 use strict;
 use warnings;
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::EPOwithExt_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::PairAlignerStats_conf');
+
 
 sub default_options {
     my ($self) = @_;
-
     return {
         %{$self->SUPER::default_options},
 
-        'division'               => 'vertebrates',
-        'linked_mlss_unreleased' => 1,
-        'method_type'            => 'EPO_EXTENDED',
-        'species_set_name'       => 'pig_breeds',
+        'division'  => 'metazoa',
     };
 }
+
 
 sub tweak_analyses {
     my $self = shift;
@@ -60,22 +62,13 @@ sub tweak_analyses {
 
     # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
     my @unguarded_funnel_analyses = (
-        'reuse_anchor_align_factory',
-        'offset_tables',
-        'map_anchor_align_genome_factory',
-        'mlss_factory',
-        'remove_overlaps',
-        'missing_anchors_factory',
-        'set_gerp_mlss_tag',
-        'setup_extended_alignment',
-        'update_max_alignment_length',
-        'set_multiplealigner_stats_table',
+        'coding_exon_stats_summary',
     );
 
     foreach my $logic_name (@unguarded_funnel_analyses) {
         $analyses_by_name->{$logic_name}->{'-analysis_capacity'} = 0;
     }
-
 }
+
 
 1;

@@ -177,13 +177,19 @@ my $distance_to_parent_cb = sub {
 # T(genbank common name)
 my $genbank_common_name = sub {
   my ($self) = @_;
-  return $self->{tree}->get_value_for_tag('genbank common name');
+  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    return $self->{tree}->species_tree_node->taxon->get_value_for_tag('genbank common name');
+  }
+  return $self->{tree}->taxon->get_value_for_tag('genbank common name');
 };
 
 # T(ensembl timetree mya)
 my $ensembl_timetree_mya_cb = sub {
   my ($self) = @_;
-  return $self->{tree}->get_value_for_tag('ensembl timetree mya');
+  if ($self->{tree}->isa('Bio::EnsEMBL::Compara::GeneTreeNode')) {
+    return $self->{tree}->species_tree_node->taxon->get_value_for_tag('ensembl timetree mya');
+  }
+  return $self->{tree}->taxon->get_value_for_tag('ensembl timetree mya');
 };
 
 my $gdb_id_cb = sub {

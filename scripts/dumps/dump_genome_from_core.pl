@@ -25,7 +25,8 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Getopt::Long;
 use POSIX qw(ceil);
 
-my ($dbname, $host, $port, $user, $pass, $mask, $species, $genome_component, $genome_dump_file, $help);
+my ($dbname, $host, $port, $user, $pass, $mask, $species, $genome_component, $compara_url, $genome_dump_file, $help);
+my $id_type = 'name';
 my $desc = "
 This script dumps toplevel sequences from a core database and stores them in fasta file.
 The sequences can be unmasked, soft masked or hard masked.
@@ -54,6 +55,12 @@ Options:
 * --genome-component
       component of a polyploid genome for which sequences should be dumped.
       By default, sequences are dumped for all components of a polyploid genome.
+* --id-type
+      type of sequence ID in the fasta file header.
+      Either 'name' (default) or 'dnafrag_id'.
+* --compara-url
+      url of compara database with genome_db and dnafrag data for the
+      given genome. Required when dumping with ID type 'dnafrag_id'.
 
 ";
 
@@ -66,6 +73,8 @@ GetOptions(
     'mask=s'             => \$mask,
     'species=s'          => \$species,
     'genome-component=s' => \$genome_component,
+    'id-type|id_type=s'  => \$id_type,
+    'compara-url|compara_url=s' => \$compara_url,
     'outfile=s'          => \$genome_dump_file,
     'help'               => \$help
   );
@@ -85,6 +94,17 @@ if ($multispecies_db && !defined $species) {
 if ( defined $mask && $mask !~ /soft|hard/ ) {
     die "ERROR: '--mask' has to be either 'soft' or 'hard'\n"
 }
+
+if ( defined $id_type ) {
+    if ( $id_type !~ /^(?:name|dnafrag_id)$/ ) {
+        die "ERROR: '--id-type' has to be either 'name' or 'dnafrag_id'\n";
+    }
+
+    if ( $id_type =~ /^(?:dnafrag_id)$/ && !defined $compara_url ) {
+        die "ERROR: '--compara-url' is required when '--id-type' is '$id_type'\n"
+    }
+}
+
 
 my $dba = Bio::EnsEMBL::DBSQL::DBAdaptor->new( -user   => $user,
                                                -pass   => $pass,
@@ -118,12 +138,35 @@ if (defined $genome_component) {
 open(my $filehandle, '>', $genome_dump_file) or die "can't open $genome_dump_file for writing\n";
 
 
+my %seq_id_map;
+if ($id_type eq 'dnafrag_id') {
+    require Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+    my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($compara_url);
+    my $genome_db = $compara_dba->get_GenomeDBAdaptor->_find_most_recent_by_name($dba->species);
+    my $dnafrags = $compara_dba->get_DnaFragAdaptor->fetch_all_by_GenomeDB($genome_db);
+
+    foreach my $dnafrag (@{$dnafrags}) {
+        $seq_id_map{$dnafrag->name} = $dnafrag->dbID;
+    }
+}
+
 # create a fasta serialiser that defines the seq_region_name() as fasta header
+# or an alternative sequence name if an ID type has been specified
 my $serializer = Bio::EnsEMBL::Utils::IO::FASTASerializer->new(
     $filehandle,
     sub{
         my $slice = shift;
-        return $slice->seq_region_name();
+
+        my $seq_name = $slice->seq_region_name();
+        if (%seq_id_map) {
+            if (exists $seq_id_map{$seq_name}) {
+                $seq_name = $seq_id_map{$seq_name};
+            } else {
+                die "ERROR: seq_region name '$seq_name' not found in $id_type mapping\n";
+            }
+        }
+
+        return $seq_name;
     }
 );
 
@@ -140,7 +183,11 @@ foreach my $slice (@$slices){
     my $padded_slice = Bio::EnsEMBL::PaddedSlice->new(-SLICE => $slice);
     $serializer->print_Seq($padded_slice);
 
-    my $seq_name = $slice->seq_region_name;
+    my $seq_name = exists $seq_id_map{$slice->seq_region_name}
+                 ? $seq_id_map{$slice->seq_region_name}
+                 : $slice->seq_region_name
+                 ;
+
     my $seq_length = $slice->seq_region_length;
     $total_dump_seq_length += $seq_length;
 

@@ -15,17 +15,6 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
-
-=head1 CONTACT
-
-  Please email comments or questions to the public Ensembl
-  developers list at <http://lists.ensembl.org/mailman/listinfo/dev>.
-
-  Questions may also be sent to the Ensembl help desk at
-  <http://www.ensembl.org/Help/Contact>.
-
 =head1 NAME
 
 Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf
@@ -34,28 +23,19 @@ Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf
 
 Pipeline that computes and stores statistics for a multiple alignment.
 
+This pipeline requires three arguments: a 'compara_db' (to read the
+alignment and store the stats), a 'division' name, and an 'mlss_id_list'
+indicating the alignment MLSSes for which stats should be updated.
+
 Note: This is usually embedded in all the multiple-alignment pipelines, but
 is also available as a standalone pipeline in case the stats have to be
 rerun or the alignment has been imported
 
 =head1 SYNOPSIS
 
-This pipeline requires two arguments: a compara database (to read the alignment
-and store the stats) and a mlss_id.
-
-The first analysis ("multiplealigner_stats_factory") can be re-seeded with extra parameters to
-compute stats on other alignments.
-
-=head1 AUTHORSHIP
-
-Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 APPENDIX
-
-Example init : init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf -host mysql-ens-compara-prod-2.ebi.ac.uk:4522 -pipeline_name <> -compara_db <> -mlss_id <>
-
-The rest of the documentation details each of the object methods.
-Internal methods are usually preceded with an underscore (_)
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf \
+        -compara_db compara_curr -division $COMPARA_DIV -mlss_id_list '[1234,5678]' \
+        -host mysql-ens-compara-prod-X -port XXXX
 
 =cut
 
@@ -63,6 +43,8 @@ package Bio::EnsEMBL::Compara::PipeConfig::MultipleAlignerStats_conf;
 
 use strict;
 use warnings;
+
+use Bio::EnsEMBL::Hive::Utils qw(destringify);
 
 use Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats;
 
@@ -73,10 +55,12 @@ sub default_options {
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
 
+        'pipeline_name' => $self->o('division') . '_msa_stats_' . $self->o('rel_with_suffix'),
+
         # Dump location
         'dump_dir'      => $self->o('pipeline_dir'),
-        'bed_dir'       => $self->o('dump_dir').'bed_dir',
-        'output_dir'    => $self->o('dump_dir').'feature_dumps',
+        'bed_dir'       => $self->o('dump_dir') . '/' . 'bed_dir',
+        'output_dir'    => $self->o('dump_dir') . '/' . 'feature_dumps',
 
         'msa_stats_shared_dir' => undef,
     };
@@ -86,11 +70,20 @@ sub no_compara_schema {}    # Tell the base class not to create the Compara tabl
 
 sub pipeline_create_commands {
     my ($self) = @_;
-    return [
+
+    my $pipeline_create_commands = [
         @{$self->SUPER::pipeline_create_commands},  # inheriting database and hive tables' creation
         $self->pipeline_create_commands_rm_mkdir(['output_dir', 'bed_dir']),
-        $self->pipeline_create_commands_rm_mkdir(['msa_stats_shared_dir'], undef, 'do not rm'),
     ];
+
+    if (defined $self->o('msa_stats_shared_dir')) {
+        push(
+            @{$pipeline_create_commands},
+            $self->pipeline_create_commands_rm_mkdir(['msa_stats_shared_dir'], undef, 'do not rm')
+        );
+    }
+
+    return $pipeline_create_commands;
 }
 
 
@@ -98,7 +91,6 @@ sub hive_meta_table {
     my ($self) = @_;
     return {
         %{$self->SUPER::hive_meta_table},       # here we inherit anything from the base class
-        'hive_use_param_stack'  => 1,           # switch on the new param_stack mechanism
     }
 }
 sub pipeline_wide_parameters {
@@ -117,11 +109,20 @@ sub core_pipeline_analyses {
     my ($self) = @_;
 
     my $pipeline_analyses = Bio::EnsEMBL::Compara::PipeConfig::Parts::MultipleAlignerStats::pipeline_analyses_multiple_aligner_stats($self);
-    $pipeline_analyses->[0]->{'-input_ids'} = [
-        {
-            'mlss_id'       => $self->o('mlss_id'),
-        }
-    ];
+
+    unshift(@{$pipeline_analyses}, {
+        -logic_name => 'msa_stats_mlss_factory',
+        -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+        -input_ids  => [
+            {
+                'inputlist' => destringify($self->o('mlss_id_list')),
+                'column_names' => [ 'mlss_id' ],
+            }
+        ],
+        -flow_into  => {
+            2 => [ 'set_multiplealigner_stats_table' ],
+        },
+    });
 
     return $pipeline_analyses;
 }

@@ -471,7 +471,7 @@ sub tweak_analyses {
             ]}
         ),
         'A->1' => WHEN(
-            'not #skip_multiplealigner_stats#' => { 'multiplealigner_stats_factory' => { 'mlss_id' => '#method_link_species_set_id#' } },
+            'not #skip_multiplealigner_stats#' => { 'set_multiplealigner_stats_table' => { 'mlss_id' => '#method_link_species_set_id#' } },
             ELSE                                  [ 'end_pipeline' ]
         ),
     };

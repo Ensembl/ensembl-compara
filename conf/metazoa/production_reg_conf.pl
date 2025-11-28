@@ -87,13 +87,13 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-6', 'ensembl_compara_master_metazoa' ],
-    #'compara_curr'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-6', "ensembl_compara_metazoa_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'    => [ 'mysql-ens-compara-prod-6', '' ],
-    #'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', '' ],
-    #'protostomes_ptrees' => [ 'mysql-ens-compara-prod-X', '' ],
+    'compara_members'    => [ 'mysql-ens-compara-prod-6', 'sbotond_metazoa_load_members_116' ],
+    'compara_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbotond_default_metazoa_protein_trees_116' ],
+    'protostomes_ptrees' => [ 'mysql-ens-compara-prod-4', 'sbotond_protostomes_metazoa_protein_trees_116' ],
     'insects_ptrees'     => [ 'mysql-ens-compara-prod-6', 'sbotond_insects_metazoa_protein_trees_115' ],
     'drosophila_ptrees'  => [ 'mysql-ens-compara-prod-8', 'sbotond_pangenome_drosophila_metazoa_protein_trees_115' ],
 
@@ -104,6 +104,7 @@ my $compara_dbs = {
     #'pangenome_drosophila_ptrees_prev'  => [ 'mysql-ens-compara-prod-X', '' ],
 
     'drosophila_cactus'  => [ 'mysql-ens-compara-prod-6', 'sbotond_pangenome_drosophila_metazoa_load_cactus_115_take2' ],
+    'wormbase_cactus_hal'=> [ 'mysql-ens-compara-prod-9', 'twalsh_wormbase_ws269_metazoa_register_halfile_116' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

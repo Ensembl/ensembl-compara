@@ -131,14 +131,14 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-8', "ensembl_compara_protists_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'jitender_protists_load_members_114' ],
-    'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'twalsh_default_protists_protein_trees_114' ],
+    'compara_members'  => [ 'mysql-ens-compara-prod-8', 'sbotond_protists_load_members_116_take2' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-8', 'sbotond_default_protists_protein_trees_116' ],
 
     # LastZ dbs
-    'lastz_batch_1' => [ 'mysql-ens-compara-prod-8', 'jitender_protists_lastz_batch1_114' ],
+    'lastz_batch_1' => [ 'mysql-ens-compara-prod-8', 'sbotond_protists_lastz_batch1_116' ],
 
     # synteny
-    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'twalsh_protists_synteny_114' ],
+    'compara_syntenies' => [ 'mysql-ens-compara-prod-8', 'sbotond_protists_synteny_116' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

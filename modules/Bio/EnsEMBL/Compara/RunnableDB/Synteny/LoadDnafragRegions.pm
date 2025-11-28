@@ -68,6 +68,15 @@ sub run {
     my $synteny_mlss_id = $self->param('synteny_mlss_id');
     my $qy_species = $self->param_required('ref_species');
     my ($gdb1, $gdb2) = @{$self->param('synteny_mlss')->species_set->genome_dbs()};
+
+    my $species_set_size;
+    if (defined $gdb2) {
+        $species_set_size = 2;
+    } else {
+        $species_set_size = 1;
+        $gdb2 = $gdb1;
+    }
+
     my ($qy_gdb, $tg_gdb) = $gdb1->name eq $qy_species ? ($gdb1,$gdb2) : ($gdb2,$gdb1);
 
     my $dfa = $self->compara_dba->get_DnaFragAdaptor();
@@ -80,6 +89,30 @@ sub run {
         chomp $line;
         if ($line =~ /^(\S+)\t.*\t.*\t(\d+)\t(\d+)\t.*\t(-1|1)\t.*\t(\S+)\t(\d+)\t(\d+)$/) {#####This will need to be changed
             my ($qy_chr,$qy_start,$qy_end,$rel,$tg_chr,$tg_start,$tg_end) = ($1,$2,$3,$4,$5,$6,$7);
+
+            if ($species_set_size == 1
+                    && $qy_chr eq $tg_chr
+                    && (
+                            ($qy_start <= $tg_start && $tg_end <= $qy_end)
+                            ||
+                            ($tg_start <= $qy_start && $qy_end <= $tg_end)
+                        )
+                ) {
+
+                $self->warning(
+                    sprintf(
+                        "skipping nested synteny region %s:%d-%d vs %s:%d-%d",
+                        $qy_chr,
+                        $qy_start,
+                        $qy_end,
+                        $tg_chr,
+                        $tg_start,
+                        $tg_end,
+                    )
+                );
+
+                next;
+            }
 
             my $qy_dnafrag = $dfa->fetch_by_GenomeDB_and_name($qy_gdb, $qy_chr);
             my $tg_dnafrag = $dfa->fetch_by_GenomeDB_and_name($tg_gdb, $tg_chr);

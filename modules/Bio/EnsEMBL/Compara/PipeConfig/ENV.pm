@@ -78,6 +78,9 @@ sub shared_default_options {
         'linuxbrew_home'        => $ENV{'LINUXBREW_HOME'} || $self->o('linuxbrew_home'),
         'compara_software_home' => $self->o('warehouse_dir') . '/software/',
 
+        # Where to find the VIRTUAL_ENV directory
+        'virtual_env_path'      => $ENV{'VIRTUAL_ENV'},
+
         # All the fixed parameters that depend on a "division" parameter
         'config_dir'            => $self->o('ensembl_root_dir') . '/ensembl-compara/conf/' . $self->o('division'),
         # NOTE: Can't use $self->check_file_in_ensembl as long as we don't produce a file for each division

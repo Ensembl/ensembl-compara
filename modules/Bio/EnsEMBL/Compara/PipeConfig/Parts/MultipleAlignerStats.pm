@@ -37,6 +37,24 @@ use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;   # For WHEN
 sub pipeline_analyses_multiple_aligner_stats {
     my ($self) = @_;
     return [
+
+        {   -logic_name => 'set_multiplealigner_stats_table',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::SetMultipleAlignerStatsTable',
+            -flow_into  => {
+                '1->A' => [ 'multiplealigner_stats_factory' ],
+                'A->1' => [ 'msa_stats_report_decision' ],
+            },
+        },
+
+        {   -logic_name => 'msa_stats_report_decision',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => {
+                1 => [
+                    WHEN( '#msa_stats_shared_dir#' => 'generate_msa_stats_report' ),
+                ],
+            },
+        },
+
         {   -logic_name => 'multiplealigner_stats_factory',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomeDBFactory',
             -flow_into  => {
@@ -68,9 +86,6 @@ sub pipeline_analyses_multiple_aligner_stats {
         {   -logic_name => 'block_size_distribution',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GenomicAlignBlock::MultipleAlignerBlockSize',
             -rc_name => '1Gb_24_hour_job',
-            -flow_into  => [
-                WHEN( '#msa_stats_shared_dir#' => 'generate_msa_stats_report' ),
-            ],
         },
 
         {   -logic_name => 'generate_msa_stats_report',
@@ -139,6 +154,7 @@ sub pipeline_analyses_multiple_aligner_stats {
         {   -logic_name => 'block_stats_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => { 1 => { 'block_stats_aggregator' => INPUT_PLUS() } },
+            -rc_name    => '16Gb_job',
         },
 
         {   -logic_name => 'block_stats_aggregator',

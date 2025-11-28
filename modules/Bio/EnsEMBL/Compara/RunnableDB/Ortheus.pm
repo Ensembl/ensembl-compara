@@ -227,6 +227,12 @@ sub detect_pecan_ortheus_errors {
               #Flow to next memory.
               $self->complete_early_if_branch_connected("Not enough memory available in this analysis. New job created in the #-1 branch\n", -1);
               throw("Ortheus ". $self->input_job->analysis->logic_name . " still failed due to insufficient heap space");
+          } elsif ($err_msg =~ /Something went wrong .+? \(return code: (?<return_code>-?[0-9]+)\)/
+                   && $+{'return_code'} == -9) {
+
+              #Flow to analysis with more memory.
+              $self->complete_early_if_branch_connected("Analysis appears to have failed due to insufficient memory. New job created in the #-1 branch\n", -1);
+              throw(sprintf("Ortheus %s appears to have failed due to insufficient memory", $self->input_job->analysis->logic_name));
           }
       }
       die "There were errors when running Pecan/Ortheus. Please investigate\n" if %err_msgs;

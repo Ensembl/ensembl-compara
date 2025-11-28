@@ -69,6 +69,7 @@ package Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonSta
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Compara::Utils::Stats 'get_coding_exon_regions';
 use Bio::EnsEMBL::Hive::Utils 'stringify';  # import 'stringify()'
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -126,7 +127,8 @@ sub run {
   die "No slices for dnafrag ".$dnafrag->name unless @$slices;
 
   foreach my $slice (@$slices) {
-      get_coding_exon_regions($slice, $coding_exons);
+      my $slice_coding_exons = get_coding_exon_regions($slice);
+      push(@$coding_exons, @$slice_coding_exons);
   }
 
   });
@@ -241,40 +243,6 @@ sub write_output {
 
   return 1;
 
-}
-
-
-sub get_coding_exon_regions {
-  my ($this_slice, $regions) = @_;
-
-  return undef if (!$this_slice);
-
-  my $all_coding_exons = [];
-  my $all_genes = $this_slice->get_all_Genes_by_type("protein_coding");
-  foreach my $this_gene (@$all_genes) {
-    my $all_transcripts = $this_gene->get_all_Transcripts();
-    foreach my $this_transcript (@$all_transcripts) {
-      push(@$all_coding_exons, @{$this_transcript->get_all_translateable_Exons()});
-    }
-  }
-  my $last_start = 0;
-  my $last_end = -1;
-  foreach my $this_exon (sort {$a->seq_region_start <=> $b->seq_region_start} @$all_coding_exons) {
-      #print "exon start " . $this_exon->seq_region_start . " end " . $this_exon->seq_region_end . " last_start $last_start last_end $last_end\n";
-
-    if ($last_end < $this_exon->seq_region_start) {
-      if ($last_end > 0) {
-        push(@$regions, [$last_start, $last_end]);
-      }
-      $last_end = $this_exon->seq_region_end;
-      $last_start = $this_exon->seq_region_start;
-    } elsif ($this_exon->seq_region_end > $last_end) {
-      $last_end = $this_exon->seq_region_end;
-    }
-  }
-
-  #Add final region
-  push (@$regions, [$last_start, $last_end]);
 }
 
 

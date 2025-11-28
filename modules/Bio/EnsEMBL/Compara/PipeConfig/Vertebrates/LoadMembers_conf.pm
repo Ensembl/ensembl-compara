@@ -70,7 +70,7 @@ sub tweak_analyses {
     my $analyses_by_name = shift;
 
     # Genomes such as homo_sapiens need a little more memory.
-    $analyses_by_name->{'check_reusability'}->{'-rc_name'} = '4Gb_job';
+    $analyses_by_name->{'check_reusability'}->{'-rc_name'} = '8Gb_job';
 
     # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
     my @unguarded_funnel_analyses = (

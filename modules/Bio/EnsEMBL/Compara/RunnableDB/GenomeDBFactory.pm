@@ -101,6 +101,10 @@ sub fetch_input {
     # We try our best to get a list of GenomeDBs
     my $genome_dbs;
 
+    if ($self->param('all_in_current_gene_trees')) {
+        $self->param('all_in_current_mlsses_of_types', ['PROTEIN_TREES', 'NC_TREES']);
+    }
+
     if (my $species_set_id = $self->param('species_set_id')) {
         assert_integer($species_set_id, 'species_set_id');
         my $species_set    = $self->compara_dba()->get_SpeciesSetAdaptor->fetch_by_dbID($species_set_id) or $self->die_no_retry("Could not fetch ss with dbID=$species_set_id");
@@ -124,10 +128,12 @@ sub fetch_input {
     } elsif ($self->param('all_current')) {
         $genome_dbs = $self->compara_dba->get_GenomeDBAdaptor->fetch_all_current();
 
-    } elsif ($self->param('all_in_current_gene_trees')) {
+    } elsif ($self->param_is_defined('all_in_current_mlsses_of_types')) {
+        my @method_types = @{$self->param('all_in_current_mlsses_of_types')};
+
         my %id_to_gdb;
         my $mlss_adaptor = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor();
-        foreach my $method_type ('PROTEIN_TREES', 'NC_TREES') {
+        foreach my $method_type (@method_types) {
             foreach my $mlss (@{$mlss_adaptor->fetch_all_by_method_link_type($method_type)}) {
                 next unless $mlss->is_current;
                 foreach my $genome_db (@{$mlss->species_set->genome_dbs}) {

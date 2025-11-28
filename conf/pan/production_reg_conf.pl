@@ -138,12 +138,12 @@ Bio::EnsEMBL::Compara::Utils::Registry::load_collection_core_database(
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-prod-7', 'ensembl_compara_master_pan' ],
-    #'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
+    'compara_curr'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${curr_eg_release}_${curr_release}" ],
     'compara_prev'   => [ 'mysql-ens-compara-prod-7', "ensembl_compara_pan_homology_${prev_eg_release}_${prev_release}" ],
 
     # homology dbs
-    #'compara_members'  => [ 'mysql-ens-compara-prod-X', '' ],
-    #'compara_ptrees'   => [ 'mysql-ens-compara-prod-x', ''],
+    'compara_members'  => [ 'mysql-ens-compara-prod-7', 'twalsh_pan_load_members_116' ],
+    'compara_ptrees'   => [ 'mysql-ens-compara-prod-7', 'twalsh_default_pan_protein_trees_116'],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );

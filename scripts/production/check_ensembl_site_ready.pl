@@ -509,29 +509,36 @@ if ($check_compara) {
                         suppress_errors => 1
                     );
 
-                    my ($ortho_panel_node) = @{$dom->findnodes('//div[@id="ComparaOrthologs"]')};
+                    if (defined $dom) {
 
-                    my $ortho_table_row_xpath = '//div[contains(@class, "selected_orthologues_table")]//table[@id="orthologues"]//tbody//tr';
-                    my @ortho_table_rows = @{$ortho_panel_node->findnodes($ortho_table_row_xpath)};
+                        my ($ortho_panel_node) = @{$dom->findnodes('//div[@id="ComparaOrthologs"]')};
 
-                    if (@ortho_table_rows) {
-                        $orthologies_accessibility = 1;
+                        my $ortho_table_row_xpath = '//div[contains(@class, "selected_orthologues_table")]//table[@id="orthologues"]//tbody//tr';
+                        my @ortho_table_rows = @{$ortho_panel_node->findnodes($ortho_table_row_xpath)};
 
-                        if (scalar(@ortho_table_rows) == 1) {
-                            my @first_row_cols = @{$ortho_table_rows[0]->findnodes('//td')};
-                            if (scalar(@first_row_cols) == 1
-                                    && $first_row_cols[0]->textContent eq 'No data available in table') {
-                                $message = 'No data available in table';
-                                $orthologies_accessibility = 0;
+                        if (@ortho_table_rows) {
+                            $orthologies_accessibility = 1;
+
+                            if (scalar(@ortho_table_rows) == 1) {
+                                my @first_row_cols = @{$ortho_table_rows[0]->findnodes('//td')};
+                                if (scalar(@first_row_cols) == 1
+                                        && $first_row_cols[0]->textContent eq 'No data available in table') {
+                                    $message = 'No data available in table';
+                                    $orthologies_accessibility = 0;
+                                }
+                            }
+
+                        } else {
+                            my $orthologs_missing = $ortho_panel_node->findnodes('//p[@text="No orthologues have been identified for this gene"]');
+                            if (defined $orthologs_missing) {
+                                $message = 'No orthologues have been identified for this gene';
                             }
                         }
 
                     } else {
-                        my $orthologs_missing = $ortho_panel_node->findnodes('//p[@text="No orthologues have been identified for this gene"]');
-                        if (defined $orthologs_missing) {
-                            $message = 'No orthologues have been identified for this gene';
-                        }
+                        $message = 'Failed to load HTML document';
                     }
+
                 } else {
                     $message = 'Empty response';
                 }
