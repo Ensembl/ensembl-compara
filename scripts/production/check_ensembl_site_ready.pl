@@ -26,6 +26,11 @@ to help establish whether they are ready for manual checks.
 It can check species and/or Compara data, as configured by the
 --check_species and --check_compara options, respectively.
 
+There is a known issue whereby the orthologue view of a genome may be flagged
+incorrectly if the genome is in multiple strain gene-tree collections, while
+lacking orthologues in the strain gene tree displayed in the website, and having
+orthologues in one or more of the other gene trees of which it is a member.
+
 =head1 SYNOPSIS
 
     perl check_ensembl_site_ready.pl --division ${COMPARA_DIV} --release ${CURR_ENSEMBL_RELEASE} \
