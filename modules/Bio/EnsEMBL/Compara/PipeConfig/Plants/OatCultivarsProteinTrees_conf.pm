@@ -44,13 +44,13 @@ sub default_options {
         'collection'       => 'oat_cultivars',
         'label_prefix'     => 'oat_cultivars_',
 
-        # Flatten all the genomes under species 'Avena sativa'
-        'multifurcation_deletes_all_subnodes' => [4498],
+        # Flatten all the genomes under genus 'Avena'
+        'multifurcation_deletes_all_subnodes' => [4496],
 
         # Clustering parameters:
         'mapped_gene_ratio_per_taxon' => {
             '2759' => 0.5,  # eukaryotes
-            '4498' => 0.9,  # avena sativa
+            '4496' => 0.75, # avena
         },
 
         # GOC parameters
