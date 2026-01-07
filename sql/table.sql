@@ -62,13 +62,13 @@ CREATE TABLE IF NOT EXISTS meta (
 @desc   Species-tree used in the Compara analyses (incl. new annotations generated in-house), and the NCBI taxonomy (which often used as a template for species-trees)
 */
 
--- NOTE: these two tables are actually defined in another repository
+-- NOTE: tables ncbi_taxa_node and ncbi_taxa_name are actually defined in another repository
 --       (ensembl-taxonomy/sql/table.sql) and the definitions have
 --       to be kept in sync
 
 /**
 @table ncbi_taxa_node
-@desc This table contains all taxa used in this database, which mirror the data and tree structure from NCBI Taxonomy database (for more details see ensembl-compara/script/taxonomy/README-taxonomy which explain our import process)
+@desc This table contains all taxa used in this database, which mirror the data and tree structure from NCBI Taxonomy database (for more details see <a href="https://github.com/Ensembl/ensembl-taxonomy">ensembl-taxonomy</a>).
 @colour   #24DA06
 
 @example    This examples shows how to get the lineage for Homo sapiens:
@@ -114,7 +114,7 @@ CREATE TABLE ncbi_taxa_node (
 
 @column taxon_id              External reference to taxon_id in @link ncbi_taxa_node
 @column name                  Information assigned to this taxon_id
-@column name_class            Type of information. e.g. common name, genbank_synonym, scientif name, etc.
+@column name_class            Type of information. e.g. common name, genbank common name, scientific name, etc.
 
 @see ncbi_taxa_node
 */
@@ -157,7 +157,7 @@ CREATE TABLE ncbi_taxa_name (
 @column is_good_for_alignment Whether the genome is good enough to be used in multiple alignments
 @column genome_component  Only used for polyploid genomes: the name of the genome component
 @column strain_name       Name of the particular strain this GenomeDB refers to
-@column display_name      Named used for display purposes. Imported from the core databases
+@column display_name      Name used for display purposes. Imported from the core databases
 @column locator           Used for production purposes or for user configuration in in-house installation.
 @column first_release     The first release this genome was present in
 @column last_release      The last release this genome was present in, or NULL if it is still current
@@ -166,7 +166,7 @@ CREATE TABLE ncbi_taxa_name (
 
 CREATE TABLE genome_db (
   genome_db_id                INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  taxon_id                    INT unsigned DEFAULT NULL, # KF taxon.taxon_id
+  taxon_id                    INT unsigned DEFAULT NULL, # FK ncbi_taxa_node.taxon_id
   name                        varchar(128) DEFAULT '' NOT NULL,
   assembly                    varchar(100) DEFAULT '' NOT NULL,
   genebuild                   varchar(255) DEFAULT '' NOT NULL,
@@ -190,7 +190,7 @@ CREATE TABLE genome_db (
 /**
 @header Dataset description
 @table species_set_header
-@desc  Header for the @link species_set table which groups or sets of species which are used in the @link method_link_species_set table.
+@desc  Header for the @link species_set table containing groups or sets of species which are used in the @link method_link_species_set table.
 @colour   #3CB371
 
 @example     This query shows the first 10 species_sets having human
@@ -314,7 +314,7 @@ CREATE TABLE method_link (
 @column species_set_id                External reference to species_set_id in the @link species_set table
 @column name                          Human-readable description for this method_link_species_set
 @column source                        Source of the data. Currently either "ensembl" or "ucsc" if data were imported from UCSC
-@column url                           A URL where you can find the orignal data if they were imported
+@column url                           A URL where you can find the original data if they were imported
 @column first_release     The first release this analysis was present in
 @column last_release      The last release this analysis was present in, or NULL if it is still current
 
@@ -450,7 +450,7 @@ CREATE TABLE `species_tree_node` (
 
 /**
 @table species_tree_root
-@desc  This table stores species trees used in compara. Each tree is made of species_tree_node's
+@desc  This table stores species trees used in compara. Each tree is made of species_tree_nodes
 @colour   #24DA06
 
 @column root_id                       Internal unique ID
@@ -609,10 +609,10 @@ CREATE TABLE synteny_region (
 /**
 @header Genomes
 @table dnafrag
-@desc  This table defines the genomic sequences used in the comparative genomics analyisis. It is used by the @link genomic_align_block table to define aligned sequences. It is also used by the @link dnafrag_region table to define syntenic regions.<br />NOTE: Index &lt;name&gt; has genome_db_id in the first place because unless fetching all dnafrags or fetching by dnafrag_id, genome_db_id appears always in the WHERE clause. Unique key &lt;name&gt; is used to ensure that Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->fetch_by_GenomeDB_and_name will always fetch a single row. This can be used in the EnsEMBL Compara DB because we store top-level dnafrags only.
+@desc  This table defines the genomic sequences used in the comparative genomics analysis. It is used by the @link genomic_align table to define aligned sequences. It is also used by the @link dnafrag_region table to define syntenic regions.<br />NOTE: Index &lt;name&gt; has genome_db_id in the first place because unless fetching all dnafrags or fetching by dnafrag_id, genome_db_id appears always in the WHERE clause. Unique key &lt;name&gt; is used to ensure that Bio::EnsEMBL::Compara::DBSQL::DnaFragAdaptor->fetch_by_GenomeDB_and_name will always fetch a single row. This can be used in the EnsEMBL Compara DB because we store top-level dnafrags only.
 @colour #808000
 
-@example    This query shows the chromosome 14 of the Human genome (genome_db.genome_db_id = 150 refers to Human genome in this example) which is 107349540 nucleotides long.
+@example    This query shows the chromosome 14 of the Human genome (genome_db.genome_db_id = 150 refers to Human genome in this example) which is 107043718 nucleotides long.
     @sql                   SELECT dnafrag.* FROM dnafrag LEFT JOIN genome_db USING (genome_db_id) WHERE dnafrag.name = "14" AND genome_db.name = "homo_sapiens";
 
 @column dnafrag_id         Internal unique ID
@@ -718,7 +718,7 @@ CREATE TABLE dnafrag_region (
 
 /**
 @table genomic_align_block
-@desc  This table is the key table for the genomic alignments. The software used to align the genomic blocks is refered as an external key to the @link method_link table. Nevertheless, actual aligned sequences are defined in the @link genomic_align table.<br />Tree alignments (EPO alignments) are best accessed through the @link genomic_align_tree table although the alignments are also indexed in this table. This allows the user to also access the tree alignments as normal multiple alignments.<br />NOTE: All queries in the API uses the primary key as rows are always fetched using the genomic_align_block_id. The key 'method_link_species_set_id' is used by MART when fetching all the genomic_align_blocks corresponding to a given method_link_species_set_id
+@desc  This table is the key table for the genomic alignments. The software used to align the genomic blocks is referenced via an external key to the @link method_link_species_set table. Nevertheless, actual aligned sequences are defined in the @link genomic_align table.<br />Tree alignments (EPO alignments) are best accessed through the @link genomic_align_tree table although the alignments are also indexed in this table. This allows the user to also access the tree alignments as normal multiple alignments.<br />NOTE: All queries in the API use the primary key as rows are always fetched using the genomic_align_block_id. The key 'method_link_species_set_id' is used by MART when fetching all the genomic_align_blocks corresponding to a given method_link_species_set_id
 @colour #FF8500
 
 @example    The following query refers to the LastZ alignment between medaka and zebrafish:
@@ -738,7 +738,7 @@ CREATE TABLE dnafrag_region (
 
 CREATE TABLE genomic_align_block (
   genomic_align_block_id      bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  method_link_species_set_id  INT unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
+  method_link_species_set_id  INT unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set.method_link_species_set_id
   score                       double,
   perc_id                     TINYINT unsigned DEFAULT NULL,
   length                      INT UNSIGNED NOT NULL,
@@ -856,7 +856,7 @@ If the original sequence is <code>AACGCTT</code>, the aligned sequence will be:<
 CREATE TABLE genomic_align (
   genomic_align_id            bigint unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   genomic_align_block_id      bigint unsigned NOT NULL, # FK genomic_align_block.genomic_align_block_id
-  method_link_species_set_id  INT unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set_id.method_link_species_set_id
+  method_link_species_set_id  INT unsigned DEFAULT 0 NOT NULL, # FK method_link_species_set.method_link_species_set_id
   dnafrag_id                  bigint unsigned DEFAULT 0 NOT NULL, # FK dnafrag.dnafrag_id
   dnafrag_start               INT UNSIGNED DEFAULT 0 NOT NULL,
   dnafrag_end                 INT UNSIGNED DEFAULT 0 NOT NULL,
@@ -972,8 +972,8 @@ CREATE TABLE constrained_element (
 
 @column sequence_id     Internal unique ID
 @column length          Length of the sequence
-@column sequence        The actual sequence
 @column md5sum          md5sum
+@column sequence        The actual sequence
 */
 
 CREATE TABLE sequence (
@@ -1001,7 +1001,7 @@ CREATE TABLE sequence (
 @column source_name           The source of the member
 @column taxon_id              External reference to taxon_id in the @link ncbi_taxa_node table
 @column genome_db_id          External reference to genome_db_id in the @link genome_db table
-@column biotype_group         Biotype of this gene.
+@column biotype_group         Biotype group of this gene.
 @column canonical_member_id   External reference to seq_member_id in the @link seq_member table to allow linkage from a gene to its canonical peptide
 @column description           The description of the gene/protein as described in the core database or from the Uniprot entry
 @column dnafrag_id            External reference to dnafrag_id in the @link dnafrag table. It shows the dnafrag the member is on.
@@ -1015,10 +1015,10 @@ CREATE TABLE sequence (
 
 CREATE TABLE gene_member (
   gene_member_id              INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
-  stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
+  stable_id                   varchar(128) NOT NULL, # e.g. ENSG000001234
   version                     INT UNSIGNED DEFAULT 0,
   source_name                 ENUM('ENSEMBLGENE', 'EXTERNALGENE') NOT NULL,
-  taxon_id                    INT unsigned NOT NULL, # FK taxon.taxon_id
+  taxon_id                    INT unsigned NOT NULL, # FK ncbi_taxa_node.taxon_id
   genome_db_id                INT unsigned, # FK genome_db.genome_db_id
   biotype_group               ENUM('coding','pseudogene','snoncoding','lnoncoding','mnoncoding','LRG','undefined','no_group','current_notdumped','notcurrent') NOT NULL DEFAULT 'coding',
   canonical_member_id         INT unsigned, # FK seq_member.seq_member_id
@@ -1057,7 +1057,7 @@ CREATE TABLE gene_member (
 @colour   #FFCC66
 
 @column gene_member_id        External reference to gene_member_id in the @link gene_member table
-@column collection            Name of the collection this row of statistics refers to (usual values are "ensembl", "mouse", etc)
+@column collection            Name of the collection this row of statistics refers to (e.g. "default", "murinae")
 @column families              The number of families associated with this member
 @column gene_trees            If this member is part of a gene tree
 @column gene_gain_loss_trees  If this member is part of a gene gain/loss tree
@@ -1100,7 +1100,7 @@ CREATE TABLE gene_member_hom_stats (
 @column source_name           The source of the member
 @column taxon_id              External reference to taxon_id in the @link ncbi_taxa_node table
 @column genome_db_id          External reference to genome_db_id in the @link genome_db table
-@column sequence_id           External reference to sequence_id in the @link sequence table. May be 0 when the sequence is not available in the @link sequence table, e.g. for a gene instance
+@column sequence_id           External reference to sequence_id in the @link sequence table. May be 0 when the sequence is not available in the @link sequence table
 @column gene_member_id        External reference to gene_member_id in the @link gene_member table to allow linkage from peptides and transcripts to genes
 @column has_transcript_edits  Boolean. Whether there are SeqEdits that modify the transcript sequence. When this happens, the (exon) coordinates don't match the transcript sequence
 @column has_translation_edits Boolean. Whether there are SeqEdits that modify the protein sequence. When this happens, the protein sequence doesn't match the transcript sequence
@@ -1119,7 +1119,7 @@ CREATE TABLE seq_member (
   stable_id                   varchar(128) NOT NULL, # e.g. ENSP000001234 or P31946
   version                     INT UNSIGNED DEFAULT 0,
   source_name                 ENUM('ENSEMBLPEP','ENSEMBLTRANS','Uniprot/SPTREMBL','Uniprot/SWISSPROT','EXTERNALPEP','EXTERNALTRANS','EXTERNALCDS') NOT NULL,
-  taxon_id                    INT unsigned NOT NULL, # FK taxon.taxon_id
+  taxon_id                    INT unsigned NOT NULL, # FK ncbi_taxa_node.taxon_id
   genome_db_id                INT unsigned, # FK genome_db.genome_db_id
   sequence_id                 INT unsigned, # FK sequence.sequence_id
   gene_member_id              INT unsigned, # FK gene_member.gene_member_id
@@ -1288,7 +1288,7 @@ CREATE TABLE `external_db` (
 
 /**
 @table member_xref
-@desc  This table stores cross-references for gene members derived from the core databases. It is used by Bio::EnsEMBL::Compara::DBSQL::XrefMemberAdaptor and provides the data used in highlighting gene trees by GO and InterPro annotation" 
+@desc  This table stores cross-references for gene members derived from the core databases. It is used by Bio::EnsEMBL::Compara::DBSQL::XrefMemberAdaptor and provides the data used in highlighting gene trees by GO and InterPro annotation.
 @colour   #FFCC66
 
 @column gene_member_id   External reference to gene_member_id in the @link gene_member table. Indicates the gene to which the xref applies.
@@ -1338,7 +1338,7 @@ CREATE TABLE other_member_sequence (
 /**
 @header   Gene trees and homologies
 @table peptide_align_feature
-@desc: This table stores the raw local alignment results of peptide to peptide alignments returned by a BLAST run. The hits are actually stored in species-specific tables rather than in a single table. For example, human has the genome_db_id 150, and all the hits that have a human gene as a query are stored in peptide_align_feature
+@desc: This table stores the raw local alignment results of peptide-to-peptide alignments returned by a BLAST run.
 @colour   #1E90FF
 
 @example    Example of peptide_align_feature entry:
@@ -1375,8 +1375,8 @@ CREATE TABLE peptide_align_feature (
   peptide_align_feature_id    bigint  unsigned NOT NULL AUTO_INCREMENT, # unique internal id
   qmember_id                  INT unsigned NOT NULL, # FK seq_member.seq_member_id
   hmember_id                  INT unsigned NOT NULL, # FK seq_member.seq_member_id
-  qgenome_db_id               INT unsigned, # FK genome.genome_id
-  hgenome_db_id               INT unsigned, # FK genome.genome_id
+  qgenome_db_id               INT unsigned, # FK genome_db.genome_db_id
+  hgenome_db_id               INT unsigned, # FK genome_db.genome_db_id
   qstart                      INT UNSIGNED DEFAULT 0 NOT NULL,
   qend                        INT UNSIGNED DEFAULT 0 NOT NULL,
   hstart                      int unsigned DEFAULT 0 NOT NULL,
@@ -1417,10 +1417,10 @@ CREATE TABLE peptide_align_feature (
 @colour   #BC5CEC
 
 @column family_id                    Internal unique ID
-@column stable_id                    Stable family ID. NOTE: stable_id are currently not stable. We are working in getting IDs stable between releases.
+@column stable_id                    Stable family ID. These are currently not stable.
 @column version                      Version of the stable_id (may only change when members migrate between this family and another one; stays the same otherwise)
 @column method_link_species_set_id   External reference to method_link_species_set_id in the method_link_species_set table
-@column description                  Description of the family as found using the Longest Common String (LCS) of the descriptions of the member proteins.
+@column description                  Description of the family
 @column description_score            Scores the accuracy of the annotation (max. 100)
 
 @see method_link_species_set
@@ -1498,7 +1498,7 @@ CREATE TABLE gene_align (
 
 /**
 @table gene_align_member
-@desc  This table allows certain nodes (leaves) to have aligned protein member_scores attached to them
+@desc  This table allows certain nodes (leaves) to have aligned protein sequences attached to them
 @colour   #1E90FF
 
 @column gene_align_id      External reference to gene_align_id in the @link gene_align table
@@ -1524,10 +1524,10 @@ CREATE TABLE gene_align_member (
 
 /**
 @table gene_tree_node
-@desc  This table holds the gene tree data structure, such as root, relation between parent and child, leaves, etc... In our data structure, all the trees of a given clusterset are arbitrarily connected to the same root. This eases to store and query in the same database the data from independant tree building analysis. Hence the "biological roots" of the trees are the children nodes of the main clusterset root. See the examples below.
+@desc  This table holds the gene tree data structure, such as root, relation between parent and child, leaves, etc... In our data structure, all the trees of a given clusterset are arbitrarily connected to the same root. This facilitates storage and querying in the same database the data from independent tree building analyses. Hence the "biological roots" of the trees are the children nodes of the main clusterset root. See the examples below.
 @colour   #1E90FF
 
-@example    The following query returns the root nodes of the independant protein trees stored in the database
+@example    The following query returns the root nodes of the independent protein trees stored in the database
      @sql                           SELECT gtn.node_id FROM gene_tree_node gtn LEFT JOIN gene_tree_root gtr ON (gtn.parent_id = gtr.root_id) WHERE gtr.tree_type = 'clusterset' AND gtr.member_type = 'protein' LIMIT 10;
 
 @column node_id                Internal unique ID
@@ -1680,14 +1680,14 @@ CREATE TABLE gene_tree_root_tag (
 @column aln_after_filter_length             Alignment length after filtering.
 @column aln_length                          Alignment length before filtering.
 @column aln_num_residues                    Total number of residues in the whole alignment.
-@column aln_percent_identity                Alignment identity.
+@column aln_percent_identity                Alignment percent identity.
 @column best_fit_model_family               Best Amino Acid replacement evolution model (WAG, JTT, etc).
-@column best_fit_model_parameter            Best paremeters used in the model (I, G, IG, IGF, etc).
+@column best_fit_model_parameter            Best parameters used in the model (I, G, IG, IGF, etc).
 @column gene_count                          Number of sequences present in the alignment.
 @column k_score                             Tree distance metric.
 @column k_score_rank                        Rank of the tree in the comparison.
 @column mcoffee_scores_gene_align_id        Gene alignment ID, used to fetch the mcoffee scores used in the alignment.
-@column aln_n_removed_columns               Number of colunms that were removed by the alignment filtering process.
+@column aln_n_removed_columns               Number of columns that were removed by the alignment filtering process.
 @column aln_num_of_patterns                 Number of different patterns present in the alignment (used by ExaML).
 @column aln_shrinking_factor                Factor used to measure how much the alignments were filtered (factor: 0..1).
 @column spec_count                          Number of different species present in the cluster
@@ -1698,8 +1698,8 @@ CREATE TABLE gene_tree_root_tag (
 @column tree_num_spec_nodes                 Number of speciation events.
 @column lca_node_id                         Lowest common ancestor (species_tree node_id).
 @column taxonomic_coverage                  Taxonomic coverage of the species present in the gene tree over all the species for that particular node on the species tree.
-@column ratio_species_genes                 Ration of the number of species over the number of genes in a tree.
-@column model_name                          HMM model name (cluster table_id).
+@column ratio_species_genes                 Ratio of the number of species over the number of genes in a tree.
+@column model_name                          HMM model name (cluster stable_id).
 
 @see gene_tree_root
 @see gene_tree_root_tag
@@ -1845,12 +1845,6 @@ CREATE TABLE `gene_tree_object_store` (
 
 */
 
--- Later
--- @column hmm_id                The internal numeric ID that uniquely identifies the model in the database
---  hmm_id                      INT unsigned NOT NULL AUTO_INCREMENT, # unique internal id
---  PRIMARY KEY (hmm_id),
---  UNIQUE KEY (model_id,type)
-
 CREATE TABLE hmm_profile (
   model_id                    varchar(40) NOT NULL,
   name                        varchar(40),
@@ -1874,13 +1868,6 @@ CREATE TABLE hmm_profile (
 
 */
 
-
--- Later
---  @column hmm_id                External reference to the internal numeric ID of a HMM profile in @link hmm_profile
---   hmm_id                     INT unsigned NOT NULL, # FK hmm_profile.hmm_id
---  FOREIGN KEY (hmm_id)        REFERENCES hmm_profile (hmm_id),
---   KEY (hmm_id)
-
 CREATE TABLE hmm_annot (
   seq_member_id              INT unsigned NOT NULL,
   model_id                   varchar(40) DEFAULT NULL,
@@ -1902,9 +1889,9 @@ CREATE TABLE hmm_annot (
 
 @column seq_member_stable_id  External reference to a seq_member_id in the @link seq_member table
 @column model_id              External reference to the internal numeric ID of a HMM profile in @link hmm_profile
-@column library_version       Name of the HMM library against the curation has been done
-@column annot_date            When did the curation happened
-@column reason                Why are we forcing this curation
+@column library_version       Name of the HMM library against which the curation has been done
+@column annot_date            When the curation happened
+@column reason                The reason why we are forcing this curation
 
 */
 
@@ -1924,10 +1911,10 @@ CREATE TABLE hmm_curated_annot (
 /**
 @header Gene trees and homologies
 @table homology
-@desc  This table contains all the genomic homologies. There are two homology_member entries for each homology entry for now, but both the schema and the API can handle more than just pairwise relationships. <br />dN, dS, N, S and lnL are statistical values given by the codeml program of the <a href="http://abacus.gene.ucl.ac.uk/software/paml.html">Phylogenetic Analysis by Maximum Likelihood (PAML)</a> package.
+@desc  This table contains all the genomic homologies. There are currently two homology_member entries for each homology entry. <br />dN, dS, N, S and lnL are statistical values given by the codeml program of the <a href="https://github.com/abacus-gene/paml/wiki">Phylogenetic Analysis by Maximum Likelihood (PAML)</a> package.
 @colour   #1E90FF
 
-@example    The following query defines a pair of paralogous xenopous genes. See @link homology_member for more details
+@example    The following query defines a pair of paralogous Xenopus tropicalis genes. See @link homology_member for more details
     @sql    SELECT homology.* FROM homology JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="Xtro paralogues" LIMIT 1;
 
 @column homology_id                    Unique internal ID
@@ -1986,7 +1973,7 @@ CREATE TABLE homology (
 
 /**
 @table homology_member
-@desc  This table contains the sequences corresponding to every genomic homology relationship found. There are two homology_member entries for each pairwise homology entry. As written in the homology table section, both schema and API can deal with more than pairwise relationships.<br />
+@desc  This table contains the sequences corresponding to every genomic homology relationship found. There are currently two homology_member entries for each pairwise homology entry.<br />
 The original alignment is not stored but it can be retrieved using the cigar_line field and the original sequences. The cigar line defines the sequence of matches or mismatches and deletions in the alignment.
 <ul>
   <li><b>First peptide sequence</b>: SERCQVVVISIGPISVLSMILDFY</li>
@@ -2114,13 +2101,13 @@ The alignment will be:<br />
 </table>
 @colour   #1E90FF
 
-@example    The following query refers to the two homologue sequences from the first xenopus' paralogy object. Gene and peptide sequence of the second homologue can retrieved in the same way.
+@example    The following query refers to the two homologue sequences from the first Xenopus tropicalis paralogy object. Gene and peptide sequence of the second homologue can retrieved in the same way.
     @sql    SELECT homology_member.* FROM homology_member JOIN homology USING (homology_id) JOIN method_link_species_set USING (method_link_species_set_id) WHERE name="Xtro paralogues" LIMIT 2;
 
 @column homology_id        External reference to homology_id in the @link homology table
-@column gene_member_id     External reference to gene_member_id in the @link gene_member table. Refers to the corresponding "ENSMBLGENE" entry
+@column gene_member_id     External reference to gene_member_id in the @link gene_member table. Refers to the corresponding "ENSEMBLGENE" entry
 @column seq_member_id      External reference to seq_member_id in the @link seq_member table. Refers to the corresponding "ENSEMBLPEP" entry
-@column cigar_line         An internal description of the alignment. It contains mathces/mismatches (M) and delations (D) and refers to the corresponding seq_member_id sequence
+@column cigar_line         An internal description of the alignment. It contains matches/mismatches (M) and deletions (D) and refers to the corresponding seq_member_id sequence
 @column perc_cov           Defines the percentage of the peptide which has been aligned
 @column perc_id            Defines the percentage of identity between both homologues
 @column perc_pos           Defines the percentage of positivity (similarity) between both homologues
@@ -2161,10 +2148,10 @@ CREATE TABLE homology_member (
 
 @column mapping_session_id    Internal unique ID
 @column type                  Type of stable_ids that were mapped during this session
-@column when_mapped           Normally, we use the date of creation of the mapping file being loaded. This prevents the date from chaging even if we accidentally remove the entry and have to re-load it.
+@column when_mapped           Normally, we use the date of creation of the mapping file being loaded. This prevents the date from changing even if we accidentally remove the entry and have to re-load it.
 @column rel_from              rel.number from which the stable_ids were mapped during this session. rel_from &lt; rel_to
 @column rel_to                rel.number to which the stable_ids were mapped during this session. rel_from &lt; rel_to
-@column prefix                Prefix
+@column prefix                stable_id prefix
 */
 
 CREATE TABLE mapping_session (
@@ -2181,7 +2168,7 @@ CREATE TABLE mapping_session (
 
 /**
 @table stable_id_history
-@desc  This table keeps the history of stable_id changes from one release to another. The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to. Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field. Since both stable_ids are listed in the primary key, they are not allowed to be NULLs. We shall treat empty strings as NULLs. If stable_id_from is empty, it means these members are newcomers into the new release. If stable_id_to is empty, it means these previously known members are disappearing in the new release. If both neither stable_id_from nor stable_id_to is empty, these members are truly migrating.
+@desc  This table keeps the history of stable_id changes from one release to another. The primary key 'object' describes a set of members migrating from stable_id_from to stable_id_to. Their volume (related to the 'shared_size' of the new class) is reflected by the fractional 'contribution' field. Since both stable_ids are listed in the primary key, they are not allowed to be NULLs. We shall treat empty strings as NULLs. If stable_id_from is empty, it means these members are newcomers into the new release. If stable_id_to is empty, it means these previously known members are disappearing in the new release. If neither stable_id_from nor stable_id_to is empty, these members are truly migrating.
 @colour   #AAAAAA
 
 @column mapping_session_id    Reference to mapping_session.mapping_session_id. All the stable_ids of a given mapping should have the same session_id
