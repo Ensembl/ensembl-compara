@@ -620,8 +620,8 @@ CREATE TABLE synteny_region (
 @column name               Name of the DNA sequence (e.g., the name of the chromosome)
 @column genome_db_id       External reference to genome_db_id in the @link genome_db table
 @column coord_system_name  Refers to the coord system in which this dnafrag has been defined
-@column is_reference       Boolean, whether dnafrag is reference (1) or non-reference (0) eg haplotype
 @column cellular_component Either "NUC", "MT", "PT" or "OTHER". Represents which organelle genome the dnafrag is part of
+@column is_reference       Boolean, whether dnafrag is reference (1) or non-reference (0) eg haplotype
 @column codon_table_id     Integer. The numeric identifier of the codon-table that applies to this dnafrag (https://www.ncbi.nlm.nih.gov/Taxonomy/Utils/wprintgc.cgi)
 
 @see genomic_align_block
@@ -731,6 +731,7 @@ CREATE TABLE dnafrag_region (
 @column length                       Total length of the alignment
 @column group_id                     Used to group alignments
 @column level_id                     Level of orthologous layer. 1 corresponds to the principal layer of orthologous sequences found (the largest), 2 and over are additional layers. Use for building the syntenies (based on level_id = 1 only). Note that level_ids are not computed on whole chromosomes but rather on chunks. This means that level_ids can be inconsistent within an alignment-net.
+@column direction                    Direction of LastZ netting
 
 @see method_link_species_set
 @see genomic_align_tree
@@ -1220,8 +1221,8 @@ CREATE TABLE seq_member_projection_stable_id (
 @example   The following query shows the projections of the gene AGO2 with the Anole lizard and the zebrafinch
 sql       SELECT ss.stable_id, gs.name, st.stable_id, gt.name, identity FROM seq_member ss JOIN genome_db gs USING (genome_db_id) JOIN seq_member_projection ON ss.seq_member_id = source_seq_member_id JOIN (seq_member st JOIN genome_db gt USING (genome_db_id)) ON st.seq_member_id=target_seq_member_id WHERE ss.stable_id IN ("ENSACAP00000000183", "ENSTGUP00000014905");
 
-@column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_seq_member_id
 @column source_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the source of the projection
+@column target_seq_member_id        External reference to seq_member_id in the @link seq_member table. Shows the target of the projection, i.e. this transcript was annotated by projection of source_seq_member_id
 @column identity                    (can be missing). The percentage of identity between the two members.
 
 @see seq_member
