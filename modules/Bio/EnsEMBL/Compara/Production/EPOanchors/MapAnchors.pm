@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::Production::EPOanchors::MapAnchors
 
 =head1 DESCRIPTION
 
-Given a database with anchor sequences and a target genome. This modules exonerates 
+Given a database with anchor sequences and a target genome, this module exonerates
 the anchors against the target genome.
 
 =head1 CONTACT

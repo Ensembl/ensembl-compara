@@ -43,7 +43,7 @@ MemberSet is the deepest base class of Bio::EnsEMBL::Compara::Family, Bio::EnsEM
 It holds the methods to construct / use a set of Bio::EnsEMBL::Compara::Member
 Currently the Member objects are used in the GeneTree structure
 to represent the leaves of the trees. Each leaf contains an aligned
-sequence, which is represented as an Member object.
+sequence, which is represented as a Member object.
 
 =head1 INHERITANCE TREE
 
@@ -68,7 +68,7 @@ The set of members can be accessed / edited with:
 I/O:
  - print_sequences_to_file()
 
-Methods about the set of species refered to by the members:
+Methods about the set of species referred to by the members:
  - get_all_taxa_by_member_source_name()
  - get_all_GenomeDBs_by_member_source_name()
  - has_species_by_name()
@@ -623,7 +623,7 @@ sub get_Member_by_source_GenomeDB {
   Example    : $family->_get_Member('_members_by_source', 'ENSEMBLPEP')
   Description: Used as the generic reference point for all 
                get_Memeber_by* methods. The method searches the given
-               scope & if the values cannot be found will initalize that value
+               scope & if the values cannot be found will initialize that value
                to an empty array reference.
   Returntype : array reference of Bio::EnsEMBL::Compara::Member
   Exceptions : None.
@@ -685,7 +685,7 @@ sub Member_count_by_source_taxon {
   Example    : Member_count_by_GenomeDB($genome_db);
   Description: Convenience wrapper for member counts by a GenomeDB
   Returntype : int
-  Exceptions : Thrown by subrountines this call. See get_Member
+  Exceptions : Thrown by subroutines this call. See get_Member
                equivalent
   Caller     : public
 
@@ -703,7 +703,7 @@ sub Member_count_by_GenomeDB {
   Example    : Member_count_by_source_GenomeDB('ENSEMBLPEP', $genome_db);
   Description: Convenience wrapper for member counts by a GenomeDB
   Returntype : int
-  Exceptions : Thrown by subrountines this call. See get_Member
+  Exceptions : Thrown by subroutines this call. See get_Member
                equivalent
   Caller     : public
 

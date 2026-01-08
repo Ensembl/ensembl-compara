@@ -148,7 +148,7 @@ corresponds to the sequence rebuilt using dnafrag and cigar_line
 =item original_sequence
 
 corresponds to the original sequence. It can be rebuilt from the aligned_sequence, the dnafrag object or can be used
-in conjuction with cigar_line to get the aligned_sequence.
+in conjunction with cigar_line to get the aligned_sequence.
 
 =back
 
@@ -865,7 +865,7 @@ sub original_sequence {
 
 =head2 set_alternative_original_sequence
 
-  Arg [1...] : Masking parametes. See L<Locus::get_sequence>
+  Arg [1...] : Masking parameters. See L<Locus::get_sequence>
   Description: Set an "original sequence" in this GenomicAlign with some masking options.
                Call without arguments to reset the original sequence.
   Returntype : none
@@ -1078,7 +1078,7 @@ sub display_id {
 
   Args       : none
   Example    : none
-  Description: reverse complement the object modifing dnafrag_strand and cigar_line
+  Description: reverse complement the object modifying dnafrag_strand and cigar_line
   Returntype : none
   Exceptions : none
   Caller     : general

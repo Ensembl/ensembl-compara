@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::MapMemberTypes
 
 =head1 DESCRIPTION
 
-This runnable generates mapping of gene-tree member type to gene member biotype
+This runnable generates a mapping of gene-tree member type to gene member biotype
 groups, checking that there is no overlap between the sets of biotype groups.
 
 =cut

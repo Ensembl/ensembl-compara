@@ -52,7 +52,7 @@ foreach my $emf_file (@ARGV) {
   open(my $maf_fh, '>', $maf_file) or die "Cannot open MAF file $maf_file\n";
   print $maf_fh "##maf version=1\n";
   print $maf_fh "# emf2maf.pl v$VERSION from file $emf_file\n";
-  print $maf_fh "# Here is the header from the orginal file:\n";
+  print $maf_fh "# Here is the header from the original file:\n";
   my $data = [];
   my $pattern = "";
   my $mode = "header";

@@ -31,9 +31,9 @@ Requires several inputs:
     'history_file'     : history file in json format (optional)
     'compara_db'       : db to run the HC on
     'datacheck_groups' : datacheck group type; e.g. 'compara_master' (optional)
-    'failures_fatal'   : [1|0] whether datacheck is admissable or not (optional)
+    'failures_fatal'   : [1|0] whether datacheck failure should result in job failure (optional)
     'registry_file'    : compara reg_conf file with db registries
-    'datacheck_types'  : [advisable|critical] (optional)
+    'datacheck_types'  : [advisory|critical] (optional)
 
 =cut
 

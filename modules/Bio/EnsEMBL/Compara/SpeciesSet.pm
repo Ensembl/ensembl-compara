@@ -138,7 +138,7 @@ sub genome_dbs {
 
             } elsif (looks_like_number($gdb)) {
                 # probably a genome_db_id
-                $gdb = $self->adaptor->get_GenomeDBAdaptor->fetch_by_dbID($gdb) or die "Could not automagicallycreate a GenomeDB from '$gdb'\n";
+                $gdb = $self->adaptor->get_GenomeDBAdaptor->fetch_by_dbID($gdb) or die "Could not automagically create a GenomeDB from '$gdb'\n";
             }
 
             my $hash_key = join('--', $gdb->name, $gdb->assembly, $gdb->genome_component || '' );

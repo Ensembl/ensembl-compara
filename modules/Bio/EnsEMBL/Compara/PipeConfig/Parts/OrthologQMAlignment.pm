@@ -28,7 +28,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::OrthologQMAlignment
 This pipeline uses whole genome alignments to calculate the
 coverage of homologous pairs.
 The coverage is calculated on both exonic and intronic regions
-seperately and summarised using a quality_score calculation.
+separately and summarised using a quality_score calculation.
 The average quality_score between both members of the homology
 will be written to the homology table.
 

@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::ConcatVep.pm
+Bio::EnsEMBL::Compara::RunnableDB::AncestralAllelesForIndels::ConcatVep
 
 =head1 SYNOPSIS
 

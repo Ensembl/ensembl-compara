@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::DBSQL::SpeciesTreeNodeAdaptor
 
 =head1 DESCRIPTION
 
-  SpeciesTreeNodeAdaptor - Adaptor for different species trees used in ensembl-compara
+  SpeciesTreeNodeAdaptor - Adaptor for species tree nodes used in ensembl-compara
 
 
 =head1 APPENDIX

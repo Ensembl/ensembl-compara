@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Pan::HighConfidenceOrthologs_conf
 
 =head1 DESCRIPTION
 
-A simple pipeline to populate the high- and low- confidence levels on an Pan Compara database.
+A simple pipeline to populate the high- and low- confidence levels on a Pan Compara database.
 
 =cut
 

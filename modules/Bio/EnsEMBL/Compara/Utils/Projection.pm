@@ -99,7 +99,7 @@ sub project_Slice_to_reference_toplevel {
     Example     : $object_name->project_Slice_to_target_genome();
     Description : This script takes as input the desired coordinates on the genome of a given species and uses the genomic aligns block object and the mapper object to map those coordinates
                     to their corresponding aligned coordinates on a target species genome.
-    Returntype  : Arrayref of paired hash objects each pair respresenting a one to one mapping of the aligned coordinates on both source and target species
+    Returntype  : Arrayref of paired hash objects each pair representing a one to one mapping of the aligned coordinates on both source and target species
     Exceptions  : none
     Caller      : general
     Status      : Stable

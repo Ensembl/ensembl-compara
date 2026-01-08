@@ -233,7 +233,7 @@ sub _attr_to_copy_list {
                   the stable_id, the sequence_id, or the seq_member_id (default)
   Example    : $family->load_cigars_from_file('/tmp/clustalw.aln');
   Description: Parses the multiple alignment fileand sets the cigar lines
-               of each of the memebers of this AlignedMemberSet
+               of each of the members of this AlignedMemberSet
   Returntype : none
   Exceptions : thrown if file cannot be parsed
                dies if a sequence identifier cannot be found in the set
@@ -477,7 +477,7 @@ sub get_SimpleAlign {
             #Permanent sequence name
             $map_long_seq_names->{$seqID}->{'seq'} = $prefix;
 
-            #Permanent suffix that will be used in the DB, it needs to be here to be replaced by the devived classes
+            #Permanent suffix that will be used in the DB, it needs to be here to be replaced by the derived classes
             $map_long_seq_names->{$seqID}->{'suf'} = $suffix;
 
         }else{

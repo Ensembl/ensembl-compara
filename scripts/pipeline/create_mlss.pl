@@ -110,7 +110,7 @@ The url for this MethodLinkSpeciesSet
 
 =item B<[--pw]>
 
-From a list of genome_db_id 1,2,3,4, it will create all possible pairwise combinaison 
+From a list of genome_db_id 1,2,3,4, it will create all possible pairwise combinations
 i.e. [1,2] [1,3] [1,4] [2,3] [2,4] [3,4] for a given  method link.
 
 =item B<[--sg]>

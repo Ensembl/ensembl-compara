@@ -17,12 +17,12 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::Example::QfoBlastProteinTrees_conf
+Bio::EnsEMBL::Compara::PipeConfig::Example::TuataraProteinTrees_conf
 
 =head1 DESCRIPTION  
 
 Parameters to run the ProteinTrees pipeline on the Quest-for-Orthologs dataset using
-a all-vs-all blast clustering
+an all-vs-all blast clustering approach.
 
 =head1 CONTACT
 

@@ -28,7 +28,7 @@ each one of the ancestor dnafrag names that have been removed to branch 2.
 
 If the GAB is left with less than 2 GAs, it is removed altogether with the
 ancestral GAB, GAs and dnafrags, and the whole GAT (EPO only). Otherwise, the
-CIGAR lines of the remaining GAs (and ancestral GAs) are updated, and so it is
+CIGAR lines of the remaining GAs (and ancestral GAs) are updated, and so is
 the GAB (and ancestral GAB) alignment length.
 
 =over

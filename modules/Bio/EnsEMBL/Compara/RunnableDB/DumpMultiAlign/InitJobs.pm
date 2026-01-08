@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::DumpMultiAlign::InitJobs.pm
+Bio::EnsEMBL::Hive::RunnableDB::DumpMultiAlign::InitJobs
 
 =head1 SYNOPSIS
 

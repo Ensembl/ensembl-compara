@@ -26,7 +26,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::DeletionHealthcheck
 This Runnable checks if the number of gene trees or homologies decreased significantly 
 compared to the previous pipeline database. 
 The difference between the current and previous counts is normalised by the previous count
-and expressed as a perecentage.
+and expressed as a percentage.
 
 =cut
 

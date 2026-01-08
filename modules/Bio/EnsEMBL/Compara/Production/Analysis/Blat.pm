@@ -29,13 +29,11 @@
 
 Bio::EnsEMBL::Compara::Production::Analysis::Blat
 
-=head1 SYNOPSIS
-
- run_blat returns an array of SeqFeatures, each one representing an aligment (e.g. a transcript), 
- and each feature contains a list of alignment blocks (e.g. exons) as sub_SeqFeatures, which are
- in fact feature pairs.
-
 =head1 DESCRIPTION
+
+run_blat returns an array of SeqFeatures, each one representing an alignment (e.g. a transcript),
+and each feature contains a list of alignment blocks (e.g. exons) as sub_SeqFeatures, which are
+in fact feature pairs.
 
 Blat takes a Bio::Seq (or Bio::PrimarySeq) object and runs Blat
 against a set of sequences.  The resulting output file is parsed

@@ -22,7 +22,7 @@ DumpAlignSlice.pl
 
 This script dumps genomic alignments from an EnsEMBL Compara
 database using the AlignSlice framework. It can work in both
-colapsed (preserving the original sequence) and expanded mode
+collapsed (preserving the original sequence) and expanded mode
 (expanding the original sequence in order to accomodate the
 gaps defined by the genomic alignment).
 
@@ -154,7 +154,7 @@ alignment.
 
 =item B<[--[no]print_genomic]>
 
-You can add the genomic sequence to the alignmnent (default: YES)
+You can add the genomic sequence to the alignment (default: YES)
 
 =item B<[--[no]print_contigs]>
 
@@ -235,7 +235,7 @@ perl DumpAlignSlice.pl
 
   Ouput:
     [--[no]print_genomic]
-        You can add the genomic sequence to the alignmnent (default: YES)
+        You can add the genomic sequence to the alignment (default: YES)
     [--[no]print_contigs]
         You can add the contigs to the alignment (default: NO)
     [--[no]print_genes]

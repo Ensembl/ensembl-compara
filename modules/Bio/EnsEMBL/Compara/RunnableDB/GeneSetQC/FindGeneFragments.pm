@@ -22,10 +22,10 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneSetQC::FindGeneFragments
 =head1 DESCRIPTION
 
 This Runnable will search for genes that are significantly longer or shorter than
-their orthologues based on the the coverage percentage. Genes that have been flagged as "split-genes" by are
-ignored by this analysis.
+their orthologues based on the the coverage percentage. Genes that have been flagged
+as "split-genes" are ignored by this analysis.
 It works by computing for each gene the average coverage of their
-orthologues. Genes with an average that fall below a given threshold (and
+orthologues. Genes with an average that falls below a given threshold (and
 when the average has been computed against enough species) are reported.
 
 =head1 SYNOPSIS

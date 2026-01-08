@@ -149,7 +149,7 @@ sub new {
                is an exact copy of the calling object
   Returntype : Bio::EnsEMBL::Compara::AlignSlice::Exon object
   Exceptions : 
-  Caller     : $obeject->methodname
+  Caller     : $object->methodname
 
 =cut
 
@@ -194,8 +194,8 @@ sub slice {
   Arg[1]     : (optional) integer $original_rank
   Example    : $align_exon->original_rank(5);
   Example    : $original_rank = $align_exon->original_rank();
-  Description: Get/set the attribute original_rank. The orignal_rank
-               is the position of the orginal Exon in the original
+  Description: Get/set the attribute original_rank. The original_rank
+               is the position of the original Exon in the original
                Transcript
   Returntype : integer
   Exceptions : 
@@ -366,9 +366,9 @@ sub map_Exon_on_Slice {
   Example    : $align_exon->exon($original_exon);
   Example    : $start = $align_exon->start();
   Description: Get/set the attribute start. This method is overloaded in order to
-               return the starting postion on the AlignSlice instead of the
+               return the starting position on the AlignSlice instead of the
                original one. Original starting position may be retrieved using
-               the SUPER::start() method or the orginal_start() method
+               the SUPER::start() method or the original_start() method
   Returntype : Bio::EnsEMBL::Exon object
   Exceptions : 
 
@@ -461,7 +461,7 @@ sub get_aligned_end {
                include UTRs (or even be entirely UTR).
   Returntype : Bio::Seq or undef
   Exceptions : warning if argument passed,
-               warning if exon does not have attatched slice
+               warning if exon does not have attached slice
                warning if exon strand is not defined (or 0)
   Caller     : general
 
@@ -618,7 +618,7 @@ sub _get_aligned_sequence_from_original_sequence_and_cigar_line {
       $seq_pos += $cigCount;
     }
   }
-  throw("Cigar line ($seq_pos) does not match sequence lenght (".length($original_sequence).")") if ($seq_pos != length($original_sequence));
+  throw("Cigar line ($seq_pos) does not match sequence length (".length($original_sequence).")") if ($seq_pos != length($original_sequence));
 
   return $aligned_sequence;
 }

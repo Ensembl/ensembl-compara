@@ -43,12 +43,6 @@ $runnable->fetch_input(); #reads from DB
 $runnable->run();
 $runnable->write_output(); #writes to DB
 
-=cut
-
-=head1 DESCRIPTION
-
-=cut
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.

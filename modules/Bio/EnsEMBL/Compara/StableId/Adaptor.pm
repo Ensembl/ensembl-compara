@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::StableId::Adaptor
 
 =head1 DESCRIPTION
 
-All database I/O should be done via this class,
+All StableId database I/O should be done via this class,
 which has a general functionality of an adaptor, but strictly speaking isn't.
 
 =cut

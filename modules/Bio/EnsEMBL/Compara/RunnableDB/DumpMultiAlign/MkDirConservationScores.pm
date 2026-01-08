@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MkDirConservationScores
 
 =head1 SYNOPSIS
 
-Find the best directory name to dump some conservation scores, and creates it
+This RunnableDB finds the best directory name to dump some conservation scores, and creates it.
 
 =cut
 

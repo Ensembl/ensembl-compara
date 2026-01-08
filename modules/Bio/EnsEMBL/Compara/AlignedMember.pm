@@ -91,7 +91,7 @@ use base ('Bio::EnsEMBL::Compara::SeqMember');
 
 
 ##################################
-# overriden superclass methods
+# overridden superclass methods
 ##################################
 
 =head2 copy
@@ -415,7 +415,7 @@ sub set {
                 case, whilst the 'exon_bounded' seq_type adds whitespaces
                 between the exons.
                 For local alignments, when the alignment does not cover the
-                whole protein, only the part of the sequence in the alignemnt
+                whole protein, only the part of the sequence in the alignment
                 is returned. Currently only global alignments are provided.
                 Therefore the alignment_string always returns the whole aligned
                 sequence.

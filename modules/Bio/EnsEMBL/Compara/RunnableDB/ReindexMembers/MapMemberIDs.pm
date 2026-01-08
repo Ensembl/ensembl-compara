@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ReindexMembers::MapMemberIDs
 =head1 SYNOPSIS
 
 This runnable loads the members from the current database and a previous one, compares them
-and outputs a list of rename operations to do on the gene-tree tables.
+and outputs a list of rename operations to do on the gene-tree member tables.
 
 =cut
 

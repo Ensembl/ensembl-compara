@@ -18,7 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CopyAlignmentsFromDB
 
 =head1 DEPRECATION NOTICE
 

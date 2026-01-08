@@ -6,7 +6,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags
 
 =head1 DESCRIPTION
 
-Version of ConditionalDataFlow that exposes all the gene-tree root-tags as parameters
+RunnableDB that exposes all the gene-tree root-tags as parameters
 
 =head1 LICENSE
 
@@ -59,7 +59,7 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 =head2 fetch_input
 
-    Description : Loads the tags passesd by parameters
+    Description : Loads the tags passed by parameters
                   Then, it passes the control back to the super-class.
 
     param('gene_tree_id'): The root_id of the tree to read the tags from.

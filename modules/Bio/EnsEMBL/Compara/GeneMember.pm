@@ -89,7 +89,7 @@ use base ('Bio::EnsEMBL::Compara::Member');
   Example    : $member = Bio::EnsEMBL::Compara::GeneMember->new_from_Gene(
                 -gene   => $gene,
                 -genome_db => $genome_db);
-  Description: contructor method which takes an EnsEMBL::Gene object
+  Description: constructor method which takes an EnsEMBL::Gene object
                and Compara::GenomeDB object and creates a new GeneMember object
                translating from the Gene object
   Returntype : Bio::EnsEMBL::Compara::GeneMember

@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Noisy;
 
 This Analysis/RunnableDB is designed to take a root_id as input.
 This must already have a multiple alignment run on it. 
-It uses that alignment as input to the filterring tool Noisy.
+It uses that alignment as input to the filtering tool Noisy.
 
 input_id/parameters format eg: "{'gene_tree_id'=>1234}"
     gene_tree_id : use 'id' to fetch a cluster from the ProteinTree

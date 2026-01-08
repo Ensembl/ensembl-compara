@@ -175,7 +175,7 @@ taxon_id values with the genome_db table.
 =head2 OLD DATA
 
 Sometimes, some alignments are dropped from one release to the other. In order to avoid copying
-these data, this script reads the "last_release" fields and skip the related entries (genome_db,
+these data, this script reads the "last_release" fields and skips the related entries (genome_db,
 species_set, and method_link_species_set)
 
 =cut

@@ -32,7 +32,8 @@ Bio::EnsEMBL::Compara::PipeConfig::GeneTreeHealthChecks_conf.
 
 =head1 DESCRIPTION
 
-The PipeConfig file for a pipeline that should for data integrity of a gene-tree / homology table.
+The PipeConfig file for a pipeline that should check
+for data integrity of a gene-tree / homology table.
 
 =head1 SYNOPSIS
 

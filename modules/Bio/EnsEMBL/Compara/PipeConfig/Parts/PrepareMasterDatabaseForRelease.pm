@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::PrepareMasterDatabaseForRelease
 
 =head1 DESCRIPTION
 
-    This is a partial PipeConfig for most part of the PrepareMasterDatabaseForRelease
+    This is a partial PipeConfig for most parts of the PrepareMasterDatabaseForRelease
     pipeline. This will update the NCBI taxonomy, add/update all species to master
     database, update master database's metadata, and update collections and mlss.
     Finally, it will run the datachecks and perform a backup of the updated master

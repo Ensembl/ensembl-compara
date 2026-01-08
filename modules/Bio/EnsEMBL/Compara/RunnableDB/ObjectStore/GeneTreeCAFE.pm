@@ -34,7 +34,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ObjectStore::GeneTreeCAFE
 
 =head1 DESCRIPTION
 
-This eHive Runnable prepares a data-structure holding the exon boundaries
+This eHive Runnable prepares a data-structure holding CAFE family data
 for a given GeneTree.
 The data are used by the web-site
 

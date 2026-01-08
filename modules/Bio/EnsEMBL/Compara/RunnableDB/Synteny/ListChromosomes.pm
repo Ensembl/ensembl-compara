@@ -30,12 +30,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::Synteny::ListChromosomes
 
-=cut
-
-=head1 SYNOPSIS
-
-=cut
-
 =head1 DESCRIPTION
 
 This module lists all the chromosomes (or similar sequence structures) that can be used to draw synteny maps.

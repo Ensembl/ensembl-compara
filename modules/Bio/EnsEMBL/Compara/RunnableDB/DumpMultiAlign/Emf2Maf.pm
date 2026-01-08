@@ -36,7 +36,7 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 
 =head1 DESCRIPTION
 
-The RunnableDB module runs emf2maf on a emf file
+The RunnableDB module runs emf2maf on an emf file.
 
 =cut
 

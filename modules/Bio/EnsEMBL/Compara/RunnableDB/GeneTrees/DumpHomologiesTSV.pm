@@ -33,7 +33,8 @@ Bio::EnsEMBL::Hive::RunnableDB::GeneTrees::DumpHomologiesTSV
 =head1 DESCRIPTION
 
 This RunnableDB module dumps homologies in TSV format. It is able to dump
-either all the homologies or only the ones of a certain genome_db_id.
+either all the homologies or only the ones of a certain genome_db_id or mlss_id,
+or alternatively by a specified 'extra_filter' parameter.
 
 =cut
 

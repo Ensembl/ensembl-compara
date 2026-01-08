@@ -38,7 +38,7 @@ taken as the description of the whole family.
 
 The objects can be read from and write to a family database.
 
-For more info, see ensembl-doc/family.txt
+For more info, see https://www.ensembl.org/info/genome/compara/family.html
 
 =head1 CONTACT
 

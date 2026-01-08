@@ -29,7 +29,9 @@ $module->write_output
 
 =head1 DESCRIPTION
 
-This module updates the species_tree_node_tag or method_link_species_set_tag table with multiple alignment statistics by firstly adding any new bed files to the correct directory and running compare_beds to generate the statistics
+This module updates the species_tree_node_tag or method_link_species_set_tag table
+with multiple alignment statistics by firstly adding any new bed files to the
+correct directory and running compare_beds to generate the statistics.
 
 =cut
 

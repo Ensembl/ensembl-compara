@@ -309,10 +309,10 @@ sub add_Slice_Mapper_pair {
                species. These are used to tell the difference between gap due to
                lack of alignments and gaps due to the alignments. If you set this
                this flag to true you will get these gap slices back but it is your
-               responsability to deal with these gap slices properly.
+               responsibility to deal with these gap slices properly.
   Returntype : list ref of hashes which keys are "slice", "mapper", "start",
                "end" and "strand". Each hash corresponds to a pair of Slice
-               and Mapper and the coordintes needed to locate the Slice in
+               and Mapper and the coordinates needed to locate the Slice in
                the AlignSlice::Slice.
                start and end refer to the Coordinate System. If you are using
                a sub_Slice, this method will be using the coordinates of the
@@ -358,7 +358,7 @@ sub get_all_Slice_Mapper_pairs {
                This methods overwrites the core one since it sends a warning
                message and return an empty array because this AlignSlice::Slice
                object has no adaptor. This implementation calls the
-               get_all_Genes methdo elsewhere in this module to fulfil the
+               get_all_Genes method elsewhere in this module to fulfil the
                query.
 
   Returntype : listref of Bio::EnsEMBL::Genes
@@ -515,7 +515,7 @@ sub get_all_Genes {
 
   Arg[1]     : Bio::EnsEMBL::Gene $original_gene
   Arg[2]     : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
-  Example    : my $mapped_gene = $align_slice->get_mapped_Gene($orignal_gene, $genomic_align);
+  Example    : my $mapped_gene = $align_slice->get_mapped_Gene($original_gene, $genomic_align);
   Description: returns a new Bio::EnsEMBL::Gene object. Mapping is based on exons.
                The object returned contains Bio::EnsEMBL::Transcripts objects. Those
                mapped transcripts contain Bio::EnsEMBL::Compara::AlignSlice::Exon objects.
@@ -939,7 +939,7 @@ sub _map_position_using_cigar_line {
   Example    : my $merged_exons = _merge_Exons($exons_to_be_merged, 100, 1000, 1);
   Description: Takes a list of Bio::EnsEMBL::Compara::AlignSlice::Exon objects and
                tries to merge them according to exon stable_id and some rules that can
-               be tunned using some optional parameters. This method can overwrite some
+               be tuned using some optional parameters. This method can overwrite some
                of the exon in the $set_of_exons.
   Parameters:  MAX_REPETITION_LENGTH. In principle you want to merge together pieces
                    of an exon which do not overlap (the beginning and the end of the
@@ -1043,7 +1043,7 @@ sub _merge_Exons {
   Example    : my $sets_of_exons = _separate_in_incompatible_sets_of_Exons(
                    $set_of_exons, 100, 100000, 0);
   Description: Takes a list of Bio::EnsEMBL::Compara::AlignSlice::Exon and separate
-               them in sets of comaptible exons. Compatibility is defined taking into
+               them in sets of compatible exons. Compatibility is defined taking into
                account 5 parameters:
                  - exons must be in the same strand
                  - exons cannot overlap on the align_slice
@@ -1302,7 +1302,7 @@ sub invert {
   Description: Makes another Slice that covers only part of this slice
                If a slice is requested which lies outside of the boundaries
                of this function will return undef.  This means that
-               behaviour will be consistant whether or not the slice is
+               behaviour will be consistent whether or not the slice is
                attached to the database (i.e. if there is attached sequence
                to the slice).  Alternatively the expand() method or the
                SliceAdaptor::fetch_by_region method can be used instead.
@@ -1439,7 +1439,7 @@ sub subseq {
     next if ($slice_start > $end or $slice_end < $start);
     my $this_slice_seq = $this_slice->seq();
 
-    # Set slice_start and slice_end in "subseq" coordinates (0 based, for compliance wiht substr() perl func) and trim them
+    # Set slice_start and slice_end in "subseq" coordinates (0 based, for compliance with substr() perl func) and trim them
     $slice_start -= $start; # $slice_start is now in subseq coordinates
     $slice_start = 0 if ($slice_start < 0);
     $slice_end -= $start; # $slice_end is now in subseq coordinates
@@ -1543,7 +1543,7 @@ sub subseq {
                This Slice is made of several Bio::EnsEMBL::Slices mapped
                on it with gaps inside and regions with no matching
                sequence. The resulting cigar line corresponds to the mapping
-               of all the nucleotides that can be mapepd. If several Slices map
+               of all the nucleotides that can be mapped. If several Slices map
                on the same positions, the behaviour is undefined.
                The cigar_line includes 3 types of regions: M for matches/mismatches,
                D for alignment gaps (formerly known as deletions) and G for
@@ -1886,10 +1886,10 @@ sub get_all_constrained_elements {
                sequence. This method tries to map on this Slice the
                region(s) corresponding to the provided $original_slice
                NB: This method does not know how to project Slices onto
-               other coordinate systems. It is your responsability to
+               other coordinate systems. It is your responsibility to
                provide an original Slice on the same coordinate system
                as the underlying Bio::EnsEMBL::Slices
-  Example    : my $slices = $as_slice->map_original_Slice($orginal_slice);
+  Example    : my $slices = $as_slice->map_original_Slice($original_slice);
   Returntype : listref of Bio::EnsEMBL::Compara::AlignSlice::Slice objects
                which are the sub_Slices of this Bio::EnsEMBL::Compara::
                AlignSlice::Slice where the $original_slice maps
@@ -1976,7 +1976,7 @@ sub expand {
                The code of the attribute type to retrieve values for.
   Example    : ($htg_phase) = @{$slice->get_all_Attributes('htg_phase')};
                @slice_attributes    = @{$slice->get_all_Attributes()};
-  Description: Gets a list of Attributes of all teh underlying slice''s
+  Description: Gets a list of Attributes of all the underlying slice's
                seq_region. Optionally just get Attributes for given code.
                This Slice is made of several Bio::EnsEMBL::Slices mapped
                on it. This method go through all of them, retrieves the
@@ -2082,7 +2082,7 @@ sub get_all_RepeatFeatures {
                the triplet: a slice in the requested coordinate system.
 
                Because of the gaps in the mapping of the Bio::EnsEMBL::Slices
-               the lenght of the slice returned in the tripet may be different
+               the length of the slice returned in the triplet may be different
                than the distance defined by the start and end of the
                Bio::EnsEMBL::ProjectionSegment object.
   Returntype : list reference of Bio::EnsEMBL::ProjectionSegment objects which
@@ -2201,7 +2201,7 @@ sub project {
 
   Args[1]     : method_name
   Description : This Slice is made of several Bio::EnsEMBL::Slices mapped on it. This
-                method go through all of them, calls method_name and maps teh result on
+                method go through all of them, calls method_name and maps the result on
                 this Bio::EnsEMBL::Compara::AlignSlice::Slice object.
   ReturnType  : listref of Bio::EnsEMBL::Variation::VariationFeature
   Exceptions  : none

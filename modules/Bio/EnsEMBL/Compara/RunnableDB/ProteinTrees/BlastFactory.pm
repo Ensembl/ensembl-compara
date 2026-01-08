@@ -41,7 +41,7 @@ Supported keys:
    'step' => <number>
        How many sequences to write into the blast query file. Default 100
 
-   'species_set_id' => <number> (optionnal)
+   'species_set_id' => <number> (optional)
        The species set on which we want to run blast for that genome_db_id
        Default: uses all the GenomeDBs
 

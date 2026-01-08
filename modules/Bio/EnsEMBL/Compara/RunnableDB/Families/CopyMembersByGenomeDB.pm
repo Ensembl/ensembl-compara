@@ -32,8 +32,7 @@ Bio::EnsEMBL::Compara::RunnableDB::Families::CopyMembersByGenomeDB
 
 =head1 DESCRIPTION
 
-This module imports all the members (and their sequences and hmm-hits) that are canonical
-and on a reference dnafrag for a given genome_db_id.
+This module imports all the members (and their sequences and hmm-hits) for a given genome_db_id.
 
 =head1 APPENDIX
 

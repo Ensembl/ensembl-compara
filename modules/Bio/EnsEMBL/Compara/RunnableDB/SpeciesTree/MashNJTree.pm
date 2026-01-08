@@ -46,7 +46,6 @@ Create a neighbour-joining tree from 'mash dist -t' output
 	   (naked mole rat, for example)
 	2. run rapidnj, disallowing negative branch lengths
 	3. replace genome_db_ids with species names
-	4. 
 
 =cut
 

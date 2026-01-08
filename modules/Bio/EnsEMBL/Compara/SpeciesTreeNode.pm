@@ -221,10 +221,11 @@ sub get_common_name {
 }
 
 
-=head2 [get/has/set]_divergence_time
+=head2 get_divergence_time
 
-Accessors for the divergence time of this node. The functions are provided to hide
-the actual implementation as tags
+  Description : returns the divergence time of the species-tree node, if available
+  Example     : my $mya = $stn->get_divergence_time();
+  Returntype  : float or undef
 
 =cut
 
@@ -233,10 +234,29 @@ sub get_divergence_time {
     return $self->taxon->get_value_for_tag('ensembl timetree mya');
 }
 
+
+=head2 has_divergence_time
+
+  Description : indicates whether the species-tree node has a divergence time
+  Example     : $stn->has_divergence_time();
+  Returntype  : Boolean
+
+=cut
+
 sub has_divergence_time {
     my $self = shift;
     return $self->taxon->has_tag('ensembl timetree mya');
 }
+
+
+=head2 set_divergence_time
+
+  Description: sets the divergence time of the species-tree node
+  Arg [1]    : <float> mya
+  Example    : $stn->set_divergence_time($mya);
+  Returntype : float
+
+=cut
 
 sub set_divergence_time {
     my ($self, $mya) = @_;

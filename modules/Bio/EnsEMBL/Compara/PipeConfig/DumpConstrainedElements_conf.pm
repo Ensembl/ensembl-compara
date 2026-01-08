@@ -29,7 +29,7 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpConstrainedElements_conf
 
 =head1 DESCRIPTION
 
-Pipeline to dump the contrained elements as BigBED files.
+Pipeline to dump the constrained elements as BigBED files.
 
 =cut
 
