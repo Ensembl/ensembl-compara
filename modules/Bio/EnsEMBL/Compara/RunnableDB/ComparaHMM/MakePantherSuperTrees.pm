@@ -30,7 +30,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::MakePantherSuperTrees
 =head1 DESCRIPTION
 
 Runnable to create super-trees that link the trees of the same Panther
-family. Panther idenfiers are expected to be found as "model_id" tags
+family. Panther identifiers are expected to be found as "model_id" tags
 and to follow the PTHR*_SF* nomenclature.
 
 =head1 AUTHORSHIP

@@ -153,7 +153,7 @@ sub copy {
   Arg [-TRANSLATE] : boolean: whether the transcript should be translated
   Example    : $member = Bio::EnsEMBL::Compara::SeqMember->new_from_Transcript(
                   $transcript, $genome_db, 'translate');
-  Description: contructor method which takes an Ensembl::Gene object
+  Description: constructor method which takes an Ensembl::Gene object
                and Compara::GenomeDB object and creates a new SeqMember object
                translating from the Gene object
   Returntype : Bio::Ensembl::Compara::SeqMember
@@ -299,7 +299,7 @@ sub sequence {
                 The undef $seq_type maps to the default sequence ($member->sequence())
                 If $sequence is set: store it in the database.
                 'exon_cased' maps to the sequence string of this member with alternating upper
-                and lower case corresponding to the translateable exons.
+                and lower case corresponding to the translatable exons.
                 'exon_bounded' maps to the sequence string of this member with exon boundaries
                 denoted as O, B, or J depending on the phase (O=0, B=1, J=2)
   Returntype : string

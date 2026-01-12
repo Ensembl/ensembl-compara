@@ -27,11 +27,7 @@ Bio::EnsEMBL::Compara::Graph::BaseXMLWriter
 
 =head1 DESCRIPTION
 
-Used as a base for 
-
-=head1 SUBROUTINES/METHODS
-
-See inline
+Used as a base for classes to write comparative genomics data in XML format.
 
 =head1 REQUIREMENTS
 
@@ -167,7 +163,7 @@ sub finish {
 
 =head2 namespaces()
 
-Alter to return the namespaces to use in this XML file. If specifed
+Alter to return the namespaces to use in this XML file. If specified
 the usage of XSI will be implicit and will mean the 2001 W3C schema. Return
 type should be a HashRef keyed by the URI and value should be the prefix
 to use. Use an empty prefix to set the namespace as default
@@ -241,7 +237,7 @@ sub _build_writer {
 =head2 _write_opening()
 
 Override to write the starting tag along with namespaces if required. Method
-takes the writer instance as its first agument (since this is called before
+takes the writer instance as its first argument (since this is called before
 the writer instance is pushed into $self).
 
 =cut

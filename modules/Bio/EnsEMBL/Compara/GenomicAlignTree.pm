@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::GenomicAlignTree
 =head1 DESCRIPTION
 
 Specific subclass of NestedSet to add functionality when the nodes of this tree
-are GenomicAlign objects and the tree is a representation of a Protein derived
+are GenomicAlign objects and the tree is a representation of a
 Phylogenetic tree
 
 =head1 APPENDIX
@@ -326,7 +326,7 @@ sub reference_genomic_align {
                Synchronises reference_genomic_align and reference_genomic_align_id
                attributes.
   Returntype : integer
-  Exceptions : throw if $reference_genomic_align_id id not a postive number
+  Exceptions : throw if $reference_genomic_align_id id not a positive number
   Caller     : $genomic_align_block->reference_genomic_align_id(int)
   Status     : Stable
 
@@ -388,7 +388,7 @@ sub reference_genomic_align_node {
 
 =head2 set_alternative_original_sequence
 
-  Arg [1...] : Masking parametes. See L<Locus::get_sequence>
+  Arg [1...] : Masking parameters. See L<Locus::get_sequence>
   Description: Set an "original sequence" in this GenomicAlign with some masking options
                Call without arguments to reset the original sequence.
   Returntype : none
@@ -435,7 +435,7 @@ sub aligned_sequence {
                GenomicAlignBlock objects
   Returntype : integer
   Exceptions : A GenomicAlignTree is made of two GenomicAlignBlock
-               object. The method fail when gettign the value if the
+               object. The method fails when getting the value if the
                two group_ids do not match
   Caller     : general
 

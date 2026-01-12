@@ -32,8 +32,8 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::AlignmentNets
 
 =head1 DESCRIPTION
 
-Given an compara MethodLinkSpeciesSet identifer, and a reference genomic
-slice identifer, fetches the GenomicAlignBlocks from the given compara
+Given a compara MethodLinkSpeciesSet identifier, and a reference genomic
+slice identifier, fetches the GenomicAlignBlocks from the given compara
 database, infers chains from the group identifiers, and then forms
 an alignment net from the chains and writes the result
 back to the database. 

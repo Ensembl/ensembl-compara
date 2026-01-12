@@ -24,10 +24,8 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::QuickTreeBreak
 This Analysis/RunnableDB is designed to take ProteinTree as input.
 
 This must already have a multiple alignment run on it. It uses that
-alignment as input into the QuickTree program which then generates a
-simple phylogenetic tree to be broken down into 2 pieces.
-
-Google QuickTree to get the latest tar.gz from the Sanger.
+alignment as input into the QuickTree program ( https://github.com/khowe/quicktree/ ),
+which then generates a simple phylogenetic tree to be broken down into subtrees.
 
 input_id/parameters format eg: "{'gene_tree_id'=>1234,'clusterset_id'=>1}"
     gene_tree_id : use 'id' to fetch a cluster from the ProteinTree

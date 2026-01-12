@@ -26,7 +26,7 @@ Bio::EnsEMBL::Compara::Homology - Homology between two proteins
 Homology is the object that stores orthology and paralogy data.
 It inherits from AlignedMemberSet, and extends it on two aspects.
 Firstly, each homology is reconciled with the gene tree and the
-species tree. Secondly, we compute dN and dS values on some of the
+species tree. Secondly, dN and dS values may be computed on some of the
 homologies.
 
 Please note that 1-to-many relations are stored as multiple pairs.

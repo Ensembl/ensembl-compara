@@ -22,7 +22,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::GroupGenomesUnderTaxa
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::ComponentGenomeDBFactory
 
 =head1 DESCRIPTION
 

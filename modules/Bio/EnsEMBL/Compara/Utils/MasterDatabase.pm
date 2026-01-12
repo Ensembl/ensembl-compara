@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
-This modules contains common methods used when dealing with the
+This module contains common methods used when dealing with the
 Compara master database. They can in fact be called on other
 databases too.
 

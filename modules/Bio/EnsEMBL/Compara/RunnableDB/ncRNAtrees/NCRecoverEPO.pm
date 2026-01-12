@@ -22,7 +22,9 @@ Bio::EnsEMBL::Compara::RunnableDB::ncRNAtrees::NCRecoverEPO
 =head1 DESCRIPTION
 
 This runnable recovers the genomic alignments from the GenomicAlignBlocks and
-GenomicAlignTrees as stored by EPO_EXTENDED multiple whole genome alignment methods
+GenomicAlignTrees as stored by EPO_EXTENDED multiple whole genome alignment methods,
+and uses these alignments to identify and filter paralogous genes in low-coverage genomes.
+https://www.ensembl.org/info/genome/genebuild/2x_genomes.html
 
 =cut
 

@@ -32,7 +32,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 DESCRIPTION
 
-This script downloads databasd dumps available at the mirbase's FTP server
+This script downloads database dumps available at the mirbase's FTP server
 and loads them in a new database. 
 
 =head1 SYNOPSIS

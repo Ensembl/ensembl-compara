@@ -137,7 +137,7 @@ sub fetch_input {
 
 =head2 run
 
-	Description: calaculate wga_score based on ortholog ranges, exon ranges and genomic alignment coverage
+	Description: calculate wga_score based on ortholog ranges, exon ranges and genomic alignment coverage
 
 =cut
 

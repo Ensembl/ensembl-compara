@@ -32,12 +32,12 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::OrthoTree
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to take GeneTree as input
+This Analysis/RunnableDB is designed to take a GeneTree as input.
 
-This must already have a rooted tree with duplication/sepeciation tags
+This GeneTree must already have a rooted tree structure with duplication/speciation tags
 on the nodes.
 
-It analyzes that tree structure to pick Orthologues and Paralogs for
+It analyses that tree structure to pick orthologues and paralogues for
 each genepair.
 
 input_id/parameters format eg: "{'tree_id'=>1234}"

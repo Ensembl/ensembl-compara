@@ -47,7 +47,9 @@ $ncfasttree->write_output(); #writes to DB
 
 =head1 DESCRIPTION
 
-This RunnableDB builds fast phylogenetic trees using examl and FastTree2. It is useful in cases where the alignments are too big to build the usual examl trees in PrepareSecStructModels and SecStructModelTree.
+This RunnableDB builds fast phylogenetic trees using examl and FastTree2.
+It is useful in cases where the alignments are too big to build the usual
+examl trees in PrepareSecStructModels and SecStructModelTree.
 
 =head1 INHERITANCE TREE
 

@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::DBSQL::DBAdaptor
 
 =head1 DESCRIPTION
 
-This object represents the handle for a comparative DNA alignment database
+This object represents the handle for a comparative genomics database
 
 =head1 SYNOPSIS
 
@@ -73,7 +73,7 @@ use base ('Bio::EnsEMBL::DBSQL::DBAdaptor');
 
   Arg [..]   : list of named arguments.  See Bio::EnsEMBL::DBConnection.
                [-URL mysql://user:pass@host:port/db_name] alternative way to specify the
-               connection parameters. Pass and port are optional. If none is speciefied,
+               connection parameters. Pass and port are optional. If none is specified,
                the species name will be equal to the db_name.
                [-GROUP] This option is *always* set to 'compara'. Use another DBAdaptor
                for other groups.

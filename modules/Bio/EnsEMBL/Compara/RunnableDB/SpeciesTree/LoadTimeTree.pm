@@ -24,8 +24,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::SpeciesTree::LoadTimeTree
 
-=head1 DESCRIPTION
-
 =cut
 
 

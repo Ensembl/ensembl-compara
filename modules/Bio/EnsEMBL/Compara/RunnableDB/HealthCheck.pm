@@ -39,12 +39,12 @@ $module->write_output
 
 =head1 DESCRIPTION
 
-This module is inteded to run automatic checks at the end of a pipeline (or at any other time)
+This module is intended to run automatic checks at the end of a pipeline (or at any other time)
 
 =head1 OPTIONS
 
 This module has been designed to run one test per job. All the options are specific to
-the test iself and therefore you shouldn't set any parameters in the analysis table. Use the input_id
+the test itself and therefore you shouldn't set any parameters in the analysis table. Use the input_id
 column of the job to set these values.
 
 =head2 test
@@ -79,7 +79,7 @@ method_link_type for the multiple alignments. Default: PECAN
 
 This test checks whether there are conservation scores in the table, whether
 these correspond to existing genomic_align_blocks, and whether there
-are no alignments wiht more than 3 seqs and no scores.
+are no alignments with more than 3 seqs and no scores.
 
 Parameters:
 
@@ -88,7 +88,7 @@ Parameters:
 =item method_link_species_set_id (or mlss_id)
 
 Specify the method_link_species_set_id for the conservation scores. Note that this can
-be guessed from the database altough specifying the right mlss_id is probably safer.
+be guessed from the database although specifying the right mlss_id is probably safer.
 
 For instance, it may happen that you expect 2 or 3 sets of scores. In that case it is
 recommended to create one test for each of these set. If one of the sets is missing,
@@ -234,7 +234,7 @@ sub _run_conservation_jobs_test {
 =head2 _run_conservation_scores_test
 
   Description : Tests whether there are conservation scores in the table, whether
-                these correspond to existing genomic_align_blocks, and hether there
+                these correspond to existing genomic_align_blocks, and whether there
                 are no alignments with more than 3 seqs and no scores.
                 Required parameters (in $self->param())
                   method_link_species_set_id => method_link_species_set_id
@@ -421,7 +421,7 @@ sub _run_pairwise_gabs_test {
                   (this) database
                   max_percent_diff => the percentage difference between the
                   number of genomic_align_blocks in the query and the target
-                  databases before being flaged as an error. Default 20.
+                  databases before being flagged as an error. Default 20.
   Returntype  :
   Exceptions  : die on failure
   Caller      : general

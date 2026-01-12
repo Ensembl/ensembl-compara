@@ -28,13 +28,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::DBMergeCheck
+Bio::EnsEMBL::Compara::RunnableDB::CopyDataWithFK
 
 =head1 AUTHORSHIP
 
 Ensembl Team. Individual contributions can be found in the GIT log.
-
-=head1 SYNOPSIS
 
 =cut
 

@@ -25,7 +25,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Plants::LoadSpeciesTrees_conf
 
 =head1 DESCRIPTION
 
-The Plpants configuration of the LoadSpeciesTrees pipeline. Please, refer to
+The Plants configuration of the LoadSpeciesTrees pipeline. Please, refer to
 the parent class for further information.
 
 =cut

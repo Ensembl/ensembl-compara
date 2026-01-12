@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Legacy::AncestralAllelesForCompleteIndels_con
 This pipeline determines the consequences of 1 bp indels at each position in the reference species in an alignment. 
 
 An alignment region is spliced out which covers "flank" characters to the left and right of the current base. This is realigned to form the "reference alignment". 
-eg Using homo sapiens as the reference species and a flank region of 10 around the asterixed "C":
+eg Using homo sapiens as the reference species and a flank region of 10 around the asterisked "C":
            *
  TTTGATTGCACTGTGGTCTGA homo_sapiens
  TTTGATTGCACTGTGGTCTGA pan_troglodytes

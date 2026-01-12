@@ -85,7 +85,7 @@ sub new {
 
 =head2 compact_alignments()
 
-  Arg [0] : Boolean; indiciates we wish to comapct the alignments of fragmented regions of low coverage species
+  Arg [0] : Boolean; indicates we wish to compact the alignments of fragmented regions of low coverage species
   Returntype : Boolean  Exceptions : None
   Status     : Stable
 

@@ -32,12 +32,12 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CDHitDiversity
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed to take a ProteinTree as input
-This must already have a multiple alignment run on it. It uses that alignment
-as input create a HMMER HMM profile
+This Analysis/RunnableDB enables a diversity filter of sequence members.
 
-input_id/parameters format eg: "{'gene_tree_id'=>1234}"
-    gene_tree_id : use 'id' to fetch a cluster from the ProteinTree
+Taking all sequence members as input, it clusters them using CD-HIT with a
+specified 'cdhit_identity_threshold'. For each cluster of similar sequence
+members, it stores projections between the representative member and each
+of the other cluster members.
 
 =head1 AUTHORSHIP
 

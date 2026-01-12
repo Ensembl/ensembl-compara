@@ -21,10 +21,9 @@ Bio::EnsEMBL::Compara::Production::Analysis::ExtendedGenomeAlignment
 
 =head1 DESCRIPTION
 
-This module creates a new tree for those alignments which contain a segmental duplication. The module will runs treeBest where there are more than 3 sequences in an alignment, otherwise it will run semphy. This module is still under development.
-
-
-=head1 METHODS
+This module creates a new tree for those alignments which contain a
+segmental duplication. The module will run TreeBeST where there are
+more than 3 sequences in an alignment, otherwise it will run semphy.
 
 =cut
 

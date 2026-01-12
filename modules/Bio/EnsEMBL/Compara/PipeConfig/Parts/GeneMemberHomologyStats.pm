@@ -22,7 +22,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::GeneMemberHomologyStats
 =head1 DESCRIPTION
 
 This pipeline-part populates the gene_member_hom_stats table.
-This table can now hold statistics for different collections and once
+This table can now hold statistics for different collections and one
 instance of the pipeline can be seeded multiple times in order to gather
 statistics for multiple collections.
 

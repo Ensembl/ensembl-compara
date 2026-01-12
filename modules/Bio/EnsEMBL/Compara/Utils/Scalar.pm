@@ -32,7 +32,7 @@ Ensembl Team. Individual contributions can be found in the GIT log.
 
 =head1 DESCRIPTION
 
-This modules contains a few additional methods to test the type of
+This module contains a few additional methods to test the type
 of scalars
 
 =head1 METHODS

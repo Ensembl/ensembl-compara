@@ -25,7 +25,7 @@ my $description = q{
 ##
 ## DESCRIPTION
 ##    This script copies data over compara DBs. It has been
-##    specifically developped to copy data from a production to a
+##    specifically developed to copy data from a production to a
 ##    release database.
 ##
 ###########################################################################
@@ -39,7 +39,7 @@ copy_data.pl
 =head1 DESCRIPTION
 
 This script copies data over compara DBs. It has been
-specifically developped to copy data from a production to a
+specifically developed to copy data from a production to a
 release database.
 
 This script does not store the homology/family data as these are completely
@@ -422,7 +422,7 @@ sub get_DBAdaptor {
           -species => $dbname,
         );
     } else {
-      warn("Cannot undestand URL: $url\n");
+      warn("Cannot understand URL: $url\n");
     }
   } elsif ($name) {
     $compara_db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($name, "compara");

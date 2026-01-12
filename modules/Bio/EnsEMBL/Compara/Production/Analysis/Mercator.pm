@@ -26,8 +26,8 @@ Bio::EnsEMBL::Compara::Production::Analysis::Mercator
 =head1 DESCRIPTION
 
 Mercator expects to run the program Mercator (https://www.biostat.wisc.edu/~cdewey/mercator/)
-given a input directory (containing the expected files) and an output directory, where output files
-are temporaly stored and parsed.
+given an input directory (containing the expected files) and an output directory, where output files
+are temporarily stored and parsed.
 
 =head1 METHODS
 

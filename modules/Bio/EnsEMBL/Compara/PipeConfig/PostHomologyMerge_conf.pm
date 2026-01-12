@@ -30,6 +30,9 @@ This pipeline combines a few steps that are run after having merged the
 homology-side of things from each gene-tree pipeline into the release database:
     - Generate the MLSS tag 'perc_orth_above_wga_thresh' combining the WGA stats
       from both gene-tree pipelines
+    - Sync Taxonomy IDs with the latest ncbi_taxa_name and ncbi_taxa_node tables
+    - Check the homology ranges of gene-tree MLSSes
+    - Store a 'member_biotype_groups' tag for each gene-tree MLSS
     - Update the 'gene_member_hom_stats' table
 
 =cut

@@ -23,8 +23,8 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::EpoExtended
 
 =head1 DESCRIPTION
 
-This is a partial PipeConfig to for the last part (3rd part) of the EPO pipeline.
-This will genereate the multiple sequence alignments (MSA) from a database containing a
+This is a partial PipeConfig for the last part (3rd part) of the EPO pipeline.
+This will generate the multiple sequence alignments (MSA) from a database containing a
 set of anchor sequences mapped to a set of target genomes. The pipeline runs Enredo
 (which generates a graph of the syntenic regions of the target genomes)
 and then runs Ortheus (which runs Pecan for generating the MSA) and infers

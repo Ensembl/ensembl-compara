@@ -1241,7 +1241,7 @@ sub _dump_fasta_and_mfa {
 
   Arg [1]    : -none-
   Example    : $self->_build_tree_string();
-  Description: This method sets the tree_string using the orginal
+  Description: This method sets the tree_string using the original
                species tree and the set of DnaFragRegions. The
                tree is edited by the _update_tree method which
                resort the DnaFragRegions (see _update_tree elsewwhere
@@ -1280,7 +1280,7 @@ sub _build_tree_string {
   Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $tree_root
   Example    : $self->_update_nodes_names($tree);
   Description: This method updates the tree by removing or
-               duplicating the leaves according to the orginal
+               duplicating the leaves according to the original
                tree and the set of DnaFragRegions. The tree nodes
                will be renamed seq1, seq2, seq3 and so on and the
                DnaFragRegions will be resorted in order to match

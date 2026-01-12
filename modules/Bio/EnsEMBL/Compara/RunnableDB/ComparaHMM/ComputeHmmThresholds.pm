@@ -18,7 +18,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::ComputeHmmThresholds
 
 =head1 AUTHORSHIP
 

@@ -434,7 +434,7 @@ sub reference_genomic_align {
                Synchronises reference_genomic_align and reference_genomic_align_id
                attributes.
   Returntype : integer
-  Exceptions : throw if $reference_genomic_align_id id not a postive number
+  Exceptions : throw if $reference_genomic_align_id id not a positive number
   Caller     : $genomic_align_block->reference_genomic_align_id(int)
   Status     : Stable
 
@@ -855,7 +855,7 @@ sub alignment_strings {
   Arg [1]    : (optional) arrayref of species to be displayed. Must be a subset of the species in the GenomicAlignBlock. Display all species if not set.
   Arg [2]    : (optional) string. Can be "soft" or "hard"
   Example    : $genomic_align_block->summary_as_hash(undef, "soft")
-  Description: Retrieves a textual sumamry of this GenomicAlignBlock object
+  Description: Retrieves a textual summary of this GenomicAlignBlock object
   Returntype : Array of hashref of descriptive strings
   Exceptions : none
   Caller     : general

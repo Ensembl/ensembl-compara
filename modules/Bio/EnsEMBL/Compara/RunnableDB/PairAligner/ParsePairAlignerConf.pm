@@ -21,7 +21,10 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::ParsePairAlignerConf
 
 =head1 SYNOPSIS
 
-If master_db defined then use populate_new_database which needs either mlss_id or a list of species provided from the conf_file. Use conf_file when adding multiple pairwise analyses. If have only one pairwise, then define mlss_id in the master.
+If master_db is defined, then use populate_new_database which needs either mlss_id
+or a list of species provided from the conf_file. Use conf_file when adding multiple
+pairwise analyses. If we have only one pairwise analysis, then define mlss_id in the
+master database.
 
 If master_db is not defined, must populate the compara database from either core databases defined in conf_file or in default_options (core_dbs). Create genome_dbs, the genome_db_id is defined in the conf_file but not in the default_options. Create mlss_ids.
 

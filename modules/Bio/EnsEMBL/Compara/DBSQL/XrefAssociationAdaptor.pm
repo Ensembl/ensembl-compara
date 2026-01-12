@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::DBSQL::XrefAssociationAdaptor
 
 =head1 DESCRIPTION
 
-This adaptor allows the storage and retrieval of the assoications between gene tree members and annotations such as InterPro and GO
+This adaptor allows the storage and retrieval of the associations between gene tree members and annotations such as InterPro and GO
 
 =head1 INHERITANCE TREE
 

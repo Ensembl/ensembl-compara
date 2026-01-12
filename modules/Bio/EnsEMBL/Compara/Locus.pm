@@ -381,7 +381,7 @@ sub dnafrag_strand {
 =head2 length
 
   Example     : $length = $dnafragregion->length;
-  Description : Returns the lenght of this Locus
+  Description : Returns the length of this Locus
   Returntype  : integer
   Exceptions  : none
 

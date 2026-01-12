@@ -32,7 +32,7 @@ GenomicAlignTreeAdaptor - Object used to store and retrieve GenomicAlignTrees to
 
 =head1 DESCRIPTION
 
-This version of the module is still very experimental.
+This module facilitates access to GenomicAlignTree data.
 
 =head1 APPENDIX
 
@@ -139,7 +139,7 @@ sub fetch_all_by_MethodLinkSpeciesSet {
                Bio::EnsEMBL::Compara::GenomicAlignTree objects. 
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignTree objects. Only dbID,
                adaptor and method_link_species_set are actually stored in the objects. The remaining
-               attributes are only retrieved when requiered.
+               attributes are only retrieved when required.
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignTree object can be retrieved
   Caller     : none

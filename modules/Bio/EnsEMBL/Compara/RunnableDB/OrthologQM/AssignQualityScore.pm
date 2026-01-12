@@ -23,11 +23,9 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::OrthologQM::AssignQualityScore
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
 	Writes final score for the homology into homology.wga_coverage
-
-=head1 DESCRIPTION
 
 	Inputs:
 	{homology_id => score}

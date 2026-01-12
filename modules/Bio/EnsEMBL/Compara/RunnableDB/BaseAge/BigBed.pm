@@ -27,18 +27,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BaseAge
-
-=cut
-
-=head1 SYNOPSIS
-
-=cut
-
-=head1 DESCRIPTION
-
-
-=cut
+Bio::EnsEMBL::Compara::RunnableDB::BaseAge::BigBed
 
 =head1 APPENDIX
 

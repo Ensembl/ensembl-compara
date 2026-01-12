@@ -40,7 +40,8 @@ More advanced use-cases include:
  - locator() (when the species is on a different server
  - sync_with_registry() (if you gradually build your Registry and the GenomeDB objects. Very unlikely !!)
 
-The constructor is able to confront the asked parameters (taxon_id, assembly, etc) to the ones that are actually stored in the core database if the db_adaptor parameter is given.
+The constructor is able to reconcile the requested parameters (taxon_id, assembly, etc) with the ones
+that are actually stored in the core database if the db_adaptor parameter is given.
 
 =cut
 

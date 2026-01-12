@@ -27,7 +27,8 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::SetInternalIdsCollection
 
 =head1 DESCRIPTION
 
-This module rewrite the genomic_align(_block) entries so that the dbIDs are in the range of method_link_species_set_id * 10**10
+This module rewrites the genomic_align(_block) entries so that the dbIDs
+are in the range of method_link_species_set_id * 10**10
 
 =head1 CONTACT
 

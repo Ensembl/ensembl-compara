@@ -35,7 +35,7 @@ Bio::EnsEMBL::Compara::GeneTree
 Class to represent a gene tree object.
 It implements the AlignedMemberSet interface (via the leaves).
 
-A GeneTree object is merely a wrapper aroung the root node (GeneTreeNode), with a few additional general tree properties.
+A GeneTree object is merely a wrapper around the root node (GeneTreeNode), with a few additional general tree properties.
 
 A gene tree is defined on a set of genes (members) of the same type ('protein' or 'ncrna').
 It is reconciled with a species tree that guides their structure (speciations, duplications, gene losses)
@@ -75,7 +75,7 @@ This results in the following hierarchy of GeneTree tree_type/member_type:
 
 =head1 SYNOPSIS
 
-The additionnal getter / setters are:
+The additional getter / setters are:
  - root()
  - member_type()
  - tree_type()
@@ -224,7 +224,7 @@ sub member_type {
   Description : Getter/Setter for the clusterset_id field. This field can
                 be any string. Each dataset should contain a set of trees
                 with the "default" clusterset_id. Other clusterset_id are
-                used to store linked / additionnal data.
+                used to store linked / additional data.
   Returntype  : String
   Example     : my $clusterset_id = $tree->clusterset_id();
   Caller      : General

@@ -30,12 +30,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::MercatorPecan::Pecan
 
-=cut
-
-=head1 SYNOPSIS
-
-=cut
-
 =head1 DESCRIPTION
 
 This module acts as a layer between the Hive system and the Bio::EnsEMBL::Compara::Production::Analysis::Pecan
@@ -43,8 +37,8 @@ module
 
 Pecan wants the files to be provided in the same order as in the tree string. This module starts
 by getting all the DnaFragRegions of the SyntenyRegion and then use them to edit the tree (some
-nodes must be removed and otehr one must be duplicated in order to cope with deletions and
-duplications). The buid_tree_string methods numbers the sequences in order and changes the
+nodes must be removed and others must be duplicated in order to cope with deletions and
+duplications). The _build_tree_string method numbers the sequences in order and changes the
 order of the dnafrag_regions array accordingly. Last, the dumpFasta() method dumps the sequences
 according to the tree_string order.
 
@@ -731,7 +725,7 @@ sub _dump_fasta {
 
   Arg [1]    : -none-
   Example    : $self->_build_tree_string();
-  Description: This method sets the tree_string using the orginal
+  Description: This method sets the tree_string using the original
                species tree and the set of DnaFragRegions. The
                tree is edited by the _update_tree method which
                resort the DnaFragRegions (see _update_tree elsewwhere
@@ -770,7 +764,7 @@ sub _build_tree_string {
   Arg [1]    : Bio::EnsEMBL::Compara::NestedSet $tree_root
   Example    : $self->_update_nodes_names($tree);
   Description: This method updates the tree by removing or
-               duplicating the leaves according to the orginal
+               duplicating the leaves according to the original
                tree and the set of DnaFragRegions. The tree nodes
                will be renamed seq1, seq2, seq3 and so on and the
                DnaFragRegions will be resorted in order to match

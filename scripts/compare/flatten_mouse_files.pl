@@ -18,7 +18,7 @@
 =head1 DESCRIPTION
 
 This script fetches data from MGI and maps its ids with Ensembl stable ids.
-MGI annotations come dorectly from the web [https://genenames.org/]
+MGI annotations come directly from the web [https://genenames.org/]
 
 =cut
 

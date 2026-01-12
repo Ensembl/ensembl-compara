@@ -29,11 +29,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::Synteny::BuildSynteny
-
-=cut
-
-=head1 SYNOPSIS
+Bio::EnsEMBL::Compara::RunnableDB::Synteny::LoadDnafragRegions
 
 =cut
 

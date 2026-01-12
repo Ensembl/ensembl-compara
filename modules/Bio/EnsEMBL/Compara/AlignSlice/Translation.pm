@@ -29,11 +29,11 @@ This module inherits attributes and methods from Bio::EnsEMBL::Translation modul
 =head1 SYNOPSIS
 
 The Bio::EnsEMBL::Compara::AlignSlice framework is used to map features between species. As the
-original Bio::EnsEMBL::Translation might mapped only partially, this module extends the core
-Bio::EnsEMBL::Translation module to allow the storage of the mapping of both start end codons.
-Both start and end codons might be mapped no, one or several times. At the moment this module
-implements a couple of method only, all_start_codon_mappings and all_end_codon_mappings which
-return a reference to an array of Bio::EnsEMBL::Compara::AlignSlice::Slice which correspond to
+original Bio::EnsEMBL::Translation might be mapped only partially, this module extends the core
+Bio::EnsEMBL::Translation module to allow the storage of the mapping of both start and end codons.
+Both start and end codons might be mapped zero, one or several times. At the moment this module
+implements a couple of methods only, all_start_codon_mappings and all_end_codon_mappings which
+return a reference to an array of Bio::EnsEMBL::Compara::AlignSlice::Slice corresponding to
 sub-slices of the original Bio::EnsEMBL::Compara::AlignSlice::Slice.
 
 Actual mapping is done by the Bio::EnsEMBL::Compara::AlignSlice::Slice module, this one only

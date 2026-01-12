@@ -20,7 +20,7 @@ limitations under the License.
 # POD documentation - main docs before the code
 =head1 NAME
 
-Bio::EnsEMBL::Compara::Production::EPOanchors::FindStrand
+Bio::EnsEMBL::Compara::Production::EPOanchors::FindDfrStrand
 
 =head1 SYNOPSIS
 

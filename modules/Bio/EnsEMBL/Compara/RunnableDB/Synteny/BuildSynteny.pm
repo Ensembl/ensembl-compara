@@ -30,12 +30,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::Synteny::BuildSynteny
 
-=cut
-
-=head1 SYNOPSIS
-
-=cut
-
 =head1 DESCRIPTION
 
 This module runs the java program BuildSynteny.jar. This can fail if the input file is already sorted on position. If such a failure is detected, the input will be sorted on a different field in an attempt to sufficiently un-sort it and the command is automatically rerun.
@@ -60,7 +54,7 @@ Supported keys:
           Minimum length a syntenic block must have, shorter blocks are discarded for the second genome. Only minSize1 needs to be defined in minSize1 equals minSize2
 
       'orient' => <false>
-           "false" is only needed for human/mouse, human/rat and mouse/rat NOT for elegans/briggsae (it can be ommitted).
+           "false" is only needed for human/mouse, human/rat and mouse/rat NOT for elegans/briggsae (it can be omitted).
 
       'output_file' => <path>
            output file

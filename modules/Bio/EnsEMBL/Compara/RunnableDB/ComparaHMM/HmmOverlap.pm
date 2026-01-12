@@ -41,7 +41,8 @@ This runnable is used to:
 
 =head1 DESCRIPTION
 
-This Analysis/RunnableDB is designed find an overlap between TreeFam and PANTHER HMM profiles. Whenever there is an overlap, PATHER will have priority.
+This Analysis/RunnableDB is designed to find an overlap between TreeFam and
+PANTHER HMM profiles. Whenever there is an overlap, PANTHER will have priority.
 
 =cut
 

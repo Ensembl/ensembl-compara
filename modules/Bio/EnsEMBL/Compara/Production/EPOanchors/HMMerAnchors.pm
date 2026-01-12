@@ -30,7 +30,7 @@ $exonate_anchors->write_output(); writes to database
 
 =head1 DESCRIPTION
 
-Given a database with anchor sequences and a target genome. This modules exonerates 
+Given a database with anchor sequences and a target genome, this module uses nhmmer to search
 the anchors against the target genome.
 
 =head1 AUTHOR

@@ -28,7 +28,7 @@ Questions may also be sent to the Ensembl help desk at
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMClassify
+Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::HMMerSearch
 
 =head1 AUTHORSHIP
 

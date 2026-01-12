@@ -312,7 +312,7 @@ sub fetch_by_Slice {
   Example    : $gdb = $gdba->fetch_all_by_ancestral_taxon_id(1234);
   Description: Retrieves all the genome dbs derived from that NCBI taxon_id.
   Note       : This method uses the ncbi_taxa_node table
-  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts
+  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB objects
   Exceptions : 
   Caller     : general
   Status     : Stable
@@ -339,7 +339,7 @@ sub fetch_all_by_ancestral_taxon_id {
   Example    : $gdb = $gdba->fetch_all_current_by_ancestral_taxon_id(1234);
   Description: Retrieves all the CURRENT genome dbs derived from that NCBI taxon_id.
   Note       : This method uses the ncbi_taxa_node table
-  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB obejcts
+  Returntype : listref of Bio::EnsEMBL::Compara::GenomeDB objects
   Exceptions : 
   Caller     : general
   Status     : Stable

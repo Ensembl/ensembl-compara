@@ -22,7 +22,7 @@ Bio::EnsEMBL::Compara::Production::DnaCollectionAdaptor
 =head1 DESCRIPTION
 
 Adpter to DnaCollection objects/tables
-DnaCollection is an object to hold a super-set of DnaFragChunkSet bjects.  
+DnaCollection is an object to hold a super-set of DnaFragChunkSet objects.
 Used in production to encapsulate particular genome/region/chunk/group DNA set
 from the others.  To allow system to blast against self, and isolate different 
 chunk/group sets of the same genome from each other.

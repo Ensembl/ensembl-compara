@@ -48,7 +48,7 @@ sub default_options {
     my ($self) = @_;
     return {
         %{$self->SUPER::default_options},   # inherit the generic ones
-        # Restore the default pipeline name, which has been overriden in DumpTrees_conf
+        # Restore the default pipeline name, which has been overridden in DumpTrees_conf
         'pipeline_name'         => $self->o('division').'_'.$self->default_pipeline_name().'_'.$self->o('rel_with_suffix'),
     }
 }

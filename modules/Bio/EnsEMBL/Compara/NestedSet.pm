@@ -1336,7 +1336,7 @@ sub flatten_tree {
 =head2 re_root
 
   Overview   : rearranges the tree structure so that the root is moved to 
-               beetween this node and its parent.  If the old root was more than
+               between this node and its parent.  If the old root was more than
 	       bifurcated (2 children) a new node is created where it was to hold
 	       the multiple children that arises from the re-rooting.  
 	       The old root is returned.

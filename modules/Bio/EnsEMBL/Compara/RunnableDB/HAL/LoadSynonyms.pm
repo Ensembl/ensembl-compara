@@ -29,16 +29,6 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::HAL::LoadSynonyms
 
-=cut
-
-=head1 SYNOPSIS
-
-=cut
-
-=head1 DESCRIPTION
-
-=cut
-
 =head1 APPENDIX
 
 The rest of the documentation details each of the object methods.

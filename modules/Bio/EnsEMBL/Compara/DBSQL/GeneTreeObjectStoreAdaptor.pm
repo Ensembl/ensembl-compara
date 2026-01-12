@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::DBSQL::GeneTreeObjectStoreAdaptor
 
 =head1 DESCRIPTION
 
-Until we have a proper ObjectStore database available in Ensembl, we're going to use a simple one in MySQL.
+A rudimentary object store adaptor implemented in MySQL.
 The underlying table associates arbitrary data structures (any Perl scalar) to a GeneTree, and is given a
 label to split the the overall data-load into meaningful smaller chunks (e.g. tracks, layers).
 

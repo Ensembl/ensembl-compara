@@ -29,9 +29,8 @@ $exonate_anchors->write_output(); writes to disc and database
 
 =head1 DESCRIPTION
 
-Module to dump the genome sequences of a given set of species to disc.
-It will also set up the jobs for mapping of anchors to those genomes if 
-an anchor_batch_size is specified in the pipe-config file.  
+Module to set up the jobs for mapping of anchors to a set of genomes,
+using the specified anchor_batch_size parameter.
 
 =head1 AUTHOR - compara
 

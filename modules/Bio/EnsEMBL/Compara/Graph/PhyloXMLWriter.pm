@@ -124,7 +124,7 @@ sub namespaces {
 
 =head2 no_release_trees()
 
-  Arg [0] : Boolean; indiciates if we need to avoid releasing trees
+  Arg [0] : Boolean; indicates if we need to avoid releasing trees
   Returntype : Boolean
   Exceptions : None
   Status     : Stable
@@ -141,7 +141,7 @@ sub no_release_trees {
 
 =head2 no_branch_lengths()
 
-  Arg [0] : Boolean; indiciates we do not wish to add branch lengths
+  Arg [0] : Boolean; indicates we do not wish to add branch lengths
   Returntype : Boolean
   Exceptions : None
   Status     : Stable

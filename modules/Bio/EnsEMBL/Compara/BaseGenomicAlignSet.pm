@@ -332,7 +332,7 @@ sub original_strand {
 
   Args       : none
   Example    : my $is_restricted = $genomic_align_block->is_restricted;
-  Description: returns true if orignal_dbID is set, else returns false. original_dbID is only set if the block has been restricted.
+  Description: returns true if original_dbID is set, else returns false. original_dbID is only set if the block has been restricted.
   Returntype : none
   Exceptions : none
   Caller     : general
@@ -473,7 +473,7 @@ sub restrict_between_reference_positions {
           while (@reference_cigar and $reference_cigar[0] =~ /[DI]/) {
             my ($num, $type) = ($reference_cigar[0] =~ /^(\d*)([DIGMX])/);
             $num = 1 if ($num eq "");
-            # only counts deletions, insertions are not part of the aligment
+            # only counts deletions, insertions are not part of the alignment
             $counter_of_trimmed_columns_from_the_start += $num if ($type eq "D");
             shift(@reference_cigar);
           }
@@ -532,7 +532,7 @@ sub restrict_between_reference_positions {
           while (@reference_cigar and $reference_cigar[-1] =~ /[DI]/) {
             my ($num, $type) = ($reference_cigar[-1] =~ /^(\d*)([DIGMX])/);
             $num = 1 if ($num eq "");
-            # only counts deletions, insertions are not part of the aligment
+            # only counts deletions, insertions are not part of the alignment
             $counter_of_trimmed_columns_from_the_end += $num if ($type eq "D");
             pop(@reference_cigar);
           }
