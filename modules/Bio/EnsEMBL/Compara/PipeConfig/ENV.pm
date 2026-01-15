@@ -136,6 +136,7 @@ sub executable_locations {
         'init_dump_registry_exe'            => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/init_dump_registry.pl'),
         'left_align_maf_exe'                => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/left_align_maf.py'),
         'list_must_reuse_species_exe'       => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/list_must_reuse_species.py'),
+        'merge_chain_files_exe'             => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/merge_chain_files.py'),
         'msa_stats_report_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/msa_stats.pl'),
         'patch_db_exe'                      => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/patch_database.pl'),
         'populate_new_database_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_new_database.pl'),

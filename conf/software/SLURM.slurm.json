@@ -48,7 +48,6 @@
     "lastz_exe"                 : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/lastz",
     "lavToAxt_exe"              : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/lavToAxt",
     "mafDuplicateFilter_exe"    : "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/mafDuplicateFilter",
-    "mafToBigMaf_exe"           : "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/mafToBigMaf",
     "maf_convert_exe"           : "/hps/software/users/ensembl/compara/twalsh/build/last/bin/maf-convert",
     "mafft_exe"                 : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/mafft",
     "mash_exe"                  : null,
@@ -82,5 +81,6 @@
     "treebest_exe"              : ["check_exe_in_compara","treebest/rc5/bin/treebest"],
     "treerecs_exe"              : "##warehouse_dir##/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs",
     "trimal_exe"                : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/trimal",
+    "validateFiles_exe"         : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/validateFiles",
     "xmllint_exe"               : null
 }

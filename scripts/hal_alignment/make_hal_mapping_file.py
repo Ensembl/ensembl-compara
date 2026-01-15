@@ -27,6 +27,7 @@ from sqlalchemy import create_engine, text
 
 def main() -> None:
     """Main function of script."""
+    # pylint: disable=too-many-branches
 
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument("--hal-genome", help="HAL genome.")

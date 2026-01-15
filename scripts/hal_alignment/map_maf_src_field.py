@@ -16,7 +16,6 @@
 """Map MAF src field values."""
 
 import argparse
-from collections import Counter
 import csv
 import os
 import shutil
@@ -45,19 +44,11 @@ def main() -> None:
         with open(src_map_file, encoding="utf-8") as in_file_obj:
             reader = csv.DictReader(in_file_obj, delimiter="\t")
             for row in reader:
-                if args.only_seq_name:
-                    old_src = f"{row['assembly_uuid']}.{row['assembly_sequence']}"
-                    new_src = row["assembly_sequence"]
-                else:
-                    old_src = f"{row['hal_genome_name']}.{row['hal_sequence_name']}"
-                    new_src = f"{row['assembly_uuid']}.{row['assembly_sequence']}"
+                old_src = f"{row['hal_genome_name']}.{row['hal_sequence_name']}"
+                new_src = row["assembly_sequence"]
                 if old_src in src_map:
                     raise ValueError(f"duplicate old src field: {old_src}")
                 src_map[old_src] = new_src
-
-    dup_new_src_fields = [x for x, n in Counter(src_map.values()).items() if n > 1]
-    if dup_new_src_fields and not args.only_seq_name:
-        raise ValueError(f"duplicate new src field(s): {', '.join(dup_new_src_fields)}")
 
     with TemporaryDirectory() as tmp_dir:
         temp_maf = os.path.join(tmp_dir, "temp.maf")
