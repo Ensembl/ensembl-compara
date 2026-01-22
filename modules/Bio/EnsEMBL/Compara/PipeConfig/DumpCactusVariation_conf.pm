@@ -21,12 +21,77 @@ Bio::EnsEMBL::Compara::PipeConfig::DumpCactusVariation_conf
 
 =head1 DESCRIPTION
 
-This pipeline makes use of various software tools for processing alignments,
-including Cactus ( Armstrong et al. 2020; https://doi.org/10.1038/s41586-020-2871-y ),
-hal2maf ( Hickey et al. 2013; https://doi.org/10.1093/bioinformatics/btt128 ),
-mafDuplicateFilter ( Earl et al. 2014; https://doi.org/10.1101/gr.174920.114 ),
-Biopython ( Cock et al. 2009; https://doi.org/10.1093/bioinformatics/btp163 ),
-and NumPy ( Harris et al. 2020; https://doi.org/10.1038/s41586-020-2649-2 ).
+The DumpCactusVariation pipeline generates a pair of bigChain files representing
+a reciprocal alignment between two genome sequences: one corresponding to a
+reference haplotype, and the other corresponding to an alternative haplotype.
+
+The pipeline takes as input:
+- hal_file          : path of an input HAL file containing the reference and alternative genomes
+- ref_hal_genome    : name of the reference haplotype genome in the HAL file
+- alt_hal_genome    : name of the alternative haplotype genome in the HAL file
+- hal_mapping_dir   : path of a directory containing HAL mapping TSV files, allowing mapping between
+                      the identifiers of a genome sequence in the input HAL file (identified by
+                      'hal_genome_name' and hal_sequence_name') and its name in Ensembl resources
+                      (identified by 'assembly_uuid' and 'assembly_sequence')
+- ref_bigchain_file : bigChain file in which the target genome is the reference haplotype,
+                      and the query genome is the alternative haplotype
+- alt_bigchain_file : bigChain file in which the target genome is the alternative haplotype,
+                      and the query genome is the reference haplotype
+
+=head2 Workflow
+
+The main steps of the DumpCactusVariation pipeline are as follows:
+
+1. halStats is used to fetch chrom.sizes data of the reference genome in order to generate,
+   for each reference sequence, coordinates of chunk regions up to 500 kb in length.
+
+2. hal2maf is used to dump a MAF alignment file for each chunk region. Option '--refGenome' is set
+   to the reference haplotype genome, while '--targetGenomes' is set to the alternative haplotype
+   genome. Other command-line arguments are as follows: '--maxBlockLen 48000000 --noAncestors --unique'
+
+3. Each nonempty MAF file is used to prepare a chain file. It is first processed to remove gap-only and
+   overhang columns, and to filter out alignment blocks having only one sequence. taffy is used to sanitise
+   haplotype genome names in the MAF file, mafDuplicateFilter is used (with option '--keep-first')
+   to deduplicate the alignment per haplotype, and taffy is used again in order to restore the original
+   haplotype genome names. The deduplicated MAF file is processed as before, to remove alignment blocks and
+   columns with fewer than two sequences. The MAF is further processed to left-align gaps in the alternative
+   haplotype with respect to the reference, remove the genome name from the MAF src field, and split MAF
+   blocks on gaps so that the final MAF file contains only ungapped alignment blocks. maf-convert reads
+   this final MAF file to generate a chain file.
+
+4. Nonempty chain files are merged into a single file in order of reference haplotype position.
+
+5. Taking the merged chain file in which the reference haplotype is the target genome
+   and the alternative haplotype is the query genome, chainSwap creates a swapped chain
+   file in which the alternative is the target genome and the reference is the query genome.
+
+6. The original and swapped chain files are each converted to a bigChain file.
+   In line with the process described on the UCSC webpage, "bigChain Track Format"
+   ( https://genome.ucsc.edu/goldenpath/help/bigChain.html ), chainToBigChain converts
+   each chain file to a pre-bigChain file.
+
+7. With a chrom.sizes file generated for the chain target genome using halStats, and a bigChain autoSql
+   file ( downloaded from https://genome.ucsc.edu/goldenpath/help/examples/bigChain.as ), the pre-bigChain
+   file is input to bedToBigBed to generate to an output bigChain file.
+
+8. Finally, validateFiles validates each output bigChain file.
+
+=head2 Software
+
+This pipeline makes use of various tools for processing alignments, including:
+- bedToBigBed v. 2.8
+- Biopython 1.81 ( Cock et al. 2009; https://doi.org/10.1093/bioinformatics/btp163 )
+- Cactus 3.0.0 ( Armstrong et al. 2020; https://doi.org/10.1038/s41586-020-2871-y )
+- chainSwap, part of kent v415
+- chainToBigChain, part of kent v479
+- hal2maf v2.2 ( Hickey et al. 2013; https://doi.org/10.1093/bioinformatics/btt128 )
+- halStats v2.2 ( Hickey et al. 2013; https://doi.org/10.1093/bioinformatics/btt128 )
+- maf-convert, part of LAST 1642
+- mafDuplicateFilter, commit c101dedb2c1c8339bc284e3a16000bc4523f5da3 ( Earl et al. 2014; https://doi.org/10.1101/gr.174920.114 )
+- mafToBigMaf, part of kent v487
+- NumPy 1.24.3 ( Harris et al. 2020; https://doi.org/10.1038/s41586-020-2649-2 )
+- taffy, commit 1329d999948ad4acc10116276fa7a9752a749595 ( https://github.com/ComparativeGenomicsToolkit/taffy )
+- validateFiles v4.7
 
 =cut
 
