@@ -25,7 +25,9 @@
       <genome name="mus_musculus"/>
       <genome name="xenopus_tropicalis"/>
 
-    </collection><collection name="shared_protists">
+    </collection>
+    
+    <collection name="shared_protists">
       <genome name="thamnophis_elegans"
       <genome name="plasmodium_berghei"/>
       <genome name="plasmodium_falciparum"/>
