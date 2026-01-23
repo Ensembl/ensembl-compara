@@ -28,7 +28,7 @@
     </collection>
     
     <collection name="shared_protists">
-      <genome name="thamnophis_elegans"
+      <genome name="thamnophis_elegans"/>
       <genome name="plasmodium_berghei"/>
       <genome name="plasmodium_falciparum"/>
       <genome name="plasmodium_knowlesi"/>
