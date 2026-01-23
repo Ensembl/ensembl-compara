@@ -571,7 +571,6 @@
       <genome name="vitis_vinifera"/>
     </collection>
 
-    </collection
     <collection name="archaea">
       <!-- Archaea -->
       <genome name="aeropyrum_pernix_k1_gca_000011125"/>
