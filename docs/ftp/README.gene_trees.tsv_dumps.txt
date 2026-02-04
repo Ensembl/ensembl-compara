@@ -33,9 +33,12 @@ homologies for a given gene-tree collection (e.g. 'default') and member type (e.
 recommended to download this complete homology TSV file if you need to access most or all of the
 homologies in a gene-tree collection.
 
-For those who need access to homologies for a subset of genomes in a gene-tree collection, genome-specific
-homology TSV dump files are available within each (possibly nested) subdirectory named for a particular genome
-(e.g. 'saccharomyces_cerevisiae').
+For those who need access to homologies for a subset of genomes in a gene-tree collection, genome-specific homology TSV
+dump files are available within each subdirectory named for a particular genome. Subdirectories are structured in a way
+that mirrors the directory structure for single-species TSV data, with data for genomes from species-specific core
+databases in a single directory named for that species (e.g. 'tsv/ensembl-compara/homologies/saccharomyces_cerevisiae'),
+and data for genomes from collection core databases in a directory path which includes the name of the collection core
+(e.g. 'tsv/ensembl-compara/homologies/fungi_ascomycota2_collection/erysiphe_necator_gca_000798715').
 
 NOTE: To eliminate redundancy, a genome-specific homology TSV file contains an arbitrary
 subset of orthologies involving the given genome. To access all available orthologies between two genomes
