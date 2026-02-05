@@ -66,6 +66,12 @@ Path of output dump registry file.
 
 (Optional) Comma-delimited list of servers hosting the core databases to be used in Compara FTP dumps.
 
+=item B<[--on_core_clash STR]>
+
+(Optional) This option indicates what to do if there are multiple core databases for the same genome.
+           By default, this script will 'throw' an exception. If this option is set to 'take_first',
+           the script issues a warning and adds the first matching core database to the dump registry.
+
 =back
 
 =cut
@@ -128,6 +134,7 @@ my ( $division, $release, $outfile );
 my ( $help, $compara_dump_host, $ancestral_dump_host, $core_dump_hosts );
 my $compara_db_alias = 'compara_curr';
 my $ancestral_db_alias = 'ancestral_curr';
+my $on_core_clash = 'throw';
 GetOptions(
     'help|?'                => \$help,
     'division=s'            => \$division,
@@ -138,6 +145,7 @@ GetOptions(
     'compara_dump_host=s'   => \$compara_dump_host,
     'ancestral_dump_host=s' => \$ancestral_dump_host,
     'core_dump_hosts=s'     => \$core_dump_hosts,
+    'on_core_clash=s'       => \$on_core_clash,
 ) or pod2usage(-verbose => 2);
 
 # Handle "print usage" scenarios
@@ -281,8 +289,15 @@ foreach my $core_host (@{$dump_host_map{'core_dump_hosts'}}) {
             if ($core_version == $release && exists $exp_sp_info{$species_division}{$species_name}) {
                 if (exists $core_adaptor_param_sets{$species_name}) {
                     my $existing = $core_adaptor_param_sets{$species_name};
-                    throw(sprintf("specified core hosts have multiple databases for species %s: %s vs %s:%d/%s", $species_name,
-                                  $core_db_key, $existing->{'host'}, $existing->{'port'}, $existing->{'dbname'}));
+                    my $msg = sprintf("specified core hosts have multiple databases for species %s: %s vs %s:%d/%s", $species_name,
+                                      $core_db_key, $existing->{'host'}, $existing->{'port'}, $existing->{'dbname'});
+
+                    if ($on_core_clash eq 'take_first') {
+                        warn($msg);
+                        next;
+                    } else {
+                        throw($msg);
+                    }
                 }
 
                 $core_adaptor_param_sets{$species_name} = {
