@@ -698,30 +698,39 @@
     <!-- The following are high level lineages for Protists and will use the shared_protists base_collection -->
     <collection name="sar">
       <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="SAR"/>
     </collection>
     <collection name="amoebozoa">
       <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Amoebozoa"/>
     </collection>
     <collection name="excavata">
       <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Excavata"/>
     </collection>
     <collection name="discoba">
       <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Discoba"/>
     </collection>
     <collection name="opisthokonta">
       <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Opisthokonta"/>
     </collection>
     <collection name="haptophyta">
       <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Haptophyta"/>
     </collection>
     <collection name="viridiplantae">
       <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Viridiplantae"/>
     </collection>
     <collection name="rhodophyta">
       <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Rhodophyta"/>
     </collection>
     <collection name="cryptophyceae">
       <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Cryptophyceae"/>
     </collection>
   </collections>
 
