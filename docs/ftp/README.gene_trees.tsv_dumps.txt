@@ -28,19 +28,19 @@ Compara.{release}.{protein|ncrna}_{gene_tree_collection}.homologies.tsv.gz
 The contents of these files differs depending on their location relative
 to the directory 'tsv/ensembl-compara/homologies'.
 
-Each homology TSV dump file at the top level in this directory contains the complete set of available
-homologies for a given gene-tree collection (e.g. 'default') and member type (e.g. 'protein'). It is
-recommended to download this complete homology TSV file if you need to access most or all of the
+Each homology TSV dump file at the top level in directory 'tsv/ensembl-compara/homologies' contains the complete
+set of available homologies for a given gene-tree collection (e.g. 'default') and member type (e.g. 'protein').
+It is recommended to download this complete homology TSV file if you need to access most or all of the
 homologies in a gene-tree collection.
 
-For those who need access to homologies for a subset of genomes in a gene-tree collection, genome-specific homology TSV
-dump files are available within each subdirectory named for a particular genome. Subdirectories are structured in a way
-that mirrors the directory structure for single-species TSV data, with data for genomes from species-specific core
+For those who need access to homologies for a subset of genomes in a gene-tree collection, genome-specific homology TSV dump files
+are available within a subdirectory of 'tsv/ensembl-compara/homologies' named for a particular genome. Subdirectories are structured
+in a way that mirrors the directory structure for single-species TSV data, with data for genomes from species-specific core
 databases in a single directory named for that species (e.g. 'tsv/ensembl-compara/homologies/saccharomyces_cerevisiae'),
 and data for genomes from collection core databases in a directory path which includes the name of the collection core
 (e.g. 'tsv/ensembl-compara/homologies/fungi_ascomycota2_collection/erysiphe_necator_gca_000798715').
 
-NOTE: To eliminate redundancy, a genome-specific homology TSV file contains an arbitrary
+NOTE: To eliminate redundancy, each genome-specific homology TSV file contains an arbitrary
 subset of orthologies involving the given genome. To access all available orthologies between two genomes
 (e.g. 'drosophila_melanogaster' and 'saccharomyces_cerevisiae'), you will need to download the genome-specific
 files of both genomes (e.g. 'drosophila_melanogaster/Compara.116.protein_default.homologies.tsv.gz'
