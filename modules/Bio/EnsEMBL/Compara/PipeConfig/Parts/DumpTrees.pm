@@ -241,7 +241,17 @@ sub pipeline_analyses_dump_trees {
                 'exp_line_count' => '#genome_exp_line_count#',
             },
             -flow_into         => {
-                1 => '?accu_name=tsv_files&accu_address=[genome_db_id]&accu_input_variable=output_file',
+                1 => [
+                    '?accu_name=tsv_files&accu_address=[genome_db_id]&accu_input_variable=output_file',
+                    'copy_genome_homologies_tsv_readme',
+                ],
+            },
+        },
+
+        {   -logic_name => 'copy_genome_homologies_tsv_readme',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => 'rsync -a #tsv_dir#/README.gene_trees.tsv_dumps.txt #tsv_dir#/#species_path#',
             },
         },
 
