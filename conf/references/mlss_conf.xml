@@ -26,11 +26,6 @@
       <genome name="xenopus_tropicalis"/>
     </collection>
 
-<<<<<<< HEAD
-    </collection>
-    
-=======
->>>>>>> c4daf200f (correcting typos in mlss_conf)
     <collection name="shared_protists">
       <genome name="thamnophis_elegans"/>
       <genome name="plasmodium_berghei"/>
