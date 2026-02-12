@@ -150,6 +150,8 @@ sub default_options {
         'ce_readme'             => $self->check_file_in_ensembl('ensembl-compara/docs/ftp/constrained_elements.txt'),
         'bigbed_autosql'        => $self->check_file_in_ensembl('ensembl-compara/scripts/pipeline/constrainedelements_autosql.as'),
 
+        'species_path_file' => '#work_dir#/#basename#/species_paths.json',
+
         'uniprot_dir'  => '/nfs/ftp/public/databases/ensembl/ensembl_compara/gene_trees_for_uniprot/',
         'uniprot_file' => 'GeneTree_content.#clusterset_id#.e#curr_release#.txt',
 
@@ -225,6 +227,7 @@ sub pipeline_wide_parameters {
         'division'        => $self->o('division'),
         'genome_dumps_dir'=> $self->o('genome_dumps_dir'),
         'warehouse_dir'   => $self->o('warehouse_dir'),
+        'species_path_file' => $self->o('species_path_file'),
         'uniprot_file'    => $self->o('uniprot_file'),
         'prev_rel_ftp_root' => $self->o('prev_rel_ftp_root'),
         'curr_ftp_pub_root' => $self->o('curr_ftp_pub_root'),
@@ -237,6 +240,7 @@ sub pipeline_wide_parameters {
         'name_root'           => 'Compara.#curr_release#.#basename#',
         'mlss_hash_dir'       => '#work_dir#/#basename#/mlsses',
         'tree_hash_dir'       => '#work_dir#/#basename#/trees',
+        'gdb_hash_dir'        => '#work_dir#/#basename#/gdbs',
         'target_dir'          => '#dump_dir#',
         'xml_dir'             => '#target_dir#/xml/ensembl-compara/homologies/',
         'emf_dir'             => '#target_dir#/emf/ensembl-compara/homologies/',

@@ -103,7 +103,7 @@ sub pipeline_analyses_dump_trees {
                     {
                         'create_dump_jobs' => undef,
                         'dump_all_trees_orthoxml' => { 'file' => '#xml_dir#/#name_root#.alltrees.orthoxml.xml', },
-                        'homology_genome_mlss_factory' => undef,
+                        'dump_species_path_json' => undef,
                         'start_uniprot_dump' => undef,
                     }
                 ],
@@ -155,6 +155,11 @@ sub pipeline_analyses_dump_trees {
                     ELSE 'archive_long_files',
                 ),
             },
+        },
+
+        {   -logic_name => 'dump_species_path_json',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::DumpSpeciesPaths',
+            -flow_into  => [ 'homology_genome_mlss_factory' ],
         },
 
         {   -logic_name => 'homology_genome_mlss_factory',
@@ -236,22 +241,13 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'concatenate_mlss_homologies_tsv',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateTSV',
             -parameters => {
-                'output_file' => '#tsv_dir#/#species_path#/#name_root#.homologies.tsv',
+                'output_file' => '#gdb_hash_dir#/#hashed_gdb_id#/#genome_db_id#.homologies.tsv',
+                'hashed_gdb_id' => '#expr(dir_revhash(#genome_db_id#))expr#',
                 'healthcheck_list' => ['line_count', 'unexpected_nulls'],
                 'exp_line_count' => '#genome_exp_line_count#',
             },
             -flow_into         => {
-                1 => [
-                    '?accu_name=tsv_files&accu_address=[genome_db_id]&accu_input_variable=output_file',
-                    'copy_genome_homologies_tsv_readme',
-                ],
-            },
-        },
-
-        {   -logic_name => 'copy_genome_homologies_tsv_readme',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
-            -parameters => {
-                'cmd' => 'rsync -a #tsv_dir#/README.gene_trees.tsv_dumps.txt #tsv_dir#/#species_path#',
+                1 => '?accu_name=tsv_files&accu_address=[genome_db_id]&accu_input_variable=output_file',
             },
         },
 
@@ -297,7 +293,7 @@ sub pipeline_analyses_dump_trees {
                 'exp_line_count' => '#clusterset_exp_line_count#',
             },
             -flow_into => {
-                1 => [ 'archive_per_genome_homologies_tsv_factory' ],
+                1 => [ 'split_homology_tsv' ],
                 '1->A' => {
                     'convert_tsv_to_orthoxml' => [
                         {'tsv_file' => '#output_file#', 'xml_file' => '#xml_dir#/#name_root#.allhomologies.orthoxml.xml'},
@@ -314,15 +310,69 @@ sub pipeline_analyses_dump_trees {
             -flow_into  => [ { 'archive_long_files' => INPUT_PLUS() } ],
         },
 
-        {   -logic_name => 'archive_per_genome_homologies_tsv_factory',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -rc_name    => '1Gb_job',
+        {   -logic_name => 'split_homology_tsv',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_24_hour_job',
             -parameters => {
-                'inputcmd'      => 'find #tsv_dir# -mindepth 2 -name #name_root#.homologies.tsv',
-                'column_names'  => [ 'full_name' ],
+                'cmd' => join(' ', (
+                    '#split_homology_tsv_exe#',
+                    '--input_file',
+                    '#tsv_dir#/#name_root#.homologies.tsv',
+                    '--species_path_file',
+                    '#species_path_file#',
+                    '--output_base_dir',
+                    '#tsv_dir#',
+                    '--dataflow_file',
+                    '#dataflow_file#',
+                )),
+                'dataflow_file'  => '#dataflow_dir#/split_homology_tsv/#name_root#.dataflow.json',
+                'split_homology_tsv_exe' => $self->o('split_homology_tsv_exe'),
             },
-            -flow_into => {
-                2 => 'archive_long_files'
+            -flow_into => 'sort_homology_tab',
+        },
+
+        {   -logic_name => 'sort_homology_tab',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_24_hour_job',
+            -parameters => {
+                'cmd' => 'sort -k8,8 -k15,15n #homology_tab_file_path# -o #homology_tab_file_path#',
+            },
+            -flow_into => 'reheader_homology_tab',
+        },
+
+        {   -logic_name => 'reheader_homology_tab',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => '#reheader_homology_tsv_exe# -i #homology_tab_file_path# -o #homology_tab_file_path#',
+                'reheader_homology_tsv_exe' => $self->o('reheader_homology_tsv_exe'),
+            },
+            -flow_into => 'compress_homology_tab',
+        },
+
+        {   -logic_name => 'compress_homology_tab',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -rc_name    => '1Gb_4c_24_hour_job',
+            -parameters => {
+                'bgzip_exe' => $self->o('bgzip_exe'),
+                'cmd' => '#bgzip_exe# --threads 4 --compress-level 9 #homology_tab_file_path#',
+            },
+            -flow_into => [ 'index_homology_tab' ],
+        },
+
+        {   -logic_name => 'index_homology_tab',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => '#tabix_exe# -s 8 -b 15 -e 15 -S 1 --csi #homology_tab_file_path#.gz',
+                'tabix_exe' => $self->o('tabix_exe'),
+            },
+            -flow_into => [ 'copy_homology_tab_readme' ],
+        },
+
+        {   -logic_name => 'copy_homology_tab_readme',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => 'rsync -a #readme_dir#/README.gene_trees.tsv_indexed.txt #homology_tab_file_dir#',
+                'readme_dir' => $self->o('readme_dir'),
             },
         },
 

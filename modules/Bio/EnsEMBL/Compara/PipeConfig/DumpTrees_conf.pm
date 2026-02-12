@@ -79,10 +79,13 @@ sub default_options {
         'base_dir'    => $self->o('pipeline_dir'),                                                                      # where the final dumps will be stored
         'tree_hash_dir' => '#base_dir#/dump_hash/#division#_#basename#/trees',                                          # where directory hash is created and maintained
         'mlss_hash_dir' => '#base_dir#/dump_hash/#division#_#basename#/mlsses',
+        'gdb_hash_dir'  => '#base_dir#/dump_hash/#division#_#basename#/gdbs',
         'target_dir'  => '#base_dir#/#division#',                                                                       # where the dumps are put (all within subdirectories)
         'xml_dir'     => '#target_dir#/xml/ensembl-compara/homologies/',                                                # where the XML dumps are put
         'emf_dir'     => '#target_dir#/emf/ensembl-compara/homologies/',                                                # where the EMF dumps are put
         'tsv_dir'     => '#target_dir#/tsv/ensembl-compara/homologies/',                                                # where the TSV dumps are put
+
+        'species_path_file' => '#work_dir#/#basename#/species_paths.json',
 
         'uniprot_file' => 'GeneTree_content.#clusterset_id#.e#curr_release#.txt',
     };
@@ -112,6 +115,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         'dump_trees_capacity' => $self->o('dump_trees_capacity'),
         'dump_hom_capacity'   => $self->o('dump_hom_capacity'  ),
         'dump_per_genome_cap' => $self->o('dump_per_genome_cap'),
+        'species_path_file' => $self->o('species_path_file'),
         'uniprot_file'        => $self->o('uniprot_file'),
     };
 }
