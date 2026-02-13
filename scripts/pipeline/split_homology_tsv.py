@@ -87,7 +87,7 @@ if __name__ == "__main__":
             reader = csv.DictReader(in_file_obj, dialect=UnquotedUnixTab)
 
             for row in reader:
-                gdb_name = row["species"]
+                gdb_name, hom_gdb_name = row["species"], row["homology_species"]
                 try:
                     writer = writers_by_genome[gdb_name]
                 except KeyError:
@@ -104,6 +104,11 @@ if __name__ == "__main__":
                     writers_by_genome[gdb_name] = writer
                 exp_line_counts[gdb_name] += 1
                 writer.writerow(row.values())
+
+                # The output homology TSV file should not
+                # have multiple copies of the same homology.
+                if hom_gdb_name == gdb_name:
+                    continue
 
                 reciprocal = [
                     row["homology_gene_stable_id"],
@@ -123,7 +128,6 @@ if __name__ == "__main__":
                     row["homology_id"],
                 ]
 
-                hom_gdb_name = row["homology_species"]
                 try:
                     writer = writers_by_genome[hom_gdb_name]
                 except KeyError:
