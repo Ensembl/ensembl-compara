@@ -74,6 +74,7 @@ if __name__ == "__main__":
             species_path_map[gdb_name] = species_path
 
     hom_tsv_by_genome = {}
+    out_base_dir_path.mkdir(mode=0o775, parents=True, exist_ok=True)
     with TemporaryDirectory(dir=out_base_dir_path, prefix=".tmp_hom_tsv_") as tmp_dir:
         tmp_dir_path = Path(tmp_dir)
 
