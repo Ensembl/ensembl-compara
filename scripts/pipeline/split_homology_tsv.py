@@ -29,22 +29,19 @@ from tempfile import TemporaryDirectory
 from ensembl.compara.utils.csv import UnquotedUnixTab
 
 
-def _open_output_gdb_hom_tsv(context_stack, base_dir_path, genome_name, hom_tsv_file_name):
-    """Open a genome-specific homology TSV file for output.
+def _open_output_gdb_hom_tsv(context_stack, base_dir_path, genome_name):
+    """Open temp genome-specific homology TSV file for output.
 
     Args:
         context_stack: An object for handling with-statement contexts.
         base_dir_path: Path of output base directory.
         genome_name: Name of genome for which the output homology TSV file should be opened.
-        hom_tsv_file_name: Homology TSV file name.
 
     Returns:
         Genome-specific homology TSV file object, opened in write mode.
     """
-    gdb_dir_path = base_dir_path / genome_name
-    gdb_dir_path.mkdir(mode=0o755)
-    gdb_file_path = gdb_dir_path / hom_tsv_file_name
-    return context_stack.enter_context(open(gdb_file_path, mode="w", encoding="utf-8", newline=""))
+    tmp_gdb_file_path = base_dir_path / f"{genome_name}.tsv"
+    return context_stack.enter_context(open(tmp_gdb_file_path, mode="w", encoding="utf-8", newline=""))
 
 
 if __name__ == "__main__":
@@ -98,7 +95,6 @@ if __name__ == "__main__":
                         stack,
                         tmp_dir_path,
                         gdb_name,
-                        in_file_path.name,
                     )
                     species_path = species_path_map[gdb_name]
                     hom_tsv_by_genome[gdb_name] = out_base_dir_path / species_path / in_file_path.name
@@ -135,7 +131,6 @@ if __name__ == "__main__":
                         stack,
                         tmp_dir_path,
                         hom_gdb_name,
-                        in_file_path.name,
                     )
                     species_path = species_path_map[hom_gdb_name]
                     hom_tsv_by_genome[hom_gdb_name] = out_base_dir_path / species_path / in_file_path.name
