@@ -35,7 +35,9 @@ if __name__ == "__main__":
 
     parser = ArgumentParser(description=__doc__)
     parser.add_argument("-i", "--input_file", required=True, help="Input homology TSV file path.")
-    parser.add_argument("-o", "--output_file", required=True, help="Output homology TSV, with header inserted.")
+    parser.add_argument(
+        "-o", "--output_file", required=True, help="Output homology TSV, with header inserted."
+    )
 
     args = parser.parse_args()
 
@@ -69,16 +71,16 @@ if __name__ == "__main__":
         tmp_file_name = out_file_path.name
         tmp_file_path = Path(tmp_dir) / tmp_file_name
 
-        with open(tmp_file_path, mode="w", encoding="utf-8") as out_file_obj:
-            out_file_obj.write(hom_tsv_header_line)
+        with open(tmp_file_path, mode="w", encoding="utf-8") as out_text_file_obj:
+            out_text_file_obj.write(hom_tsv_header_line)
 
         with open(tmp_file_path, mode="ab") as out_file_obj:
             with open(in_file_path, mode="rb") as in_file_obj:
                 shutil.copyfileobj(in_file_obj, out_file_obj)
 
         num_header_lines = 0
-        with open(tmp_file_path, encoding="utf-8") as in_file_obj:
-            for line in in_file_obj:
+        with open(tmp_file_path, encoding="utf-8") as in_text_file_obj:
+            for line in in_text_file_obj:
                 if line != hom_tsv_header_line:
                     break
                 num_header_lines += 1

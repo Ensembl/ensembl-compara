@@ -81,8 +81,8 @@ if __name__ == "__main__":
         tmp_dir_path = Path(tmp_dir)
 
         logging.info("Splitting homology TSV by genome ...")
-        exp_line_counts = defaultdict(int)
-        writers_by_genome = {}
+        exp_line_counts: defaultdict[str, int] = defaultdict(int)
+        writers_by_genome = {}   # type: ignore
         tmp_tsv_by_genome = {}
         with ExitStack() as stack:
             in_file_obj = stack.enter_context(open(in_file_path, encoding="utf-8", newline=""))
@@ -149,7 +149,7 @@ if __name__ == "__main__":
         for gdb_name, tmp_hom_tsv_path in tmp_tsv_by_genome.items():
             exp_line_count = exp_line_counts[gdb_name]
             logging.info("Checking line count of homology TSV of genome '%s' ...", gdb_name)
-            cmd_args = ["wc", "-l", tmp_hom_tsv_path]
+            cmd_args = ["wc", "-l", str(tmp_hom_tsv_path)]
             output = subprocess.check_output(cmd_args, text=True)
             first_line, *_ignored_lines = output.splitlines()
             first_field, *_ignored_fields = first_line.split()
