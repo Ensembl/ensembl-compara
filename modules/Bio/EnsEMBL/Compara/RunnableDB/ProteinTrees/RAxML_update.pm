@@ -22,7 +22,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::RAxML_update
 
 =head1 DEPRECATION NOTICE
 
-This runnable is deprecated, and may be removed in a future release.
+This runnable is deprecated and is not maintained.
 
 =cut
 
@@ -54,8 +54,6 @@ sub param_defaults {
 
 sub fetch_input {
     my $self = shift;
-
-    $self->warning("RunnableDB::ProteinTrees::RAxML_update is deprecated, and may be removed in a future release");
 
     $self->SUPER::fetch_input();
 }

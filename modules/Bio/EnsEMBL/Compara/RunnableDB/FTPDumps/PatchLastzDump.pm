@@ -27,7 +27,7 @@ Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::PatchLastzDump
 
 =head1 DEPRECATION NOTICE
 
-This runnable is deprecated, and may be removed in a future release.
+This runnable is deprecated and is not maintained.
 
 =cut
 
@@ -73,8 +73,6 @@ sub fetch_input {
 
 sub run {
 	my $self = shift;
-
-    $self->warning("RunnableDB::FTPDumps::PatchLastzDump is deprecated, and may be removed in a future release");
 
 	my $prev_rel_tarball = $self->param('prev_rel_tarball');
 	my $patch_dump_dir = $self->param('patch_dump_dir');

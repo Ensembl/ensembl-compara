@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::AddHMMLib
 
 =head1 DEPRECATION NOTICE
 
-This runnable is deprecated, and may be removed in a future release.
+This runnable is deprecated and is not maintained.
 
 =cut
 
@@ -36,8 +36,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub run {
     my $self = shift;
-
-    $self->warning("RunnableDB::FTPDumps::AddHMMLib is deprecated, and may be removed in a future release");
 
     # Get the name of the current library
     my $hmm_library_basedir = $self->param_required('hmm_library_basedir');

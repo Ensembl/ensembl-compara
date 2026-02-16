@@ -55,7 +55,7 @@ use IO::File;
 
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
-use Bio::EnsEMBL::Utils::Exception qw(warning throw deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(warning throw);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet Bio::EnsEMBL::Compara::BaseGenomicAlignSet);
 
@@ -273,16 +273,12 @@ sub get_all_genomic_aligns_for_node {
 
 sub genomic_align_array {  ## DEPRECATED
     my $self = shift(@_);
-    deprecate('GenomicAlignTree::genomic_align_array is deprecated, and may be removed in a future release.'
-              . ' Use Bio::EnsEMBL::Compara::GenomicAlignTree->get_all_genomic_aligns_for_node() instead');
     return($self->get_all_genomic_aligns_for_node);
 
 }
 
 sub get_all_GenomicAligns {  ## DEPRECATED
     my $self = shift(@_);
-    deprecate('GenomicAlignTree::get_all_GenomicAligns is deprecated, and may be removed in a future release.'
-              . ' Use Bio::EnsEMBL::Compara::GenomicAlignTree->get_all_genomic_aligns_for_node() instead');
     return($self->get_all_genomic_aligns_for_node);
 
 }
@@ -925,8 +921,6 @@ sub sorted_children {
 
 sub sort_children { ## DEPRECATED
   my ($self) = @_;
-
-  deprecate('GenomicAlignTree::sort_children() is deprecated and will be removed in e97. Use sorted_children() instead');
   return $self->sorted_children;
 }
 

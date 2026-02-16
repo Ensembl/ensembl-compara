@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MafftUpdate
 
 =head1 DEPRECATION NOTICE
 
-This runnable is deprecated, and may be removed in a future release.
+This runnable is deprecated and is not maintained.
 
 =cut
 
@@ -45,8 +45,6 @@ sub param_defaults {
 
 sub fetch_input {
     my ($self) = @_;
-
-    $self->warning("RunnableDB::ProteinTrees::MafftUpdate is deprecated, and may be removed in a future release");
 
     #get current tree adaptor
     $self->param( 'current_tree_adaptor', $self->compara_dba->get_GeneTreeAdaptor );
