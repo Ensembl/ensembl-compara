@@ -90,7 +90,10 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'md5sum_tree_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -rc_name    => '1Gb_job',
-            -flow_into  => [ { 'md5sum_tree_factory' => INPUT_PLUS() } ],
+            -flow_into  => [ {
+                'md5sum_genome_homologies_factory' => INPUT_PLUS(),
+                'md5sum_tree_factory' => INPUT_PLUS(),
+            } ],
         },
 
         {   -logic_name => 'mk_work_dir',
@@ -507,6 +510,22 @@ sub pipeline_analyses_dump_trees {
             },
         },
 
+        {   -logic_name => 'md5sum_genome_homologies_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FindGenomeHomologySubdirectories',
+            -parameters => {
+                'search_path' => '#tsv_dir#',
+            },
+            -flow_into => {
+                2 => [ 'md5sum_genome_homologies' ],
+            },
+        },
+
+        {   -logic_name => 'md5sum_genome_homologies',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => q/cd #directory# ; md5sum *.gz > MD5SUM/,
+            },
+        },
     ];
 }
 
