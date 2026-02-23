@@ -239,8 +239,15 @@ def download_homology_tsv_set(
                         raise RuntimeError(
                             "cannot concatenate homology TSV files due to inconsistent column names"
                         )
-                    for row in reader:
 
+                    assert (
+                        species_col_idx is not None
+                    ), "'species' column index required to filter homologies by genome"
+                    assert (
+                        hom_species_col_idx is not None
+                    ), "'homology_species' column index required to filter homologies by genome"
+
+                    for row in reader:
                         if (
                             row[species_col_idx] not in genome_names
                             or row[hom_species_col_idx] not in genome_names
