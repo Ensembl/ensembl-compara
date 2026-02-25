@@ -42,6 +42,7 @@ from ftplib import FTP
 import gzip
 import hashlib
 import logging
+import os
 from pathlib import Path
 import re
 import shutil
@@ -254,6 +255,9 @@ def download_homology_tsv_set(
                         ):  # pylint: disable=possibly-used-before-assignment
                             continue
                         writer.writerow(row)
+
+            out_file_obj.flush()
+            os.fsync(out_file_obj.fileno())
 
         logging.info("writing final output homology TSV file")
         shutil.move(tmp_out_file_path, out_file_path)
@@ -555,8 +559,6 @@ def main():
 
         logging.info("downloading selected homology TSV file set")
         download_homology_tsv_set(homology_tsv_file_set, genomes, args.output_file)
-
-        logging.info("download complete")
 
 
 if __name__ == "__main__":
