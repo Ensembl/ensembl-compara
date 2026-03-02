@@ -432,6 +432,7 @@ my $clusterset_results = $helper->execute( -SQL => $clusterset_sql );
 my @hom_emf_file_names;
 my @hom_tsv_file_names;
 my @hom_tsv_file_paths;
+my @hom_tsv_meta_file_paths;
 my @hom_xml_file_names;
 foreach my $row (@{$clusterset_results}) {
     my ($mlss_id, $clusterset_id, $member_type) = @{$row};
@@ -454,6 +455,10 @@ foreach my $row (@{$clusterset_results}) {
         # Homology TSV file concatenated per genome.
         my $hom_tsv_file_path = $genome_rel_path . '/' . $hom_tsv_file_name;
         push(@hom_tsv_file_paths, $hom_tsv_file_path);
+
+        my $hom_tsv_md5sum_file_path = $genome_rel_path . '/' . 'MD5SUM';
+        my $hom_tsv_readme_file_path = $genome_rel_path . '/' . 'README.gene_trees.tsv_dumps.txt';
+        push(@hom_tsv_meta_file_paths, ($hom_tsv_md5sum_file_path, $hom_tsv_readme_file_path));
     }
 
     my $mlss_has_cafe = $mlss->get_value_for_tag('has_cafe', 0);
@@ -474,6 +479,7 @@ if (@hom_emf_file_names) {
 if (@hom_tsv_file_names || @hom_tsv_file_paths) {
     push(@{$expectations{'HOMOLOGIES'}{'tsv'}}, {
         'meta_file_names' => ['MD5SUM', 'README.gene_trees.tsv_dumps.txt'],
+        'meta_file_paths' => \@hom_tsv_meta_file_paths,
         'data_file_names' => \@hom_tsv_file_names,
         'data_file_paths' => \@hom_tsv_file_paths,
     });
@@ -711,6 +717,14 @@ foreach my $data_type (sort keys %expectations) {
                     my ($vol, $rel_dir_path, $data_file_name) = splitpath($data_file_path);
                     $rel_dir_path =~ s|/$||;
                     push(@{$exp_items_by_dir{$rel_dir_path}}, $data_file_name);
+                }
+
+                if (exists $dset_expectations->{'meta_file_paths'}) {
+                    foreach my $meta_file_path (@{$dset_expectations->{'meta_file_paths'}}) {
+                        my ($vol, $rel_dir_path, $meta_file_name) = splitpath($meta_file_path);
+                        $rel_dir_path =~ s|/$||;
+                        push(@{$exp_items_by_dir{$rel_dir_path}}, $meta_file_name);
+                    }
                 }
 
                 foreach my $rel_dir_path (sort keys %exp_items_by_dir) {
