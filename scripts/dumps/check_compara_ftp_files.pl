@@ -723,7 +723,9 @@ foreach my $data_type (sort keys %expectations) {
                     foreach my $meta_file_path (@{$dset_expectations->{'meta_file_paths'}}) {
                         my ($vol, $rel_dir_path, $meta_file_name) = splitpath($meta_file_path);
                         $rel_dir_path =~ s|/$||;
-                        push(@{$exp_items_by_dir{$rel_dir_path}}, $meta_file_name);
+                        if (! grep { $_ eq $meta_file_name} @{$exp_items_by_dir{$rel_dir_path}}) {
+                            push(@{$exp_items_by_dir{$rel_dir_path}}, $meta_file_name);
+                        }
                     }
                 }
 
