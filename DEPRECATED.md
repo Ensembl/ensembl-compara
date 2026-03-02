@@ -1,14 +1,12 @@
 > This file contains the list of methods deprecated in the Ensembl Compara
 > API.  A method is deprecated when it is not functional any more
 > (schema/data change) or has been replaced by a better one.  Backwards
-> compatibility is provided whenever possible.  When a method is
-> deprecated, a deprecation warning is thrown whenever the method is used.
-> The warning also contains instructions on replacing the deprecated method
-> and when it will be removed.
+> compatibility is provided whenever possible.
+> As of release 116, deprecated methods no longer issue a deprecation warning.
 
 ----
 
-# Deprecated methods not yet scheduled for deletion
+# Deprecated methods not scheduled for deletion
 
 * `AlignedMember::get_cigar_array()`
 * `AlignedMember::get_cigar_breakout()`

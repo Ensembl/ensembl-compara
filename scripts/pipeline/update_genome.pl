@@ -154,7 +154,6 @@ my $force = 0;
 my $offset = 0;
 my $file;
 my $release;
-my $collection;
 
 GetOptions(
     "help" => \$help,
@@ -166,11 +165,7 @@ GetOptions(
     'offset=i' => \$offset,
     'file|file_of_production_names=s' => \$file,
     'release' => \$release,
-    'collection' => \$collection,
   );
-
-die "The --collection flag has been deprecated. See here for more info:
-https://www.ebi.ac.uk/seqdb/confluence/display/EnsCom/Updating+the+master+database\n" if $collection;
 
 $| = 0;
 

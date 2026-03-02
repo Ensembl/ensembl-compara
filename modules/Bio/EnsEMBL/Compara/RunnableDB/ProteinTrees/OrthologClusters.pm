@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::OrthologClusters
 
 =head1 DEPRECATION NOTICE
 
-This runnable is deprecated, and may be removed in a future release.
+This runnable is deprecated and is not maintained.
 
 =cut
 
@@ -56,8 +56,6 @@ sub param_defaults {
 sub fetch_input {
 
 	my $self = shift;
-
-    $self->warning("RunnableDB::ProteinTrees::OrthologClusters is deprecated, and may be removed in a future release");
 
 	$self->param('previous_dba' , $self->get_cached_compara_dba('ref_ortholog_db') );
 	$self->param('prev_homolog_adaptor', $self->param('previous_dba')->get_HomologyAdaptor);

@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB
 
 =head1 DEPRECATION NOTICE
 
-This runnable is deprecated, and may be removed in a future release.
+This runnable is deprecated and is not maintained.
 
 =cut
 
@@ -37,8 +37,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 sub fetch_input {
     my $self = shift @_;
-
-        $self->warning("RunnableDB::GeneTrees::CopyTreesFromDB is deprecated, and may be removed in a future release");
 
         #get compara_dba adaptor
         $self->param( 'compara_dba', $self->compara_dba );

@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FlagUpdateClusters
 
 =head1 DEPRECATION NOTICE
 
-This runnable is deprecated, and may be removed in a future release.
+This runnable is deprecated and is not maintained.
 
 =cut
 
@@ -39,8 +39,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift @_;
-
-    $self->warning("RunnableDB::GeneTrees::FlagUpdateClusters is deprecated, and may be removed in a future release");
 
     #get reuse_compara_dba adaptor
     $self->param( 'reuse_compara_dba', $self->get_cached_compara_dba('reuse_db') );
