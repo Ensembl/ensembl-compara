@@ -56,6 +56,16 @@ sub run {
     my $cmd = "python $dump_homologies_script -u $db_url -r $compara_db -o \"$out_dir/$filename\"";
     my $run_cmd = $self->run_command($cmd, { 'die_on_failure' => 1});
     print "Time for dumping the homologies... " . $run_cmd->runtime_msec . " msec\n" if $self->debug();
+    # Check if output file has at least 2 lines (header + at least one homology)
+    my $filepath = $self->param('filepath');
+    open(my $fh, '<', $filepath) or $self->throw("Cannot open $filepath: $!");
+    my $line_count = 0;
+    while (<$fh>) {
+        $line_count++;
+        last if $line_count > 1;
+    }
+    close($fh);
+    $self->throw("Output file $filepath has fewer than 2 lines!") if $line_count < 2;
 }
 
 sub write_output {
