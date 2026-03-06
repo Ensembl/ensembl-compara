@@ -61,7 +61,7 @@ Bio::EnsEMBL::Compara::Graph::HomologyPhyloXMLWriter
 =head1 DESCRIPTION
 
 Used as a way of emitting instances of L<Bio::EnsEMBL::Compara::Homology>
-in a format which conforms to L<PhyloXML|http://www.phyloxml.org/>.
+in a format which conforms to L<PhyloXML|https://www.phyloxml.org/>.
 
 The code provides a number of property extensions to the existing PhyloXML
 standard:
