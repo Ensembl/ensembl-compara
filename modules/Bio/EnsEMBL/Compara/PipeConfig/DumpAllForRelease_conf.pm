@@ -306,6 +306,7 @@ sub core_pipeline_analyses {
                     'alignment_dump_options' => $self->o('alignment_dump_options'),
                     'default_dump_options' => $self->o('default_dump_options'),
                     'ancestral_db'         => $self->o('ancestral_db'),
+                    'on_core_clash'        => 'take_first',
                 } ],
             -parameters => {
                 'init_dump_registry_exe' => $self->o('init_dump_registry_exe'),
