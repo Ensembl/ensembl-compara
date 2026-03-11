@@ -153,6 +153,12 @@ pod2usage(-exitvalue => 0, -verbose => 1) if $help;
 pod2usage(-verbose => 1) if !$division or !$release or !$outfile;
 
 
+my %known_overlap_species = (
+    'caenorhabditis_elegans' => 1,
+    'drosophila_melanogaster' => 1,
+    'saccharomyces_cerevisiae' => 1,
+);
+
 my $eg_release = $release - 53;
 
 my %div_to_compara_db_name = (
@@ -215,12 +221,15 @@ if (defined $core_dump_hosts) {
 }
 
 my %exp_sp_info;
+my %exp_overlap_species;
 foreach my $species_name (@{$allowed_species}) {
     $exp_sp_info{$division}{$species_name} = 1;
+    $exp_overlap_species{$species_name} = 1 if ($known_overlap_species{$species_name});
 }
 while (my ($division, $species_names) = each %{$additional_species}) {
     foreach my $species_name (@{$species_names}) {
         $exp_sp_info{$division}{$species_name} = 1;
+        $exp_overlap_species{$species_name} = 1 if ($known_overlap_species{$species_name});
     }
 }
 
@@ -286,7 +295,8 @@ foreach my $core_host (@{$dump_host_map{'core_dump_hosts'}}) {
                 throw("species $species_name has unknown division '$species_division'");
             }
 
-            if ($core_version == $release && exists $exp_sp_info{$species_division}{$species_name}) {
+            if ($core_version == $release && (exists $exp_sp_info{$species_division}{$species_name}
+                    || exists $exp_overlap_species{$species_name})) {
                 if (exists $core_adaptor_param_sets{$species_name}) {
                     my $existing = $core_adaptor_param_sets{$species_name};
                     my $msg = sprintf("specified core hosts have multiple databases for species %s: %s vs %s:%d/%s", $species_name,
