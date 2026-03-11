@@ -1,5 +1,20 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <grammar xmlns="http://relaxng.org/ns/structure/1.0" xmlns:blockly="http://blockly.com/">
+  <define name="composable_collection">
+    <zeroOrMore>
+      <element name="composable_collection" blockly:blockName="Include or exclude collection">
+        <attribute name="name" blockly:blockName="Collection name"/>
+        <optional>
+          <attribute name="exclude" blockly:blockName="Exclude this collection">
+            <choice>
+              <value blockly:blockName="Yes">1</value>
+              <value blockly:blockName="No">0</value>
+            </choice>
+          </attribute>
+        </optional>
+      </element>
+    </zeroOrMore>
+  </define>
   <define name="new_species_set">
     <oneOrMore>
       <choice>
@@ -67,6 +82,7 @@
                        blockly:blockName="If specified, this indicates which genome component is represented by this genome element; an empty attribute string indicates the principal genome"/>
           </optional>
         </element>
+        <ref name="composable_collection"/>
       </choice>
     </oneOrMore>
   </define>
