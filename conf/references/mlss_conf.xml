@@ -25,6 +25,50 @@
       <genome name="mus_musculus"/>
       <genome name="xenopus_tropicalis"/>
     </collection>
+
+    <collection name="shared_protists">
+      <genome name="thamnophis_elegans"/>
+      <genome name="plasmodium_berghei"/>
+      <genome name="plasmodium_falciparum"/>
+      <genome name="plasmodium_knowlesi"/>
+      <genome name="plasmodium_vivax_gca900093555"/>
+      <genome name="babesia_bovis"/>
+      <genome name="theileria_orientalis_gca003072535"/>
+      <genome name="eimeria_mitis"/>
+      <genome name="toxoplasma_gondii"/>
+      <genome name="gregarina_niphandrodes_gca_000223845"/>
+      <genome name="pseudonitzschia_multistriata"/>
+      <genome name="phaeodactylum_tricornutum"/>
+      <genome name="thalassiosira_pseudonana"/>
+      <genome name="bigelowiella_natans"/>
+      <genome name="stentor_coeruleus_gca_001970955"/>
+      <genome name="tetrahymena_thermophila"/>
+      <genome name="paramecium_tetraurelia"/>
+      <genome name="oxytricha_trifallax_gca_000295675_gca_000295675"/>
+      <genome name="acanthamoeba_castellanii"/>
+      <genome name="plasmodiophora_brassicae_gca_001049375"/>
+      <genome name="leishmania_major"/>
+      <genome name="trypanosoma_brucei_gca000002445"/>
+      <genome name="perkinsela_sp_ccap_1560_4_gca_001235845"/>
+      <genome name="dictyostelium_discoideum"/>
+      <genome name="planoprotostelium_fungivorum_gca_003024175"/>
+      <genome name="entamoeba_histolytica"/>
+      <genome name="reticulomyxa_filosa_gca_000512085"/>
+      <genome name="giardia_intestinalis_gca000002435v2"/>
+      <genome name="emiliania_huxleyi"/>
+      <genome name="naegleria_gruberi_gca_000004985"/>
+      <genome name="phytophthora_infestans"/>
+      <genome name="globisporangium_ultimum_gca000387525"/>
+      <genome name="aphanomyces_astaci_gca000520075"/>
+      <genome name="tritrichomonas_foetus_gca_001839685"/>
+      <genome name="perkinsus_marinus_atcc_50983_gca_000006405"/>
+      <genome name="blastocystis_hominis_gca_000151665"/>
+      <genome name="salpingoeca_rosetta_gca_000188695"/>
+      <genome name="guillardia_theta"/>
+      <genome name="nannochloropsis_gaditana_ccmp526_gca_000240725"/>
+      <genome name="capsaspora_owczarzaki_atcc_30864_gca_000151315"/>
+      <genome name="ectocarpus_siliculosus_gca_000310025"/>
+    </collection>
     
     <collection name="default">
       <base_collection name="shared"/>
@@ -524,6 +568,169 @@
       <genome name="solanum_tuberosum"/>
       <!-- Vitales -->
       <genome name="vitis_vinifera"/>
+    </collection>
+
+    <collection name="archaea">
+      <!-- Archaea -->
+      <genome name="aeropyrum_pernix_k1_gca_000011125"/>
+      <genome name="archaeoglobus_fulgidus_dsm_4304_gca_000008665"/>
+      <genome name="bacillus_subtilis_subsp_subtilis_str_168_gca_000009045"/>
+      <genome name="candidatus_korarchaeum_cryptofilum_opf8_gca_000019605"/>
+      <genome name="cenarchaeum_symbiosum_a_gca_000200715"/>
+      <genome name="escherichia_coli_str_k_12_substr_mg1655_gca_000005845"/>
+      <genome name="haloarcula_marismortui_atcc_43049_gca_000011085"/>
+      <genome name="halobacterium_salinarum_r1_gca_000069025"/>
+      <genome name="haloferax_volcanii_ds2_gca_000025685"/>
+      <genome name="hyperthermus_butylicus_dsm_5456_gca_000015145"/>
+      <genome name="methanobrevibacter_smithii_atcc_35061_gca_000016525"/>
+      <genome name="methanocaldococcus_jannaschii_dsm_2661_gca_000091665"/>
+      <genome name="methanococcus_maripaludis_s2_gca_000011585"/>
+      <genome name="methanopyrus_kandleri_av19_gca_000007185"/>
+      <genome name="methanosarcina_acetivorans_c2a_gca_000007345"/>
+      <genome name="methanospirillum_hungatei_jf_1_gca_000013445"/>
+      <genome name="methanothermobacter_thermautotrophicus_str_delta_h_gca_000008645"/>
+      <genome name="nanoarchaeum_equitans_kin4_m_gca_000008085"/>
+      <genome name="natronomonas_pharaonis_dsm_2160_gca_000026045"/>
+      <genome name="nitrosopumilus_maritimus_scm1_gca_000018465"/>
+      <genome name="pyrobaculum_aerophilum_str_im2_gca_000007225"/>
+      <genome name="pyrococcus_horikoshii_ot3_gca_000011105"/>
+      <genome name="saccharolobus_solfataricus_p2_gca_000007005"/>
+      <genome name="thermococcus_kodakarensis_kod1_gca_000009965"/>
+      <genome name="thermofilum_pendens_hrk_5_gca_000015225"/>
+      <genome name="thermoplasma_acidophilum_dsm_1728_gca_000195915"/>
+      <genome name="thermus_thermophilus_hb8_gca_000091545"/>
+    </collection>
+
+    <collection name="fungi">
+      <!-- Fungi -->
+      <genome name="allomyces_macrogynus_atcc_38327_gca_000151295"/>
+      <genome name="ashbya_gossypii"/>
+      <genome name="aspergillus_clavatus"/>
+      <genome name="botrytis_cinerea"/>
+      <genome name="candida_albicans"/>
+      <genome name="colletotrichum_graminicola"/>
+      <genome name="conidiobolus_coronatus_nrrl_28638_gca_001566745"/>
+      <genome name="cryptococcus_neoformans"/>
+      <genome name="cyberlindnera_jadinii_nrrl_y_1542_gca_001661405"/>
+      <genome name="dothistroma_septosporum"/>
+      <genome name="encephalitozoon_cuniculi_gb_m1_gca_000091225"/>
+      <genome name="encephalitozoon_hellem_atcc_50504_gca_000277815"/>
+      <genome name="fonsecaea_multimorphosa_cbs_102226_gca_000836435"/>
+      <genome name="fusarium_fujikuroi"/>
+      <genome name="hanseniaspora_osmophila_gca_001747045"/>
+      <genome name="histoplasma_capsulatum"/>
+      <genome name="hypoxylon_sp_ci_4a_gca_002120315"/>
+      <genome name="komagataella_pastoris"/>
+      <genome name="kwoniella_mangroviensis_cbs_8886_gca_000507485"/>
+      <genome name="melampsora_laricipopulina"/>
+      <genome name="microbotryum_violaceum"/>
+      <genome name="mortierella_elongata_ag_77_gca_001651415"/>
+      <genome name="mucor_lusitanicus"/>
+      <genome name="nematocida_sp_ertm5_gca_001642415"/>
+      <genome name="neurospora_crassa"/>
+      <genome name="phanerochaete_chrysosporium"/>
+      <genome name="powellomyces_hirtus_gca_006536005"/>
+      <genome name="pseudogymnoascus_verrucosus_gca_001662655"/>
+      <genome name="puccinia_graminis"/>
+      <genome name="pyrenophora_teres"/>
+      <genome name="rhizophagus_irregularis_gca_001593155"/>
+      <genome name="rhizopogon_vinicolor_am_or11_026_gca_001658105"/>
+      <genome name="rhodotorula_toruloides_np11_gca_000320785"/>
+      <genome name="rozella_allomycis_csf55_gca_000442015"/>
+      <genome name="saccharomyces_cerevisiae"/>
+      <genome name="schizophyllum_commune"/>
+      <genome name="spizellomyces_punctatus_daom_br117_gca_000182565"/>
+      <genome name="spizellomyces_sp_palustris_gca_006535965"/>
+      <genome name="sporisorium_reilianum"/>
+      <genome name="ustilago_maydis"/>
+    </collection>
+
+    <collection name="bacteria">
+      <!-- Vertebrata -->
+      <genome name="homo_sapiens"/>
+      <!-- Plants -->
+      <genome name="oryza_sativa_gca001433935v1cm"/>
+      <!-- Protist (Basal)-->
+      <genome name="giardia_intestinalis_gca000002435v2"/>
+      <!-- Bacteria -->
+      <genome name="aquifex_aeolicus_vf5_gca_000008625"/>
+      <genome name="bacillus_subtilis_subsp_subtilis_str_168_gca_000009045"/>
+      <genome name="bifidobacterium_longum_ncc2705_gca_000007525"/>
+      <genome name="borreliella_burgdorferi_b31_gca_000008685"/>
+      <genome name="burkholderia_pseudomallei_1710b_gca_000012785"/>
+      <genome name="candidatus_koribacter_versatilis_ellin345_gca_000014005"/>
+      <genome name="chlamydia_trachomatis_d_uw_3_cx_gca_000008725"/>
+      <genome name="chlorobaculum_tepidum_tls_gca_000006985"/>
+      <genome name="chloroflexus_aurantiacus_j_10_fl_gca_000018865"/>
+      <genome name="clostridioides_difficile_630_gca_000009205"/>
+      <genome name="deinococcus_radiodurans_r1_gca_000008565"/>
+      <genome name="dictyoglomus_turgidum_dsm_6724_gca_000021645"/>
+      <genome name="escherichia_coli_str_k_12_substr_mg1655_gca_000005845"/>
+      <genome name="flavobacterium_psychrophilum_jip02_86_gca_000064305"/>
+      <genome name="fusobacterium_nucleatum_subsp_nucleatum_atcc_25586_gca_000007325"/>
+      <genome name="geobacter_sulfurreducens_pca_gca_000007985"/>
+      <genome name="gloeobacter_violaceus_pcc_7421_gca_000011385"/>
+      <genome name="halobacterium_salinarum_r1_gca_000069025"/>
+      <genome name="helicobacter_pylori_26695_gca_000008525"/>
+      <genome name="lactococcus_lactis_subsp_lactis_il1403_gca_000006865"/>
+      <genome name="leptospira_interrogans_serovar_lai_str_56601_gca_000092565"/>
+      <genome name="micrococcus_luteus_nctc_2665_gca_000023205"/>
+      <genome name="moorella_thermoacetica_atcc_39073_gca_000013105"/>
+      <genome name="myxococcus_xanthus_dk_1622_gca_000012685"/>
+      <genome name="neisseria_meningitidis_z2491_gca_000009105"/>
+      <genome name="nostoc_punctiforme_pcc_73102_gca_000020025"/>
+      <genome name="porphyromonas_gingivalis_w83_gca_000007585"/>
+      <genome name="rhodobacter_sphaeroides_2_4_1_gca_000012905"/>
+      <genome name="rhodopirellula_baltica_sh_1_gca_000196115"/>
+      <genome name="rickettsia_prowazekii_str_madrid_e_gca_000195735"/>
+      <genome name="salinibacter_ruber_dsm_13855_gca_000013045"/>
+      <genome name="staphylococcus_aureus_subsp_aureus_n315_gca_000009645"/>
+      <genome name="streptococcus_pneumoniae_tigr4_gca_000006885"/>
+      <genome name="synechocystis_sp_pcc_6803_gca_000009725"/>
+      <genome name="thermanaerovibrio_acidaminovorans_dsm_6589_gca_000024905"/>
+      <genome name="thermodesulfovibrio_yellowstonii_dsm_11347_gca_000020985"/>
+      <genome name="thermofilum_pendens_hrk_5_gca_000015225"/>
+      <genome name="thermotoga_maritima_msb8_gca_000008545"/>
+      <genome name="thermus_thermophilus_hb8_gca_000091545"/>
+      <genome name="vibrio_cholerae_o1_biovar_el_tor_str_n16961_gca_000006745"/>
+    </collection>
+
+    <!-- The following are high level lineages for Protists and will use the shared_protists base_collection -->
+    <collection name="sar">
+      <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="SAR"/>
+    </collection>
+    <collection name="amoebozoa">
+      <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Amoebozoa"/>
+    </collection>
+    <collection name="excavata">
+      <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Excavata"/>
+    </collection>
+    <collection name="discoba">
+      <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Discoba"/>
+    </collection>
+    <collection name="opisthokonta">
+      <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Opisthokonta"/>
+    </collection>
+    <collection name="haptophyta">
+      <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Haptophyta"/>
+    </collection>
+    <collection name="viridiplantae">
+      <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Viridiplantae"/>
+    </collection>
+    <collection name="rhodophyta">
+      <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Rhodophyta"/>
+    </collection>
+    <collection name="cryptophyceae">
+      <base_collection name="shared_protists"/>
+      <taxonomic_group taxon_name="Cryptophyceae"/>
     </collection>
   </collections>
 
