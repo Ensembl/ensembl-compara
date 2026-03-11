@@ -87,7 +87,7 @@ my $gdb_adaptor = $compara_dba->get_GenomeDBAdaptor();
 my $division =  $compara_dba->get_division();
 my $base_url = $division eq 'vertebrates'
              ? sprintf('https://ftp.ensembl.org/pub/release-%d/', $release)
-             : sprintf('http://ftp.ensemblgenomes.org/pub/%s/release-%d/', $division, $release - 53)
+             : sprintf('https://ftp.ensemblgenomes.ebi.ac.uk/pub/%s/release-%d/', $division, $release - 53)
              ;
 
 my $all_genome_dbs = $gdb_adaptor->fetch_all_by_release($release);

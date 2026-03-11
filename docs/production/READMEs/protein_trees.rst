@@ -52,7 +52,7 @@ Here is the list of the versions that we used for the e78 production:
 * quicktree 1.1        - https://www.sanger.ac.uk/tool/quicktree/
 * hmmbuild 3.0         - (part of the HMMER package) http://hmmer.org/
 * codeml 4.3           - (part of the PAML package) https://github.com/abacus-gene/paml/wiki
-* Ktreedist 1.0        - https://www.biologiaevolutiva.org/jcastresana/Ktreedist.html
+* Ktreedist 1.0        - https://europepmc.org/article/MED/17890735
 
 Except for CodeML, more recent versions probably still work (as long as the command line parameters haven't changed) but we only guarantee that the pipeline behaves with the advertised versions.
 

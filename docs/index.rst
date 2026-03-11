@@ -13,8 +13,7 @@ Welcome to the Ensembl Compara documentation
 
 The code is open source, and `available on GitHub`_.
 
-.. _available on GitHub: http://github.com/Ensembl/ensembl-compara
-.. _Read The Docs: http://ensembl-compara.readthedocs.io/
+.. _available on GitHub: https://github.com/Ensembl/ensembl-compara
 
 The main documentation is organized into a couple sections:
 

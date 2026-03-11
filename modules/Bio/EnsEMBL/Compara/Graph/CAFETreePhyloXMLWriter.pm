@@ -61,7 +61,7 @@ Bio::EnsEMBL::Compara::Graph::CAFETreePhyloXMLWriter
 =head1 DESCRIPTION
 
 Used as a way of emitting Compara Gene Gain/Loss Tree (aka CAFE Trees) in a format which conforms
-to L<PhyloXML|http://www.phyloxml.org/>. The code is built to work with
+to L<PhyloXML|https://www.phyloxml.org/>. The code is built to work with
 instances of L<Bio::EnsEMBL::Compara::CAFETree>
 The code provides a number of property extensions to the existing PhyloXML
 standard:
