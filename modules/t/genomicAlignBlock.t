@@ -32,6 +32,7 @@ my $species = [
         "homo_sapiens",
          "felis_catus",
     ];
+my $species_list_sql = join(q{','}, @$species);
 
 #####################################################################
 ## Connect to the test database using the MultiTestDB.conf file
@@ -61,12 +62,21 @@ my $sth = $compara_db_adaptor->dbc->prepare("
     SELECT
       ga1.genomic_align_id, ga2.genomic_align_id, gab.genomic_align_block_id,
       gab.method_link_species_set_id, gab.score, gab.perc_id, gab.length, gab.group_id, gab.level_id
-    FROM genomic_align ga1, genomic_align ga2, genomic_align_block gab
+    FROM genomic_align ga1, genomic_align ga2, genomic_align_block gab,
+         dnafrag df1, dnafrag df2, genome_db gdb1, genome_db gdb2
     WHERE ga1.genomic_align_block_id = ga2.genomic_align_block_id
       and ga1.genomic_align_id != ga2.genomic_align_id
       and ga1.genomic_align_block_id = gab.genomic_align_block_id
       and ga1.cigar_line LIKE \"\%D\%\" and ga2.cigar_line LIKE \"\%D\%\"
-      and ga1.dnafrag_strand = 1 and ga2.dnafrag_strand = 1 LIMIT 1");
+      and ga1.dnafrag_strand = 1 and ga2.dnafrag_strand = 1
+      and ga1.dnafrag_id = df1.dnafrag_id and ga2.dnafrag_id = df2.dnafrag_id
+      and df1.genome_db_id = gdb1.genome_db_id and df2.genome_db_id = gdb2.genome_db_id
+      and gdb1.name in ('$species_list_sql') and gdb2.name in ('$species_list_sql')
+      and gdb1.name != gdb2.name
+      and (SELECT COUNT(*)
+           FROM genomic_align ga3
+           WHERE ga3.genomic_align_block_id = gab.genomic_align_block_id) = 2
+      LIMIT 1");
 $sth->execute();
 my ($genomic_align_1_dbID, $genomic_align_2_dbID, $genomic_align_block_id,
     $method_link_species_set_id, $score, $perc_id, $length, $group_id, $level_id) =
@@ -495,4 +505,3 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlignBlock->genomic_align_array(0) m
 
 
 done_testing();
-

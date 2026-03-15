@@ -42,11 +42,13 @@ my $dnafrag_adaptor = $compara_db_adaptor->get_DnaFragAdaptor();
 
 my $epo_species_set_name = "mammals";
 my $epo_method_type = "EPO";
+my $core_species = ["homo_sapiens", "mus_musculus"];
+my $core_species_list_sql = join(q{','}, @$core_species);
 
 my $mlss_epo = $method_link_species_set_adaptor->fetch_by_method_link_type_species_set_name($epo_method_type, $epo_species_set_name);
 my $mlss_id_epo = $mlss_epo->dbID;
 
-my $sth = $compara_db_adaptor->dbc->prepare("SELECT node_id, parent_id, root_id, left_index, right_index, left_node_id, right_node_id, distance_to_parent, genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line FROM genomic_align_tree JOIN genomic_align USING (node_id) WHERE method_link_species_set_id = $mlss_id_epo LIMIT 1");
+my $sth = $compara_db_adaptor->dbc->prepare("SELECT node_id, parent_id, root_id, left_index, right_index, left_node_id, right_node_id, distance_to_parent, genomic_align_id, genomic_align_block_id, method_link_species_set_id, dnafrag_id, dnafrag_start, dnafrag_end, dnafrag_strand, cigar_line FROM genomic_align_tree JOIN genomic_align USING (node_id) JOIN dnafrag USING (dnafrag_id) JOIN genome_db USING (genome_db_id) WHERE method_link_species_set_id = $mlss_id_epo AND genome_db.name IN ('$core_species_list_sql') LIMIT 1");
 $sth->execute();
 my ($node_id, $parent_id, $root_id, $left_index, $right_index, $left_node_id, $right_node_id, $distance_to_parent, $genomic_align_id, $genomic_align_block_id, $method_link_species_set_id, $dnafrag_id, $dnafrag_start, $dnafrag_end, $dnafrag_strand, $cigar_line) = $sth->fetchrow_array();
 $sth->finish();
@@ -75,16 +77,16 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlignTreeAdaptor fetch_all_by_Method
 subtest "Test Bio::EnsEMBL::Compara::GenomicAlignTreeAdaptor fetch_all_by_MethodLinkSpeciesSet_DnaFrag method", sub {
     
     my ($num_epo) =  $compara_db_adaptor->dbc->db_handle->selectrow_array("
-    SELECT count(distinct root_id)
-    FROM genomic_align_tree
-    JOIN genomic_align USING (node_id)
-    WHERE method_link_species_set_id = $mlss_id_epo AND dnafrag_id = $dnafrag_id");
+    SELECT count(distinct ga.genomic_align_id)
+    FROM genomic_align ga
+    WHERE ga.method_link_species_set_id = $mlss_id_epo AND ga.dnafrag_id = $dnafrag_id");
+    my $expected_limit = ($num_epo < 5) ? $num_epo : 5;
 
     my $genomic_align_trees = $genomic_align_tree_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss_epo, $dnafrag);
     is(scalar @$genomic_align_trees, $num_epo, "Num genomic_align_trees");
 
     $genomic_align_trees = $genomic_align_tree_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss_epo, $dnafrag, undef, undef, 5);
-    is(scalar @$genomic_align_trees, 5, "Num genomic_align_trees with limit");
+    is(scalar @$genomic_align_trees, $expected_limit, "Num genomic_align_trees with limit");
 
     $genomic_align_trees = $genomic_align_tree_adaptor->fetch_all_by_MethodLinkSpeciesSet_DnaFrag($mlss_epo, $dnafrag, $dnafrag_start, $dnafrag_end);
     is(scalar @$genomic_align_trees, 1, "Num genomic_align_trees with dnafrag_start and dnafrag_end");
@@ -100,16 +102,16 @@ subtest "Test Bio::EnsEMBL::Compara::GenomicAlignTreeAdaptor fetch_all_by_Method
     my $slice = $dnafrag->slice;
 
     my ($num_epo) =  $compara_db_adaptor->dbc->db_handle->selectrow_array("
-    SELECT count(distinct root_id)
-    FROM genomic_align_tree
-    JOIN genomic_align USING (node_id)
-    WHERE method_link_species_set_id = $mlss_id_epo AND dnafrag_id = $dnafrag_id");
+    SELECT count(distinct ga.genomic_align_id)
+    FROM genomic_align ga
+    WHERE ga.method_link_species_set_id = $mlss_id_epo AND ga.dnafrag_id = $dnafrag_id");
+    my $expected_limit = ($num_epo < 5) ? $num_epo : 5;
 
     my $genomic_align_trees = $genomic_align_tree_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss_epo, $slice);
     is(scalar @$genomic_align_trees, $num_epo, "Num genomic_align_trees");
 
     $genomic_align_trees = $genomic_align_tree_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss_epo, $slice, 5);
-    is(scalar @$genomic_align_trees, 5, "Num genomic_align_trees with limit");
+    is(scalar @$genomic_align_trees, $expected_limit, "Num genomic_align_trees with limit");
 
     $genomic_align_trees = $genomic_align_tree_adaptor->fetch_all_by_MethodLinkSpeciesSet_Slice($mlss_epo, $slice, undef, undef, 1);
     is(scalar @$genomic_align_trees, $num_epo, "Num genomic_align_trees with restrict");
