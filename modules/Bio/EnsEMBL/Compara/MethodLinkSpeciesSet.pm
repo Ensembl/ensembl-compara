@@ -406,6 +406,62 @@ sub filename {
 }
 
 
+sub _get_unique_filename {
+    my $self = shift;
+
+    my $name = $self->filename;
+
+    if (!$self->adaptor) {
+        throw("Cannot get unique filename without MLSS adaptor");
+    }
+
+    my @supported_method_types = (
+        'EPO',
+        'EPO_EXTENDED',
+        'GERP_CONSTRAINED_ELEMENT',
+        'GERP_CONSERVATION_SCORE',
+        'LASTZ_NET',
+        'PECAN',
+    );
+
+    my $clashing_mlss_found = 0;
+    foreach my $method_type (@supported_method_types) {
+        my $mlsses_of_type = $self->adaptor->fetch_all_by_method_link_type($method_type);
+        foreach my $mlss (@{$mlsses_of_type}) {
+            if ($mlss->filename eq $name && $mlss->dbID != $self->dbID) {
+                $clashing_mlss_found = 1;
+            }
+        }
+    }
+
+    if ($clashing_mlss_found) {
+        # This is very similar to code in 'MethodLinkSpeciesSet::filename',
+        # but uses the full production name instead of species short name.
+        if ( $self->species_set->size == 2 ) {
+            my ($ref_gdb, $nonref_gdb) = $self->find_pairwise_reference();
+            $name = $ref_gdb->name . "_" . $ref_gdb->assembly . '.v.';
+            $name .= $nonref_gdb->name . "_" . $nonref_gdb->assembly;
+        } elsif ( $self->species_set->size == 1 && $self->method->class =~ /pairwise/ ) {
+            my $self_aln_gdb = $self->species_set->genome_dbs->[0];
+            my $species_label = $self_aln_gdb->name . "_" . $self_aln_gdb->assembly;
+            $name = "$species_label.v.$species_label";
+        } else {
+            throw(
+                sprintf(
+                    "Cannot make unique filename for MLSS '%s' (mlss_id:%d)",
+                    $self->name,
+                    $self->dbID,
+                )
+            );
+        }
+    }
+
+    my $type = $self->method->type;
+    my $dir = lc "$name.$type";
+    return $dir;
+}
+
+
 =head2 _find_homology_mlss_sets
 
   Example    : my $mlss_info = $mlss->_find_homology_mlss_sets();

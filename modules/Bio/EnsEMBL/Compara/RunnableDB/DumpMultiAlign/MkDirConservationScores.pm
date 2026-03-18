@@ -52,7 +52,7 @@ sub write_output {
     print "Fetching mlss " . $self->param_required('mlss_id') . "\n" if $self->debug;
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
 
-    my $dirname = $mlss->filename;
+    my $dirname = $mlss->_get_unique_filename();
     $self->param( 'dirname', $dirname );
 
     my $output_dir = $self->param_required('cs_output_dir');

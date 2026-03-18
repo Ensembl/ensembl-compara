@@ -136,7 +136,7 @@ sub _dataflow_mlss {
     my ($self, $mlss, $extra_params) = @_;
 
     my $mlss_id     = $mlss->dbID();
-    my $filename = $mlss->filename;
+    my $filename = $mlss->_get_unique_filename();
 
     if ($self->param('add_conservation_scores')) {
         my $cs_mlsss = $mlss->get_all_sister_mlss_by_class('ConservationScore.conservation_score');

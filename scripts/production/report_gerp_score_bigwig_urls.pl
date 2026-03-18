@@ -109,7 +109,7 @@ foreach my $genome_db (@rel_genome_dbs) {
 
     @curr_mlsses = sort { $b->species_set->size <=> $a->species_set->size } @curr_mlsses;
 
-    my $mlss_filename = $curr_mlsses[0]->filename;
+    my $mlss_filename = $curr_mlsses[0]->_get_unique_filename();
 
     my $prod_name = $genome_db->name;
     my $bigwig_url = sprintf(
