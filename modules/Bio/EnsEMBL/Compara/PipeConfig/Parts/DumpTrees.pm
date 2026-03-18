@@ -75,6 +75,7 @@ sub pipeline_analyses_dump_trees {
 
         {   -logic_name => 'map_member_types',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::MapMemberTypes',
+            -rc_name    => '1Gb_24_hour_job',
             -flow_into  => { 2 => 'collection_factory' },
         },
 
