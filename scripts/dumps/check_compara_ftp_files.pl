@@ -323,7 +323,7 @@ foreach my $mlss (@{$const_elem_mlsses}) {
     }
 
     push(@{$expectations{'CONSTRAINED_ELEMENT'}{'bb'}}, {
-        'dir_path' => $mlss->filename,
+        'dir_path' => $mlss->_get_unique_filename(),
         'meta_file_names' => ['MD5SUM', 'README'],
         'data_file_names' => \@bigbed_file_names,
     });
@@ -341,7 +341,7 @@ foreach my $mlss (@{$cons_score_mlsses}) {
     }
 
     push(@{$expectations{'CONSERVATION_SCORE'}{'bw'}}, {
-        'dir_path' => $mlss->filename,
+        'dir_path' => $mlss->_get_unique_filename(),
         'meta_file_names' => ['MD5SUM', 'README'],
         'data_file_names' => \@bigwig_file_names,
     });
@@ -506,7 +506,7 @@ my $msa_mlsses;
 foreach my $method_type ('EPO', 'EPO_EXTENDED', 'PECAN') {
     foreach my $mlss (@{$mlss_dba->fetch_all_by_method_link_type($method_type)}) {
         my $msa_part_names = get_msa_part_names($mlss);
-        my $mlss_filename = $mlss->filename;
+        my $mlss_filename = $mlss->_get_unique_filename();
 
         foreach my $format ('emf', 'maf') {
             my @file_patterns;
@@ -532,7 +532,7 @@ print STDERR "Checking for LASTZ_NET expectations ... \n";
 
 my @lastz_file_names;
 foreach my $mlss (@{$mlss_dba->fetch_all_by_method_link_type('LASTZ_NET')}) {
-    push(@lastz_file_names, $mlss->filename . '.tar.gz');
+    push(@lastz_file_names, $mlss->_get_unique_filename() . '.tar.gz');
 }
 
 if (@lastz_file_names) {

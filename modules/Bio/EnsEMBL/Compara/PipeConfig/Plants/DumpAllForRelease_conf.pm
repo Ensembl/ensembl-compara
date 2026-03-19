@@ -344,4 +344,15 @@ sub default_options {
     };
 }
 
+
+sub tweak_analyses {
+    my $self = shift;
+
+    $self->SUPER::tweak_analyses(@_);
+
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'md5sum_aln'}->{'-parameters'}->{'cmd'} = q/cd #output_dir# && find . -maxdepth 1 -name '*.#format#*' -printf '%f\\n' | xargs --max-args 128 md5sum > MD5SUM/;
+}
+
 1;

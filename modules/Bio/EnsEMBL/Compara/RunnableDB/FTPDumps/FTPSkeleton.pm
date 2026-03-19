@@ -127,7 +127,7 @@ sub _mlss_dirs {
 	my @these_mlsses = map { $mlss_adaptor->fetch_by_dbID($_) } @{ $self->param_required('mlss_ids') };
 	my %mlss_dirs;
 	foreach my $mlss ( @these_mlsses ) {
-		$mlss_dirs{ $mlss->filename } = $mlss->dbID if $mlss->method->type eq $method_type;
+		$mlss_dirs{ $mlss->_get_unique_filename() } = $mlss->dbID if $mlss->method->type eq $method_type;
 	}
 	return \%mlss_dirs;
 }

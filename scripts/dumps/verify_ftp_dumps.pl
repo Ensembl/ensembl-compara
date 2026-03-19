@@ -90,7 +90,7 @@ foreach my $mlss ( @$mlsses ) {
     next unless defined $glob_exp_for_type;
     
     if ( $glob_exp_for_type =~ /#mlss_filename#/ ) {
-        my $mlss_filename = $mlss->filename;
+        my $mlss_filename = $mlss->_get_unique_filename();
         $glob_exp_for_type =~ s/#mlss_filename#/$mlss_filename/ig;
         my @files = glob $glob_exp_for_type;
         if ( (!defined $files[0] || !-e $files[0]) && $mlss->method->type eq 'LASTZ_NET' ) {
