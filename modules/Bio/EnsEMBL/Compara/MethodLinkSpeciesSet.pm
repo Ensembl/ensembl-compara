@@ -454,11 +454,12 @@ sub _get_unique_filename {
                 )
             );
         }
+
+        my $type = $self->method->type;
+        $name = lc "$name.$type";
     }
 
-    my $type = $self->method->type;
-    my $dir = lc "$name.$type";
-    return $dir;
+    return $name;
 }
 
 
