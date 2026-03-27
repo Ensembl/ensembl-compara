@@ -74,7 +74,7 @@ process DUMP_VERSIONS {
     python --version >> $out
 
     echo "kentUtils:" >> $out
-    brew info kent | grep -m 1 kent >> $out
+    ${params.brew_exe} info kent | grep -m 1 kent >> $out
 
     echo "halLiftover:" >> $out
     ${params.hal_liftover_exe} --help 2>&1 | grep -Po -m 1 'halLiftover [^:]+' >> $out
