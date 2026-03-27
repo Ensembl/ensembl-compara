@@ -97,14 +97,14 @@ process DUMP_HAL_CHROM_SIZES {
     output:
     path("*.chrom.sizes"), emit: genome_chrom_sizes
 
-    shell:
-    '''
-    !{params.hal_stats_exe} --genomes !{hal} | tr ' ' '\\n' > hal_genome_names.txt
+    script:
+    """
+    ${params.hal_stats_exe} --genomes '${hal}' | tr ' ' '\\n' > hal_genome_names.txt
 
     while read genome_name
-    do !{params.hal_stats_exe} --chromSizes $genome_name !{hal} > "${genome_name}.chrom.sizes"
+    do ${params.hal_stats_exe} --chromSizes \$genome_name '${hal}' > "\${genome_name}.chrom.sizes"
     done < hal_genome_names.txt
-    '''
+    """
 }
 
 process PREP_TASK_SHEET {
