@@ -88,6 +88,7 @@ process DUMP_VERSIONS {
 }
 
 process DUMP_HAL_CHROM_SIZES {
+    label "rc_16Gb"
 
     publishDir "${hal_cache}/genome/chrom_sizes", mode: "copy",  overwrite: false
 
@@ -123,6 +124,7 @@ process PREP_TASK_SHEET {
 }
 
 process DUMP_HAL_GENOME_SEQS {
+    label "rc_16Gb"
 
     publishDir "${hal_cache}/genome/2bit", mode: "copy",  overwrite: false
 
@@ -171,7 +173,7 @@ process MAKE_SOURCE_BED {
 }
 
 process HAL_LIFTOVER {
-    label "rc_1Gb"
+    label "rc_16Gb"
 
     input:
     tuple val(task_params), path(liftover_source_bed)
