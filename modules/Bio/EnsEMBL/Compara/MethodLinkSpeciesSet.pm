@@ -409,11 +409,11 @@ sub filename {
 sub _get_unique_filename {
     my $self = shift;
 
-    my $name = $self->filename;
-
     if (!$self->adaptor) {
         throw("Cannot get unique filename without MLSS adaptor");
     }
+
+    my $name = $self->filename;
 
     my @supported_method_types = (
         'EPO',
