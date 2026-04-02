@@ -341,6 +341,7 @@ sub pipeline_analyses_dump_trees {
                 ]
             }},
             -rc_name => '16Gb_168_hour_job',
+            -analysis_capacity => 1,
         },
 
         {   -logic_name => 'create_dump_jobs',
