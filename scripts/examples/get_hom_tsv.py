@@ -174,8 +174,12 @@ def download_homology_tsv_set(
         RuntimeError: If a downloaded file has an unexpected file size
             or MD5 digest, or if downloaded files have inconsistent
             column names.
+        ValueError: If the homology types list is empty.
     """
     out_file_path = Path(output_file)
+
+    if homology_types is not None and not homology_types:
+        raise ValueError("cannot filter homologies by homology type, as the list of homology types is empty")
 
     with TemporaryDirectory(prefix="tmp_hom_tsv_", dir=out_file_path.parent) as tmp_dir:
         tmp_dir_path = Path(tmp_dir)
