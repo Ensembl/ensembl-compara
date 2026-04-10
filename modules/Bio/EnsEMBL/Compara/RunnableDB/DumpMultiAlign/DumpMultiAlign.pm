@@ -115,19 +115,25 @@ sub write_output {
 sub _healthcheck {
     my ($self) = @_;
     
-    my $output_file = $self->param('output_file');
+    my $output_file_pattern = $self->param('output_file');
 
-    my $cmd;
+    my $cmd_prefix;
     if ($self->param('format') eq "emf") {
-        $cmd = "grep '^DATA\$' " . $output_file . " | wc -l";
-
+        $cmd_prefix = "grep '^DATA\$' ";
     } elsif ($self->param('format') eq "maf") {
-	$cmd = "grep ^a " . $output_file . " | wc -l";
+        $cmd_prefix = "grep ^a ";
     } else {
         die '_healthcheck() is not implemented for '.$self->param('format')."\n";
     }
-    my $num_blocks = $self->get_command_output($cmd);
-    chomp $num_blocks;
+
+    my $num_blocks = 0;
+    while (my $output_file = glob($output_file_pattern)) {  # we may need to check all supercontig* files
+        my $cmd = $cmd_prefix . $output_file . " | wc -l";
+        my $file_block_count = $self->get_command_output($cmd);
+        chomp $file_block_count;
+        $num_blocks += $file_block_count;
+    }
+
     if ($num_blocks != $self->param('num_blocks')) {
 	die("Number of block dumped is $num_blocks but should be " . $self->param('num_blocks'));
     } else {
