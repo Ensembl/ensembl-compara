@@ -289,7 +289,6 @@ def find_homology_tsv_file_sets(
     compara: str,
     release: Optional[int] = None,
     member_type: str = "protein",
-    clusterset_id: Optional[str] = None,
 ) -> dict[str, list[dict]]:
     """Find homology TSV file sets.
 
@@ -298,8 +297,6 @@ def find_homology_tsv_file_sets(
         compara: Compara resource.
         release: Ensembl release (default: current).
         member_type: Member sequence type.
-        clusterset_id: If specified, this must be the clusterset_id of the
-            gene-tree collection from which homologies should be taken.
 
     Returns:
         Mapping of label to homology TSV file set, where each file set
@@ -360,8 +357,10 @@ def find_homology_tsv_file_sets(
                 gdb_dir_recs[item_name]["rel_path"] = item_name
                 genomes_to_find.remove(item_name)
             elif match := hom_tsv_file_re.fullmatch(item_name):
+                file_member_type = match["member_type"]
                 file_cset_id = match["clusterset_id"]
-                if match["member_type"] != member_type or (clusterset_id and file_cset_id != clusterset_id):
+
+                if file_member_type != member_type:
                     continue
 
                 main_rec = {
@@ -408,10 +407,10 @@ def find_homology_tsv_file_sets(
 
             for item_name in gdb_dir_item_names:
                 if match := hom_tsv_file_re.fullmatch(item_name):
+                    file_member_type = match["member_type"]
                     file_cset_id = match["clusterset_id"]
-                    if match["member_type"] != member_type or (
-                        clusterset_id and file_cset_id != clusterset_id
-                    ):
+
+                    if file_member_type != member_type:
                         continue
 
                     gdb_rec = {
@@ -493,7 +492,6 @@ def main():
         "--eg-release", metavar="INT", type=int, help="Ensembl Genomes release (default: current)."
     )
 
-    parser.add_argument("--clusterset-id", metavar="STR", help="Gene-tree collection clusterset ID.")
     parser.add_argument(
         "--member-type",
         choices=("protein", "ncrna"),
@@ -542,7 +540,6 @@ def main():
         args.compara,
         release=ensembl_release,
         member_type=args.member_type,
-        clusterset_id=args.clusterset_id,
     )
 
     if not homology_tsv_file_sets:
