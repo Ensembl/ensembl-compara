@@ -64,8 +64,8 @@ _FTP_META: dict[str, dict[str, Any]] = {
         "host": "ftp.ensemblgenomes.ebi.ac.uk",
         "path_prefix_template": "pub/fungi/release-${eg_version}",
         "current_path_prefix": "pub/fungi/current",
-        "min_ensembl_version": 98,
-        "min_eg_version": 45,
+        "min_ensembl_version": 114,
+        "min_eg_version": 61,
     },
     "metazoa": {
         "host": "ftp.ensemblgenomes.ebi.ac.uk",
@@ -78,8 +78,8 @@ _FTP_META: dict[str, dict[str, Any]] = {
         "host": "ftp.ensemblgenomes.ebi.ac.uk",
         "path_prefix_template": "pub/release-${eg_version}/${pan_ensembl}",
         "current_path_prefix": "pub/current/pan",
-        "min_ensembl_version": 97,
-        "min_eg_version": 44,
+        "min_ensembl_version": 114,
+        "min_eg_version": 61,
     },
     "plants": {
         "host": "ftp.ensemblgenomes.ebi.ac.uk",
@@ -92,8 +92,8 @@ _FTP_META: dict[str, dict[str, Any]] = {
         "host": "ftp.ensemblgenomes.ebi.ac.uk",
         "path_prefix_template": "pub/protists/release-${eg_version}",
         "current_path_prefix": "pub/protists/current",
-        "min_ensembl_version": 97,
-        "min_eg_version": 44,
+        "min_ensembl_version": 114,
+        "min_eg_version": 61,
     },
     "vertebrates": {
         "host": "ftp.ensembl.org",
