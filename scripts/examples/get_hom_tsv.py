@@ -278,7 +278,7 @@ def download_homology_tsv_set(
                             or row[hom_species_col_idx] not in genome_names
                         ):
                             continue
-                        if homology_types and row[hom_type_col_idx] not in homology_types:
+                        if homology_types is not None and row[hom_type_col_idx] not in homology_types:
                             continue
                         writer.writerow(row)
 
