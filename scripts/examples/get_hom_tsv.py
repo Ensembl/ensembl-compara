@@ -105,6 +105,20 @@ _FTP_META: dict[str, dict[str, Any]] = {
 
 _COMPARA_NAMES = list(_FTP_META.keys())
 
+_KNOWN_HOMOLOGY_TYPES = set(
+    [
+        "gene_split",
+        "homoeolog_many2many",
+        "homoeolog_one2many",
+        "homoeolog_one2one",
+        "ortholog_many2many",
+        "ortholog_one2many",
+        "ortholog_one2one",
+        "other_paralog",
+        "within_species_paralog",
+    ]
+)
+
 
 class HomologyTSV(csv.Dialect):
     """Homology TSV dialect."""
@@ -138,7 +152,10 @@ def compute_file_md5sum(file_path):
 
 # pylint: disable-next=too-many-branches
 def download_homology_tsv_set(
-    hom_tsv_file_set: list[dict], genome_names: Sequence[str], output_file: str
+    hom_tsv_file_set: list[dict],
+    genome_names: Sequence[str],
+    output_file: str,
+    homology_types: Optional[list[str]] = None,
 ) -> None:
     """Download TSV file of homologies involving specified genome(s).
 
@@ -150,6 +167,8 @@ def download_homology_tsv_set(
         genome_names: Sequence of names of one or more genomes for which
             homologies should be downloaded.
         output_file: Output homology TSV file path.
+        homology_types: If specified, filter homologies to keep only those
+            of the specified homology types.
 
     Raises:
         RuntimeError: If a downloaded file has an unexpected file size
@@ -170,6 +189,7 @@ def download_homology_tsv_set(
 
             hom_tsv_col_names = None
             species_col_idx = None
+            hom_type_col_idx = None
             hom_species_col_idx = None
             for file_rec in hom_tsv_file_set:
                 file_url = file_rec["file_url"]
@@ -235,6 +255,7 @@ def download_homology_tsv_set(
                         hom_tsv_col_names = tmp_in_file_col_names
                         writer.writerow(hom_tsv_col_names)
                         species_col_idx = hom_tsv_col_names.index("species")
+                        hom_type_col_idx = hom_tsv_col_names.index("homology_type")
                         hom_species_col_idx = hom_tsv_col_names.index("homology_species")
                     elif tmp_in_file_col_names != hom_tsv_col_names:
                         raise RuntimeError(
@@ -245,6 +266,9 @@ def download_homology_tsv_set(
                         species_col_idx is not None
                     ), "'species' column index required to filter homologies by genome"
                     assert (
+                        hom_type_col_idx is not None
+                    ), "'homology_type' column index required to filter homologies by homology type"
+                    assert (
                         hom_species_col_idx is not None
                     ), "'homology_species' column index required to filter homologies by genome"
 
@@ -252,7 +276,9 @@ def download_homology_tsv_set(
                         if (
                             row[species_col_idx] not in genome_names
                             or row[hom_species_col_idx] not in genome_names
-                        ):  # pylint: disable=possibly-used-before-assignment
+                        ):
+                            continue
+                        if not homology_types or row[hom_type_col_idx] not in homology_types:
                             continue
                         writer.writerow(row)
 
@@ -499,6 +525,12 @@ def main():
         help="Member sequence type (default: 'protein').",
     )
 
+    parser.add_argument(
+        "--homology-type-list",
+        metavar="STR",
+        help="Comma-separated list of homology types (default: all supported homology types).",
+    )
+
     output_group = parser.add_mutually_exclusive_group(required=True)
     output_group.add_argument("-o", "--output-file", metavar="PATH", help="Output homology TSV file.")
     output_group.add_argument(
@@ -528,6 +560,14 @@ def main():
     else:
         genomes = sorted(args.genome_list.split(","))
 
+    if args.homology_type_list:
+        hom_types = set(args.homology_type_list.split(","))
+        unk_hom_types = hom_types - _KNOWN_HOMOLOGY_TYPES
+        if unk_hom_types:
+            raise ValueError(f"unknown homology types: {','.join(unk_hom_types)}")
+    else:
+        hom_types = _KNOWN_HOMOLOGY_TYPES
+
     if args.eg_release:
         ensembl_release = args.eg_release + _EG_RELEASE_OFFSET
     else:
@@ -555,7 +595,7 @@ def main():
             raise ValueError("output file must have extension '.gz'")
 
         logging.info("downloading selected homology TSV file set")
-        download_homology_tsv_set(homology_tsv_file_set, genomes, args.output_file)
+        download_homology_tsv_set(homology_tsv_file_set, genomes, args.output_file, homology_types=hom_types)
 
 
 if __name__ == "__main__":
