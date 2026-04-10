@@ -56,11 +56,11 @@ sub run {
     my $temp_dir = tempdir( CLEANUP => 1, DIR => $self->worker_temp_directory );
     my $temp_cat_tsv_file_path = catfile($temp_dir, $cat_tsv_file_name);
 
-    my $cmd1 = "cp $first_input_tsv_file $temp_cat_tsv_file_path";
+    my $cmd1 = qq/awk '\$5 != "alt_allele" {print \$0}' $first_input_tsv_file > $temp_cat_tsv_file_path/;
     $self->run_command($cmd1, { die_on_failure => 1 });
 
     foreach my $other_input_tsv_file (@other_input_tsv_files) {
-        my $cmd2 = "tail -n +2 $other_input_tsv_file >> $temp_cat_tsv_file_path";
+        my $cmd2 = qq/tail -n +2 $other_input_tsv_file | awk '\$5 != "alt_allele" {print \$0}' >> $temp_cat_tsv_file_path/;
         $self->run_command($cmd2, { die_on_failure => 1 });
     }
 
@@ -104,6 +104,10 @@ sub _healthcheck {
     foreach my $hc_type (@{$healthcheck_list}) {
         if ( $hc_type eq 'line_count' ) {
             my $exp_line_count = $self->param_required('exp_line_count') + 1; # incl header line
+
+            my $num_alt_allele_homologies = $self->_count_alt_allele_homologies();
+            $exp_line_count -= $num_alt_allele_homologies; # excl alt-allele homologies
+
             check_line_counts($temp_cat_csv_file_path, $exp_line_count);
         } elsif ( $hc_type eq 'unexpected_nulls' ) {
             check_for_null_characters($temp_cat_csv_file_path);
@@ -113,5 +117,21 @@ sub _healthcheck {
     }
 }
 
+
+sub _count_alt_allele_homologies {
+    my $self = shift;
+
+    my @input_tsv_files = grep { defined $_ } @{$self->param_required('tsv_files')};
+
+    my $num_alt_alleles = 0;
+    foreach my $input_tsv_file (@input_tsv_files) {
+        my $cmd = qq/awk '\$5 == "alt_allele" {print \$0}' $input_tsv_file | wc -l/;
+        my $file_alt_allele_count = $self->get_command_output($cmd);
+        chomp $file_alt_allele_count;
+        $num_alt_alleles += $file_alt_allele_count;
+    }
+
+    return $num_alt_alleles;
+}
 
 1;
