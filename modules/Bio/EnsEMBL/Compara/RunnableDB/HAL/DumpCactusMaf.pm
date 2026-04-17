@@ -41,6 +41,13 @@ use Bio::EnsEMBL::Hive::Utils qw(destringify);
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
+sub param_defaults {
+    return {
+        'max_block_length_to_dump' => 1_000_000,
+    }
+}
+
+
 sub pre_cleanup {
     my $self = shift;
 
@@ -59,12 +66,18 @@ sub pre_cleanup {
 sub fetch_input {
     my $self = shift;
 
-    my $mlss_id = $self->param_required('mlss_id');
-    my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
-    my $species_map = destringify($mlss->get_value_for_tag('hal_mapping', '{}'));
+    if (!$self->param_is_defined('hal_file')) {
+        my $mlss_id = $self->param_required('mlss_id');
+        my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+        $self->param('hal_file', $mlss->url);
+    }
 
-    $self->param('target_genomes', [values %{$species_map}]);
-    $self->param('hal_file', $mlss->url);
+    if (!$self->param_is_defined('target_genomes')) {
+        my $mlss_id = $self->param_required('mlss_id');
+        my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($mlss_id);
+        my $species_map = destringify($mlss->get_value_for_tag('hal_mapping', '{}'));
+        $self->param('target_genomes', join(',', values %{$species_map}));
+    }
 }
 
 
@@ -90,8 +103,10 @@ sub run {
         $self->param_required('chunk_offset'),
         '--length',
         $chunk_length,
+        '--maxBlockLen',
+        $self->param_required('max_block_length_to_dump'),
         '--targetGenomes',
-        join(',', @{$self->param('target_genomes')}),
+        $self->param('target_genomes'),
         '--noAncestors',
         '--unique',
     ];
@@ -105,6 +120,7 @@ sub run {
 sub write_output {
     my $self = shift;
 
+    my $hal_chunk_index = $self->param_required('hal_chunk_index');
     my $maf_parent_dir = $self->param_required('maf_parent_dir');
     my $temp_maf_file = $self->param_required('temp_maf_file');
     my $maf_file = $self->param_required('maf_file');
@@ -124,6 +140,7 @@ sub write_output {
     }
 
     my $output_id = {
+        'hal_chunk_index'        => $hal_chunk_index,
         'dumped_maf_block_count' => $maf_block_count,
         'dumped_maf_file'        => $maf_file,
         'maf_parent_dir'         => $maf_parent_dir,

@@ -135,7 +135,9 @@ sub executable_locations {
         'emf2maf_program'                   => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/emf2maf.pl'),
         'ftp_file_check_exe'                => $self->check_exe_in_ensembl('ensembl-compara/scripts/dumps/check_compara_ftp_files.pl'),
         'init_dump_registry_exe'            => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/init_dump_registry.pl'),
+        'left_align_maf_exe'                => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/left_align_maf.py'),
         'list_must_reuse_species_exe'       => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/list_must_reuse_species.py'),
+        'merge_chain_files_exe'             => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/merge_chain_files.py'),
         'msa_stats_report_exe'              => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/msa_stats.pl'),
         'patch_db_exe'                      => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/patch_database.pl'),
         'populate_new_database_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/populate_new_database.pl'),
@@ -144,6 +146,8 @@ sub executable_locations {
         'copy_ancestral_core_exe'           => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/copy_ancestral_core.pl'),
         'gene_tree_stats_report_exe'        => $self->check_exe_in_ensembl('ensembl-compara/scripts/production/gene_tree_stats.pl'),
         'hal_cov_one_seq_chunk_exe'         => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/hal_cov_one_seq_chunk.py'),
+        'map_maf_src_field_exe'             => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/map_maf_src_field.py'),
+        'split_maf_on_gaps_exe'             => $self->check_exe_in_ensembl('ensembl-compara/scripts/hal_alignment/split_maf_on_gaps.py'),
         'symlink_prev_dump_exe'             => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/symlink_prev_dump.py'),
         'xmlschema_validate_exe'            => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/xmlschema_validate.py'),
 
