@@ -134,6 +134,56 @@ sub run {
             )
         );
     }
+
+
+    my $funnel_analysis_id = $self->input_job->analysis_id;
+
+    if (!defined $funnel_analysis_id) {
+        $self->die_no_retry("cannot check semaphores linked to factory job - analysis_id undefined");
+    }
+
+    my $factory_job_sql = q/
+        SELECT
+            factory_job.job_id
+        FROM
+            job AS funnel_job
+        JOIN
+            job AS factory_job ON factory_job.job_id = funnel_job.prev_job_id
+        WHERE
+            funnel_job.job_id = ?
+    /;
+
+    my $factory_job_id = $helper->execute_single_result(-SQL => $factory_job_sql, -PARAMS => [$job_id]);
+
+    my $semaphore_sql = q/
+        SELECT
+            semaphore.semaphore_id
+        FROM
+            job AS fan_job
+        JOIN
+            semaphore ON fan_job.controlled_semaphore_id = semaphore.semaphore_id
+        JOIN
+            job AS dep_job ON semaphore.dependent_job_id = dep_job.job_id
+        WHERE
+            dep_job.analysis_id = ?
+        AND
+            fan_job.prev_job_id = ?
+    /;
+
+    my $semaphore_ids = $helper->execute_simple(-SQL => $semaphore_sql, -PARAMS => [$funnel_analysis_id, $factory_job_id]);
+
+    my %semaphore_id_set = map { $_ => 1 } @{$semaphore_ids};
+    my @unique_semaphore_ids = sort { $a <=> $b } keys %semaphore_id_set;
+
+    if (scalar(@unique_semaphore_ids) > 1) {
+        $self->die_no_retry(
+            sprintf(
+                "factory job %d linked to multiple semaphores: %s",
+                $factory_job_id,
+                join(', ', @unique_semaphore_ids),
+            )
+        );
+    }
 }
 
 
