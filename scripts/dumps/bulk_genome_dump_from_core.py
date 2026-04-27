@@ -16,6 +16,7 @@
 """
 Wrapper of dump_genome_from_core.pl to dump a list of FASTA files
 """
+
 import argparse
 import subprocess
 import os
@@ -25,8 +26,10 @@ import shlex
 
 import yaml
 
+from typing import Optional, List, Dict, TextIO
 
-def setup_logging():
+
+def setup_logging() -> None:
     """
     Sets up logging configuration.
     """
@@ -35,7 +38,7 @@ def setup_logging():
     )
 
 
-def parse_arguments():
+def parse_arguments() -> argparse.Namespace:
     """
     Parses command-line arguments.
 
@@ -51,12 +54,12 @@ def parse_arguments():
 
 
 def subprocess_call(
-    command,
-    stdout_file="/dev/null",
-    stderr_file="/dev/null",
-    use_job_scheduler=False,
-    job_name=None,
-):
+    command: List[str],
+    stdout_file: str = "/dev/null",
+    stderr_file: str = "/dev/null",
+    use_job_scheduler: Optional[bool] = False,
+    job_name: Optional[str] = None,
+) -> str:
     """
     Subprocess function to execute the given command line.
 
@@ -65,7 +68,7 @@ def subprocess_call(
         stdout_file (str): Job scheduler standard output file (default: '/dev/null').
         stderr_file (str): Job scheduler standard error file (default: '/dev/null').
         use_job_scheduler (bool): If True, the command will be submitted to the Slurm job scheduler.
-        job_name (bool): If using the job scheduler, this sets the job name.
+        job_name (str): If using the job scheduler, this sets the job name.
 
     Returns:
         str: The subprocess output or None otherwise.
@@ -74,7 +77,6 @@ def subprocess_call(
         RuntimeError if the subprocess return code is nonzero.
     """
     if use_job_scheduler:
-
         if not job_name:
             job_name = os.path.basename(__file__)
 
@@ -113,15 +115,15 @@ def subprocess_call(
 
 
 def download_file(
-    host,
-    port,
-    core_db,
-    fasta_filename,
-    stdout_file="/dev/null",
-    stderr_file="/dev/null",
-    genome_component="",
-    mask="soft",
-):
+    host: str,
+    port: str,
+    core_db: str,
+    fasta_filename: str,
+    stdout_file: str = "/dev/null",
+    stderr_file: str = "/dev/null",
+    genome_component: Optional[str] = "",
+    mask: str = "soft",
+) -> str:
     """
     Download the FASTA file from the core DB using a PERL script `dump_genome_from_core.pl`.
 
@@ -191,7 +193,7 @@ def download_file(
         raise
 
 
-def query_coredb(host, core_db, query):
+def query_coredb(host: str, core_db: str, query: str) -> str:
     """
     Get the correct meta production name.
 
@@ -207,7 +209,7 @@ def query_coredb(host, core_db, query):
     return subprocess_call(command=mysql_call)
 
 
-def parse_yaml(file):
+def parse_yaml(file: TextIO) -> List[Dict[str, str]]:
     """
     YAML parser.
 
@@ -283,7 +285,7 @@ def parse_yaml(file):
     return download_content
 
 
-def main():
+def main() -> None:
     """
     Main function to parse arguments and handle the processing of a YAML file to dump a list of FASTA files.
     """
