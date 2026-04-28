@@ -433,7 +433,7 @@ The assembly is "the version of the highest coordinate system":
 
 .. code-block:: sql
 
-   SELECT version FROM coord_system WHERE rank = 1;
+   SELECT version FROM coord_system WHERE coord_system.rank = 1;
 
 Make sure you are using the same version in your master database:
 
