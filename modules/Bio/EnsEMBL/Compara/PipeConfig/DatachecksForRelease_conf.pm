@@ -79,6 +79,8 @@ sub default_options {
     };
 }
 
+sub no_compara_schema {}
+
 sub hive_meta_table {
     my ($self) = @_;
 
