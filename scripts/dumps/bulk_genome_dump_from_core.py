@@ -24,9 +24,10 @@ import sys
 import logging
 import shlex
 
+from typing import Optional, List, Dict, TextIO
+
 import yaml
 
-from typing import Optional, List, Dict, TextIO
 
 
 def setup_logging() -> None:
