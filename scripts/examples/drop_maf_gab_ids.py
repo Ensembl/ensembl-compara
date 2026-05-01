@@ -55,6 +55,8 @@ class ComparaMafPreprocessor(Iterator):
 
         return line
 
+    # File readline method does not have a docstring.
+    # pylint: disable-next=missing-function-docstring
     def readline(self):
         try:
             line = next(self)
