@@ -17,7 +17,10 @@
 
 from argparse import ArgumentParser
 from collections.abc import Iterator
+from pathlib import Path
 import re
+import shutil
+from tempfile import TemporaryDirectory
 
 from Bio.AlignIO.MafIO import MafIterator, MafWriter
 
@@ -68,10 +71,18 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    with open(args.output_maf, mode="w", encoding="utf-8") as out_file_obj:
-        maf_writer = MafWriter(out_file_obj)
-        maf_writer.write_header()
-        with open(args.input_maf, encoding="utf-8") as in_file_obj:
-            preprocessed_lines = ComparaMafPreprocessor(in_file_obj)
-            for maf_block in MafIterator(preprocessed_lines):
-                maf_writer.write_alignment(maf_block)
+    in_maf_path = Path(args.input_maf)
+    out_maf_path = Path(args.output_maf)
+
+    with TemporaryDirectory(dir=out_maf_path.parent) as tmp_dir:
+        tmp_dir_path = Path(tmp_dir)
+        tmp_maf_path = tmp_dir_path / out_maf_path.name
+        with open(tmp_maf_path, mode="w", encoding="utf-8") as out_file_obj:
+            maf_writer = MafWriter(out_file_obj)
+            maf_writer.write_header()
+            with open(in_maf_path, encoding="utf-8") as in_file_obj:
+                preprocessed_lines = ComparaMafPreprocessor(in_file_obj)
+                for maf_block in MafIterator(preprocessed_lines):
+                    maf_writer.write_alignment(maf_block)
+
+        shutil.move(tmp_maf_path, out_maf_path)
