@@ -38,12 +38,25 @@ class ComparaMafPreprocessor(Iterator):
             if line.startswith("a"):
                 comment_regex = re.compile(r"#[^\r\n]*")
                 line = comment_regex.sub("", line)
-                next_line = next(self.stream)
-                name_value_pair_regex = re.compile(r"\s*(\S+=\S+)(\s+\S+=\S+)*\s*")
-                if name_value_pair_regex.fullmatch(next_line):
-                    line = line.rstrip() + next_line
+
+                try:
+                    next_line = next(self.stream)
+                except StopIteration:
+                    pass
                 else:
-                    self.cached_line = next_line
+                    name_value_pair_regex = re.compile(r"\s*(\S+=\S+)(\s+\S+=\S+)*\s*")
+                    if name_value_pair_regex.fullmatch(next_line):
+                        line = line.rstrip() + next_line
+                    else:
+                        self.cached_line = next_line
+
+        return line
+
+    def readline(self):
+        try:
+            line = next(self)
+        except StopIteration:
+            line = ""
         return line
 
 
