@@ -88,7 +88,6 @@ This pipeline makes use of various tools for processing alignments, including:
 - halStats v2.2 ( Hickey et al. 2013; https://doi.org/10.1093/bioinformatics/btt128 )
 - maf-convert, part of LAST 1642 ( Kielbasa et al. 2011; https://doi.org/10.1101/gr.113985.110 )
 - mafDuplicateFilter, commit c101dedb2c1c8339bc284e3a16000bc4523f5da3 ( Earl et al. 2014; https://doi.org/10.1101/gr.174920.114 )
-- mafToBigMaf, part of kent v487 (Casper et al. 2025; https://doi.org/10.1093/nar/gkaf1250 )
 - NumPy 1.24.3 ( Harris et al. 2020; https://doi.org/10.1038/s41586-020-2649-2 )
 - taffy, commit 1329d999948ad4acc10116276fa7a9752a749595 ( https://github.com/ComparativeGenomicsToolkit/taffy )
 - validateFiles v4.7 ( Casper et al. 2025; https://doi.org/10.1093/nar/gkaf1250 )
