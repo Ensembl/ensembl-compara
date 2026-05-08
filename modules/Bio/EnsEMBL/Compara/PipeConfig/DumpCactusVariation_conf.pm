@@ -76,7 +76,7 @@ The main steps of the DumpCactusVariation pipeline are as follows:
 
 8. Finally, validateFiles validates each output bigChain file.
 
-=head2 Software
+=head2 Software/references
 
 This pipeline makes use of various tools for processing alignments, including:
 - bedToBigBed v. 2.8 ( Kent et al. 2010; https://doi.org/10.1093/bioinformatics/btq351 )
@@ -91,6 +91,9 @@ This pipeline makes use of various tools for processing alignments, including:
 - NumPy 1.24.3 ( Harris et al. 2020; https://doi.org/10.1038/s41586-020-2649-2 )
 - taffy, commit 1329d999948ad4acc10116276fa7a9752a749595 ( https://github.com/ComparativeGenomicsToolkit/taffy )
 - validateFiles v4.7 ( Casper et al. 2025; https://doi.org/10.1093/nar/gkaf1250 )
+
+Additionally, the pipeline implements variant normalisation along the lines
+described in Tan et al. 2015 ( https://doi.org/10.1093/bioinformatics/btv112 ).
 
 =cut
 
