@@ -88,10 +88,12 @@ use strict;
 use warnings;
 
 use Array::Utils qw(array_minus intersect);
-use Cwd;
-use File::Find;
+use Cwd qw(getcwd);
+use File::Spec::Functions qw(catdir catfile file_name_is_absolute splitpath);
+use File::Temp qw(tempfile);
 use Getopt::Long;
 use List::Util qw(all);
+use Net::FTP;
 use Pod::Usage;
 use Text::CSV;
 
@@ -107,6 +109,9 @@ use Bio::EnsEMBL::Hive::Utils qw(go_figure_dbc);
 use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::IO qw(spurt);
 
+
+my $PAN_REDUB_RELEASE = 114;
+my $PER_GDB_HOM_TSV_META_RELEASE = 116;
 
 my %ftp_path_prefix_map = (
     'CONSTRAINED_ELEMENT' => {
@@ -142,6 +147,45 @@ my %ftp_path_prefix_map = (
 );
 
 
+sub ftp_is_dir {
+    my ($ftp, $path) = @_;
+
+    my $pwd = $ftp->pwd();
+    my $is_dir = $ftp->cwd($path);
+    $ftp->cwd($pwd);
+
+    return $is_dir ? 1 : 0;
+}
+
+
+sub ftp_listdir {
+    my ($ftp, $path) = @_;
+
+    my $pwd = $ftp->pwd();
+    my $is_dir = $ftp->cwd($path);
+    my $items = $ftp->ls() if ($is_dir);
+    $ftp->cwd($pwd);
+
+    if (!$is_dir) {
+        throw(
+            sprintf(
+                "cannot obtain FTP directory listing; path '%s' on host '%s' is not a directory",
+                $path,
+                $ftp->host,
+            )
+        );
+    }
+
+    return $items;
+}
+
+
+sub ftp_path_url {
+    my ($ftp, $path) = @_;
+    return sprintf('https://%s/%s', $ftp->host, $path);
+}
+
+
 sub get_compara_schema_table_names {
     my ($release) = @_;
 
@@ -161,6 +205,36 @@ sub get_compara_schema_table_names {
     }
 
     return \@exp_compara_table_names;
+}
+
+
+sub get_ftp_site_info {
+    my ($compara_division, $ensembl_release) = @_;
+
+    my $ftp_host_name;
+    my $ftp_base_path;
+    if ($compara_division eq 'vertebrates') {
+
+        $ftp_host_name = 'ftp.ensembl.org';
+        $ftp_base_path = "pub/release-${ensembl_release}";
+
+    } else {
+
+        my $div_path_part = $compara_division eq 'pan' && $ensembl_release < $PAN_REDUB_RELEASE
+                          ? 'pan_ensembl'
+                          : $compara_division
+                          ;
+
+        my $eg_release = $ensembl_release - 53;
+
+        $ftp_host_name = 'ftp.ensemblgenomes.ebi.ac.uk';
+        $ftp_base_path = "pub/${div_path_part}/release-${eg_release}"
+    }
+
+    return {
+        'host' => $ftp_host_name,
+        'base_path' => $ftp_base_path,
+    }
 }
 
 
@@ -280,7 +354,7 @@ GetOptions(
 ) or pod2usage(-verbose => 2);
 
 pod2usage(-exitvalue => 0, -verbose => 1) if $help;
-pod2usage(-verbose => 1) if !$dump_dir or !$outfile;
+pod2usage(-verbose => 1) if !$outfile;
 
 
 if ($pipeline_url && $reg_conf) {
@@ -456,6 +530,7 @@ foreach my $row (@{$clusterset_results}) {
         my $hom_tsv_file_path = $genome_rel_path . '/' . $hom_tsv_file_name;
         push(@hom_tsv_file_paths, $hom_tsv_file_path);
 
+        next if $release < $PER_GDB_HOM_TSV_META_RELEASE;
         my $hom_tsv_md5sum_file_path = $genome_rel_path . '/' . 'MD5SUM';
         my $hom_tsv_readme_file_path = $genome_rel_path . '/' . 'README.gene_trees.tsv_dumps.txt';
         push(@hom_tsv_meta_file_paths, ($hom_tsv_md5sum_file_path, $hom_tsv_readme_file_path));
@@ -560,6 +635,27 @@ if ($include_mysql) {
     }
 }
 
+my $ftp;
+my $ftp_base_path;
+if ($dump_dir) {
+
+    print STDERR "Checking Ensembl FTP dump directory ... \n";
+    if (! -d $dump_dir) {
+        throw(sprintf("cannot access Ensembl FTP dump directory at '%s'", $dump_dir));
+    }
+
+} else {
+    my $ftp_info = get_ftp_site_info($division, $release);
+    $ftp_base_path = $ftp_info->{'base_path'};
+    $ftp = Net::FTP->new($ftp_info->{'host'}) or throw("Failed to connect to FTP host: $@");
+    $ftp->login;
+
+    print STDERR "Checking Ensembl FTP site; symlink checks will be skipped ... \n";
+    if (!ftp_is_dir($ftp, $ftp_base_path)) {
+        throw(sprintf("cannot access Ensembl FTP site at '%s'", ftp_path_url($ftp, $ftp_base_path)));
+    }
+}
+
 my %issues;
 foreach my $data_type (sort keys %expectations) {
 
@@ -570,21 +666,38 @@ foreach my $data_type (sort keys %expectations) {
         next if !$include_mysql && $format eq 'mysql';
 
         my $path_prefix = $ftp_path_prefix_map{$data_type}{$format};
-        my $data_path = $dump_dir . '/' . $path_prefix;
+        my $data_path;
+        if ($ftp) {
+            $data_path = $ftp_base_path . '/' . $path_prefix;
+            if (!ftp_is_dir($ftp, $data_path)) {
+                push(@{$issues{'missing directory'}}, $data_path);
+                next;
+            }
 
-        if (! -d $data_path) {
-            push(@{$issues{'missing directory'}}, $data_path);
-            next;
+        } else {
+            $data_path = catdir($dump_dir, $path_prefix);
+            if (! -d $data_path) {
+                push(@{$issues{'missing directory'}}, $data_path);
+                next;
+            }
         }
 
         foreach my $dset_expectations (@{$expectations{$data_type}{$format}}) {
 
             my $dset_data_path = $data_path;
             if (exists $dset_expectations->{'dir_path'}) {
-                $dset_data_path = catdir($dset_data_path, $dset_expectations->{'dir_path'});
-                if (! -d $dset_data_path) {
-                    push(@{$issues{'missing directory'}}, $dset_data_path);
-                    next;
+                if ($ftp) {
+                    $dset_data_path = $dset_data_path . '/' . $dset_expectations->{'dir_path'};
+                    if (!ftp_is_dir($ftp, $dset_data_path)) {
+                        push(@{$issues{'missing directory'}}, $dset_data_path);
+                        next;
+                    }
+                } else {
+                    $dset_data_path = catdir($dset_data_path, $dset_expectations->{'dir_path'});
+                    if (! -d $dset_data_path) {
+                        push(@{$issues{'missing directory'}}, $dset_data_path);
+                        next;
+                    }
                 }
             }
 
@@ -595,9 +708,18 @@ foreach my $data_type (sort keys %expectations) {
                 }
             }
 
-            opendir(my $dh, $dset_data_path) or throw("can't opendir [$dset_data_path]: $!");
-            my @obs_file_names = grep { ! ( -d catdir($dset_data_path, $_) || $_ =~ /^\./ || $_ =~ /^CHECKSUMS$/ ) } readdir($dh);
-            closedir($dh);
+            my @obs_file_names;
+            if ($ftp) {
+                @obs_file_names = grep  {
+                    ! ( ftp_is_dir($ftp, $dset_data_path . '/' . $_) || $_ =~ /^\./ || $_ =~ /^CHECKSUMS$/ )
+                } @{ftp_listdir($ftp, $dset_data_path)};
+            } else {
+                opendir(my $dh, $dset_data_path) or throw("can't opendir [$dset_data_path]: $!");
+                @obs_file_names = grep {
+                    ! ( -d catdir($dset_data_path, $_) || $_ =~ /^\./ || $_ =~ /^CHECKSUMS$/ )
+                } readdir($dh);
+                closedir($dh);
+            }
 
             my @missing_file_names = array_minus(@exp_file_names, @obs_file_names);
             my @surplus_file_names = array_minus(@obs_file_names, @exp_file_names);
@@ -692,7 +814,7 @@ foreach my $data_type (sort keys %expectations) {
                 push(@{$issues{'surplus file'}}, $surplus_file_path);
             }
 
-            if (@matched_file_paths) {
+            if (@matched_file_paths && !$ftp) {
                 my $cwd = getcwd();
                 chdir($dset_data_path);
 
@@ -732,15 +854,28 @@ foreach my $data_type (sort keys %expectations) {
                 foreach my $rel_dir_path (sort keys %exp_items_by_dir) {
                     my $subdir_path = catdir($dset_data_path, $rel_dir_path);
 
-                    if (! -d $subdir_path) {
-                        push(@{$issues{'missing directory'}}, $subdir_path);
-                        next;
+                    if ($ftp) {
+                        if (!ftp_is_dir($ftp, $subdir_path)) {
+                            push(@{$issues{'missing directory'}}, $subdir_path);
+                            next;
+                        }
+                    } else {
+                        if (! -d $subdir_path) {
+                            push(@{$issues{'missing directory'}}, $subdir_path);
+                            next;
+                        }
                     }
 
                     my @exp_item_names = @{$exp_items_by_dir{$rel_dir_path}};
-                    opendir(my $dh, $subdir_path) or throw("can't opendir [$subdir_path]: $!");
-                    my @obs_item_names = grep { ! ($_ =~ /^\./ || $_ =~ /^CHECKSUMS$/) } readdir($dh);
-                    closedir($dh);
+
+                    my @obs_item_names;
+                    if ($ftp) {
+                        @obs_item_names = grep { ! ($_ =~ /^\./ || $_ =~ /^CHECKSUMS$/) } @{ftp_listdir($ftp, $subdir_path)};
+                    } else {
+                        opendir(my $dh, $subdir_path) or throw("can't opendir [$subdir_path]: $!");
+                        @obs_item_names = grep { ! ($_ =~ /^\./ || $_ =~ /^CHECKSUMS$/) } readdir($dh);
+                        closedir($dh);
+                    }
 
                     my @missing_item_paths = map { catfile($subdir_path, $_) } array_minus(@exp_item_names, @obs_item_names);
                     my @surplus_item_paths = map { catfile($subdir_path, $_) } array_minus(@obs_item_names, @exp_item_names);
@@ -774,7 +909,7 @@ foreach my $data_type (sort keys %expectations) {
                         push(@{$issues{'surplus file'}}, $surplus_item_path);
                     }
 
-                    if (@matched_item_paths) {
+                    if (@matched_item_paths && !$ftp) {
                         my $cwd = getcwd();
                         chdir($subdir_path);
 
@@ -807,6 +942,7 @@ if (%issues) {
     $csv->say($fh, ['issue', 'path']);
     foreach my $issue (sort keys %issues) {
         foreach my $path (sort @{$issues{$issue}}) {
+            $path = ftp_path_url($ftp, $path) if ($ftp);
             $csv->say($fh, [$issue, $path]);
         }
     }
@@ -816,5 +952,7 @@ if (%issues) {
 } else {
     print STDERR "No issues found ... \n";
 }
+
+$ftp->quit if ($ftp);
 
 print STDERR "Done.\n";
