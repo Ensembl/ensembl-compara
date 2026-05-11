@@ -149,8 +149,12 @@ my %ftp_path_prefix_map = (
 
 
 sub ftp_is_dir {
+    # Check if the specified path on the given FTP host is a directory.
     my ($ftp, $path) = @_;
 
+    # We want to check if the path refers to a directory using the
+    # 'cwd' method, but without actually changing the directory. So
+    # we store the $pwd and change back to it as soon as we're done.
     my $pwd = $ftp->pwd();
     my $is_dir = $ftp->cwd($path);
     $ftp->cwd($pwd);
@@ -160,6 +164,7 @@ sub ftp_is_dir {
 
 
 sub ftp_listdir {
+    # List items at the specified path on the given FTP host.
     my ($ftp, $path) = @_;
 
     my $pwd = $ftp->pwd();
@@ -187,6 +192,7 @@ sub ftp_listdir {
 
 
 sub ftp_path_url {
+    # Return HTTPS URL for the given FTP host and path.
     my ($ftp, $path) = @_;
     return sprintf('https://%s/%s', $ftp->host, $path);
 }
