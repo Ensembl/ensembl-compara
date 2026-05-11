@@ -164,7 +164,12 @@ sub ftp_listdir {
 
     my $pwd = $ftp->pwd();
     my $is_dir = $ftp->cwd($path);
-    my $items = $ftp->ls() if ($is_dir);
+    my $items;
+
+    if ($is_dir) {
+        $items = $ftp->ls();
+    }
+
     $ftp->cwd($pwd);
 
     if (!$is_dir) {
