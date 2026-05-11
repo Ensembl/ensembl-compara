@@ -240,7 +240,7 @@ sub get_ftp_site_info {
         my $eg_release = $ensembl_release - 53;
 
         $ftp_host_name = 'ftp.ensemblgenomes.ebi.ac.uk';
-        $ftp_base_path = "pub/${div_path_part}/release-${eg_release}"
+        $ftp_base_path = "pub/release-${eg_release}/${div_path_part}"
     }
 
     return {
