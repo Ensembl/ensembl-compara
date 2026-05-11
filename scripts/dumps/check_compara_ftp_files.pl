@@ -379,6 +379,7 @@ if ($pipeline_url && $reg_conf) {
     throw("one of parameters 'pipeline_url' or 'reg_conf' must be specified");
 }
 
+my %registry_name_set = map { $_ => 1 } @{Bio::EnsEMBL::Registry->get_all_species()};
 
 my $compara_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba($compara_db);
 
@@ -541,7 +542,15 @@ foreach my $row (@{$clusterset_results}) {
     push(@hom_tsv_file_names, $hom_tsv_file_name);
 
     foreach my $gdb (@{$mlss->species_set->genome_dbs}) {
-        my $genome_rel_path = $gdb->_get_ftp_dump_relative_path();
+        my $gdb_name = $gdb->name;
+
+        my $genome_rel_path;
+        if (exists $registry_name_set{$gdb_name}) {
+            $genome_rel_path = $gdb->_get_ftp_dump_relative_path();
+        } else {
+            print STDERR "GenomeDB '$gdb_name' missing from registry; taking GenomeDB name as path ... \n";
+            $genome_rel_path = $gdb_name;
+        }
 
         # Homology TSV file concatenated per genome.
         my $hom_tsv_file_path = $genome_rel_path . '/' . $hom_tsv_file_name;
