@@ -27,7 +27,7 @@ from contextlib import nullcontext as does_not_raise
 import filecmp
 from pathlib import Path
 import subprocess
-from typing import Any, ContextManager, Dict, Iterable, List, Mapping, Tuple
+from typing import Any, ContextManager, Dict, Iterable, List, Mapping, Optional, Tuple
 
 import pytest
 from pytest import raises
@@ -75,7 +75,7 @@ class TestTools:
 class TestUcscUtils:
     """Tests :mod:`ucsc` utils submodule."""
 
-    ref_file_dir = None  # type: Path
+    ref_file_dir: Optional[Path] = None
 
     @pytest.fixture(scope="class", autouse=True)
     def setup(self) -> None:
@@ -106,7 +106,7 @@ class TestUcscUtils:
 class TestHalUtils:
     """Tests :mod:`ucsc` utils submodule."""
 
-    ref_file_dir = None  # type: Path
+    ref_file_dir: Optional[Path] = None
 
     @pytest.fixture(scope="class", autouse=True)
     def setup(self) -> None:
