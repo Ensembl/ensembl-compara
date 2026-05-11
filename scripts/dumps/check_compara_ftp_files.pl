@@ -112,6 +112,7 @@ use Bio::EnsEMBL::Utils::IO qw(spurt);
 
 my $PAN_REDUB_RELEASE = 114;
 my $PER_GDB_HOM_TSV_META_RELEASE = 116;
+my $SPECIES_TREE_LABEL_FIX_RELEASE = 112;
 
 my %ftp_path_prefix_map = (
     'CONSTRAINED_ELEMENT' => {
@@ -423,13 +424,18 @@ foreach my $mlss (@{$cons_score_mlsses}) {
 
 print STDERR "Checking for SPECIES_TREE expectations ... \n";
 
-my $species_tree_sql = q/
+my $species_tree_label = $release >= $SPECIES_TREE_LABEL_FIX_RELEASE
+                       ? q/REPLACE(label, ' ', '_')/
+                       : q/label/
+                       ;
+
+my $species_tree_sql = qq/
     SELECT
         CONCAT(
             CONCAT_WS(
                 '_',
                 REPLACE(name, ' ', '_'),
-                REPLACE(label, ' ', '_')
+                $species_tree_label
             ),
             '.nh'
         ) AS species_tree_file_name
