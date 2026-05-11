@@ -52,6 +52,7 @@ class TestPrepTaskSheet:
         tmp_path: Path,
     ) -> None:
         """Tests ``prep_task_sheet.py`` script."""
+        assert self.ref_file_dir is not None
 
         in_file_path = self.ref_file_dir / "task_sheets" / in_file_name
         chrom_sizes_dir = self.ref_file_dir / "aln_cache" / "genome" / "chrom_sizes"

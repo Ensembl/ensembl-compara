@@ -67,6 +67,7 @@ class TestHalLiftover:
         tmp_path: Path,
     ) -> None:
         """Tests ``hal-liftover`` console script."""
+        assert self.ref_file_dir is not None
         mocker.patch("subprocess.run", side_effect=mock_two_bit_to_fa)
 
         hal_file_path = self.ref_file_dir / hal_file
