@@ -17,7 +17,10 @@
 
 from argparse import ArgumentParser
 from collections.abc import Iterator
+from pathlib import Path
 import re
+import shutil
+from tempfile import TemporaryDirectory
 
 from Bio.AlignIO.MafIO import MafIterator, MafWriter
 
@@ -38,12 +41,27 @@ class ComparaMafPreprocessor(Iterator):
             if line.startswith("a"):
                 comment_regex = re.compile(r"#[^\r\n]*")
                 line = comment_regex.sub("", line)
-                next_line = next(self.stream)
-                name_value_pair_regex = re.compile(r"\s*(\S+=\S+)(\s+\S+=\S+)*\s*")
-                if name_value_pair_regex.fullmatch(next_line):
-                    line = line.rstrip() + next_line
+
+                try:
+                    next_line = next(self.stream)
+                except StopIteration:
+                    pass
                 else:
-                    self.cached_line = next_line
+                    name_value_pair_regex = re.compile(r"\s*(\S+=\S+)(\s+\S+=\S+)*\s*")
+                    if name_value_pair_regex.fullmatch(next_line):
+                        line = line.rstrip() + next_line
+                    else:
+                        self.cached_line = next_line
+
+        return line
+
+    # File readline method does not have a docstring.
+    # pylint: disable-next=missing-function-docstring
+    def readline(self):
+        try:
+            line = next(self)
+        except StopIteration:
+            line = ""
         return line
 
 
@@ -55,10 +73,18 @@ if __name__ == "__main__":
 
     args = parser.parse_args()
 
-    with open(args.output_maf, mode="w", encoding="utf-8") as out_file_obj:
-        maf_writer = MafWriter(out_file_obj)
-        maf_writer.write_header()
-        with open(args.input_maf, encoding="utf-8") as in_file_obj:
-            preprocessed_lines = ComparaMafPreprocessor(in_file_obj)
-            for maf_block in MafIterator(preprocessed_lines):
-                maf_writer.write_alignment(maf_block)
+    in_maf_path = Path(args.input_maf)
+    out_maf_path = Path(args.output_maf)
+
+    with TemporaryDirectory(dir=out_maf_path.parent) as tmp_dir:
+        tmp_dir_path = Path(tmp_dir)
+        tmp_maf_path = tmp_dir_path / out_maf_path.name
+        with open(tmp_maf_path, mode="w", encoding="utf-8") as out_file_obj:
+            maf_writer = MafWriter(out_file_obj)
+            maf_writer.write_header()
+            with open(in_maf_path, encoding="utf-8") as in_file_obj:
+                preprocessed_lines = ComparaMafPreprocessor(in_file_obj)
+                for maf_block in MafIterator(preprocessed_lines):
+                    maf_writer.write_alignment(maf_block)
+
+        shutil.move(tmp_maf_path, out_maf_path)
