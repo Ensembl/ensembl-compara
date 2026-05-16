@@ -142,6 +142,9 @@ my %ftp_path_prefix_map = (
     'LASTZ_NET' => {
         'maf' => 'maf/ensembl-compara/pairwise_alignments',
     },
+    'TRANSLATED_BLAT_NET' => {
+        'maf' => 'maf/ensembl-compara/pairwise_alignments',
+    },
     'DB' => {
         'mysql' => 'mysql',
     }
@@ -641,6 +644,20 @@ if (@lastz_file_names) {
         'data_file_names' => \@lastz_file_names,
     });
 }
+
+print STDERR "Checking for TRANSLATED_BLAT_NET expectations ... \n";
+
+my @tblat_net_file_names;
+foreach my $mlss (@{$mlss_dba->fetch_all_by_method_link_type('TRANSLATED_BLAT_NET')}) {
+    push(@tblat_net_file_names, $mlss->_get_unique_filename() . '.tar.gz');
+}
+
+if (@tblat_net_file_names) {
+    push(@{$expectations{'TRANSLATED_BLAT_NET'}{'maf'}}, {
+        'data_file_names' => \@tblat_net_file_names,
+    });
+}
+
 
 if ($include_mysql) {
     print STDERR "Checking for DB expectations ... \n";
