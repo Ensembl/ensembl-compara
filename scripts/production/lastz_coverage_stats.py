@@ -101,7 +101,7 @@ def calculate_coverage_ratios(results: Iterable[Any]) -> list[dict[str, Any]]:
     Returns:
         A list of dictionaries with the calculated coverage ratios.
     """
-    data = defaultdict(dict)
+    data: defaultdict[Any, dict[str, Any]] = defaultdict(dict)
     for mlss, tag, value in results:
         data[mlss][tag] = value
 
