@@ -16,6 +16,7 @@
 
 import filecmp
 from pathlib import Path
+from typing import Optional
 
 import pytest
 from pytest_console_scripts import ScriptRunner
@@ -24,7 +25,7 @@ from pytest_console_scripts import ScriptRunner
 class TestPrepTaskSheet:
     """Tests ``prep_task_sheet.py`` script."""
 
-    ref_file_dir = None  # type: Path
+    ref_file_dir: Optional[Path] = None
 
     @pytest.fixture(scope="class", autouse=True)
     def setup(self) -> None:
@@ -52,6 +53,7 @@ class TestPrepTaskSheet:
         tmp_path: Path,
     ) -> None:
         """Tests ``prep_task_sheet.py`` script."""
+        assert self.ref_file_dir is not None
 
         in_file_path = self.ref_file_dir / "task_sheets" / in_file_name
         chrom_sizes_dir = self.ref_file_dir / "aln_cache" / "genome" / "chrom_sizes"

@@ -61,7 +61,7 @@ Bio::EnsEMBL::Compara::Graph::GeneTreePhyloXMLWriter
 =head1 DESCRIPTION
 
 Used as a way of emitting Compara GeneTrees in a format which conforms
-to L<PhyloXML|http://www.phyloxml.org/>. The code is built to work with
+to L<PhyloXML|https://www.phyloxml.org/>. The code is built to work with
 instances of L<Bio::EnsEMBL::Compara::GeneTree> but can be extended to
 operate on any tree structure provided by the Compara Graph infrastructure.
 

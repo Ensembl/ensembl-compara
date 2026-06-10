@@ -36,7 +36,11 @@ This RunnableDB module is part of the AncestralAllelesForIndels pipeline.
 
 =head1 DESCRIPTION
 
-This RunnableDB module creates and analyses the consequences of an indel event for each base in an alignment. It writes the 'event' to a file which can used with the Variant Effect Predictor. This module uses forking to reduce the memory footprint which significantly reduces the time taken over many iterations. This doesn't fit very well with the beekeeper model though since a worker can only run a single job and then must die.
+This RunnableDB module creates and analyses the consequences of an indel event for each base in
+an alignment. It writes the 'event' to a file which can be used with the Variant Effect Predictor.
+This module uses forking to reduce the memory footprint which significantly reduces the time
+taken over many iterations. This doesn't fit very well with the beekeeper model though since
+a worker can only run a single job and then must die.
 
 =cut
 

@@ -37,7 +37,7 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 =head1 DESCRIPTION
 
 This RunnableDB module generates DumpMultiAlign jobs from genomic_align_blocks
-on the chromosomes which do not contain species. The jobs are split into
+in which the given species is not represented. The jobs are split into
 $split_size chunks
 
 =cut

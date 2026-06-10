@@ -42,7 +42,7 @@ copy_ancestral_core.pl
 =head1 DESCRIPTION
 
 This script copies data over compara DBs. It has been
-specifically developped to copy data from a production to a
+specifically developed to copy data from a production to a
 release database.
 
 This script does not store the homology/family data as these are completely
@@ -218,7 +218,7 @@ sub get_DBAdaptor {
           -species => "ancestral_sequence",
         );
     } else {
-      warn("Cannot undestand URL: $url\n");
+      warn("Cannot understand URL: $url\n");
     }
   } elsif ($name) {
     $core_db_adaptor = Bio::EnsEMBL::Registry->get_DBAdaptor($name, "core");

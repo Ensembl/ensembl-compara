@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Hive::RunnableDB::DumpMultiAlign::Emf2Maf
+Bio::EnsEMBL::Hive::RunnableDB::DumpMultiAlign::MD5SUMFactory
 
 =head1 SYNOPSIS
 
@@ -36,7 +36,8 @@ This RunnableDB module is part of the DumpMultiAlign pipeline.
 
 =head1 DESCRIPTION
 
-The RunnableDB module runs emf2maf on a emf file
+The RunnableDB module dataflows details of alignment
+files on which MD5 checksums are to be calculated.
 
 =cut
 

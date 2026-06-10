@@ -242,7 +242,7 @@ my $aligngap_coord_system = new Bio::EnsEMBL::CoordSystem(
                all the previous genomic_align_blocks. At the moment all
                the blocks should correspond to the same MethodLinkSpeciesSet
     -expanded: boolean flag. If set to true, the AlignSlice will insert all
-               the gaps requiered by the alignments in the reference_slice
+               the gaps required by the alignments in the reference_slice
                (see MODES elsewhere in this document)
     -solve_overlapping:
                If set to 0 only one of the overlapping alignments is returned.

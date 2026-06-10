@@ -26,7 +26,7 @@ use Bio::EnsEMBL::Compara::Homology;
 use Bio::EnsEMBL::Compara::DBSQL::BaseRelationAdaptor;
 use Bio::EnsEMBL::Compara::Utils::Scalar qw(:assert);
 
-use Bio::EnsEMBL::Utils::Exception qw(throw deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(throw);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::Scalar qw(:assert :check);
 
@@ -327,7 +327,7 @@ sub fetch_all_by_tree_node_id {
   Example    : $homologies = $HomologyAdaptor->fetch_all_in_paralogues_from_Member_NCBITaxon
                     $human_member, $chicken_genomdb->taxon);
   Description: fetch all the same species paralogues of this member, that are more recent than
-                the speciation even refered to by the boundary_species argument
+                the speciation even referred to by the boundary_species argument
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
 
 =cut
@@ -345,7 +345,7 @@ sub fetch_all_in_paralogues_from_Member_NCBITaxon {
   Example    : $homologies = $HomologyAdaptor->fetch_all_in_paralogues_from_Member_NCBITaxon
                     $human_member, $chicken_genomdb->taxon);
   Description: fetch all the same species paralog of this member, that are older than
-                the speciation even refered to by the boundary_species argument
+                the speciation even referred to by the boundary_species argument
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
   Caller     :
 
@@ -365,7 +365,7 @@ sub fetch_all_out_paralogues_from_Member_NCBITaxon {
   Example    : $homologies = $HomologyAdaptor->fetch_all_in_paralogues_from_GenomeDB_NCBITaxon
                     $human_genomedb, $chicken_genomdb->taxon);
   Description: fetch all the same species paralog of this species, that are more recent than
-                the speciation even refered to by the boundary_species argument
+                the speciation even referred to by the boundary_species argument
                WARNING: Some combinations may lead to a large number of rows (several millions)
                The time to download the data may be very long. We advise to use Biomart in those cases.
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
@@ -387,7 +387,7 @@ sub fetch_all_in_paralogues_from_GenomeDB_NCBITaxon {
   Example    : $homologies = $HomologyAdaptor->fetch_all_out_paralogues_from_GenomeDB_NCBITaxon
                     $human_genomedb, $chicken_genomdb->taxon);
   Description: fetch all the same species paralog of this species, that are older than
-                the speciation even refered to by the boundary_species argument
+                the speciation even referred to by the boundary_species argument
                WARNING: Some combinations may lead to a large number of rows (several millions)
                The time to download the data may be very long. We advise to use Biomart in those cases.
   Returntype : an array reference of Bio::EnsEMBL::Compara::Homology objects
@@ -636,7 +636,6 @@ sub store {
 sub update_genetic_distance { ## DEPRECATED
   my $self = shift;
   my $hom = shift;
-  deprecate("DBSQL::HomologyAdaptor::update_genetic_distance() is deprecated.");
 
   assert_ref($hom, 'Bio::EnsEMBL::Compara::Homology', 'hom');
 

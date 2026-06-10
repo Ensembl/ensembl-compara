@@ -87,7 +87,7 @@ my $gdb_adaptor = $compara_dba->get_GenomeDBAdaptor();
 my $division =  $compara_dba->get_division();
 my $base_url = $division eq 'vertebrates'
              ? sprintf('https://ftp.ensembl.org/pub/release-%d/', $release)
-             : sprintf('http://ftp.ensemblgenomes.org/pub/%s/release-%d/', $division, $release - 53)
+             : sprintf('https://ftp.ensemblgenomes.ebi.ac.uk/pub/%s/release-%d/', $division, $release - 53)
              ;
 
 my $all_genome_dbs = $gdb_adaptor->fetch_all_by_release($release);
@@ -109,7 +109,7 @@ foreach my $genome_db (@rel_genome_dbs) {
 
     @curr_mlsses = sort { $b->species_set->size <=> $a->species_set->size } @curr_mlsses;
 
-    my $mlss_filename = $curr_mlsses[0]->filename;
+    my $mlss_filename = $curr_mlsses[0]->_get_unique_filename();
 
     my $prod_name = $genome_db->name;
     my $bigwig_url = sprintf(

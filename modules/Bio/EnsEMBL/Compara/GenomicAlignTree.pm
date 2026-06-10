@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::GenomicAlignTree
 =head1 DESCRIPTION
 
 Specific subclass of NestedSet to add functionality when the nodes of this tree
-are GenomicAlign objects and the tree is a representation of a Protein derived
+are GenomicAlign objects and the tree is a representation of a
 Phylogenetic tree
 
 =head1 APPENDIX
@@ -55,7 +55,7 @@ use IO::File;
 
 use Bio::EnsEMBL::Compara::NestedSet;
 use Bio::EnsEMBL::Compara::BaseGenomicAlignSet;
-use Bio::EnsEMBL::Utils::Exception qw(warning throw deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(warning throw);
 
 our @ISA = qw(Bio::EnsEMBL::Compara::NestedSet Bio::EnsEMBL::Compara::BaseGenomicAlignSet);
 
@@ -273,16 +273,12 @@ sub get_all_genomic_aligns_for_node {
 
 sub genomic_align_array {  ## DEPRECATED
     my $self = shift(@_);
-    deprecate('GenomicAlignTree::genomic_align_array is deprecated, and may be removed in a future release.'
-              . ' Use Bio::EnsEMBL::Compara::GenomicAlignTree->get_all_genomic_aligns_for_node() instead');
     return($self->get_all_genomic_aligns_for_node);
 
 }
 
 sub get_all_GenomicAligns {  ## DEPRECATED
     my $self = shift(@_);
-    deprecate('GenomicAlignTree::get_all_GenomicAligns is deprecated, and may be removed in a future release.'
-              . ' Use Bio::EnsEMBL::Compara::GenomicAlignTree->get_all_genomic_aligns_for_node() instead');
     return($self->get_all_genomic_aligns_for_node);
 
 }
@@ -326,7 +322,7 @@ sub reference_genomic_align {
                Synchronises reference_genomic_align and reference_genomic_align_id
                attributes.
   Returntype : integer
-  Exceptions : throw if $reference_genomic_align_id id not a postive number
+  Exceptions : throw if $reference_genomic_align_id id not a positive number
   Caller     : $genomic_align_block->reference_genomic_align_id(int)
   Status     : Stable
 
@@ -388,7 +384,7 @@ sub reference_genomic_align_node {
 
 =head2 set_alternative_original_sequence
 
-  Arg [1...] : Masking parametes. See L<Locus::get_sequence>
+  Arg [1...] : Masking parameters. See L<Locus::get_sequence>
   Description: Set an "original sequence" in this GenomicAlign with some masking options
                Call without arguments to reset the original sequence.
   Returntype : none
@@ -435,7 +431,7 @@ sub aligned_sequence {
                GenomicAlignBlock objects
   Returntype : integer
   Exceptions : A GenomicAlignTree is made of two GenomicAlignBlock
-               object. The method fail when gettign the value if the
+               object. The method fails when getting the value if the
                two group_ids do not match
   Caller     : general
 
@@ -925,8 +921,6 @@ sub sorted_children {
 
 sub sort_children { ## DEPRECATED
   my ($self) = @_;
-
-  deprecate('GenomicAlignTree::sort_children() is deprecated and will be removed in e97. Use sorted_children() instead');
   return $self->sorted_children;
 }
 

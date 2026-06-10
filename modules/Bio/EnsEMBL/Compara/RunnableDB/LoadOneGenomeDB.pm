@@ -80,7 +80,7 @@ supported keys:
         optional, sets the preferential order of precedence of species_name sources, depending on whether the module is run by EG or Compara
 
     'db_version'    => <integer>
-        optional, sets the prefered version of the core databases to load from
+        optional, sets the preferred version of the core databases to load from
 
 =cut
 

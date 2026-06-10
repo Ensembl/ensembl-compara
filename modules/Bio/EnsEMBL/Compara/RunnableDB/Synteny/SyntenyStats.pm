@@ -159,7 +159,8 @@ sub calculate_stats {
   my %tags;
   my $prefix = '';
   
-  my $ref_species = $self->param('ref_species');
+  # We really do need the 'ref_species' parameter here, to avoid clobbering existing 'reference_species' tags.
+  my $ref_species = $self->param_required('ref_species');
   my @species = $ref_species ? sort {$a ne $ref_species} keys %syntenic_regions : sort keys %syntenic_regions;
   foreach my $species (@species) {
     my $coding_overlap;

@@ -28,7 +28,7 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyAdaptor
+Bio::EnsEMBL::Compara::DBSQL::CAFEGeneFamilyNodeAdaptor
 
 =head1 DESCRIPTION
 

@@ -83,7 +83,7 @@ Each alignment is represented by Bio::EnsEMBL::Compara::GenomicAlignBlock. Each 
 contains several Bio::EnsEMBL::Compara::GenomicAlign, one per sequence included in the alignment.
 The GenomicAlign contains information about the coordinates of the sequence and the sequence of
 gaps, information needed to rebuild the aligned sequence. By combining all the aligned sequences
-of the GenomicAlignBlock, it is possible to get the orignal alignment back.
+of the GenomicAlignBlock, it is possible to get the original alignment back.
 
 =head1 INHERITANCE
 
@@ -668,7 +668,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_Slice {
                Bio::EnsEMBL::Compara::GenomicAlignBlock objects.
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Only dbID,
                adaptor and method_link_species_set are actually stored in the objects. The remaining
-               attributes are only retrieved when requiered.
+               attributes are only retrieved when required.
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
   Caller     : none
@@ -854,7 +854,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag {
                Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Objects 
   Returntype : ref. to an array of Bio::EnsEMBL::Compara::GenomicAlignBlock objects. Only dbID,
                adaptor and method_link_species_set are actually stored in the objects. The remaining
-               attributes are only retrieved when requiered.
+               attributes are only retrieved when required.
   Exceptions : Returns ref. to an empty array if no matching
                Bio::EnsEMBL::Compara::GenomicAlignBlock object can be retrieved
   Caller     : fetch_all_by_MethodLinkSpeciesSet_DnaFrag
@@ -1197,7 +1197,7 @@ sub fetch_all_by_MethodLinkSpeciesSet_DnaFrag_DnaFrag {
 
   Arg  1     : Bio::EnsEMBL::Compara::GenomicAlignBlock $genomic_align_block
   Example    : $genomic_align_block_adaptor->retrieve_all_direct_attributes($genomic_align_block)
-  Description: Retrieve the all the direct attibutes corresponding to the dbID of the
+  Description: Retrieve the all the direct attributes corresponding to the dbID of the
                Bio::EnsEMBL::Compara::GenomicAlignBlock object. It is used after lazy fetching
                of the object for populating it when required.
   Returntype : Bio::EnsEMBL::Compara::GenomicAlignBlock object

@@ -17,7 +17,7 @@ limitations under the License.
 
 =head1 DESCRIPTION
 
-This modules contains common methods used when dealing with the
+This module contains common methods used when dealing with the
 Compara master database. They can in fact be called on other
 databases too.
 
@@ -29,7 +29,7 @@ package Bio::EnsEMBL::Compara::Utils::MasterDatabase;
 
 use strict;
 use warnings;
-use Bio::EnsEMBL::Utils::Exception qw(deprecate throw warning verbose);
+use Bio::EnsEMBL::Utils::Exception qw(throw warning verbose);
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Utils::IO qw/:spurt/;
 

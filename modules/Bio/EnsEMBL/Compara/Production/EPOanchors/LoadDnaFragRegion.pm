@@ -30,7 +30,7 @@ $self->write_output(); writes to database
 
 =head1 DESCRIPTION
 
-Module to set up the production database for generating multiple alignments usng Ortheus.
+Module to set up the production database for generating multiple alignments using Ortheus.
 
 
 =head1 AUTHOR - compara

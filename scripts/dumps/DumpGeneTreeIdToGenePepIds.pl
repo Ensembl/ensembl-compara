@@ -110,7 +110,7 @@ sub _file {
       unlink $file;
     }
     else {
-      _exit("File already exists at ${file}. Remove before proceeeding", 2, 1);
+      _exit("File already exists at ${file}. Remove before proceeding", 2, 1);
     }
   }
   return;

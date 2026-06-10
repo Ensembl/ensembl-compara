@@ -23,9 +23,8 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::DeleteOneTree
 
 =head1 SYNOPSIS
 
-This runnable removes the tree with the given roo
-This runnable loads the members from the current database and a previous one, compares them
-and performs a list of rename operations to do on the gene-tree tables.
+This runnable deletes the gene tree specified by 'gene_tree_id',
+then verifies that the gene tree has been cleanly deleted.
 
 =cut
 

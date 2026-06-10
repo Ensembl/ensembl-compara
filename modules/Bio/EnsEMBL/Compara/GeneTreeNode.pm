@@ -424,7 +424,7 @@ sub get_leaf_by_Member {
 
   Example     : my $member_set = $tree->get_AlignedMemberSet
   Description : Returns a new AlignedMemberSet object for this sub-tree
-                This is the prefered method of getting an alignment for a sub-tree
+                This is the preferred method of getting an alignment for a sub-tree
   Returntype  : Bio::EnsEMBL::Compara::AlignedMemberSet object
   Exceptions  :
   Caller      : general

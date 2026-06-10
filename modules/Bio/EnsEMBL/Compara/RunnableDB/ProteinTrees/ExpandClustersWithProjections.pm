@@ -32,9 +32,10 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::ExpandClustersWithProjections
 
 =head1 DESCRIPTION
 
-This is the RunnableDB that parses the output of Hcluster, stores the
-clusters as trees without internal structure (each tree will have one
-root and several leaves) and dataflows the cluster_ids down branch #2.
+This RunnableDB expands clusters using projection relationships.
+If a projection source member is in a cluster but its projection target
+member is not, the target member is assigned to the same cluster as its
+source member.
 
 =head1 AUTHORSHIP
 

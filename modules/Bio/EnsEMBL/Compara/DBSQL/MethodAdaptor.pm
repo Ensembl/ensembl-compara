@@ -63,7 +63,7 @@ package Bio::EnsEMBL::Compara::DBSQL::MethodAdaptor;
 use strict;
 use warnings;
 
-use Bio::EnsEMBL::Utils::Exception qw(deprecate);
+use Bio::EnsEMBL::Utils::Exception qw(warning);
 
 use Bio::EnsEMBL::Compara::Method;
 use base ('Bio::EnsEMBL::Compara::DBSQL::BaseFullCacheAdaptor');
@@ -130,7 +130,7 @@ sub _objs_from_sth {
 sub fetch_by_type {
     my ($self, $type) = @_;
     if ($type =~ /EPO_LOW_COVERAGE/i) {
-        deprecate("EPO_LOW_COVERAGE is deprecated and was replaced by EPO_EXTENDED in release 101.");
+        warning("EPO_LOW_COVERAGE was superseded by EPO_EXTENDED in release 101, switching to EPO_EXTENDED");
         $type = "EPO_EXTENDED";
     }
     return $self->_id_cache->get_by_additional_lookup('type', uc $type);

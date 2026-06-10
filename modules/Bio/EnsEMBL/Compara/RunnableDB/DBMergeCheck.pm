@@ -66,7 +66,7 @@ Currently, only INT anc CHAR columns are allowed.
 
 Some tables can be configured to be merged per MLSS, assuming that certain constraints are satisfied.
 The main constraint is that per-MLSS merge is intended for merging homology data from gene-tree pipeline
-databases with a defined member type and collection. It cannot be used for merging from a prevous release
+databases with a defined member type and collection. It cannot be used for merging from a previous release
 database, nor can it be used for incremental merging of homology data into the current release database,
 since a release database could have homologies involving genes of various member types and collections,
 and the current implementation of per-MLSS merge does not have a mechanism for disentangling them.
@@ -78,8 +78,8 @@ mode, primary-key collisions are tolerated if the corresponding rows contain ess
 The Runnable will complain if:
  - no primary key is defined / can be found for a table that needs to be merged
  - the primary key is not INT or CHAR
- - the tables refered by the "only_tables" parameter should all be non-empty
- - the tables refered by the "exclusive_tables" parameter should all be non-empty
+ - the tables referred to by the "only_tables" parameter should all be non-empty
+ - the tables referred to by the "exclusive_tables" parameter should all be non-empty
  - all the non-production and non-eHive tables of the source databases should
    exist in the target database
  - some tables that need to be merged share a value of their primary key,

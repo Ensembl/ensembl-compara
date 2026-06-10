@@ -34,9 +34,8 @@ To summarize:
 
 More details:
 
-The module is running codeml/PAML (via BioPerl) on each of the homologies
-we are inferring in Ensembl.
-Now, around line 250 (search for REF1 in this file), there is a test for
+The module is running codeml/PAML (via BioPerl) on each of the homologies.
+Within this file (search for REF1), there is a test for
 very low values of dS (and dN). We then fall-back to a more traditional
 way of computing Ka and Ks: still with BioPerl, but with a Jukes-Cantor
 model instead of maximum likelihood.

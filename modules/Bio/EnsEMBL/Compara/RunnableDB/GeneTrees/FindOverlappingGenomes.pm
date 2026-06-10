@@ -19,7 +19,7 @@ limitations under the License.
 
 Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::FindOverlappingGenomes
 
-=head1 SYNOPSIS
+=head1 DESCRIPTION
 
 When we build complementary gene trees we want to identify and exclude data in the overlap
 between gene-tree collections, giving priority to data in higher-precedence collection(s).

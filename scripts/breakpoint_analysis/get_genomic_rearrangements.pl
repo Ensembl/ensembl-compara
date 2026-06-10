@@ -24,7 +24,7 @@
  Also inversion bigger than the threshold are reported as breakpoints.
  To run this script, you need to give it the following
 
-    -reg_conf  -> The registry configuration file which contains infomation on where to find and how to connect to the alignment database
+    -reg_conf  -> The registry configuration file which contains information on where to find and how to connect to the alignment database
 
     -species1   -> the reference species
 

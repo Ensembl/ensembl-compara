@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConstrainedElements
 
 =head1 DESCRIPTION
 
-This PipeConfig contains the core analyses required to dump the contrained
+This PipeConfig contains the core analyses required to dump the constrained
 elements as BigBED files.
 
 =cut

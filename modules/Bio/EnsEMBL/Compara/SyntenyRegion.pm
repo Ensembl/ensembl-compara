@@ -44,7 +44,7 @@ Bio::EnsEMBL::Compara::SyntenyRegion - Synteny region
 =head1 DESCRIPTION
 
 A Bio::EnsEMBL::Compara::SyntenyRegion object is a container of Bio::EnsEMBL::Compara::DnaFragRegion
-objects. Each Bio::EnsEMBL::Compara::DnaFragRegion represent a genomic region which is in synteny
+objects. Each Bio::EnsEMBL::Compara::DnaFragRegion represents a genomic region which is in synteny
 with the other regions represented in the Bio::EnsEMBL::Compara::SyntenyRegion object.
 
 Also, the Bio::EnsEMBL::Compara::SyntenyRegion object implicitly contains a

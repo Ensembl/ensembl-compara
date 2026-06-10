@@ -23,7 +23,7 @@ Bio::EnsEMBL::Compara::RunnableDB::PairAligner::PairAlignerCodingExonStats
 
 =head1 DESCRIPTION
 
-This module populuates the temporary table 'statistics' with coding exon
+This module populates the temporary table 'statistics' with coding exon
 statistics (matches, mis-matches, insertions and uncovered).
 
 =over

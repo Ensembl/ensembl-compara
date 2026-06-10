@@ -133,7 +133,7 @@ sub genbank_hidden_flag {
                     that found in core species MetaContainers.
 
                     This code is a redevelopment of existing code which
-                    descended down the taxonomy which had disadvanatages 
+                    descended down the taxonomy which had disadvantages
                     when a classification was requested on nodes causing
                     the taxonomy to bi/multi-furcate.
 
@@ -150,7 +150,7 @@ sub genbank_hidden_flag {
 
                     Recalling this subroutine with the same parameters for
                     separators will return a cached representation. Calling
-                    for AS_ARRAY will cause the classificaiton to be 
+                    for AS_ARRAY will cause the classification to be
                     recalculated each time.
   Returntype      : String if not asking for an array otherwise the array
   Exceptions      : - 
@@ -263,7 +263,7 @@ sub _to_text_classification {
 =head2 subspecies
 
   Example    : $ncbi->subspecies;
-  Description: Returns the subspeceis name for this species
+  Description: Returns the subspecies name for this species
   Example    : "verus" for Pan troglodytes verus
   Returntype : string
   Exceptions :
@@ -283,7 +283,7 @@ sub subspecies {
 =head2 species
 
   Example    : $ncbi->species;
-  Description: Returns the speceis name for this species
+  Description: Returns the species name for this species
   Example    : "sapiens" for Homo sapiens
   Returntype : string
   Exceptions :

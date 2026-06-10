@@ -585,7 +585,7 @@ The convention for the sequence is:
 ACTG : high-confidence call, ancestral state supproted by the other two sequences
 actg : low-confidence call, ancestral state supported by one sequence only
 N    : failure, the ancestral state is not supported by any other sequence
--    : the extant species contains an insertion at this postion
+-    : the extant species contains an insertion at this position
 .    : no coverage in the alignment
 
 The convention for the ancestral sequence region coordinates is 1-based,

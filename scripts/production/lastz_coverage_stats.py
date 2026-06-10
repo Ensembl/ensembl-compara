@@ -26,8 +26,10 @@ Example command:
 import argparse
 import csv
 from collections import defaultdict
+from collections.abc import Iterable
+from typing import Any
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import bindparam, create_engine, text
 
 
 get_lastz_mlss_from_first_release = """
@@ -89,7 +91,7 @@ get_query_for_results = """
     """
 
 
-def calculate_coverage_ratios(results):
+def calculate_coverage_ratios(results: Iterable[Any]) -> list[dict[str, Any]]:
     """
     Calculate the coverage ratios from the query results.
 
@@ -99,7 +101,7 @@ def calculate_coverage_ratios(results):
     Returns:
         A list of dictionaries with the calculated coverage ratios.
     """
-    data = defaultdict(dict)
+    data: defaultdict[Any, dict[str, Any]] = defaultdict(dict)
     for mlss, tag, value in results:
         data[mlss][tag] = value
 
@@ -138,7 +140,7 @@ def calculate_coverage_ratios(results):
     return calculated_results
 
 
-def write_to_tsv(filename, results):
+def write_to_tsv(filename: str, results: list[dict[str, Any]]) -> None:
     """
     Write the calculated results to a TSV file.
 
@@ -173,7 +175,7 @@ def write_to_tsv(filename, results):
             )
 
 
-def process_database(url, output_file, release=None):
+def process_database(url: str, output_file: str, release: int | None = None) -> None:
     """
     Process the database to retrieve coverage ratios and write the result to a TSV file.
 
@@ -206,13 +208,15 @@ def process_database(url, output_file, release=None):
             mlss_ids.extend([row[0] for row in get_rerun_mlsses])
 
         if mlss_ids:
-            param_ids = {"mlss_ids": mlss_ids}
-            result_query = connection.execute(text(get_query_for_results), param_ids)
+            result_query = connection.execute(
+                text(get_query_for_results).bindparams(bindparam("mlss_ids", expanding=True)),
+                {"mlss_ids": mlss_ids},
+            )
             calculated_results = calculate_coverage_ratios(result_query)
             write_to_tsv(output_file, calculated_results)
 
 
-def main():
+def main() -> None:
     """
     Main function to parse user input and process the database.
     """

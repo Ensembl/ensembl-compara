@@ -122,7 +122,7 @@ The type of alignment. This can be BLASTZ_NET, TRANSLATED_BLAT,
 MLAGAN, PECAN, GERP_CONSERVATION_SCORES, etc.
 
 GERP_CONSERVATION_SCORES are only supported when dumping in emf
-format. The scores are dumped together with the orginal alignment.
+format. The scores are dumped together with the original alignment.
 
 =item B<[--set_of_species species1:species2:species3:...]>
 
@@ -145,7 +145,7 @@ Choose to restrict the alignments to the query slice. Off by default.
 
 =item B<[--original_seq]>
 
-Dumps orignal sequences instead of the aligned ones.
+Dumps original sequences instead of the aligned ones.
 
 NB: This won't work properly with some file formats
 like clustalw
@@ -160,7 +160,7 @@ Aliases are now allowed: 'soft' for 1, and 'hard' for 2
 =item B<[--output_format clustalw|fasta|...]>
 
 The type of output you want. Both fasta and clustalw have been tested.
-In fasta format, a line containg a hash ("#") is added at the end of
+In fasta format, a line containing a hash ("#") is added at the end of
 each alignment. "Fasta" is the default format.
 
 This script uses the Bio::AlignIO::xxx modules to format the output
@@ -290,7 +290,7 @@ perl DumpMultiAlign.pl
         The type of alignment. This can be BLASTZ_NET, TRANSLATED_BLAT,
         MLAGAN, PECAN, GERP_CONSERVATION_SCORES, etc.
         NB: GERP_CONSERVATION_SCORES are only supported when dumping in emf
-        format. The scores are dumped together with the orginal alignment.
+        format. The scores are dumped together with the original alignment.
     [--set_of_species species1:species2:species3:...]
     [--set_of_species species_set_name]
         The list of species used to get those alignments. The names

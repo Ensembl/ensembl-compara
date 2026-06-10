@@ -18,11 +18,11 @@ limitations under the License.
 
 =head1 NAME
 
-Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CopyTreesFromDB
+Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::CopyAlignmentsFromDB
 
 =head1 DEPRECATION NOTICE
 
-This runnable is deprecated, and may be removed in a future release.
+This runnable is deprecated and is not maintained.
 
 =cut
 
@@ -37,8 +37,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::StoreTree');
 
 sub fetch_input {
     my $self = shift @_;
-
-        $self->warning("RunnableDB::ProteinTrees::CopyAlignmentsFromDB is deprecated, and may be removed in a future release");
 
         #Get adaptors
         #----------------------------------------------------------------------------------------------------------------------------

@@ -32,8 +32,8 @@ Bio::EnsEMBL::Compara::RunnableDB::ComparaHMM::DumpUnannotatedMembersIntoFasta
 
 =head1 DESCRIPTION
 
-This is a Compara-specific module that dumps the all sequences
-that lack an HMM annnotation into a file in Fasta format.
+This is a Compara-specific module that dumps all the sequences
+that lack an HMM annotation into a file in Fasta format.
 
 Supported keys:
 

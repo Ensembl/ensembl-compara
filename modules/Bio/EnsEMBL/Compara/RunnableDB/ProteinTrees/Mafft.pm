@@ -33,7 +33,7 @@ Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::Mafft
 =head1 DESCRIPTION
 
 This RunnableDB implements Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::MSA
-by calling Mafft. It only needs the 'mafft_exe' pararameter
+by calling Mafft. It only needs the 'mafft_exe' parameter
 
 =head1 AUTHORSHIP
 

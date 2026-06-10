@@ -25,7 +25,7 @@ This object is an abstract superclass which must be inherited from.
 It uses a runnable which takes sequence as input and returns
 FeaturePair objects as output (like Bio::EnsEMBL::Compara::Production::Analysis::Blastz)
 
-It adds functionality to read and write to a compara databases.
+It adds functionality to read and write to a compara database.
 It takes as input (via input_id or analysis->parameters) DnaFragChunk or DnaFragChunkSet
 objects (via dbID reference) and stores GenomicAlignBlock entries.
 

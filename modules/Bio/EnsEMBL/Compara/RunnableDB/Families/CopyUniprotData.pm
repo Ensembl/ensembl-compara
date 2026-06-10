@@ -32,8 +32,8 @@ Bio::EnsEMBL::Compara::RunnableDB::Families::CopyUniprotData
 
 =head1 DESCRIPTION
 
-This module imports all the members (and their sequences and hmm-hits) that are canonical
-and on a reference dnafrag for a given genome_db_id.
+This module imports all the 'Uniprot/SWISSPROT' and 'Uniprot/SPTREMBL'
+members (and their sequences) from a source database.
 
 =head1 APPENDIX
 

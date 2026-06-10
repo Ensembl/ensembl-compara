@@ -68,6 +68,7 @@ sub default_options {
             'rice_prot_db'  => 'rice_cultivars_ptrees',
             'barley_prot_db' => 'barley_cultivars_ptrees',
             'members_db'    => 'compara_members',
+            'oat_prot_db'   => 'oat_cultivars_ptrees',
         },
 
         # From these databases, only copy these tables
@@ -95,6 +96,7 @@ sub default_options {
             'wheat_prot_db'  => [qw(ortholog_quality datacheck_results)],
             'rice_prot_db'   => [qw(ortholog_quality datacheck_results)],
             'barley_prot_db' => [qw(ortholog_quality datacheck_results)],
+            'oat_prot_db'    => [qw(ortholog_quality datacheck_results)],
         },
     };
 }

@@ -46,8 +46,8 @@ Bio::EnsEMBL::Compara::Production::Analysis::Lastz -
 
 =head1 DESCRIPTION
 
-Lastz takes a Bio::Seq (or Bio::PrimarySeq) object and runs lastz with against 
-the specified multi-FASTA file database. Tthe output is parsed by 
+Lastz takes a Bio::Seq (or Bio::PrimarySeq) object and runs lastz against
+the specified multi-FASTA file database. The output is parsed by
 Bio::EnsEMBL::Compara::Production::Analysis::Parser::Lastz and stored as Bio::EnsEMBL::DnaDnaAlignFeature 
 
 Other options can be passed to the lastz program using the -options method

@@ -34,11 +34,13 @@ Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneGainLossCommon
 
 =head1 DESCRIPTION
 
-This RunnableDB calculates the dynamics of a GeneTree family (based on the tree obtained and the CAFE software) in terms of gains losses per branch tree. It needs a CAFE-compliant species tree.
+This RunnableDB is the parent class of the
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::CAFETable RunnableDB.
 
 =head1 INHERITANCE TREE
 
-Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable
+Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::GeneGainLossCommon
++- Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable
 
 =head1 APPENDIX
 

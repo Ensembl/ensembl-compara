@@ -112,7 +112,7 @@ corresponds to a constrained_element.strand
 listref of listrefs (each of which contain 5 strings (dnafrag.dnafrag_id, constrained_element.dnafrag_start, 
 constrained_element.dnafrag_end, constrained_element.strand, genome_db.genome_db_id, dnafrag.dnafrag_name) 
    [ [ $dnafrag_id, $start, $end, $genome_db_id, $dnafrag_name ], .. ]
-Each inner listref contains information about one of the species sequences which make up the constarained 
+Each inner listref contains information about one of the species sequences which make up the constrained
 element block from the alignment. 
 
 =back

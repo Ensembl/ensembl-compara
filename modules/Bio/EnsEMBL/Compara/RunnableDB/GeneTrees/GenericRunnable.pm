@@ -48,7 +48,7 @@ The command has to be defined using the following parameters:
  - #tag_XYZ#: the value of the tag "XYZ" of the gene-tree
 
 By default, the standard output of the job is captured and is expected
-to be a Newick/NHX tree. This is overriden by any of the parameters:
+to be a Newick/NHX tree. This is overridden by any of the parameters:
  - output_file: file to read instead of the standard output
  - read_tags: if 1, the runnable will call a get_tags() method that must be
               implemented in the derived class and return a hash of tag/values
@@ -64,7 +64,7 @@ Other parameters:
  - remove_columns: 1 if the alignment has to be filtered (assumes that there is a "removed_columns" tag)
  - ryo_species_tree: Roll-Your-Own format string for the species-tree
  - ryo_gene_tree: Roll-Your-Own format string for the gene-tree
- - species_tree_label: the label od the species-tree that should be used for this command
+ - species_tree_label: the label of the species-tree that should be used for this command
  - input_clusterset_id: alternative clusterset_id for the input gene tree
  - run_treebest_sdi: do we have to pass the output tree through "treebest sdi"
  - reroot_with_sdi: should "treebest sdi" also reroot the tree

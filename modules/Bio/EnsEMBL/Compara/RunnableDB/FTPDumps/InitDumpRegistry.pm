@@ -55,6 +55,7 @@ sub run {
         'compara_dump_host',
         'ancestral_dump_host',
         'core_dump_hosts',
+        'on_core_clash',
     );
 
     foreach my $param_name (@optional_param_names) {

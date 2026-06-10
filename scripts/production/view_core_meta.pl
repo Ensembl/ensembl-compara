@@ -122,6 +122,7 @@ my @ensembl_divisions = (
 );
 
 our %META_KEY_PRESETS = (
+    'none' => [],
     'compara' => [
         'species.production_name',
         'species.display_name',

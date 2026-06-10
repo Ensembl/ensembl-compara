@@ -76,7 +76,7 @@ Each alignment is represented by Bio::EnsEMBL::Compara::GenomicAlignBlock. Each 
 contains several Bio::EnsEMBL::Compara::GenomicAlign, one per sequence included in the alignment.
 The GenomicAlign contains information about the coordinates of the sequence and the sequence of
 gaps, information needed to rebuild the aligned sequence. By combining all the aligned sequences
-of the GenomicAlignBlock, it is possible to get the orignal alignment back.
+of the GenomicAlignBlock, it is possible to get the original alignment back.
 
 =head1 INHERITANCE
 
@@ -303,7 +303,7 @@ sub fetch_all_by_node_id {
 
   Arg  1     : Bio::EnsEMBL::Compara::GenomicAlign $genomic_align
   Example    : $genomic_align_adaptor->retrieve_all_direct_attributes($genomic_align)
-  Description: Retrieve the all the direct attibutes corresponding to the dbID of the
+  Description: Retrieve the all the direct attributes corresponding to the dbID of the
                Bio::EnsEMBL::Compara::GenomicAlign object. It is used after lazy fetching
                of the object for populating it when required.
   Returntype : Bio::EnsEMBL::Compara::GenomicAlign object

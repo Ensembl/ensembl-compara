@@ -75,6 +75,7 @@ sub pipeline_analyses_dump_trees {
 
         {   -logic_name => 'map_member_types',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::MapMemberTypes',
+            -rc_name    => '1Gb_24_hour_job',
             -flow_into  => { 2 => 'collection_factory' },
         },
 
@@ -90,7 +91,10 @@ sub pipeline_analyses_dump_trees {
         {   -logic_name => 'md5sum_tree_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -rc_name    => '1Gb_job',
-            -flow_into  => [ { 'md5sum_tree_factory' => INPUT_PLUS() } ],
+            -flow_into  => [ {
+                'md5sum_genome_homologies_factory' => INPUT_PLUS(),
+                'md5sum_tree_factory' => INPUT_PLUS(),
+            } ],
         },
 
         {   -logic_name => 'mk_work_dir',
@@ -172,7 +176,8 @@ sub pipeline_analyses_dump_trees {
 
         {   -logic_name => 'homology_mlss_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
-            -analysis_capacity => 150,
+            -rc_name    => '1Gb_24_hour_job',
+            -analysis_capacity => 50,
             -flow_into => {
                 '2->A' => [ 'dump_per_mlss_homologies_tsv' ],
                 'A->1' => [ 'homology_dump_mlss_funnel_check' ],
@@ -241,7 +246,17 @@ sub pipeline_analyses_dump_trees {
                 'exp_line_count' => '#genome_exp_line_count#',
             },
             -flow_into         => {
-                1 => '?accu_name=tsv_files&accu_address=[genome_db_id]&accu_input_variable=output_file',
+                1 => [
+                    '?accu_name=tsv_files&accu_address=[genome_db_id]&accu_input_variable=output_file',
+                    'copy_genome_homologies_tsv_readme',
+                ],
+            },
+        },
+
+        {   -logic_name => 'copy_genome_homologies_tsv_readme',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => 'rsync -a #tsv_dir#/README.gene_trees.tsv_dumps.txt #tsv_dir#/#species_path#',
             },
         },
 
@@ -327,6 +342,7 @@ sub pipeline_analyses_dump_trees {
                 ]
             }},
             -rc_name => '16Gb_168_hour_job',
+            -analysis_capacity => 1,
         },
 
         {   -logic_name => 'create_dump_jobs',
@@ -497,6 +513,22 @@ sub pipeline_analyses_dump_trees {
             },
         },
 
+        {   -logic_name => 'md5sum_genome_homologies_factory',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::FindGenomeHomologySubdirectories',
+            -parameters => {
+                'search_path' => '#tsv_dir#',
+            },
+            -flow_into => {
+                2 => [ 'md5sum_genome_homologies' ],
+            },
+        },
+
+        {   -logic_name => 'md5sum_genome_homologies',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -parameters => {
+                'cmd' => q/cd #directory# ; md5sum *.gz > MD5SUM/,
+            },
+        },
     ];
 }
 

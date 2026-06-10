@@ -74,7 +74,7 @@ process DUMP_VERSIONS {
     python --version >> $out
 
     echo "kentUtils:" >> $out
-    brew info kent | grep -m 1 kent >> $out
+    ${params.brew_exe} info kent | grep -m 1 kent >> $out
 
     echo "halLiftover:" >> $out
     ${params.hal_liftover_exe} --help 2>&1 | grep -Po -m 1 'halLiftover [^:]+' >> $out
@@ -88,6 +88,7 @@ process DUMP_VERSIONS {
 }
 
 process DUMP_HAL_CHROM_SIZES {
+    label "rc_16Gb"
 
     publishDir "${hal_cache}/genome/chrom_sizes", mode: "copy",  overwrite: false
 
@@ -97,14 +98,14 @@ process DUMP_HAL_CHROM_SIZES {
     output:
     path("*.chrom.sizes"), emit: genome_chrom_sizes
 
-    shell:
-    '''
-    !{params.hal_stats_exe} --genomes !{hal} | tr ' ' '\\n' > hal_genome_names.txt
+    script:
+    """
+    ${params.hal_stats_exe} --genomes '${hal}' | tr ' ' '\\n' > hal_genome_names.txt
 
     while read genome_name
-    do !{params.hal_stats_exe} --chromSizes $genome_name !{hal} > "${genome_name}.chrom.sizes"
+    do ${params.hal_stats_exe} --chromSizes \$genome_name '${hal}' > "\${genome_name}.chrom.sizes"
     done < hal_genome_names.txt
-    '''
+    """
 }
 
 process PREP_TASK_SHEET {
@@ -123,6 +124,7 @@ process PREP_TASK_SHEET {
 }
 
 process DUMP_HAL_GENOME_SEQS {
+    label "rc_16Gb"
 
     publishDir "${hal_cache}/genome/2bit", mode: "copy",  overwrite: false
 
@@ -171,7 +173,7 @@ process MAKE_SOURCE_BED {
 }
 
 process HAL_LIFTOVER {
-    label "rc_1Gb"
+    label "rc_16Gb"
 
     input:
     tuple val(task_params), path(liftover_source_bed)

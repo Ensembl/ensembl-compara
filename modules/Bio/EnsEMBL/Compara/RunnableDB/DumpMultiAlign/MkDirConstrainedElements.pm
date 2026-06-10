@@ -32,7 +32,7 @@ Bio::EnsEMBL::Compara::RunnableDB::DumpMultiAlign::MkDirConstrainedElements
 
 =head1 SYNOPSIS
 
-Find the best directory name to dump some constrained elements, and creates it
+This RunnableDB finds the best directory name to dump some constrained elements, and creates it.
 
 =cut
 
@@ -51,7 +51,7 @@ sub write_output {
 
     my $mlss = $self->compara_dba->get_MethodLinkSpeciesSetAdaptor->fetch_by_dbID($self->param_required('mlss_id'));
 
-    my $dirname = $mlss->filename;
+    my $dirname = $mlss->_get_unique_filename();
 
     my $work_dir = $self->param_required('work_dir').'/'.$dirname;
     make_path($work_dir) unless -d $work_dir;

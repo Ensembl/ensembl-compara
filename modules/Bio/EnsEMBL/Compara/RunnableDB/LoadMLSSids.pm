@@ -21,7 +21,7 @@ Bio::EnsEMBL::Compara::RunnableDB::LoadMLSSids
 
 =head1 DESCRIPTION
 
-Fetches for the MLSS id that matches the given method type, species set name and
+Fetches the MLSS id that matches the given method type, species set name and
 release number, as well as its previous MLSS id (--add_prev_mlss) and its sister
 MLSS ids (--add_sister_mlss). If a branch code is provided, the MLSS id(s) are
 flowed into that branch. If not, they are added as pipeline-wide parameters

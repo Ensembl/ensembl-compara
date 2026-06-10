@@ -27,7 +27,7 @@ from contextlib import nullcontext as does_not_raise
 import filecmp
 from pathlib import Path
 import subprocess
-from typing import Any, ContextManager, Dict, Iterable, List, Mapping, Tuple
+from typing import Any, ContextManager, Dict, Iterable, List, Mapping, Optional, Tuple
 
 import pytest
 from pytest import raises
@@ -75,7 +75,7 @@ class TestTools:
 class TestUcscUtils:
     """Tests :mod:`ucsc` utils submodule."""
 
-    ref_file_dir = None  # type: Path
+    ref_file_dir: Optional[Path] = None
 
     @pytest.fixture(scope="class", autouse=True)
     def setup(self) -> None:
@@ -95,6 +95,7 @@ class TestUcscUtils:
         self, chrom_sizes_file_name: str, exp_output: Dict[str, int], expectation: ContextManager
     ) -> None:
         """Tests :func:`utils.ucsc.load_chrom_sizes_file()` function."""
+        assert self.ref_file_dir is not None
         with expectation:
             chrom_sizes_dir_path = self.ref_file_dir / "aln_cache" / "genome" / "chrom_sizes"
             chrom_sizes_file_path = chrom_sizes_dir_path / chrom_sizes_file_name
@@ -105,7 +106,7 @@ class TestUcscUtils:
 class TestHalUtils:
     """Tests :mod:`ucsc` utils submodule."""
 
-    ref_file_dir = None  # type: Path
+    ref_file_dir: Optional[Path] = None
 
     @pytest.fixture(scope="class", autouse=True)
     def setup(self) -> None:
@@ -134,6 +135,7 @@ class TestHalUtils:
         mocker: MockerFixture,
     ) -> None:
         """Tests :func:`utils.hal.extract_region_sequences_from_2bit()` function."""
+        assert self.ref_file_dir is not None
         mocker.patch("subprocess.run", side_effect=mock_two_bit_to_fa)
         with expectation:
             two_bit_dir_path = self.ref_file_dir / "aln_cache" / "genome" / "2bit"
@@ -152,6 +154,7 @@ class TestHalUtils:
     )
     def test_extract_regions_from_bed(self, bed_file_name: str, exp_output: List[str]) -> None:
         """Tests :func:`utils.hal.extract_regions_from_bed()` function."""
+        assert self.ref_file_dir is not None
         bed_file_path = self.ref_file_dir / bed_file_name
         obs_output = extract_regions_from_bed(bed_file_path)
         assert obs_output == exp_output
@@ -224,6 +227,7 @@ class TestHalUtils:
         tmp_path: Path,
     ) -> None:
         """Tests :func:`utils.hal.make_src_region_file()` function."""
+        assert self.ref_file_dir is not None
         with expectation:
             out_file_path = tmp_path / bed_file_name
             make_src_region_file(*region_tuple, chrom_sizes, out_file_path, flank_length)

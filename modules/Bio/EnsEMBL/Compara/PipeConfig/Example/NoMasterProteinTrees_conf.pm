@@ -24,7 +24,7 @@ Bio::EnsEMBL::Compara::PipeConfig::Example::NoMasterProteinTrees_conf
 Parameters to run the ProteinTrees pipeline without a master database.
 It can use a mix of Ensembl core databases and custom defined assemblies. To be defined at: 'curr_file_sources_locs'.
 Currently we support sources from augustus_maker, refseq and gigascience.
-It uses a all-vs-all blast clustering approach.
+It uses an all-vs-all blast clustering approach.
 
 Custom assemblies should be defined in a JSON file like this:
     [

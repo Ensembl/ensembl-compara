@@ -33,6 +33,7 @@ The source is one of (by decreasing priority):
  - a species set given by name
  - a species set given by collection name
  - all current GenomeDBs
+ - all GenomeDBs in current MLSSes of a specified type (e.g. 'PROTEIN_TREES')
  - all the GenomeDBs
 
 The set of GenomeDBs may be filtered further, whether by a positive filter

@@ -16,6 +16,7 @@
 
 import filecmp
 from pathlib import Path
+from typing import Optional
 
 import pytest
 from pytest_console_scripts import ScriptRunner
@@ -37,7 +38,7 @@ from helpers import mock_two_bit_to_fa
 class TestHalLiftover:
     """Tests ``hal-liftover`` console script."""
 
-    ref_file_dir = None  # type: Path
+    ref_file_dir: Optional[Path] = None
 
     @pytest.fixture(scope="class", autouse=True)
     def setup(self) -> None:
@@ -67,6 +68,7 @@ class TestHalLiftover:
         tmp_path: Path,
     ) -> None:
         """Tests ``hal-liftover`` console script."""
+        assert self.ref_file_dir is not None
         mocker.patch("subprocess.run", side_effect=mock_two_bit_to_fa)
 
         hal_file_path = self.ref_file_dir / hal_file

@@ -23,8 +23,8 @@ Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpConservationScores
 
 =head1 DESCRIPTION
 
-This PipeConfig contains the core analyses required to dump the constrained
-elements as bigBed and conservation scores as bigWig files.
+This PipeConfig contains the core analyses required
+to dump the conservation scores as bigWig files.
 
 =cut
 

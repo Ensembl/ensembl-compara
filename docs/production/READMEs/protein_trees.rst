@@ -51,8 +51,8 @@ Here is the list of the versions that we used for the e78 production:
 * treebest (tag e78)   - https://github.com/Ensembl/treebest
 * quicktree 1.1        - https://www.sanger.ac.uk/tool/quicktree/
 * hmmbuild 3.0         - (part of the HMMER package) http://hmmer.org/
-* codeml 4.3           - (part of the PAML package) https://abacus.gene.ucl.ac.uk/software/paml.html
-* Ktreedist 1.0        - https://www.biologiaevolutiva.org/jcastresana/Ktreedist.html
+* codeml 4.3           - (part of the PAML package) https://github.com/abacus-gene/paml/wiki
+* Ktreedist 1.0        - https://europepmc.org/article/MED/17890735
 
 Except for CodeML, more recent versions probably still work (as long as the command line parameters haven't changed) but we only guarantee that the pipeline behaves with the advertised versions.
 
@@ -433,7 +433,7 @@ The assembly is "the version of the highest coordinate system":
 
 .. code-block:: sql
 
-   SELECT version FROM coord_system WHERE rank = 1;
+   SELECT version FROM coord_system WHERE coord_system.rank = 1;
 
 Make sure you are using the same version in your master database:
 
