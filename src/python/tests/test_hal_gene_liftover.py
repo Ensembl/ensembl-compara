@@ -27,7 +27,7 @@ from importlib.util import module_from_spec, spec_from_file_location
 from pathlib import Path
 import sys
 from types import ModuleType
-from typing import ContextManager, Iterable, Mapping, Union
+from typing import ContextManager, Iterable, Mapping, Optional, Union
 
 import pytest
 from pytest import raises
@@ -82,7 +82,7 @@ from hal_gene_liftover import SimpleRegion
 class TestHalGeneLiftover:
     """Tests script hal_gene_liftover.py"""
 
-    ref_file_dir = None  # type: Path
+    ref_file_dir: Optional[Path] = None
 
     @pytest.fixture(scope='class', autouse=True)
     def setup(self) -> None:
