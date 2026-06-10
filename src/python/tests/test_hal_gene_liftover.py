@@ -156,6 +156,7 @@ class TestHalGeneLiftover:
             tmp_path: Unit test temp directory (fixture).
 
         """
+        assert self.ref_file_dir is not None
         with expectation:
             out_file_path = tmp_path / bed_file
             hal_gene_liftover.make_src_region_file(regions, chr_sizes, out_file_path, flank_length)
