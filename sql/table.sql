@@ -71,8 +71,8 @@ CREATE TABLE IF NOT EXISTS meta (
 @desc This table contains all taxa used in this database, which mirror the data and tree structure from NCBI Taxonomy database (for more details see ensembl-compara/script/taxonomy/README-taxonomy which explain our import process)
 @colour   #24DA06
 
-@example    This examples shows how to get the lineage for Homo sapiens:
-    @sql    SELECT n2.taxon_id, n2.parent_id, na.name, n2.rank, n2.left_index, n2.right_index FROM ncbi_taxa_node n1 JOIN (ncbi_taxa_node n2 LEFT JOIN ncbi_taxa_name na ON n2.taxon_id = na.taxon_id AND na.name_class = "scientific name")  ON n2.left_index <= n1.left_index AND n2.right_index >= n1.right_index WHERE n1.taxon_id = 9606 ORDER BY left_index;
+@example    These examples show how to get the lineage for Homo sapiens:
+    @sql    SELECT n2.taxon_id, n2.parent_id, na.name, n2.`rank`, n2.left_index, n2.right_index FROM ncbi_taxa_node n1 JOIN (ncbi_taxa_node n2 LEFT JOIN ncbi_taxa_name na ON n2.taxon_id = na.taxon_id AND na.name_class = "scientific name")  ON n2.left_index <= n1.left_index AND n2.right_index >= n1.right_index WHERE n1.taxon_id = 9606 ORDER BY left_index;
 
 @column taxon_id                The NCBI Taxonomy ID
 @column parent_id               The parent taxonomy ID for this node (refers to ncbi_taxa_node.taxon_id)
@@ -89,7 +89,7 @@ CREATE TABLE ncbi_taxa_node (
   taxon_id                        int(10) unsigned NOT NULL,
   parent_id                       int(10) unsigned NOT NULL,
 
-  rank                            char(32) default '' NOT NULL,
+  `rank`                          char(32) default '' NOT NULL,
   genbank_hidden_flag             tinyint(1) default 0 NOT NULL,
 
   left_index                      int(10) DEFAULT 0 NOT NULL,
@@ -98,7 +98,7 @@ CREATE TABLE ncbi_taxa_node (
 
   PRIMARY KEY (taxon_id),
   KEY (parent_id),
-  KEY (rank),
+  KEY (`rank`),
   KEY (left_index),
   KEY (right_index)
 
