@@ -1,6 +1,6 @@
 // https://stackoverflow.com/a/25359264
 $.urlParam = function(name){
-    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+    var results = new RegExp('[?&]' + name + '=([^&#]*)').exec(window.location.href);
     if (results==null) {
         return null;
     }
