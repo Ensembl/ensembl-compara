@@ -50,6 +50,7 @@ dependencies = [
     "CrossMap>=0.6.5",
     "ete3>=3.1.1",
     "lxml>=4.9.2",
+    "ortheus@git+https://github.com/Ensembl/ortheus.git@ensembl_production_116",
     "pandas>=0.24.2",
     "pybedtools>=0.9.0",
     "sqlalchemy>=1.4.0",
