@@ -39,6 +39,7 @@ my $help = 0;
 my $aln_out;
 my $fasta_out;
 my $fasta_cds_out;
+my $json_out;
 my $nh_out;
 my $nhx_out;
 my $orthoxml;
@@ -63,6 +64,7 @@ GetOptions('help'           => \$help,
            'a|aln_out=s'    => \$aln_out,
            'f|fasta_out=s'  => \$fasta_out,
            'fc|fasta_cds_out=s' => \$fasta_cds_out,
+           'json|json_out=s' => \$json_out,
            'nh|nh_out=s'    => \$nh_out,
            'nhx|nhx_out=s'  => \$nhx_out,
            'oxml|orthoxml=s'    => \$orthoxml,
@@ -87,6 +89,7 @@ $0 [--tree_id id | --tree_id_file file.txt] [--url mysql://ensro\@compara1:3306/
 The following parameters define the data that should be dumped.
 string is the filename extension. If string is 1, the default extension will be used
 
+--json_out string tree in JSON format (tree.json)
 --nh_out string   tree in newick / EMF format (nh.emf)
 --nhx_out string  tree in extended newick / EMF format (nhx.emf)
 --aln_out string        multiple alignment in EMF format (aln.emf)
@@ -206,7 +209,8 @@ foreach my $tree_id (@tree_ids) {
   dump_if_wanted($fasta_out, $tree_id, $fasta_names{$tree->member_type}, \&dumpTreeFasta, $root, [0]);
   dump_if_wanted($fasta_cds_out, $tree_id, 'cds.fasta', \&dumpTreeFasta, $root, [1]) if $tree->member_type eq 'protein';
 
-  my ($orthoxml_file_path, $phyloxml_file_path, $cafe_file_path);
+  my ($json_file_path, $orthoxml_file_path, $phyloxml_file_path, $cafe_file_path);
+  $json_file_path = dump_if_wanted($json_out, $tree_id, 'tree.json', \&dumpTreeJSON, $tree);
   $orthoxml_file_path = dump_if_wanted($orthoxml, $tree_id, 'orthoxml.xml', \&dumpTreeOrthoXML, $tree) if $orthoxml_compatible;
   $phyloxml_file_path = dump_if_wanted($phyloxml, $tree_id, 'phyloxml.xml', \&dumpTreePhyloXML, $tree);
   $cafe_file_path = dump_if_wanted($cafe_phyloxml, $tree_id, 'cafe_phyloxml.xml', \&dumpCafeTreePhyloXML, $cafe_tree) if $cafe_tree;
@@ -303,6 +307,33 @@ sub dumpTreeFasta {
                                      );
     print $alignIO $sa;
     print $fh "\n//\n\n";
+}
+
+sub dumpTreeJSON {
+    my $tree = shift;
+    my $fh = shift;
+
+    my $json = JSON->new->utf8;
+
+    no warnings 'recursion';
+
+    if ($tree->root->max_depth > $json->get_max_depth) {
+        $json->max_depth([$tree->root->max_depth]);
+    }
+
+    require Bio::EnsEMBL::Compara::Utils::GeneTreeHash;
+    my $tree_hash = Bio::EnsEMBL::Compara::Utils::GeneTreeHash->convert(
+        $tree,
+        -no_sequences => 0,
+        -aligned => 0,
+        -cdna => 0,
+        -exon_boundaries => 0,
+        -gaps => 0,
+        -cigar_line => 0
+    );
+
+    my $tree_json = $json->encode($tree_hash) . "\n";
+    print $fh $tree_json;
 }
 
 sub dumpTreeOrthoXML {
