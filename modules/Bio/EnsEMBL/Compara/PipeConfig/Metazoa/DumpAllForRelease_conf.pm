@@ -50,23 +50,6 @@ sub default_options {
         'dump_dir'         => $self->o('dump_root') . '/release-' . $self->o('eg_release'),
 
         'division'         => 'metazoa',
-
-         # mlss_ids of LastZ alignments to redump
-        'updated_mlss_ids' => [
-            9560,  # Agam-Asin LastZ (on Agam)
-            9706,  # Aalv-Agam LastZ (on Agam)
-            9726,  # Acep-Amel LastZ (on Acep)
-            9728,  # Acep-Nvit LastZ (on Acep)
-            9736,  # Amel-Nvit LastZ (on Amel)
-            9773,  # Acep-Sinv LastZ (on Acep)
-            9774,  # Acep-Bimp LastZ (on Acep)
-            9777,  # Amel-Sinv LastZ (on Amel)
-            9778,  # Amel-Bimp LastZ (on Amel)
-            9779,  # Nvit-Sinv LastZ (on Nvit)
-            9780,  # Bimp-Nvit LastZ (on Nvit)
-            9781,  # Bimp-Sinv LastZ (on Sinv)
-            9784,  # Gfus-Gmor LastZ (on Gmor)
-        ],
     };
 }
 
