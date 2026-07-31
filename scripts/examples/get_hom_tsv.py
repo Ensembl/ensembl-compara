@@ -78,8 +78,8 @@ _FTP_META: dict[str, dict[str, Any]] = {
         "host": "ftp.ensemblgenomes.ebi.ac.uk",
         "path_prefix_template": "pub/release-${eg_version}/${pan_ensembl}",
         "current_path_prefix": "pub/current/pan",
-        "min_ensembl_version": 114,
-        "min_eg_version": 61,
+        "min_ensembl_version": 110,
+        "min_eg_version": 57,
     },
     "plants": {
         "host": "ftp.ensemblgenomes.ebi.ac.uk",

@@ -713,6 +713,7 @@ sub _fetch_gene_tree_homology_mlsses {
     }
 
     my $homology_methods = $self->db->get_MethodAdaptor->fetch_all_by_class_pattern('^Homology\.homology$');
+    @$homology_methods = grep { $_->type ne 'ENSEMBL_PROJECTIONS' } @$homology_methods;
     my @collection_gdb_ids = map { $_->dbID } @{$mlss->species_set->genome_dbs};
 
     my @homology_mlsses;

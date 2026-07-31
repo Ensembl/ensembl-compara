@@ -1,6 +1,6 @@
 // https://stackoverflow.com/a/25359264
 $.urlParam = function(name){
-    var results = new RegExp('[\?&]' + name + '=([^&#]*)').exec(window.location.href);
+    var results = new RegExp('[?&]' + name + '=([^&#]*)').exec(window.location.href);
     if (results==null) {
         return null;
     }
@@ -21,7 +21,9 @@ var url_jira_issue = 'https://www.ebi.ac.uk/panda/jira/browse/';
 var release = $.urlParam("release");
 var all_divisions = [ 'empty', 'Vertebrates', 'GRCh37', 'Metazoa', 'Plants', 'Protists', 'Fungi', 'Pan', 'Bacteria' ];
 
-$('body').append('<h1>Release ' + release + ' dashboard</h1>');
+var h1 = /^\d+$/.test(release) ? '<h1>Release ' + parseInt(release).toString() + ' dashboard</h1>' : '<h1>Release dashboard</h1>'
+
+$('body').append(h1);
 
 function process_division(division) { return function(json) {
     //console.log('json: ', json);
