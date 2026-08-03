@@ -161,6 +161,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromRegFactory',
             -parameters => {
                 'master_db' => $self->o('master_db'),
+                'allowed_species_file' => $self->o('config_dir') . '/' . 'allowed_species.json',
             },
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
