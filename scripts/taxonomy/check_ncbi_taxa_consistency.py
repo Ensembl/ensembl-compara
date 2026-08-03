@@ -18,7 +18,10 @@
 import argparse
 from collections import defaultdict
 import subprocess
+from urllib.parse import urlparse, urlunparse
+from warnings import warn
 
+import sqlalchemy
 from sqlalchemy import create_engine, text
 
 
@@ -44,8 +47,19 @@ if __name__ == "__main__":
         output = subprocess.check_output(cmd_args, text=True)
 
         host_url = output.rstrip()
+        parsed_url = urlparse(host_url)
+        if parsed_url.scheme != "mysql+pymysql":
+            host_url = urlunparse(tuple(["mysql+pymysql"]) + parsed_url[1:])
+
         engine = create_engine(host_url)
-        with engine.connect() as conn:
+
+        try:
+            conn = engine.connect()
+        except sqlalchemy.exc.OperationalError:
+            warn(f"failed to connect to host {host}; skipping")
+            continue
+
+        with conn:
             db_found = conn.execute(db_query, {"db_name": db_name}).scalar_one_or_none()
 
         if db_found:
