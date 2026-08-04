@@ -202,16 +202,62 @@ sub new_from_Slice {
         $is_reference            = $slice->is_reference(),
     }
 
-    my %seq_loc_to_cell_component = ( 'nuclear_chromosome' => 'NUC', 'mitochondrial_chromosome' => 'MT', 'chloroplast_chromosome' => 'PT' );
     # FIXME this default nuclear assignment means that genomes without assignment in cores that should be mitochondrial for example, are later processed for pairwise alignment and synteny incorrectly
     my $cellular_component = 'NUC';
 
-    if ($sequence_location) {
+    if (defined $sequence_location) {
+
+        # Mapping of 'cellular_component' to 'sequence_location' values.
+        my %cell_component_to_seq_locs = (
+            'NUC' => ['nuclear_chromosome'],
+            'MT'  => ['mitochondrial_chromosome'],
+            'PT'  => ['chloroplast_chromosome'],
+            'OTHER' => [
+                'apicoplast_chromosome',
+                'chromoplast_chromosome',
+                'cyanelle_chromosome',
+                'leucoplast_chromosome',
+                'macronuclear_chromosome',
+                'micronuclear_chromosome',
+                'nucleomorphic_chromosome',
+            ],
+        );
+
+        # Mapping of 'sequence_location' to 'cellular_component' value.
+        my %seq_loc_to_cell_component;
+        while (my ($cell_component, $seq_locs) = each %cell_component_to_seq_locs) {
+            foreach my $seq_loc (@{$seq_locs}) {
+                $seq_loc_to_cell_component{$seq_loc} = $cell_component;
+            }
+        }
+
         if (exists $seq_loc_to_cell_component{$sequence_location}) {
             $cellular_component = $seq_loc_to_cell_component{$sequence_location};
         }
         else {
-            $cellular_component = 'OTHER';
+            throw(
+                sprintf(
+                    "seq_region %s of genome %s has unsupported 'sequence_location' attribute: %s",
+                    $slice->seq_region_name,
+                    $genome_db->name,
+                    $sequence_location,
+                )
+            );
+        }
+    }
+
+    if (defined $codon_table_id) {
+        require Bio::Tools::CodonTable;
+        my $supported_codon_table_ids = Bio::Tools::CodonTable::tables();
+        if (!exists $supported_codon_table_ids->{$codon_table_id}) {
+            throw(
+                sprintf(
+                    "seq_region %s of genome %s has unsupported codon table_id: %s",
+                    $slice->seq_region_name,
+                    $genome_db->name,
+                    $codon_table_id,
+                )
+            );
         }
     }
 

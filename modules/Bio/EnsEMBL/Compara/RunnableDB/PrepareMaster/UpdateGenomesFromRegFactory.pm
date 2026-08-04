@@ -37,10 +37,13 @@ package Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromRegFa
 use warnings;
 use strict;
 
+use Data::Dumper;
+use JSON qw(decode_json);
+
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
 
-use base ('Bio::EnsEMBL::Hive::Process');
+use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 
 sub fetch_input {
@@ -55,21 +58,38 @@ sub fetch_input {
 
     # If provided, get the list of allowed species
     my $allowed_species_file = $self->param('allowed_species_file');
+    my $allowed_species_set = {};
     if (defined $allowed_species_file && -e $allowed_species_file) {
         die "The allowed species JSON file ('$allowed_species_file') should not be empty" if -z $allowed_species_file;
-        # Keep only the species included in the allowed list
-        my $allowed_species = { map { $_ => 1 } @{ decode_json($self->_slurp($allowed_species_file)) } };
-        my @excluded_species = grep { ! exists $allowed_species->{$_} } @{ keys %core_dbas };
+        $allowed_species_set = { map { $_ => 1 } @{ decode_json($self->_slurp($allowed_species_file)) } };
+    }
+
+    # If available, get the set of additional species
+    my $additional_species_set = {};
+    if ($self->param_is_defined('additional_species_file')) {
+        my $additional_species_file = $self->param('additional_species_file');
+        die "Additional species JSON file ('$additional_species_file') does not exist" unless -e $additional_species_file;
+        die "Additional species JSON file ('$additional_species_file') should not be empty" if -z $additional_species_file;
+        my $additional_species;
+        my $additional_species = decode_json($self->_slurp($additional_species_file));
+        foreach my $additional_div ( keys %$additional_species ) {
+            foreach my $species_name (@{$additional_species->{$additional_div}}) {
+                $additional_species_set->{$species_name} = 1;
+            }
+        }
+    }
+
+    # Filter core database set, keeping only those that are in the allowed-species/additional-species lists.
+    if ($allowed_species_set || $additional_species_set) {
+        my @excluded_species = grep { ! (exists $allowed_species_set->{$_} || exists $additional_species_set->{$_}) } keys %core_dbas;
         delete @core_dbas{@excluded_species};
     }
 
-    my $master_dba = Bio::EnsEMBL::Compara::DBSQL::DBAdaptor->go_figure_compara_dba( $self->param_required('master_db') );
-    my $current_genomes = $master_dba->get_GenomeDBAdaptor->fetch_all_current();
+    my $master_dba = $self->get_cached_compara_dba('master_db');
+    my $current_genomes = [grep { $_->name ne 'ancestral_sequences' && !defined $_->genome_component } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current()}];
     my (@genomes_to_update, @genomes_to_retire, @genomes_to_verify);
     if ( @$current_genomes ) {
         foreach my $genome ( @$current_genomes ) {
-            # Never retire ancestral_sequences
-            next if $genome->name eq 'ancestral_sequences';
             if ( $core_dbas{$genome->name} ) {
                 if ( $genome->assembly eq $core_dbas{$genome->name}->assembly_name ) {
                     push @genomes_to_verify, $genome->name;
@@ -81,10 +101,24 @@ sub fetch_input {
                 push @genomes_to_retire, $genome->name;
             }
         }
-    } else {
-        # We are creating a new compara master dabatase, so all the species have to be added
-        push @genomes_to_update, keys %core_dbas;
     }
+
+    # Add allowed/additional species not yet stored as a GenomeDB.
+    my %current_gdb_name_set = map { $_->name => 1 } @$current_genomes;
+    my @new_gdb_names = grep { !exists $current_gdb_name_set{$_} } keys %core_dbas;
+    push @genomes_to_update, @new_gdb_names;
+
+    print "GENOME_LIST!! ";
+    print Dumper [sort keys %core_dbas];
+
+    print "GENOMES_TO_UPDATE!! ";
+    print Dumper \@genomes_to_update;
+
+    print "GENOMES_TO_RETIRE!! ";
+    print Dumper \@genomes_to_retire;
+
+    print "GENOMES_TO_VERIFY!! ";
+    print Dumper \@genomes_to_verify;
 
     $self->param('genomes_to_update', \@genomes_to_update);
     $self->param('genomes_to_retire', \@genomes_to_retire);

@@ -149,6 +149,7 @@ sub tweak_analyses {
 
     if (defined $self->o('additional_species_file')) {
         $analyses_by_name->{'update_genome_from_metadata_factory'}->{'-parameters'}{'additional_species_file'} = $self->o('additional_species_file');
+        $analyses_by_name->{'update_genome_from_registry_factory'}->{'-parameters'}{'additional_species_file'} = $self->o('additional_species_file');
     }
 }
 

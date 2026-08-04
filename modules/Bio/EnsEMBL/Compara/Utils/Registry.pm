@@ -58,11 +58,13 @@ use Bio::EnsEMBL::DBSQL::DBAdaptor;
 use Bio::EnsEMBL::DBSQL::DBConnection;
 use Bio::EnsEMBL::Utils::Argument qw(rearrange);
 use Bio::EnsEMBL::Compara::DBSQL::DBAdaptor;
+use Bio::EnsEMBL::Compara::Utils::RunCommand;
 use Bio::EnsEMBL::Taxonomy::DBSQL::TaxonomyDBAdaptor;
 
 use constant PREVIOUS_DATABASE_SUFFIX => '__previous_database__';
 
 my %ports;
+my %ro_users;
 my %rw_users;
 my %rw_passwords;
 
@@ -259,11 +261,11 @@ sub add_dbas {
         my ( $host, $db_name ) = @{ $compara_dbs->{$alias_name} };
 
         my ( $user, $pass );
-        if ( ($host =~ /-prod-/) && !($alias_name =~ /_prev/) ) {
+        if ( ($host =~ /-prod-/ || $host =~ /mysql-ens-compara/) && !($alias_name =~ /_prev/) ) {
             $user = get_rw_user($host);
             $pass = get_rw_pass($host);
         } else {
-            $user = 'ensro';
+            $user = get_ro_user($host);
             $pass = '';
         }
 
@@ -332,6 +334,25 @@ sub get_port {
 }
 
 
+sub get_ro_user {
+    my $host = shift;
+    unless (exists $ro_users{$host}) {
+
+        my $run_cmd = Bio::EnsEMBL::Compara::Utils::RunCommand->new_and_exec(
+            "$host user",
+            { die_on_failure => 1 },
+        );
+
+        unless ($run_cmd->exit_code) {
+            my $ro_user = $run_cmd->out;
+            chomp $ro_user;
+            $ro_users{$host} = $ro_user;
+        }
+    }
+    return $ro_users{$host};
+}
+
+
 =head2 get_rw_user
 
   Arg[1]      : String $host. Host name
@@ -347,6 +368,12 @@ sub get_rw_user {
     unless (exists $rw_users{$host}) {
         # There are several possible user names
         my @rw_users = qw(ensadmin ensrw w);
+
+        # Username may be stored in an environment variable.
+        if ($ENV{'ENSADMIN_USR'} =~ /^[a-z]{1,32}$/) {
+            unshift(@rw_users, $ENV{'ENSADMIN_USR'});
+        }
+
         foreach my $rw_user (@rw_users) {
             my $rc = system("which $host-$rw_user > /dev/null 2> /dev/null");
             unless ($rc) {

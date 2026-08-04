@@ -1,0 +1,28 @@
+{
+    "plants": [
+        "aegilops_tauschii",
+        "arabidopsis_thaliana",
+        "arabidopsis_thaliana_gca001651475v1gb",
+        "arabidopsis_thaliana_gca978657495v1gb",
+        "avena_sativa_ot3098",
+        "brassica_napus",
+        "brassica_napus_gca905183035v1gb",
+        "chlamydomonas_reinhardtii",
+        "hordeum_vulgare",
+        "hordeum_vulgare_barke",
+        "medicago_truncatula",
+        "oryza_sativa",
+        "oryza_sativa_ir64",
+        "solanum_lycopersicum_gca000188115v5cm",
+        "solanum_tuberosum",
+        "triticum_aestivum",
+        "zea_mays"
+    ],
+    "vertebrates": [
+        "caenorhabditis_elegans",
+        "ciona_savignyi",
+        "drosophila_melanogaster",
+        "homo_sapiens",
+        "saccharomyces_cerevisiae"
+    ]
+}

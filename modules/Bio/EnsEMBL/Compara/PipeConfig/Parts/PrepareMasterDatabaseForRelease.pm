@@ -71,7 +71,10 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'src_db_conn'  => $self->o('taxonomy_db'),
                 'dest_db_conn' => '#master_db#',
                 'mode'         => 'overwrite',
-                'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g"',
+                # From the docs: https://dev.mysql.com/doc/refman/8.0/en/create-table.html
+                #     ROW_FORMAT=FIXED is not supported. If ROW_FORMAT=FIXED is specified while
+                #     innodb_strict_mode is disabled, InnoDB issues a warning and assumes ROW_FORMAT=DYNAMIC.
+                'filter_cmd'   => 'sed "s/ENGINE=MyISAM/ENGINE=InnoDB/g" | sed "s/ROW_FORMAT=FIXED/ROW_FORMAT=DYNAMIC/g"',
                 'table'        => 'ncbi_taxa_node',
             },
             -flow_into  => ['load_ncbi_name']
@@ -158,6 +161,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::UpdateGenomesFromRegFactory',
             -parameters => {
                 'master_db' => $self->o('master_db'),
+                'allowed_species_file' => $self->o('config_dir') . '/' . 'allowed_species.json',
             },
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],

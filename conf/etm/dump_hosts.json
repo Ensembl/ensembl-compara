@@ -1,0 +1,16 @@
+{
+    "even": {
+        "compara_dump_host": "mysql-ens-compara-exp",
+        "core_dump_hosts": [
+            "mysql-ens-vertannot-staging",
+            "mysql-ens-compara-exp"
+        ]
+    },
+    "odd": {
+        "compara_dump_host": "mysql-ens-compara-exp",
+        "core_dump_hosts": [
+            "mysql-ens-vertannot-staging",
+            "mysql-ens-compara-exp"
+        ]
+    }
+}
