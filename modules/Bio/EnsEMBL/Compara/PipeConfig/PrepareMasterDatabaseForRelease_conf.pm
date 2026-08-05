@@ -89,6 +89,8 @@ sub default_options {
         'additional_species_file' => undef,
         'species_trees'          => undef,
 
+        'do_copy_to_shared_loc'   => 0,
+        'do_copy_to_warehouse'    => 0,
         'do_update_from_metadata' => 1,
         'do_load_timetree'        => 0,
 
@@ -117,6 +119,8 @@ sub pipeline_wide_parameters {
         'release'    => $self->o('ensembl_release'),
         'hc_version' => 1,
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
+        'do_copy_to_shared_loc'   => $self->o('do_copy_to_shared_loc'),
+        'do_copy_to_warehouse'    => $self->o('do_copy_to_warehouse'),
         'do_update_from_metadata' => $self->o('do_update_from_metadata'),
         'do_load_timetree'        => $self->o('do_load_timetree'),
     };

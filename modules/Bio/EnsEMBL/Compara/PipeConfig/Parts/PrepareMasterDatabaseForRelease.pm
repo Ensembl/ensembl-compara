@@ -307,7 +307,10 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'src_db_conn' => '#master_db#',
                 'output_file' => $self->o('master_backup_file'),
             },
-            -flow_into  => [ 'copy_pre_backup_to_warehouse' ],
+            -flow_into  => [
+                WHEN( '#do_copy_to_shared_loc#' => 'copy_annotations_to_shared_loc' ),
+                WHEN( '#do_copy_to_warehouse#' => 'copy_pre_backup_to_warehouse' ),
+            ],
             -rc_name    => '1Gb_job',
         },
 
@@ -328,9 +331,6 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'warehouse_dir' => $self->o('warehouse_dir'),
                 'cmd'           => 'cp #backups_dir#/compara_master_#division#.post#release#.sql #warehouse_dir#/master_db_dumps/ensembl_compara_master_#division#.$(date "+%Y%m%d").during#release#.sql',
             },
-            -flow_into  => WHEN(
-                '#do_update_from_metadata#' => 'copy_annotations_to_shared_loc'
-            ),
         },
 
         {   -logic_name => 'copy_annotations_to_shared_loc',
