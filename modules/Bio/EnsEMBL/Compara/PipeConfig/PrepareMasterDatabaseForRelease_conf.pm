@@ -118,6 +118,7 @@ sub pipeline_wide_parameters {
         'division'   => $self->o('division'),
         'release'    => $self->o('ensembl_release'),
         'hc_version' => 1,
+        'annotation_file' => $self->o('annotation_file'),
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
         'do_copy_to_shared_loc'   => $self->o('do_copy_to_shared_loc'),
         'do_copy_to_warehouse'    => $self->o('do_copy_to_warehouse'),

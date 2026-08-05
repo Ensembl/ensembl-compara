@@ -171,6 +171,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -parameters => {
                 'master_db' => $self->o('master_db'),
                 'allowed_species_file' => $self->o('config_dir') . '/' . 'allowed_species.json',
+                'annotation_file'      => $self->o('annotation_file'),
             },
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],

@@ -127,6 +127,8 @@ sub pipeline_wide_parameters {
         'init_reg_conf'    => $self->o('init_reg_conf'),
         'do_clone_species' => $self->o('do_clone_species'),
 
+        'annotation_file'  => $self->o('annotation_file'),
+
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
         'do_copy_to_shared_loc'   => $self->o('do_copy_to_shared_loc'),
         'do_copy_to_warehouse'    => $self->o('do_copy_to_warehouse'),
