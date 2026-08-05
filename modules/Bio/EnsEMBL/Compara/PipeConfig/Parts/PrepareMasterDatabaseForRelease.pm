@@ -47,6 +47,15 @@ sub pipeline_analyses_prep_master_db_for_release {
                 'cmd' => [$self->o('patch_db_exe'), '--reg_conf', $self->o('reg_conf'), '--reg_alias', '#master_db#', '--fix', '--oldest', '#oldest_patch_release#', '--nointeractive'],
                 'oldest_patch_release' => $self->o('rel_with_suffix'),
             },
+            -flow_into  => ['hc_metadata'],
+        },
+
+        {   -logic_name => 'hc_metadata',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::PrepareMaster::SqlHealthChecks',
+            -parameters => {
+                'db_conn' => '#master_db#',
+                'mode'    => 'metadata',
+            },
             -flow_into  => ['check_ncbi_taxa_consistency'],
         },
 
