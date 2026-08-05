@@ -84,6 +84,7 @@ sub default_options {
 
         # the master database for synchronization of various ids (use undef if you don't have a master database)
         'master_db' => 'compara_master',
+        'master_prep_db' => 'master_prep',
         'master_db_is_missing_dnafrags' => 0,
 
         # NOTE: The databases referenced in the following arrays have to be hashes (not URLs)
@@ -99,10 +100,6 @@ sub default_options {
         'include_nonreference' => 0,
         'include_patches'      => 0,
         'include_lrg'          => 0,
-
-        # list of species that got an annotation update
-        # ... assuming the same person has run both pipelines
-        'expected_updates_file' => $self->o('shared_hps_dir') . '/genome_reports/annotation_updates.' . $self->o('division') . '.' . $self->o('ensembl_release') . '.list',
     };
 }
 
@@ -130,6 +127,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
 
         # Database connection
         'master_db'             => $self->o('master_db'),
+        'master_prep_db'        => $self->o('master_prep_db'),
         'reuse_member_db'       => $self->o('reuse_member_db'),
         'work_dir'              => $self->o('work_dir'),
         'do_nonblocking_checks' => $self->o('do_nonblocking_checks'),
@@ -266,13 +264,17 @@ sub core_pipeline_analyses {
                 'whole_method_links' => '#gene_tree_method_types#',
             },
             -rc_name    => '2Gb_job',
-            -flow_into  => [ 'compare_non_reused_genome_list' ],
+            -flow_into  => [ 'find_non_reused_genome_list' ],
+        },
+
+        {   -logic_name => 'find_non_reused_genome_list',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::FindNonReusedGenomeList',
+            -flow_into  => { 2 => 'compare_non_reused_genome_list' },
         },
 
         {   -logic_name => 'compare_non_reused_genome_list',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::CompareNonReusedGenomeList',
             -parameters => {
-                'expected_updates_file' => $self->o('expected_updates_file'),
                 'current_release'       => $self->o('ensembl_release'),
             },
             -flow_into  => [ 'nonpolyploid_genome_reuse_factory' ],

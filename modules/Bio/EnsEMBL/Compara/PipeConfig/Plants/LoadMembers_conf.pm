@@ -74,11 +74,6 @@ sub tweak_analyses {
     # Genomes such as avena_sativa_ot3098 need a little more memory.
     $analyses_by_name->{'check_reusability'}->{'-rc_name'} = '4Gb_job';
 
-    # The metadata service reports human annotation updates almost every
-    # release because of LRGs and assembly patches, which we don't care
-    # about in this division.
-    $analyses_by_name->{compare_non_reused_genome_list}->{'-parameters'}->{'ok_homo_sapiens'} = 1;
-
     # Block unguarded funnel analyses; to be unblocked as needed during pipeline execution.
     my @unguarded_funnel_analyses = (
         'offset_tables',
