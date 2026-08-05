@@ -96,8 +96,8 @@ sub shared_default_options {
         #'hmm_library_basedir'   => $self->o('shared_hps_dir') . '/compara_hmm_91/',
         
         'homology_dumps_shared_basedir' => $self->o('shared_hps_dir') . '/homology_dumps/'. $self->o('division'),
-        'gene_tree_stats_shared_basedir' => $self->o('shared_hps_dir') . '/gene_tree_stats/' . $self->o('division'),
-        'msa_stats_shared_basedir'       => $self->o('shared_hps_dir') . '/msa_stats/' . $self->o('division'),
+        'gene_tree_stats_shared_basedir' => $self->o('work_dir') . '/gene_tree_stats/',
+        'msa_stats_shared_basedir'       => $self->o('work_dir') . '/msa_stats/',
     }
 }
 
