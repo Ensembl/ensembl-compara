@@ -94,6 +94,8 @@ my $compara_dbs = {
     'compara_master' => [ 'mysql-ens-compara-exp', 'ensembl_compara_master_etm_20260729' ],
     'compara_prev'   => [ 'mysql-ens-mirror-3', 'ensembl_compara_plants_63_116' ],
 
+    'master_prep'    => [ 'mysql-ens-compara-exp', 'twalsh_prepare_etm_master_for_rel_20260805' ],
+
     # homology dbs
     #'compara_members'        => [ 'mysql-ens-compara-exp', '' ],
     #'compara_ptrees'         => [ 'mysql-ens-compara-exp', '' ],
