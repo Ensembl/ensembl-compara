@@ -96,6 +96,11 @@ sub default_options {
                 'thresholds'    => [ 50, 50, 25 ],
             },
         ],
+
+        # Do we need a mapping between homology_ids of this database to another database?
+        'do_homology_id_mapping' => 0,
+        # Do we expect to need shared homology dumps in a future release to facilitate reuse of WGA coverage data ?
+        'homology_dumps_shared_dir' => undef,
     };
 }
 

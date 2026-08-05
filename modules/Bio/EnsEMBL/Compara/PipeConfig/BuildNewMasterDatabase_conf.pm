@@ -93,6 +93,8 @@ sub default_options {
         'update_metadata_script'  => $self->check_exe_in_ensembl('ensembl-compara/scripts/pipeline/update_master_db.pl'),
         'assembly_patch_species'  => [], # by default, skip this step
         'additional_species'      => {}, # by default, skip this step
+        'do_copy_to_shared_loc'   => 0,
+        'do_copy_to_warehouse'    => 0,
         'do_update_from_metadata' => 0,
         'do_load_timetree'        => 0,
         'meta_host'               => undef, # required but not used: do_update_from_metadata = 0
@@ -124,8 +126,12 @@ sub pipeline_wide_parameters {
         
         'init_reg_conf'    => $self->o('init_reg_conf'),
         'do_clone_species' => $self->o('do_clone_species'),
-        
+
+        'annotation_file'  => $self->o('annotation_file'),
+
         # Define the flags so they can be seen by Parts::PrepareMasterDatabaseForRelease
+        'do_copy_to_shared_loc'   => $self->o('do_copy_to_shared_loc'),
+        'do_copy_to_warehouse'    => $self->o('do_copy_to_warehouse'),
         'do_update_from_metadata' => $self->o('do_update_from_metadata'),
         'do_load_timetree'        => $self->o('do_load_timetree'),
     };

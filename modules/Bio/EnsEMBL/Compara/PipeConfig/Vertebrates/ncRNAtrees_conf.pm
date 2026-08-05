@@ -86,6 +86,9 @@ sub default_options {
                 'thresholds'    => [ 50, 50, 25 ],
             },
         ],
+
+        # Do we expect to need shared homology dumps in a future release to facilitate reuse of WGA coverage data ?
+        'homology_dumps_shared_dir' => undef,
     };
 } 
 

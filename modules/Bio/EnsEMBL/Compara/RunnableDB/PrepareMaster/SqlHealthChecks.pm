@@ -58,6 +58,19 @@ use base ('Bio::EnsEMBL::Hive::RunnableDB::SqlHealthcheck');
 
 my $config = {
 
+    metadata => {
+        params => [ 'division', 'release' ],
+        tests => [
+            {
+                description => 'compara master database must have expected division',
+                query => "SELECT * from meta WHERE meta_key = 'division' and meta_value != '#division#';",
+            },
+            {
+                description => 'compara master database must have expected release',
+                query => "SELECT * from meta WHERE meta_key = 'schema_version' and meta_value != '#release#';",
+            },
+        ],
+    },
 
     ## ensure no duplicate names ##
     ###############################

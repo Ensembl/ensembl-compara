@@ -87,12 +87,17 @@ sub fetch_input {
 
     my $master_dba = $self->get_cached_compara_dba('master_db');
     my $current_genomes = [grep { $_->name ne 'ancestral_sequences' && !defined $_->genome_component } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current()}];
-    my (@genomes_to_update, @genomes_to_retire, @genomes_to_verify);
+    my (@genomes_to_update, @genomes_to_retire, @genomes_to_verify, @updated_annotations);
     if ( @$current_genomes ) {
         foreach my $genome ( @$current_genomes ) {
             if ( $core_dbas{$genome->name} ) {
                 if ( $genome->assembly eq $core_dbas{$genome->name}->assembly_name ) {
                     push @genomes_to_verify, $genome->name;
+
+                    if ( $genome->genebuild ne $core_dbas{$genome->name}->get_MetaContainer->get_genebuild() ) {
+                        push @updated_annotations, $genome->name;
+                    }
+
                 } else {
                     push @genomes_to_update, $genome->name;
                 }
@@ -121,6 +126,7 @@ sub fetch_input {
     print Dumper \@genomes_to_verify;
 
     $self->param('genomes_to_update', \@genomes_to_update);
+    $self->param('genomes_with_updated_annotation', \@updated_annotations);
     $self->param('genomes_to_retire', \@genomes_to_retire);
     $self->param('genomes_to_verify', \@genomes_to_verify);
 }
@@ -134,6 +140,11 @@ sub write_output {
     $self->dataflow_output_id(\@genomes_to_retire, 3);
     my @genomes_to_verify = map { {species_name => $_} } @{ $self->param('genomes_to_verify') };
     $self->dataflow_output_id(\@genomes_to_verify, 5);
+
+    $self->_spurt(
+        $self->param_required('annotation_file'),
+        join("\n", @{$self->param('genomes_to_update')}, @{$self->param('genomes_with_updated_annotation')}),
+    );
 }
 
 

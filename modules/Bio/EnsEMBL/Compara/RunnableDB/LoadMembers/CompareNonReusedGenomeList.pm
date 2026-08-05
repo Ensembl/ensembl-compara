@@ -75,6 +75,8 @@ package Bio::EnsEMBL::Compara::RunnableDB::LoadMembers::CompareNonReusedGenomeLi
 use strict;
 use warnings;
 
+use List::Util qw/sum/;
+
 use Bio::EnsEMBL::Utils::IO qw/slurp_to_array/;
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -106,7 +108,12 @@ sub fetch_input {
 
     my $nonreuse_ss_id  = $self->param_required('nonreuse_ss_id');
     my $nonreuse_ss     = $self->compara_dba->get_SpeciesSetAdaptor->fetch_by_dbID($nonreuse_ss_id);
-    my %nonreuse_gdbs   = map {$_->name => $_->dbID} @{$nonreuse_ss->genome_dbs};  # map GenomeDB name to dbID, so we can use both later
+
+    # map GenomeDB name to dbIDs, so we can use them later
+    my %nonreuse_gdbs;
+    foreach my $gdb (@{$nonreuse_ss->genome_dbs}) {
+        push(@{$nonreuse_gdbs{$gdb->name}}, $gdb->dbID);
+    }
 
     my $do_not_reuse_list   = $self->param('do_not_reuse_list');
     my %do_not_reuse_hash   = map {$_ => 1} @$do_not_reuse_list;
@@ -133,7 +140,8 @@ sub run {
         next if exists $do_not_reuse_hash->{$name};
         next if exists $expected_updated_gdbs->{$name};
         next if $self->param_exists("ok_$name") && $self->param("ok_$name");
-        next if $reuse_member_adaptor->count_all_by_GenomeDB($nonreuse_gdbs->{$name}) == 0;
+        my $member_count = sum map { $reuse_member_adaptor->count_all_by_GenomeDB($_) } @{$nonreuse_gdbs->{$name}};
+        next if $member_count == 0;
         $error_msg .= "$name can't be reused but is not listed as having an updated annotation.\n";
     }
 
