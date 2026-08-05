@@ -103,7 +103,7 @@ sub test_division {
 
     # Load additional_species.json if it exists
     my $additional_species_file = File::Spec->catfile($division_dir, 'additional_species.json');
-    if (-e $additional_species_file) {
+    if ($division eq 'pan' && -e $additional_species_file) {
         my $additional_species = decode_json(slurp($additional_species_file));
         my @divisions_to_test = grep { exists $allowed_species_info->{$_} } keys %$additional_species;
         if (scalar(@divisions_to_test) > 0) {
