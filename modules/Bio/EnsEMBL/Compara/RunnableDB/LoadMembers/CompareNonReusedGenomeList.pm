@@ -96,6 +96,10 @@ sub param_defaults {
 sub fetch_input {
     my $self = shift @_;
 
+    if ($self->param('ok_all')) {
+        $self->complete_early(sprintf("Parameter 'ok_all' set to '%s'. Skipping this step", $self->param('ok_all')));
+    }
+
     my $expected_updates_file = $self->param('expected_updates_file');
     unless ($expected_updates_file) {
         $self->complete_early('No annotation file provided. Skipping this step');
