@@ -23,11 +23,6 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-my $curr_release = $ENV{'CURR_ENSEMBL_RELEASE'};
-my $prev_release = $curr_release - 1;
-my $curr_eg_release = $curr_release - 53;
-my $prev_eg_release = $curr_eg_release - 1;
-
 my @overlap_species = (
     'avena_sativa_ot3098',
     'caenorhabditis_elegans',
@@ -78,7 +73,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $additional_cores );
         -port   => 4275,
         -user   => 'ensro',
         -pass   => '',
-        -db_version     => $prev_release,
+        -db_version     => 116,
         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
     );
     Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
@@ -88,7 +83,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $additional_cores );
         -port   => 4240,
         -user   => 'ensro',
         -pass   => '',
-        -db_version     => $prev_release,
+        -db_version     => 116,
         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
     );
 };
@@ -97,7 +92,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $additional_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-exp', 'ensembl_compara_master_etm_20260729' ],
-    'compara_prev'   => [ 'mysql-ens-mirror-3', "ensembl_compara_plants_${prev_eg_release}_${prev_release}" ],
+    'compara_prev'   => [ 'mysql-ens-mirror-3', 'ensembl_compara_plants_63_116' ],
 
     # homology dbs
     #'compara_members'        => [ 'mysql-ens-compara-exp', '' ],
