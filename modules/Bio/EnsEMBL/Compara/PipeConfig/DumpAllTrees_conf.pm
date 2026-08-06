@@ -42,6 +42,9 @@ package Bio::EnsEMBL::Compara::PipeConfig::DumpAllTrees_conf;
 use strict;
 use warnings;
 
+use Bio::EnsEMBL::Hive::Version v2.4;
+use Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf;  # Allow this particular config to use conditional dataflow
+
 use base ('Bio::EnsEMBL::Compara::PipeConfig::DumpTrees_conf');
 
 sub default_options {
@@ -54,16 +57,18 @@ sub default_options {
 }
 
 
-sub pipeline_analyses {
-    my ($self) = @_;
-    
-    my $pa = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees::pipeline_analyses_dump_trees($self);
-    $pa->[0]->{'-input_ids'} = [{}];  
-    $pa->[1]->{'-parameters'} = {
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'collection_factory'}{'-parameters'} = {
         'inputquery'    => 'SELECT clusterset_id, member_type FROM gene_tree_root WHERE tree_type = "tree" AND ref_root_id IS NULL GROUP BY clusterset_id, member_type',
         'db_conn'       => '#rel_db#',
     };
-    return $pa;
+
+    $analyses_by_name->{'start_uniprot_dump'}{'-flow_into'} = [
+        WHEN('#division# eq "vertebrates" && #clusterset_id# eq "default" && #member_type# eq "protein"' => 'dump_for_uniprot'),
+    ];
 }
 
 

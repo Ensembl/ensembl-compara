@@ -135,41 +135,26 @@ sub resource_classes {
 }
 
 
-=head2 pipeline_analyses
-
-    Description : Implements pipeline_analyses() interface method of Bio::EnsEMBL::Hive::PipeConfig::HiveGeneric_conf that defines the structure of the pipeline: analyses, jobs, rules, etc.
-                  Here it defines seven analyses:
-
-                    * 'create_dump_jobs'   generates a list of tree_ids to be dumped
-
-                    * 'dump_a_tree'         dumps one tree in multiple formats
-
-                    * 'generate_collations' generates five jobs that will be merging the hashed single trees
-
-                    * 'collate_dumps'       actually merge/collate single trees into long dumps
-
-                    * 'archive_long_files'  zip the long dumps
-
-                    * 'md5sum_tree'         compute md5sum for compressed files
-
-
-=cut
-
-sub pipeline_analyses {
+sub core_pipeline_analyses {
     my ($self) = @_;
-
     my $pa = Bio::EnsEMBL::Compara::PipeConfig::Parts::DumpTrees::pipeline_analyses_dump_trees($self);
-
-    # dump_trees_pipeline_start
     $pa->[0]->{'-input_ids'} = [{}];
+    return $pa;
+}
 
-    # collection_factory
-    $pa->[2]->{'-parameters'} = {
+
+sub tweak_analyses {
+    my $self = shift;
+    my $analyses_by_name = shift;
+
+    $analyses_by_name->{'collection_factory'}{'-parameters'} = {
         'column_names'      => [ 'clusterset_id', 'member_type' ],
         'inputlist'         => [ [$self->o('clusterset_id'), $self->o('member_type')] ],
     };
 
-    return $pa;
+    $analyses_by_name->{'start_uniprot_dump'}{'-flow_into'} = [
+        WHEN('#division# eq "vertebrates" && #clusterset_id# eq "default" && #member_type# eq "protein"' => 'dump_for_uniprot'),
+    ];
 }
 
 1;
