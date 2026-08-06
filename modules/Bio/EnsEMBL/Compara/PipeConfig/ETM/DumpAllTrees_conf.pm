@@ -15,30 +15,28 @@ WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
 
-=cut
-
 =head1 NAME
 
-Bio::EnsEMBL::Compara::PipeConfig::ETM::DumpAllForRelease_conf
+Bio::EnsEMBL::Compara::PipeConfig::ETM::DumpAllTrees_conf
 
 =head1 SYNOPSIS
 
-    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::ETM::DumpAllForRelease_conf -host mysql-ens-compara-prod-X -port XXXX
+    init_pipeline.pl Bio::EnsEMBL::Compara::PipeConfig::DumpAllTrees_conf -host mysql-ens-compara-prod-X -port XXXX
 
 =head1 DESCRIPTION
 
-ETM version of DumpAllForRelease pipeline.
+ETM version of DumpAllTrees pipeline.
 
 =cut
 
-package Bio::EnsEMBL::Compara::PipeConfig::ETM::DumpAllForRelease_conf;
+package Bio::EnsEMBL::Compara::PipeConfig::ETM::DumpAllTrees_conf;
 
 use strict;
 use warnings;
 
 use Bio::EnsEMBL::Hive::Utils ('whoami');
 
-use base ('Bio::EnsEMBL::Compara::PipeConfig::Plants::DumpAllForRelease_conf');
+use base ('Bio::EnsEMBL::Compara::PipeConfig::DumpAllTrees_conf');
 
 sub default_options {
     my ($self) = @_;
