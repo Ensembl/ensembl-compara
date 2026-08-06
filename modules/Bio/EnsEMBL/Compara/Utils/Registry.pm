@@ -370,7 +370,7 @@ sub get_rw_user {
         my @rw_users = qw(ensadmin ensrw w);
 
         # Username may be stored in an environment variable.
-        if ($ENV{'ENSADMIN_USR'} =~ /^[a-z]{1,32}$/) {
+        if (exists $ENV{'ENSADMIN_USR'} && $ENV{'ENSADMIN_USR'} =~ /^[a-z]{1,32}$/) {
             unshift(@rw_users, $ENV{'ENSADMIN_USR'});
         }
 
