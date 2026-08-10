@@ -24,15 +24,9 @@ use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
 my @overlap_species = (
-    'avena_sativa_ot3098',
     'caenorhabditis_elegans',
     'drosophila_melanogaster',
-    'hordeum_vulgare',
-    'hordeum_vulgare_barke',
-    'oryza_sativa',
-    'oryza_sativa_ir64',
     'saccharomyces_cerevisiae',
-    'solanum_lycopersicum_gca000188115v5cm',
 );
 Bio::EnsEMBL::Compara::Utils::Registry::suppress_overlap_species_warnings(\@overlap_species);
 
@@ -41,13 +35,25 @@ Bio::EnsEMBL::Compara::Utils::Registry::suppress_overlap_species_warnings(\@over
 # Use our mirror (which has all the databases)
 Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertannot-staging:4573/116');
 
+my @restaged_species = (
+    'avena_sativa_ot3098',
+    'hordeum_vulgare',
+    'hordeum_vulgare_barke',
+    'oryza_sativa',
+    'oryza_sativa_ir64',
+    'solanum_lycopersicum_gca000188115v5cm',
+);
+
 # Ensure we're using the correct cores for species that overlap with other divisions
-Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species);
+Bio::EnsEMBL::Compara::Utils::Registry::remove_species([@overlap_species, @restaged_species]);
 my $overlap_cores = {
     'caenorhabditis_elegans' => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_116_282" ],
     'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_116_11" ],
     'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_116_4" ],
+};
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 
+my $restaged_cores = {
     'avena_sativa_ot3098' => [ 'mysql-ens-compara-exp', 'avena_sativa_ot3098_core_63_116_1' ],
     'hordeum_vulgare' => [ 'mysql-ens-compara-exp', 'hordeum_vulgare_core_63_116_4' ],
     'hordeum_vulgare_barke' => [ 'mysql-ens-compara-exp', 'hordeum_vulgare_barke_core_63_116_1' ],
@@ -55,7 +61,7 @@ my $overlap_cores = {
     'oryza_sativa_ir64' => [ 'mysql-ens-compara-exp', 'oryza_sativa_ir64_core_63_116_1' ],
     'solanum_lycopersicum_gca000188115v5cm' => [ 'mysql-ens-compara-exp', 'solanum_lycopersicum_gca000188115v5cm_core_63_116_1' ],
 };
-Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
+Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $restaged_cores );
 
 my $additional_cores = {
     'arabidopsis_thaliana_gca001651475v1gb' => [ 'mysql-ens-compara-exp', 'arabidopsis_thaliana_gca001651475v1gb_core_62_114_1' ],
