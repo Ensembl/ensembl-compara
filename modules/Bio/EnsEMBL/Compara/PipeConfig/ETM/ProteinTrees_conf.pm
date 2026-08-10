@@ -53,6 +53,10 @@ sub default_options {
         'user'     => $ENV{'ENSADMIN_USR'},
         'dbowner'  => whoami(),
         'division' => 'etm',
+
+        'alt_aln_dbs'     => [
+            'compara_prev',
+        ],
     };
 }
 
