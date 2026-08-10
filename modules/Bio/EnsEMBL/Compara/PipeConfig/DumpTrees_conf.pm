@@ -75,8 +75,8 @@ sub default_options {
         'max_files_per_tar'     => 500,
 
         'readme_dir'  => $self->check_dir_in_ensembl('ensembl-compara/docs/ftp'),                                      # where the template README files are
-
         'base_dir'    => $self->o('pipeline_dir'),                                                                      # where the final dumps will be stored
+        'work_dir'    => $self->o('base_dir') . '/dump_hash/',                                                          # required by convert_tsv_to_orthoxml
         'tree_hash_dir' => '#base_dir#/dump_hash/#division#_#basename#/trees',                                          # where directory hash is created and maintained
         'mlss_hash_dir' => '#base_dir#/dump_hash/#division#_#basename#/mlsses',
         'target_dir'  => '#base_dir#/#division#',                                                                       # where the dumps are put (all within subdirectories)
@@ -95,6 +95,7 @@ sub pipeline_wide_parameters {  # these parameter values are visible to all anal
         %{$self->SUPER::pipeline_wide_parameters},          # here we inherit anything from the base class
 
         'base_dir'      => $self->o('base_dir'),
+        'work_dir'      => $self->o('work_dir'),
         'target_dir'    => $self->o('target_dir'),
         'tree_hash_dir' => $self->o('tree_hash_dir'),
         'mlss_hash_dir' => $self->o('mlss_hash_dir'),
