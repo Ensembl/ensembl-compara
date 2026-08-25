@@ -59,10 +59,12 @@
                       arabis_alpina,
                       (
                         brassica_juncea,
-                        brassica_napus,
-                        brassica_napus_gca905183035v1gb,
                         brassica_oleracea,
-                        brassica_rapa_ro18
+                        brassica_rapa_ro18,
+                        (
+                          brassica_napus,
+                          brassica_napus_gca905183035v1gb
+                        )Brassica_napus
                       )Brassica,
                       (
                         (
