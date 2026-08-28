@@ -187,23 +187,23 @@
                           (
                             (
                               (
-                                avena_sativa_ot3098,
+                                avena_sativa_gca022788535v1,
                                 avena_sativa_sang
                               ),
                               (
                                 (
-                                  avena_sativa_ot3098_A,
+                                  avena_sativa_gca022788535v1_A,
                                   avena_sativa_sang_A
                                 )
                               ),
                               (
                                 (
-                                  avena_sativa_ot3098_C,
+                                  avena_sativa_gca022788535v1_C,
                                   avena_sativa_sang_C
                                 )
                               ),
                               (
-                                avena_sativa_ot3098_D,
+                                avena_sativa_gca022788535v1_D,
                                 avena_sativa_sang_D
                               ),
                               avena_sativa_sang_U[&&NHX:unassigned_region_component=1]
@@ -214,7 +214,7 @@
                             (
                               (
                                 hordeum_vulgare,
-                                hordeum_vulgare_barke
+                                hordeum_vulgare_gca949782835v1cm
                               )Hordeum_vulgare,
                               secale_cereale
                             )Hordeinae,
@@ -270,8 +270,8 @@
                             oryza_rufipogon,
                             (
                               oryza_indica,
-                              oryza_sativa,
-                              oryza_sativa_ir64
+                              oryza_sativa_gca001433935v1cm,
+                              oryza_sativa_gca009914875v1
                             )Oryza_sativa
                           )Oryza
                         )Oryzinae
