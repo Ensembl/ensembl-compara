@@ -38,7 +38,7 @@ use warnings;
 use strict;
 
 use Data::Dumper;
-use JSON qw(decode_json);
+use JSON qw(decode_json encode_json);
 
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::CoreDBAdaptor;
@@ -70,7 +70,6 @@ sub fetch_input {
         my $additional_species_file = $self->param('additional_species_file');
         die "Additional species JSON file ('$additional_species_file') does not exist" unless -e $additional_species_file;
         die "Additional species JSON file ('$additional_species_file') should not be empty" if -z $additional_species_file;
-        my $additional_species;
         my $additional_species = decode_json($self->_slurp($additional_species_file));
         foreach my $additional_div ( keys %$additional_species ) {
             foreach my $species_name (@{$additional_species->{$additional_div}}) {
@@ -85,11 +84,31 @@ sub fetch_input {
         delete @core_dbas{@excluded_species};
     }
 
+    # Get new core database adaptors by assembly dyad (e.g. '["GCA_000001405.29","GRCh38"]').
+    my %new_core_dbas_by_asm_dyad = map { encode_json(assembly_dyad_from_core_adaptor($_)) => $_ } values %core_dbas;
+
     my $master_dba = $self->get_cached_compara_dba('master_db');
     my $current_genomes = [grep { $_->name ne 'ancestral_sequences' && !defined $_->genome_component } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current()}];
     my (@genomes_to_update, @genomes_to_retire, @genomes_to_verify, @updated_annotations);
+    my %gdb_asm_dyad_set;
     if ( @$current_genomes ) {
         foreach my $genome ( @$current_genomes ) {
+
+            my $gdb_core_dba = Bio::EnsEMBL::Compara::Utils::Registry::get_previous_core_DBAdaptor($genome->name);
+            my $asm_dyad = encode_json(assembly_dyad_from_core_adaptor($gdb_core_dba));
+            $gdb_asm_dyad_set{$asm_dyad} = 1;
+
+            if (exists $new_core_dbas_by_asm_dyad{$asm_dyad}) {
+                my $new_core_dba = $new_core_dbas_by_asm_dyad{$asm_dyad};
+                my $new_prod_name = $new_core_dba->get_MetaContainer->get_production_name();
+                my $gdb_prod_name = $gdb_core_dba->get_MetaContainer->get_production_name();
+
+                if ($new_prod_name ne $gdb_prod_name) {
+                    $renamed_genomes{$new_prod_name} = $gdb_prod_name;
+                    next;
+                }
+            }
+
             if ( $core_dbas{$genome->name} ) {
                 if ( $genome->assembly eq $core_dbas{$genome->name}->assembly_name ) {
                     push @genomes_to_verify, $genome->name;
@@ -109,8 +128,9 @@ sub fetch_input {
     }
 
     # Add allowed/additional species not yet stored as a GenomeDB.
-    my %current_gdb_name_set = map { $_->name => 1 } @$current_genomes;
-    my @new_gdb_names = grep { !exists $current_gdb_name_set{$_} } keys %core_dbas;
+    my @new_gdb_names = grep {
+        !exists $gdb_asm_dyad_set{encode_json(assembly_dyad_from_core_adaptor($core_dbas{$_}))}
+    } keys %core_dbas;
     push @genomes_to_update, @new_gdb_names;
 
     print "GENOME_LIST!! ";
@@ -118,6 +138,12 @@ sub fetch_input {
 
     print "GENOMES_TO_UPDATE!! ";
     print Dumper \@genomes_to_update;
+
+    print "GENOMES_WITH_UPDATED_ANNOTATION!! ";
+    print Dumper \@updated_annotations;
+
+    print "GENOMES_TO_RENAME!! ";
+    print Dumper \%renamed_genomes;
 
     print "GENOMES_TO_RETIRE!! ";
     print Dumper \@genomes_to_retire;
@@ -128,6 +154,7 @@ sub fetch_input {
     $self->param('genomes_to_update', \@genomes_to_update);
     $self->param('genomes_with_updated_annotation', \@updated_annotations);
     $self->param('genomes_to_retire', \@genomes_to_retire);
+    $self->param('renamed_genomes', \%renamed_genomes);
     $self->param('genomes_to_verify', \@genomes_to_verify);
 }
 
@@ -138,6 +165,11 @@ sub write_output {
     $self->dataflow_output_id(\@genomes_to_update, 2);
     my @genomes_to_retire = map { {species_name => $_} } @{ $self->param('genomes_to_retire') };
     $self->dataflow_output_id(\@genomes_to_retire, 3);
+
+    my $renamed_genomes = $self->param('renamed_genomes');
+    my @rename_genomes_dataflow = map { {new_name => $_, old_name => $renamed_genomes->{$_}} } keys %{ $renamed_genomes };
+    $self->dataflow_output_id( \@rename_genomes_dataflow, 4 );
+
     my @genomes_to_verify = map { {species_name => $_} } @{ $self->param('genomes_to_verify') };
     $self->dataflow_output_id(\@genomes_to_verify, 5);
 
@@ -145,6 +177,14 @@ sub write_output {
         $self->param_required('annotation_file'),
         join("\n", @{$self->param('genomes_to_update')}, @{$self->param('genomes_with_updated_annotation')}),
     );
+}
+
+
+sub assembly_dyad_from_core_adaptor {
+    my ($core_dba) = @_;
+    my $assembly_accession = $core_dba->get_MetaContainer->single_value_by_key('assembly.accession');
+    my $gdb_assembly = $core_dba->assembly_name;
+    return [$assembly_accession, $gdb_assembly];
 }
 
 

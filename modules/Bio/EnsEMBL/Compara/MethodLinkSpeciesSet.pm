@@ -581,7 +581,16 @@ sub find_pairwise_reference {
             return ($genome_dbs->[1], $genome_dbs->[0]);
         } else {
             # In any other case, always place usual references first
-            my @ref_list = qw(homo_sapiens mus_musculus gallus_gallus oryzias_latipes arabidopsis_thaliana vitis_vinifera oryza_sativa);
+            my @ref_list = (
+                'homo_sapiens',
+                'mus_musculus',
+                'gallus_gallus',
+                'oryzias_latipes',
+                'arabidopsis_thaliana',
+                'vitis_vinifera',
+                'oryza_sativa',
+                'oryza_sativa_gca001433935v1cm',
+            );
             if ( grep { $genome_dbs->[0]->name eq $_ } @ref_list ) {
                 # List already in correct order
                 return @$genome_dbs;
