@@ -89,7 +89,7 @@ sub fetch_input {
 
     my $master_dba = $self->get_cached_compara_dba('master_db');
     my $current_genomes = [grep { $_->name ne 'ancestral_sequences' && !defined $_->genome_component } @{$master_dba->get_GenomeDBAdaptor->fetch_all_current()}];
-    my (@genomes_to_update, @genomes_to_retire, @genomes_to_verify, @updated_annotations);
+    my (@genomes_to_update, @genomes_to_retire, @genomes_to_verify, @updated_annotations, %renamed_genomes);
     my %gdb_asm_dyad_set;
     if ( @$current_genomes ) {
         foreach my $genome ( @$current_genomes ) {
