@@ -314,6 +314,10 @@ sub get_expansions {
     return $expansions;
 }
 
+sub nhx_format {
+    my ($self) = @_;
+    return $self->root->nhx_format('cafe_gene_gain_loss_tree');
+}
 
 =head2 toString
 

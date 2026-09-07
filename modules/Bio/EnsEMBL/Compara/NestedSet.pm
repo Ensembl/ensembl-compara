@@ -1057,6 +1057,7 @@ my %nhx_ryo_modes_1 = (
     'phylip' => $ryo_modes{'phylip'},
     'genome_gene_stable_id' => '%{-S"|"}%{-i}:%{d}',
     'genome_product_stable_id' => '%{-S"|"}%{-n}:%{d}',
+    'cafe_gene_gain_loss_tree' => '%{y_}:%{d}',
 );
 
 my %nhx_ryo_modes_2 = (
@@ -1071,6 +1072,7 @@ my %nhx_ryo_modes_2 = (
     'treebest_ortho' => $nhx1.$nhx2.':S=%{-x}%{C(species_tree_node,taxon_id)-}',
     'genome_gene_stable_id' => $nhx1.'%{":G="-r}'.$nhx2,
     'genome_product_stable_id' => $nhx1.'%{":G="-i}'.$nhx2,
+    'cafe_gene_gain_loss_tree' => ':T=%{-x}%{C(taxon_id)-}' . '%{":lambda="R}%{":present_count="N}%{":pvalue="P}',
 );
 
 

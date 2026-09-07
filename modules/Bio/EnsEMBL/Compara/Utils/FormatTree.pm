@@ -92,7 +92,7 @@ Method_caller : "C(" string ( "," string )(s?) ")"
     "C";
 }
 
-Letter_code : "n" | "c" | "d" | "t" | "r" | "l" | "L" | "h" | "s" | "p" | "m" | "g" | "i" | "o" | "x" | "y" | "X" | "S" | "N" | "P" | "E" | Tag_reader | Method_caller
+Letter_code : "n" | "c" | "d" | "t" | "r" | "l" | "L" | "h" | "s" | "p" | "m" | "g" | "i" | "o" | "x" | "y" | "X" | "S" | "N" | "P" | "R" | "E" | Tag_reader | Method_caller
 
 preliteral  : string
 {
@@ -334,6 +334,19 @@ my $pvalue_cb = sub {
     return undef;
 };
 
+# C(lambdas)
+my $lambda_cb = sub {
+    my ($self) = @_;
+    if ($self->{tree}->isa('Bio::EnsEMBL::Compara::CAFEGeneFamilyNode')
+            && $self->{tree}->node_id == $self->{tree}->root->node_id
+            && $self->{tree}->can('lambdas')) {
+        my $lambda = $self->{tree}->lambdas;
+        return $lambda+0 if defined $lambda;
+    }
+    return undef;
+};
+
+
 my $empty_cb = sub {
     return '';
 };
@@ -379,6 +392,7 @@ my %callbacks = (
         'S' => $sp_name_cb,
         'N' => $n_members_cb, # Used in cafe trees (number of members)
         'P' => $pvalue_cb, # Used in cafe trees (pvalue)
+        'R' => $lambda_cb, # Used in cafe trees (lambda)
         'E' => $empty_cb, ## Implement the "Empty" option
         'T' => $tag_cb,
         'C' => $method_cb,
