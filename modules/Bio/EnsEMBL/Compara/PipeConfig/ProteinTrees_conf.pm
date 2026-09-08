@@ -685,7 +685,7 @@ sub core_pipeline_analyses {
         {   -logic_name => 'fire_tree_building_analyses',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
             -flow_into  => {
-                '1->A'  => [ 'cluster_factory' ],
+                '1->A'  => [ 'main_entry_point' ],
                 'A->1'  => [ 'backbone_fire_homology_dumps' ],
             },
         },
@@ -739,7 +739,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature%',
                 'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_4_pipeline_finished.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_7_pipeline_finished.sql.gz',
             },
             -rc_name    => '1Gb_24_hour_job',
             -flow_into  => [ { 'final_semaphore_check' => \%semaphore_check_params } ],
@@ -1719,20 +1719,37 @@ sub core_pipeline_analyses {
 
 # ---------------------------------------------[main tree fan]-------------------------------------------------------------
 
+        {   -logic_name => 'main_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => [ 'alignment_entry_point' ],
+                'A->1' => [ 'post_annotation_funnel_check' ],
+            },
+            %decision_analysis_params,
+        },
+
+        {   -logic_name => 'alignment_entry_point',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => {
+                '1->A' => [ 'cluster_factory' ],
+                'A->1' => [ 'post_alignment_funnel_check' ],
+            },
+            %decision_analysis_params,
+        },
+
         {   -logic_name => 'cluster_factory',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
             -parameters => {
                 'inputquery'        => 'SELECT root_id AS gene_tree_id, COUNT(seq_member_id) AS tree_num_genes FROM gene_tree_root JOIN gene_tree_node USING (root_id) WHERE tree_type = "tree" AND clusterset_id="default" GROUP BY root_id',
             },
             -flow_into  => {
-                '2->A' => [ 'alignment_entry_point' ],
-                '1->A' => [ 'join_panther_subfam' ],
-                'A->1' => [ 'global_tree_processing' ],
+                2 => [ 'alignment_cycle_entry_point' ],
+                1 => [ 'join_panther_subfam' ],
             },
             -rc_name    => '2Gb_job',
         },
 
-        {   -logic_name => 'alignment_entry_point',
+        {   -logic_name => 'alignment_cycle_entry_point',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::LoadTags',
             -parameters => {
                 'tags'  => {
@@ -1763,12 +1780,21 @@ sub core_pipeline_analyses {
             %decision_analysis_params,
         },
 
-        {   -logic_name => 'global_tree_processing',
+        {   -logic_name => 'post_annotation_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => {
-                '1->A'  => [ 'hc_global_tree_set', 'hc_supertree_factory' ],
-                'A->1'  => [ 'tree_id_mapping' ],
+                1 => [ 'post_annotation_backup' ],
             },
+        },
+
+        {   -logic_name => 'post_annotation_backup',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'table_list'    => 'peptide_align_feature%',
+                'exclude_list'  => 1,
+                'output_file'   => '#dump_dir#/snapshot_5_post_annotation.sql.gz',
+            },
+            -flow_into  => [ 'tree_id_mapping' ],
         },
 
         {   -logic_name => 'tree_id_mapping',
@@ -2003,8 +2029,7 @@ sub core_pipeline_analyses {
             -hive_capacity  => $self->o('split_genes_capacity'),
             -batch_size     => 20,
             -flow_into      => {
-                '2->A' => 'split_genes_per_species',
-                'A->1' => 'tree_building_entry_point',
+                2 => 'split_genes_per_species',
                 -1  => 'split_genes_himem',
             },
         },
@@ -2018,7 +2043,53 @@ sub core_pipeline_analyses {
             -module         => 'Bio::EnsEMBL::Compara::RunnableDB::ProteinTrees::FindContiguousSplitGenes',
             -hive_capacity  => $self->o('split_genes_capacity'),
             -rc_name        => '4Gb_job',
-            -flow_into      => [ 'tree_building_entry_point' ],
+        },
+
+        {   -logic_name => 'post_alignment_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'hc_alignments' ],
+            %hc_analysis_params,
+        },
+
+        {   -logic_name => 'hc_alignments',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+            -flow_into  => [ 'post_alignment_backup' ],
+            %hc_analysis_params,
+        },
+
+        {   -logic_name => 'post_alignment_backup',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'table_list'    => 'peptide_align_feature%',
+                'exclude_list'  => 1,
+                'output_file'   => '#dump_dir#/snapshot_3_post_alignment.sql.gz',
+            },
+            -flow_into  => {
+                '1->A' => [ 'tree_building_factory' ],
+                'A->1' => [ 'post_tree_funnel_check' ],
+            },
+        },
+
+        {   -logic_name => 'tree_building_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery' => q/
+                    SELECT
+                        root_id AS gene_tree_id, COUNT(seq_member_id) AS tree_gene_count
+                    FROM
+                        gene_tree_root JOIN gene_tree_node USING (root_id)
+                    WHERE
+                        tree_type = "tree"
+                    AND
+                        clusterset_id="default"
+                    GROUP BY
+                        root_id
+                /,
+            },
+            -flow_into  => {
+                2 => [ 'tree_building_entry_point' ],
+            },
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name => 'tree_building_entry_point',
@@ -2037,6 +2108,14 @@ sub core_pipeline_analyses {
             %decision_analysis_params,
         },
 
+        {   -logic_name => 'post_tree_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => {
+                '1->A' => [ 'hc_global_tree_set', 'hc_supertree_factory' ],
+                'A->1' => [ 'post_tree_backup' ],
+            },
+            %hc_analysis_params,
+        },
 
 # ---------------------------------------------[alignment filtering]-------------------------------------------------------------
 
@@ -3042,9 +3121,40 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'hc_post_tree',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HCOneTree',
-            -flow_into  => [ 'ortho_tree_decision' ],
             -hive_capacity        => $self->o('hc_post_tree_capacity'),
             %hc_analysis_params,
+        },
+
+        {   -logic_name => 'post_tree_backup',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
+            -parameters => {
+                'table_list'    => 'peptide_align_feature%',
+                'exclude_list'  => 1,
+                'output_file'   => '#dump_dir#/snapshot_4_post_tree_building.sql.gz',
+            },
+            -flow_into  => [ 'ortho_tree_factory' ],
+        },
+
+        {   -logic_name => 'ortho_tree_factory',
+            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::JobFactory',
+            -parameters => {
+                'inputquery' => q/
+                    SELECT
+                        root_id AS gene_tree_id, COUNT(seq_member_id) AS tree_gene_count
+                    FROM
+                        gene_tree_root JOIN gene_tree_node USING (root_id)
+                    WHERE
+                        tree_type = "tree"
+                    AND
+                        clusterset_id="default"
+                    GROUP BY
+                        root_id
+                /,
+            },
+            -flow_into  => {
+                2 => [ 'ortho_tree_decision' ],
+            },
+            -rc_name => '2Gb_job',
         },
 
         {   -logic_name => 'ortho_tree_decision',
@@ -3261,7 +3371,7 @@ sub core_pipeline_analyses {
             -parameters    => {
                 'sql'         => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT seq_member_id, root_id FROM gene_tree_node WHERE seq_member_id IS NOT NULL AND root_id = #gene_tree_id#',
             },
-            -flow_into      => [ 'alignment_entry_point' ],
+            -flow_into      => [ 'alignment_cycle_entry_point' ],
         },
 
         {   -logic_name     => 'join_panther_subfam',
@@ -3278,7 +3388,7 @@ sub core_pipeline_analyses {
                 'sql'   => 'INSERT INTO gene_tree_backup (seq_member_id, root_id) SELECT gtn3.seq_member_id, gtn1.root_id FROM gene_tree_node gtn1 JOIN gene_tree_node gtn2 ON gtn1.node_id = gtn2.parent_id JOIN gene_tree_node gtn3 ON gtn2.root_id = gtn3.root_id WHERE gtn3.seq_member_id IS NOT NULL AND gtn1.root_id = #gene_tree_id#',
             },
             -flow_into      => {
-                1 => { 'alignment_entry_point' => INPUT_PLUS({ 'is_already_supertree' => 1 }) },
+                1 => { 'alignment_cycle_entry_point' => INPUT_PLUS({ 'is_already_supertree' => 1 }) },
             },
         },
 
@@ -3492,7 +3602,7 @@ sub core_pipeline_analyses {
             -parameters => {
                 'table_list'    => 'peptide_align_feature%',
                 'exclude_list'  => 1,
-                'output_file'   => '#dump_dir#/snapshot_3_after_tree_building.sql.gz',
+                'output_file'   => '#dump_dir#/snapshot_6_after_tree_building.sql.gz',
             },
             -hive_capacity => 9, # this prevents too many competing `dump_per_mlss_homologies_tsv` jobs being spawned
             -rc_name        => '1Gb_24_hour_job',
