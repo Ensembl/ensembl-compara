@@ -1,6 +1,6 @@
-More information about the file formats can be found:
- - OrthoXML at https://orthoxml.org
- - PhyloXML at http://www.phyloxml.org
+More information is available about the file formats we use.
+- Information about OrthoXML can be found at https://orthoxml.org
+- For more on PhyloXML, see Han & Zmasek (2009) https://europepmc.org/article/MED/19860910
 
 This directory contains all the XML dumps of the gene-tree related resources:
  - the gene trees themselves
