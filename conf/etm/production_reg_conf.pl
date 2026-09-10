@@ -23,50 +23,22 @@ use warnings;
 use Bio::EnsEMBL::Registry;
 use Bio::EnsEMBL::Compara::Utils::Registry;
 
-my @overlap_species = (
-    'caenorhabditis_elegans',
-    'drosophila_melanogaster',
-    'saccharomyces_cerevisiae',
-);
-Bio::EnsEMBL::Compara::Utils::Registry::suppress_overlap_species_warnings(\@overlap_species);
-
 # ---------------------- CURRENT CORE DATABASES----------------------------------
 
-# Use our mirror (which has all the databases)
-Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-vertannot-staging:4573/116');
+# e116 core databases
+Bio::EnsEMBL::Registry->load_registry_from_url('mysql://ensro@mysql-ens-compara-prod-1:4485/116');
 
-my @restaged_species = (
-    'avena_sativa_ot3098',
-    'hordeum_vulgare',
-    'hordeum_vulgare_barke',
-    'oryza_sativa',
-    'oryza_sativa_ir64',
-    'solanum_lycopersicum_gca000188115v5cm',
-);
-
-# Ensure we're using the correct cores for species that overlap with other divisions
-Bio::EnsEMBL::Compara::Utils::Registry::remove_species([@overlap_species, @restaged_species]);
-my $overlap_cores = {
-    'caenorhabditis_elegans' => [ 'mysql-ens-vertannot-staging', "caenorhabditis_elegans_core_116_282" ],
-    'drosophila_melanogaster' => [ 'mysql-ens-vertannot-staging', "drosophila_melanogaster_core_116_11" ],
-    'saccharomyces_cerevisiae' => [ 'mysql-ens-vertannot-staging', "saccharomyces_cerevisiae_core_116_4" ],
-};
-Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
-
-my $restaged_cores = {
-    'avena_sativa_ot3098' => [ 'mysql-ens-compara-exp', 'avena_sativa_ot3098_core_63_116_1' ],
-    'hordeum_vulgare' => [ 'mysql-ens-compara-exp', 'hordeum_vulgare_core_63_116_4' ],
-    'hordeum_vulgare_barke' => [ 'mysql-ens-compara-exp', 'hordeum_vulgare_barke_core_63_116_1' ],
-    'oryza_sativa' => [ 'mysql-ens-compara-exp', 'oryza_sativa_core_63_116_7' ],
-    'oryza_sativa_ir64' => [ 'mysql-ens-compara-exp', 'oryza_sativa_ir64_core_63_116_1' ],
-    'solanum_lycopersicum_gca000188115v5cm' => [ 'mysql-ens-compara-exp', 'solanum_lycopersicum_gca000188115v5cm_core_63_116_1' ],
-};
-Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $restaged_cores );
-
+# additional core databases
 my $additional_cores = {
-    'arabidopsis_thaliana_gca001651475v1gb' => [ 'mysql-ens-compara-exp', 'arabidopsis_thaliana_gca001651475v1gb_core_62_114_1' ],
-    'arabidopsis_thaliana_gca978657495v1gb' => [ 'mysql-ens-compara-exp', 'arabidopsis_thaliana_gca978657495v1gb_core_114_1' ],
-    'brassica_napus_gca905183035v1gb' => [ 'mysql-ens-compara-exp', 'brassica_napus_gca905183035v1gb_core_62_114_1' ],
+    'arabidopsis_thaliana_gca001651475v1gb' => [ 'mysql-ens-compara-prod-1', 'arabidopsis_thaliana_gca001651475v1gb_core_62_114_1' ],
+    'arabidopsis_thaliana_gca978657495v1gb' => [ 'mysql-ens-compara-prod-1', 'arabidopsis_thaliana_gca978657495v1gb_core_114_1' ],
+    'avena_sativa_gca022788535v1'           => [ 'mysql-ens-compara-prod-1', 'avena_sativa_gca022788535v1_core_110_1' ],
+    'brassica_napus_gca905183035v1gb'       => [ 'mysql-ens-compara-prod-1', 'brassica_napus_gca905183035v1gb_core_62_114_1' ],
+    'hordeum_vulgare'                       => [ 'mysql-ens-compara-prod-1', 'hordeum_vulgare_core_57_110_4' ],
+    'hordeum_vulgare_gca949782835v1cm'      => [ 'mysql-ens-compara-prod-1', 'hordeum_vulgare_gca949782835v1cm_core_114_1' ],
+    'oryza_sativa_gca001433935v1cm'         => [ 'mysql-ens-compara-prod-1', 'oryza_sativa_gca001433935v1cm_core_114_1' ],
+    'oryza_sativa_gca009914875v1'           => [ 'mysql-ens-compara-prod-1', 'oryza_sativa_gca009914875v1_core_110_1' ],
+    'solanum_lycopersicum_gca000188115v5cm' => [ 'mysql-ens-compara-prod-1', 'solanum_lycopersicum_gca000188115v5cm_core_114_1' ],
 };
 Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $additional_cores );
 
@@ -82,7 +54,6 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $additional_cores );
         -db_version     => 116,
         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
     );
-    Bio::EnsEMBL::Compara::Utils::Registry::remove_species(\@overlap_species, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Registry->load_registry_from_db(
         -host   => 'mysql-ens-mirror-1',
@@ -93,18 +64,23 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $additional_cores );
         -species_suffix => Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX,
     );
 };
+
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
 my $compara_dbs = {
     # general compara dbs
-    'compara_master' => [ 'mysql-ens-compara-exp', 'ensembl_compara_master_etm_20260729' ],
+    'compara_master' => [ 'mysql-ens-compara-exp', 'ensembl_compara_master_etm_20260909' ],
     'compara_prev'   => [ 'mysql-ens-mirror-3', 'ensembl_compara_plants_63_116' ],
 
-    'master_prep'    => [ 'mysql-ens-compara-exp', 'twalsh_prepare_etm_master_for_rel_20260805' ],
+    # production setup
+    #'master_prep' => [ 'mysql-ens-compara-exp', '' ],
 
     # homology dbs
-    #'compara_members'        => [ 'mysql-ens-compara-exp', '' ],
-    #'compara_ptrees'         => [ 'mysql-ens-compara-exp', '' ],
+    #'compara_members' => [ 'mysql-ens-compara-exp', '' ],
+    #'compara_ptrees'  => [ 'mysql-ens-compara-exp', '' ],
+
+    # dump pipeline
+    #'compara_dumps' => [ 'mysql-ens-compara-exp', '' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
