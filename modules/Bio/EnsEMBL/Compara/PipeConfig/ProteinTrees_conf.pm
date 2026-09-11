@@ -2047,12 +2047,15 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'post_alignment_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-            -flow_into  => [ 'hc_alignments' ],
+            -flow_into  => [ 'hc_alignment' ],
             %hc_analysis_params,
         },
 
-        {   -logic_name => 'hc_alignments',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::Dummy',
+        {   -logic_name => 'hc_alignment',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters => {
+                mode => 'alignment',
+            },
             -flow_into  => [ 'post_alignment_backup' ],
             %hc_analysis_params,
         },
