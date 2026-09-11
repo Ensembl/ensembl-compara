@@ -176,6 +176,7 @@ sub pipeline_analyses_prep_master_db_for_release {
             -flow_into  => {
                 '2->A' => [ 'add_species_into_master' ],
                 '3->A' => [ 'retire_species_from_master' ],
+                '4->A' => [ 'rename_genome' ],
                 '5->A' => [ 'verify_genome' ],
                 'A->1' => [ 'sync_metadata' ],
             },
