@@ -130,8 +130,8 @@ sub run {
 
     # We really need a transaction to ensure we are not screwing the databases
     foreach my $dba (values %{$dba_hash}) {
-        # Make sure we are ensadmin for every connection
-        $self->elevate_privileges($dba->dbc);
+        # Make sure we are ensadmin for every connection to a Compara host
+        $self->elevate_privileges($dba->dbc) if ($dba->dbc->host =~ /mysql-ens-compara/);
         $dba->dbc->sql_helper->transaction(-CALLBACK => sub {
             $dba->dbc->do("UPDATE genome_db SET name = '$new_name' WHERE name = '$old_name' AND first_release IS NOT NULL AND last_release IS NULL");
             $dba->dbc->do("UPDATE method_link_species_set_tag SET value = '$new_name' WHERE tag LIKE '%reference_species' AND value = '$old_name'");
