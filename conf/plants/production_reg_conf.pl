@@ -108,6 +108,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $overlap_cores );
 };
 #------------------------COMPARA DATABASE LOCATIONS----------------------------------
 
+# Compara databases may be modified (e.g. by the rename_genome step of the PrepareMaster pipeline),
+# so in general, you should only configure Compara databases that you have permission to modify.
 
 my $compara_dbs = {
     # general compara dbs
