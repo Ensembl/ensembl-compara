@@ -47,8 +47,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $additional_cores );
 # previous release core databases will be required by PrepareMasterDatabaseForRelease and LoadMembers only
 *Bio::EnsEMBL::Compara::Utils::Registry::load_previous_core_databases = sub {
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-mirror-3',
-        -port   => 4275,
+        -host   => 'mysql-ens-sta-3',
+        -port   => 4160,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => 116,
@@ -56,8 +56,8 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $additional_cores );
     );
     Bio::EnsEMBL::Compara::Utils::Registry::remove_multi(undef, Bio::EnsEMBL::Compara::Utils::Registry::PREVIOUS_DATABASE_SUFFIX);
     Bio::EnsEMBL::Registry->load_registry_from_db(
-        -host   => 'mysql-ens-mirror-1',
-        -port   => 4240,
+        -host   => 'mysql-ens-sta-1',
+        -port   => 4519,
         -user   => 'ensro',
         -pass   => '',
         -db_version     => 116,
@@ -70,7 +70,7 @@ Bio::EnsEMBL::Compara::Utils::Registry::add_core_dbas( $additional_cores );
 my $compara_dbs = {
     # general compara dbs
     'compara_master' => [ 'mysql-ens-compara-exp', 'ensembl_compara_master_etm_20260909' ],
-    'compara_prev'   => [ 'mysql-ens-mirror-3', 'ensembl_compara_plants_63_116' ],
+    'compara_prev'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_63_116' ],
 
     # production setup
     #'master_prep' => [ 'mysql-ens-compara-exp', '' ],
