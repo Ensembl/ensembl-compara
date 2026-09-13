@@ -48,13 +48,6 @@ use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
 
 sub fetch_input {
     my $self = shift;
-    # Get the core database adaptors for all the current species specified in the registry
-    my $species_list = Bio::EnsEMBL::Registry->get_all_species();
-    my %core_dbas;
-    foreach my $species_name ( @$species_list ) {
-        my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name, 'core');
-        $core_dbas{$species_name} = $dba;
-    }
 
     # If provided, get the list of allowed species
     my $allowed_species_file = $self->param('allowed_species_file');
@@ -78,10 +71,17 @@ sub fetch_input {
         }
     }
 
-    # Filter core database set, keeping only those that are in the allowed-species/additional-species lists.
-    if ($allowed_species_set || $additional_species_set) {
-        my @excluded_species = grep { ! (exists $allowed_species_set->{$_} || exists $additional_species_set->{$_}) } keys %core_dbas;
-        delete @core_dbas{@excluded_species};
+    # Get the core database adaptors for all the current species specified in the registry
+    my $species_list = Bio::EnsEMBL::Registry->get_all_species();
+    my %core_dbas;
+    foreach my $species_name ( @$species_list ) {
+        my $dba = Bio::EnsEMBL::Registry->get_DBAdaptor($species_name, 'core');
+        # If any allowed-species/additional-species list defined, keep only those that are listed.
+        if ((%{$allowed_species_set} || %{$additional_species_set})
+                && !(exists $allowed_species_set->{$species_name} || exists $additional_species_set->{$species_name})) {
+            next;
+        }
+        $core_dbas{$species_name} = $dba;
     }
 
     # Get new core database adaptors by assembly dyad (e.g. '["GCA_000001405.29","GRCh38"]').
