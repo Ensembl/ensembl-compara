@@ -100,12 +100,11 @@ sub tweak_analyses {
     my @unguarded_funnel_analyses = (
         'create_mlss_ss',
         'datacheck_funnel',
-        'exon_boundaries_prep',
+        'hc_alignment',
         'hc_cafe_results',
         'hc_post_tree',
         'hcluster_dump_input_all_pafs',
         'ortholog_mlss_factory',
-        'panther_paralogs',
         'store_tags',
     );
     foreach my $logic_name (@unguarded_funnel_analyses) {
