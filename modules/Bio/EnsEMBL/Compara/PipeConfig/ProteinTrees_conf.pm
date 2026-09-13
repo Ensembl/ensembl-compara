@@ -2117,7 +2117,7 @@ sub core_pipeline_analyses {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
             -flow_into  => {
                 '1->A' => [ 'hc_global_tree_set', 'hc_supertree_factory' ],
-                'A->1' => [ 'post_tree_backup' ],
+                'A->1' => [ 'post_hc_funnel_check' ],
             },
             %hc_analysis_params,
         },
@@ -3130,7 +3130,13 @@ sub core_pipeline_analyses {
             %hc_analysis_params,
         },
 
-        {   -logic_name => 'post_tree_backup',
+        {   -logic_name => 'post_hc_funnel_check',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
+            -flow_into  => [ 'post_hc_backup' ],
+            %hc_analysis_params,
+        },
+
+        {   -logic_name => 'post_hc_backup',
             -module     => 'Bio::EnsEMBL::Hive::RunnableDB::DatabaseDumper',
             -parameters => {
                 'table_list'    => 'peptide_align_feature%',
