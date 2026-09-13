@@ -1772,12 +1772,23 @@ sub core_pipeline_analyses {
                     '(#tree_gene_count# >= #mafft_gene_count#         and #tree_gene_count# < #mafft_himem_gene_count#)     or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft',
                     '(#tree_gene_count# >= #mafft_himem_gene_count#)                                                        or      (#tree_reuse_aln_runtime#/1000 >= #mafft_runtime#)'  => 'mafft_himem',
                 ),
-                'A->1' => WHEN(
+                'A->1' => [ 'hc_alignment' ],
+            },
+            %decision_analysis_params,
+        },
+
+        {   -logic_name => 'hc_alignment',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
+            -parameters => {
+                mode => 'alignment',
+            },
+            -flow_into  => {
+                1 => WHEN(
                     '#is_already_supertree#' => 'panther_paralogs',
                     ELSE 'exon_boundaries_prep',
                 ),
             },
-            %decision_analysis_params,
+            %hc_analysis_params,
         },
 
         {   -logic_name => 'post_annotation_funnel_check',
@@ -2047,15 +2058,6 @@ sub core_pipeline_analyses {
 
         {   -logic_name => 'post_alignment_funnel_check',
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FunnelCheck',
-            -flow_into  => [ 'hc_alignment' ],
-            %hc_analysis_params,
-        },
-
-        {   -logic_name => 'hc_alignment',
-            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::SqlHealthChecks',
-            -parameters => {
-                mode => 'alignment',
-            },
             -flow_into  => [ 'post_alignment_backup' ],
             %hc_analysis_params,
         },
