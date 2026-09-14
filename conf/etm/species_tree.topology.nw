@@ -191,16 +191,12 @@
                                 avena_sativa_sang
                               ),
                               (
-                                (
-                                  avena_sativa_gca022788535v1_A,
-                                  avena_sativa_sang_A
-                                )
+                                avena_sativa_gca022788535v1_A,
+                                avena_sativa_sang_A
                               ),
                               (
-                                (
-                                  avena_sativa_gca022788535v1_C,
-                                  avena_sativa_sang_C
-                                )
+                                avena_sativa_gca022788535v1_C,
+                                avena_sativa_sang_C
                               ),
                               (
                                 avena_sativa_gca022788535v1_D,
