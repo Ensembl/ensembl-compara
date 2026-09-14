@@ -79,7 +79,7 @@ my $compara_dbs = {
     'master_prep' => [ 'mysql-ens-compara-exp', 'twalsh_prepare_etm_master_for_rel_take3_20260911' ],
 
     # homology dbs
-    #'compara_members' => [ 'mysql-ens-compara-exp', '' ],
+    'compara_members' => [ 'mysql-ens-compara-exp', 'twalsh_etm_load_members_116' ],
     #'compara_ptrees'  => [ 'mysql-ens-compara-exp', '' ],
 
     # dump pipeline
