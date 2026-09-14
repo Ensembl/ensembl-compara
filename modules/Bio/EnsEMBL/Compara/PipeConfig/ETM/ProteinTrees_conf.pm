@@ -57,6 +57,8 @@ sub default_options {
         'alt_aln_dbs'     => [
             'compara_prev',
         ],
+
+        'do_cafe' => 0,
     };
 }
 
