@@ -76,7 +76,7 @@ my $compara_dbs = {
     'compara_prev'   => [ 'mysql-ens-compara-prod-5', 'ensembl_compara_plants_63_116' ],
 
     # production setup
-    #'master_prep' => [ 'mysql-ens-compara-exp', '' ],
+    'master_prep' => [ 'mysql-ens-compara-exp', 'twalsh_prepare_etm_master_for_rel_take3_20260911' ],
 
     # homology dbs
     #'compara_members' => [ 'mysql-ens-compara-exp', '' ],
