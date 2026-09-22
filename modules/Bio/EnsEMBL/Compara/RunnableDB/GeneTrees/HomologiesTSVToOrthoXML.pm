@@ -87,6 +87,7 @@ sub run {
 
         open( my $tsv_fh,  '<', $tsv_file ) or die "Cannot open '$tsv_file'\n";
 
+        my %score_counts_by_type;
         my %species_and_genes;
         my @ortholog_groups;
         while( my $line = <$tsv_fh> ) {
@@ -115,11 +116,29 @@ sub run {
             $species_and_genes{$species2_header}->{$seq2_info->{stable_id}} = $gene2_info;
 
             # store homology pairs
-            my $group_str = "<orthologGroup id=\"${homology_id}\"><property name=\"homology_description\" value=\"$homology_type\" /><geneRef id=\"" . $seq1_info->{seq_member_id} . "\" /><geneRef id=\"" . $seq2_info->{seq_member_id} . "\" />";
-            $group_str .= "<score id=\"dn\" value=\"$dn\" />" if defined $dn and $dn ne 'NULL';
-            $group_str .= qq{<score id=\"ds\" value=\"$ds\" />} if defined $ds and $ds ne 'NULL';
-            $group_str .= qq{<score id=\"goc_score\" value=\"$goc_score\" />} if defined $goc_score and $goc_score ne 'NULL';
-            $group_str .= qq{<score id=\"wga_coverage\" value=\"$wga_coverage\" />} if defined $wga_coverage and $wga_coverage ne 'NULL';
+            my $group_str = "<orthologGroup id=\"${homology_id}\">";
+
+            if (defined $dn and $dn ne 'NULL') {
+                $group_str .= "<score id=\"dn\" value=\"$dn\" />";
+                $score_counts_by_type{'dn'} += 1;
+            }
+
+            if (defined $ds and $ds ne 'NULL') {
+                $group_str .= qq{<score id=\"ds\" value=\"$ds\" />};
+                $score_counts_by_type{'ds'} += 1;
+            }
+
+            if (defined $goc_score and $goc_score ne 'NULL') {
+                $group_str .= qq{<score id=\"goc_score\" value=\"$goc_score\" />};
+                $score_counts_by_type{'goc_score'} += 1;
+            }
+
+            if (defined $wga_coverage and $wga_coverage ne 'NULL') {
+                $group_str .= qq{<score id=\"wga_coverage\" value=\"$wga_coverage\" />};
+                $score_counts_by_type{'wga_coverage'} += 1;
+            }
+
+            $group_str .= "<property name=\"homology_description\" value=\"$homology_type\" /><geneRef id=\"" . $seq1_info->{seq_member_id} . "\" /><geneRef id=\"" . $seq2_info->{seq_member_id} . "\" />";
             $group_str .= qq{</orthologGroup>\n};
             # push( @ortholog_groups, $str );
             print $tmp_groups_fh $group_str;
@@ -137,6 +156,33 @@ sub run {
             print $xml_fh "\t" . join("\n\t", values %{ $species_and_genes{$species_header} }) . "\n";
             print $xml_fh "</genes></database></species>\n";
         }
+
+        if (%score_counts_by_type) {
+            print $xml_fh '<scores>' . "\n";
+
+            if ($score_counts_by_type{'dn'}) {
+                print $xml_fh "\t" . '<scoreDef id="dn" desc="Rate of non-synonymous mutations" />' . "\n";
+            }
+
+            if ($score_counts_by_type{'ds'}) {
+                print $xml_fh "\t" . '<scoreDef id="ds" desc="Rate of synonymous mutations" />' . "\n";
+            }
+
+            if ($score_counts_by_type{'goc_score'}) {
+                print $xml_fh "\t" . '<scoreDef id="goc_score" desc="Gene order conservation score" />' . "\n";
+            }
+
+            if ($score_counts_by_type{'wga_coverage'}) {
+                print $xml_fh "\t" . '<scoreDef id="wga_coverage" desc="Whole genome alignment coverage" />' . "\n";
+            }
+
+            if ($score_counts_by_type{'perc_identity'}) {
+                print $xml_fh "\t" . '<scoreDef id="perc_identity" desc="Percentage of identity of this protein to the alignment" />' . "\n";
+            }
+
+            print $xml_fh '</scores>' . "\n";
+        }
+
         print $xml_fh "<groups>\n";
         open($tmp_groups_fh, '<', $tmp_groups_file);
         while ( my $group_line = <$tmp_groups_fh> ) {
@@ -166,6 +212,12 @@ sub healthcheck_xml {
     unless ( $tail_out =~ /<groups>\s+<\/groups>\s+<\/orthoXML>$/ ) { # allow for 'empty' XML
         die "Detected truncation at EOF in $xml_file:\n$tail_out\n\n" unless $tail_out =~ /<\/orthologGroup>\s+<\/groups>\s+<\/orthoXML>$/;
     }
+
+    print "Validating OrthoXML..\n";
+    my $xmllint_exe = $self->require_executable('xmllint_exe');
+    my $xml_schema_file = $self->param_required('xml_schema_file');
+    my $xmllint_cmd_args = [$xmllint_exe, '--noout', '--stream', '--schema', $xml_schema_file, $xml_file];
+    $self->run_command($xmllint_cmd_args, { die_on_failure => 1 });
 
     print "Counting orthologGroup entries in XML..\n";
     my $xml_count_cmd = "grep -c orthologGroup $xml_file";

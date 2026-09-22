@@ -43,15 +43,15 @@ sub pipeline_analyses_dump_trees {
 
     my %tree_dump_params = (
         'dump_script'       => $self->o('dump_gene_tree_exe'),
-        'xmllint_exe'       => $self->o('xmlschema_validate_exe'),
+        'xmlschema_validate_exe' => $self->o('xmlschema_validate_exe'),
         'tree_args'         => '-nh 1 -a 1 -nhx 1 -f 1 -fc 1 -oxml 1 -pxml 1 -cafe 1',
         'hps_shared_dir'    => $self->o('shared_hps_dir'),
         'base_filename'     => '#tree_hash_dir#/#hashed_tree_id#/tree.#tree_id#',
         'commands'          => [
             '#dump_script# --reg_conf #reg_conf# --reg_alias #rel_db# --dirpath #tree_hash_dir#/#hashed_tree_id# --tree_id #tree_id# #tree_args#',
-            '[[ ! -e #base_filename#.orthoxml.xml ]] || #xmllint_exe# --noout --schema #hps_shared_dir#/xml_schema/orthoxml.xsd #base_filename#.orthoxml.xml',
-            '[[ ! -e #base_filename#.phyloxml.xml ]] || #xmllint_exe# --noout --schema #hps_shared_dir#/xml_schema/phyloxml.xsd #base_filename#.phyloxml.xml',
-            '[[ ! -e #base_filename#.cafe_phyloxml.xml ]] || #xmllint_exe# --noout --schema #hps_shared_dir#/xml_schema/phyloxml.xsd #base_filename#.cafe_phyloxml.xml',
+            '[[ ! -e #base_filename#.orthoxml.xml ]] || #xmlschema_validate_exe# --schema #hps_shared_dir#/xml_schema/orthoxml.xsd #base_filename#.orthoxml.xml',
+            '[[ ! -e #base_filename#.phyloxml.xml ]] || #xmlschema_validate_exe# --schema #hps_shared_dir#/xml_schema/phyloxml.xsd #base_filename#.phyloxml.xml',
+            '[[ ! -e #base_filename#.cafe_phyloxml.xml ]] || #xmlschema_validate_exe# --schema #hps_shared_dir#/xml_schema/phyloxml.xsd #base_filename#.cafe_phyloxml.xml',
         ],
     );
 
@@ -228,7 +228,7 @@ sub pipeline_analyses_dump_trees {
                                       AND gm1.genome_db_id = #genome_db_id#/,
                 'hashed_hom_mlss_id' => '#expr(dir_revhash(#hom_mlss_id#))expr#',
                 'output_file' => '#mlss_hash_dir#/#hashed_hom_mlss_id#/mlss_#hom_mlss_id#.#species_name#.homologies.tsv',
-                'healthcheck_list' => ['line_count', 'unexpected_nulls'],
+                'healthcheck_list' => ['line_count', 'unexpected_nulls', 'column_integrity'],
             },
             -hive_capacity => $self->o('dump_per_genome_cap'),
             -flow_into     => {
@@ -245,7 +245,7 @@ sub pipeline_analyses_dump_trees {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::FTPDumps::ConcatenateTSV',
             -parameters => {
                 'output_file' => '#tsv_dir#/#species_path#/#name_root#.homologies.tsv',
-                'healthcheck_list' => ['line_count', 'unexpected_nulls'],
+                'healthcheck_list' => ['line_count', 'unexpected_nulls', 'column_integrity'],
                 'exp_line_count' => '#genome_exp_line_count#',
             },
             -flow_into         => {
@@ -273,6 +273,8 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'compara_db'            => '#rel_db#',
                 'tree_type'             => 'tree',
+                'xml_schema_file'       => $self->o('shared_hps_dir') . '/' . 'xml_schema' . '/' . 'orthoxml.xsd',
+                'xmllint_exe'           => $self->o('xmllint_exe'),
             },
             -rc_name => '1Gb_168_hour_job',
             -hive_capacity => $self->o('dump_trees_capacity'),
@@ -287,6 +289,8 @@ sub pipeline_analyses_dump_trees {
             -parameters => {
                 'compara_db'            => '#rel_db#',
                 'tree_type'             => 'tree',
+                'xml_schema_file'       => $self->o('shared_hps_dir') . '/' . 'xml_schema' . '/' . 'orthoxml.xsd',
+                'xmllint_exe'           => $self->o('xmllint_exe'),
             },
             -rc_name => '4Gb_168_hour_job',
             -flow_into => {
@@ -301,7 +305,7 @@ sub pipeline_analyses_dump_trees {
             -rc_name    => '1Gb_24_hour_job',
             -parameters => {
                 'output_file' => '#tsv_dir#/#name_root#.homologies.tsv',
-                'healthcheck_list' => ['line_count', 'unexpected_nulls'],
+                'healthcheck_list' => ['line_count', 'unexpected_nulls', 'column_integrity'],
                 'exp_line_count' => '#clusterset_exp_line_count#',
             },
             -flow_into => {
@@ -338,6 +342,8 @@ sub pipeline_analyses_dump_trees {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HomologiesTSVToOrthoXML',
             -parameters => {
                 'compara_db' => '#rel_db#',
+                'xml_schema_file' => $self->o('shared_hps_dir') . '/' . 'xml_schema' . '/' . 'orthoxml.xsd',
+                'xmllint_exe' => $self->o('xmllint_exe'),
             },
             -flow_into  => { 1 => {
                 'archive_long_files' => [
@@ -481,10 +487,13 @@ sub pipeline_analyses_dump_trees {
         },
 
         {   -logic_name => 'archive_long_files',
-            -module     => 'Bio::EnsEMBL::Hive::RunnableDB::SystemCmd',
+            -module     => 'Bio::EnsEMBL::Compara::RunnableDB::SystemCommands',
             -rc_name    => '1Gb_4c_job',
             -parameters => {
-                'cmd'         => 'pigz -p 4 --force --best #full_name#',
+                'commands' => [
+                    'pigz -p 4 --force --best #full_name#',
+                    'pigz -p 4 --test #full_name#',
+                ],
             },
         },
 

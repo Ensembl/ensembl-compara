@@ -128,7 +128,24 @@ sub write_output {
     my ($self) = @_;
     $self->param('writer')->finish();
     $self->param('file_handle')->close();
+    $self->healthcheck_xml;
 }
 
+sub healthcheck_xml {
+    my $self = shift;
+    my $xml_file = $self->param_required('file');
+
+    # check for truncated line near EOF
+    my $tail_out = $self->get_command_output(['tail', '-3', $xml_file]);
+    unless ( $tail_out =~ /<groups>\s+<\/groups>\s+<\/orthoXML>$/ ) { # allow for 'empty' XML
+        die "Detected truncation at EOF in $xml_file:\n$tail_out\n\n" unless $tail_out =~ /<\/orthologGroup>\s+<\/groups>\s+<\/orthoXML>$/;
+    }
+
+    print "Validating OrthoXML..\n";
+    my $xmllint_exe = $self->require_executable('xmllint_exe');
+    my $xml_schema_file = $self->param_required('xml_schema_file');
+    my $xmllint_cmd_args = [$xmllint_exe, '--noout', '--stream', '--schema', $xml_schema_file, $xml_file];
+    $self->run_command($xmllint_cmd_args, { die_on_failure => 1 });
+}
 
 1;

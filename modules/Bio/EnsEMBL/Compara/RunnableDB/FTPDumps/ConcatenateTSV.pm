@@ -37,7 +37,7 @@ use File::Path qw(make_path);
 use File::Spec::Functions qw(catfile);
 use File::Temp qw(tempdir);
 
-use Bio::EnsEMBL::Compara::Utils::FlatFile qw(check_for_null_characters check_line_counts);
+use Bio::EnsEMBL::Compara::Utils::FlatFile qw(check_column_integrity check_for_null_characters check_line_counts);
 use Bio::EnsEMBL::Hive::Utils qw(destringify);
 
 use base ('Bio::EnsEMBL::Compara::RunnableDB::BaseRunnable');
@@ -105,6 +105,8 @@ sub _healthcheck {
         if ( $hc_type eq 'line_count' ) {
             my $exp_line_count = $self->param_required('exp_line_count') + 1; # incl header line
             check_line_counts($temp_cat_csv_file_path, $exp_line_count);
+        } elsif ( $hc_type eq 'column_integrity' ) {
+            check_column_integrity($self->param('output_file'), '"\t"');
         } elsif ( $hc_type eq 'unexpected_nulls' ) {
             check_for_null_characters($temp_cat_csv_file_path);
         } else {
