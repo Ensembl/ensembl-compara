@@ -82,5 +82,5 @@
     "treerecs_exe"              : "##warehouse_dir##/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs",
     "trimal_exe"                : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/trimal",
     "validateFiles_exe"         : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/validateFiles",
-    "xmllint_exe"               : null
+    "xmllint_exe"               : ["check_exe_in_linuxbrew_opt", "libxml2/bin/xmllint"]
 }
