@@ -21,12 +21,8 @@ import shlex
 import subprocess
 from typing import Sequence
 
-
-def mock_two_bit_to_fa(
-    cmd_args: Sequence,
-    *args,  # pylint: disable=unused-argument
-    **kwargs,  # pylint: disable=unused-argument
-) -> None:
+# pylint: disable-next=unused-argument
+def mock_two_bit_to_fa(cmd_args: Sequence, *args, **kwargs) -> None:
     """Mock of ``twoBitToFa`` call to generate expected output file."""
     if cmd_args[0] == "twoBitToFa":
         two_bit_seq_map = {
