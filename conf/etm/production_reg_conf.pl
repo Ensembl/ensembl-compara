@@ -83,7 +83,7 @@ my $compara_dbs = {
     'compara_ptrees'  => [ 'mysql-ens-compara-exp', 'twalsh_etm_protein_trees_20260914' ],
 
     # dump pipeline
-    #'compara_dumps' => [ 'mysql-ens-compara-exp', '' ],
+    'compara_dumps' => [ 'mysql-ens-compara-exp', 'twalsh_etm_dump_trees_20260923' ],
 };
 
 Bio::EnsEMBL::Compara::Utils::Registry::add_compara_dbas( $compara_dbs );
