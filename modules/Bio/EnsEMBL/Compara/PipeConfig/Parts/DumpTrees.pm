@@ -342,8 +342,6 @@ sub pipeline_analyses_dump_trees {
             -module     => 'Bio::EnsEMBL::Compara::RunnableDB::GeneTrees::HomologiesTSVToOrthoXML',
             -parameters => {
                 'compara_db' => '#rel_db#',
-                'xml_schema_file' => $self->o('shared_hps_dir') . '/' . 'xml_schema' . '/' . 'orthoxml.xsd',
-                'xmllint_exe' => $self->o('xmllint_exe'),
             },
             -flow_into  => { 1 => {
                 'archive_long_files' => [

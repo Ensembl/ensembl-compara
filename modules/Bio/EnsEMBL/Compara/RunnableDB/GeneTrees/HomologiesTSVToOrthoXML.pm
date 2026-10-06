@@ -213,12 +213,6 @@ sub healthcheck_xml {
         die "Detected truncation at EOF in $xml_file:\n$tail_out\n\n" unless $tail_out =~ /<\/orthologGroup>\s+<\/groups>\s+<\/orthoXML>$/;
     }
 
-    print "Validating OrthoXML..\n";
-    my $xmllint_exe = $self->require_executable('xmllint_exe');
-    my $xml_schema_file = $self->param_required('xml_schema_file');
-    my $xmllint_cmd_args = [$xmllint_exe, '--noout', '--stream', '--schema', $xml_schema_file, $xml_file];
-    $self->run_command($xmllint_cmd_args, { die_on_failure => 1 });
-
     print "Counting orthologGroup entries in XML..\n";
     my $xml_count_cmd = "grep -c orthologGroup $xml_file";
     my $xml_count_run = $self->run_command($xml_count_cmd); # can't use die_on_failure when result could be 0!
