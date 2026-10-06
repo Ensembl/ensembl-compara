@@ -53,7 +53,6 @@ dependencies = [
     "ortheus@git+https://github.com/Ensembl/ortheus.git@ensembl_production_116",
     "pandas>=0.24.2",
     "pybedtools>=0.9.0",
-    "sqlalchemy>=1.4.0",
     "xmlschema>=2.5.1",
 ]
 
