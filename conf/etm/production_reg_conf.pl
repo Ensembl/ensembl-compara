@@ -80,7 +80,7 @@ my $compara_dbs = {
 
     # homology dbs
     'compara_members' => [ 'mysql-ens-compara-exp', 'twalsh_etm_load_members_116' ],
-    #'compara_ptrees'  => [ 'mysql-ens-compara-exp', '' ],
+    'compara_ptrees'  => [ 'mysql-ens-compara-exp', 'twalsh_etm_protein_trees_20260914' ],
 
     # dump pipeline
     #'compara_dumps' => [ 'mysql-ens-compara-exp', '' ],
