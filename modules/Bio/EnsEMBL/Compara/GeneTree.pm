@@ -708,6 +708,10 @@ sub get_alignment_of_homologues {
         $new_aligment->add_Member($member) if $members_to_keep{$member->dbID};
     }
 
+    # Homologues for a particular type or species are typically a subset of the
+    # complete gene-tree alignment, so we update alignment stats and CIGAR lines.
+    $new_aligment->update_alignment_stats();
+
     return $new_aligment;
 }
 
