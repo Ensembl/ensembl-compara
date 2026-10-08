@@ -109,7 +109,6 @@ sub pipeline_wide_parameters {
         %{$self->SUPER::pipeline_wide_parameters},
         'bed_dir'                => $self->o('bed_dir'),
         'bedtools_exe'           => $self->o('bedtools_exe'),
-        'cactus_hal2maf_exe'     => $self->o('cactus_hal2maf_exe'),
         'do_alt_mlss'            => $self->o('do_alt_mlss'),
         'dump_dir'               => $self->o('dump_dir'),
         'feature_dir'            => $self->o('feature_dir'),

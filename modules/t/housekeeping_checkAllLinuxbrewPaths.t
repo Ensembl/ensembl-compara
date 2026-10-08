@@ -17,8 +17,11 @@
 use strict;
 use warnings;
 
+use JSON qw(decode_json);
 use Path::Tiny qw(path);
 use Test::More;
+
+use Bio::EnsEMBL::Utils::IO qw/:slurp/;
 
 unless ($ENV{LINUXBREW_HOME}) {
     plan skip_all => 'No linuxbrew installation available ($LINUXBREW_HOME missing)';
@@ -65,10 +68,18 @@ find_and_check('check_dir_in_compara', sub {
 
 sub find_and_check {
     my ($method, $callback) = @_;
-    my $out = qx(grep -FH $method $software_config_path);
-    foreach my $line ( split(",\n", $out) ) {
-        $line =~ /([^"']+)["']\s*\]$/;
-        $callback->($1);
+    my $json = decode_json(slurp($software_config_path));
+
+    while (my ($key, $value) = each %$json) {
+        if (defined $value && ref($value) eq 'HASH' && exists $value->{'spec'}) {
+            $value = $value->{'spec'};
+        }
+
+        if (ref($value) eq 'ARRAY') {
+            my $func_name = shift @$value;
+            next unless $func_name eq $method;
+            $callback->(@$value);
+        }
     }
 }
 
