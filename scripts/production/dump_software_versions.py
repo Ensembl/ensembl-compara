@@ -115,6 +115,7 @@ def main() -> None:
             for command_num, command in enumerate(commands, start=1):
                 for software_base_config_key, software_base_path in software_base_paths.items():
                     command = command.replace(f"##{software_base_config_key}##", software_base_path)
+                # pylint: disable-next=subprocess-run-check
                 process = subprocess.run(
                     command, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT, text=True
                 )
