@@ -13,9 +13,24 @@
 # WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 # See the License for the specific language governing permissions and
 # limitations under the License.
-"""Dump Compara software version information."""
+"""Dump Compara software version information.
 
-from argparse import ArgumentParser
+When running this utility script, please note the following caveats.
+
+The script should be run on a Compara software configuration file
+(e.g. 'ensembl-compara/conf/software/SLURM.slurm.json')
+and should never be run on untrusted input.
+
+The script does not check the exit code of software version
+commands. You should check that its output is as expected.
+
+It is your responsibility to verify the software actually
+exists at the configured path. For example, you can use
+'housekeeping_checkAllLinuxbrewPaths.t' for checking
+Linuxbrew software.
+"""
+
+from argparse import ArgumentParser, RawDescriptionHelpFormatter
 import datetime
 import json
 import os
@@ -57,7 +72,7 @@ def main() -> None:
         )
     )
 
-    parser = ArgumentParser(description=__doc__)
+    parser = ArgumentParser(description=__doc__, formatter_class=RawDescriptionHelpFormatter)
     parser.add_argument(
         "-i",
         "--software-config-file",
