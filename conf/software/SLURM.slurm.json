@@ -4,83 +4,318 @@
 
     "renv_dir"                  : "/hps/software/users/ensembl/compara/shared/renv/4.1.1",
 
-    "axtChain_exe"              : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/axtChain",
-    "bedtools_exe"              : ["check_exe_in_cellar","bedtools/2.30.0/bin/bedtools"],
-    "big_bed_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/bedToBigBed",
-    "big_wig_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/bedGraphToBigWig",
+    "axtChain_exe"              : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/axtChain",
+        "version_command": "echo https://github.com/ucscGenomeBrowser/kent/archive/refs/tags/v415_branch.1.tar.gz"
+    },
+    "bedtools_exe"              : {
+        "spec": ["check_exe_in_cellar","bedtools/2.30.0/bin/bedtools"],
+        "version_command": "##linuxbrew_home##/Cellar/bedtools/2.30.0/bin/bedtools --version"
+    },
+    "big_bed_exe"               : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/bedToBigBed",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/bedToBigBed 2>&1 | grep 'bedToBigBed v'"
+    },
+    "big_wig_exe"               : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/bedGraphToBigWig",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/bedGraphToBigWig 2>&1 | grep 'bedGraphToBigWig v'"
+    },
     "bl2seq_exe"                : null,
-    "blast_bin_dir"             : ["check_dir_in_cellar", "blast/2.2.30/bin"],
-    "blastn_exe"                : ["check_exe_in_cellar", "blast/2.2.30/bin/blastn"],
-    "blat_exe"                  : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/blat",
-    "blast_fix_dir"             : ["check_dir_in_compara","blast_fix"],
-    "cactus_hal2maf_exe"        : "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/cactus-hal2maf",
-    "cafe_shell"                : "/hps/software/users/ensembl/compara/shared/build/cafe/4.2.1/bin/cafe",
-    "cdhit_exe"                 : ["check_exe_in_cellar","cd-hit/4.8.1/bin/cd-hit"],
-    "chainNet_exe"              : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/chainNet",
-    "chainSwap_exe"             : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/chainSwap",
-    "chainToBigChain_exe"       : "/hps/software/users/ensembl/compara/twalsh/bin/chainToBigChain",
-    "cmalign_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/cmalign",
-    "cmbuild_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/cmbuild",
-    "cmsearch_exe"              : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/cmsearch",
+    "blast_bin_dir"             : {
+        "spec": ["check_dir_in_cellar", "blast/2.2.30/bin"],
+        "version_command": "##linuxbrew_home##/Cellar/blast/2.2.30/bin/blastp -version"
+    },
+    "blastn_exe"                : {
+        "spec": ["check_exe_in_cellar", "blast/2.2.30/bin/blastn"],
+        "version_command": "##linuxbrew_home##/Cellar/blast/2.2.30/bin/blastn -version"
+    },
+    "blat_exe"                  : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/blat",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/blat | grep 'BLAT v'"
+    },
+    "blast_fix_dir"             : {
+        "spec": ["check_dir_in_compara","blast_fix"],
+        "version_command": "grep 'Id:' ##warehouse_dir##/software/blast_fix/legacy_blast.pl"
+    },
+    "cactus_hal2maf_exe"        : null,
+    "cafe_shell"                : {
+        "spec": "/hps/software/users/ensembl/compara/shared/build/cafe/4.2.1/bin/cafe",
+        "version_command": "/hps/software/users/ensembl/compara/shared/build/cafe/4.2.1/bin/cafe --version"
+    },
+    "cdhit_exe"                 : {
+        "spec": ["check_exe_in_cellar","cd-hit/4.8.1/bin/cd-hit"],
+        "version_command": "##linuxbrew_home##/Cellar/cd-hit/4.8.1/bin/cd-hit | grep -- 'CD-HIT version'"
+    },
+    "chainNet_exe"              : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/chainNet",
+        "version_command": "echo https://github.com/ucscGenomeBrowser/kent/archive/refs/tags/v415_branch.1.tar.gz"
+    },
+    "chainSwap_exe"             : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/chainSwap",
+        "version_command": "echo https://github.com/ucscGenomeBrowser/kent/archive/refs/tags/v415_branch.1.tar.gz"
+    },
+    "chainToBigChain_exe"       : {
+        "spec": "/hps/software/users/ensembl/compara/twalsh/bin/chainToBigChain",
+        "version_command": "echo https://github.com/ucscGenomeBrowser/kent/archive/refs/tags/v479_branch.1.tar.gz"
+    },
+    "cmalign_exe"               : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/cmalign",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/cmalign -h | grep INFERNAL"
+    },
+    "cmbuild_exe"               : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/cmbuild",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/cmbuild -h | grep INFERNAL"
+    },
+    "cmsearch_exe"              : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/cmsearch",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/cmsearch -h | grep INFERNAL"
+    },
     "codeml_exe"                : null,
-    "diamond_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/diamond",
-    "enredo_exe"                : ["check_exe_in_cellar","enredo/0.5.0/bin/enredo"],
-    "erable_exe"                : ["check_exe_in_cellar","erable/1.0/bin/erable"],
-    "esd2esi_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/esd2esi",
-    "estimate_tree_exe"         : ["check_file_in_cellar","pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py"],
-    "examl_exe_avx"             : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/examl",
-    "examl_exe_sse3"            : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/examl",
-    "exonerate_exe"             : ["check_exe_in_cellar", "exonerate24/2.4.0/bin/exonerate"],
-    "extaligners_exe_dir"       : "##linuxbrew_home##/bin/",
-    "fasta2esd_exe"             : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/fasta2esd",
-    "fasttree_exe"              : ["check_exe_in_cellar","fasttree/2.1.8/bin/FastTree"],
-    "faToNib_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/faToNib",
-    "gerp_exe_dir"              : ["check_dir_in_cellar","gerp/20080211_1/bin"],
-    "getPatterns_exe"           : ["check_exe_in_cellar","raxml-get-patterns/1.0/bin/getPatterns"],
-    "hal2maf_exe"               : "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/hal2maf",
-    "halStats_exe"              : "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/halStats",
-    "halAlignmentDepth_exe"     : "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/halAlignmentDepth",
-    "hcluster_exe"              : ["check_exe_in_cellar","hclustersg/0.5.0/bin/hcluster_sg"],
-    "hmmer2_home"               : ["check_dir_in_cellar","hmmer2/2.3.2/bin"],
-    "hmmer3_home"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin",
-    "java_exe"                  : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/java",
-    "ktreedist_exe"             : ["check_exe_in_cellar","ktreedist/1.0.0/bin/Ktreedist.pl"],
-    "lastz_exe"                 : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/lastz",
-    "lavToAxt_exe"              : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/lavToAxt",
-    "mafDuplicateFilter_exe"    : "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/mafDuplicateFilter",
-    "maf_convert_exe"           : "/hps/software/users/ensembl/compara/twalsh/build/last/bin/maf-convert",
-    "mafft_exe"                 : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/mafft",
+    "diamond_exe"               : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/diamond",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/diamond version"
+    },
+    "enredo_exe"                : {
+        "spec": ["check_exe_in_cellar","enredo/0.5.0/bin/enredo"],
+        "version_command": "##linuxbrew_home##/Cellar/enredo/0.5.0/bin/enredo | grep -m 1 'Enredo v'"
+    },
+    "erable_exe"                : {
+        "spec": ["check_exe_in_cellar","erable/1.0/bin/erable"],
+        "version_command": "##linuxbrew_home##/Cellar/erable/1.0/bin/erable | grep 'ERaBLE Version'"
+    },
+    "esd2esi_exe"               : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/esd2esi",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/esd2esi | grep 'exonerate version'"
+    },
+    "estimate_tree_exe"         : {
+        "spec": ["check_file_in_cellar","pecan/0.8.0/libexec/bp/pecan/utils/EstimateTree.py"],
+        "version_command": "echo https://github.com/Ensembl/homebrew-ensembl/commits/0bbf5ec/pecan.rb"
+    },
+    "examl_exe_avx"             : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/examl",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/examl -v | grep 'ExaML version'"
+    },
+    "examl_exe_sse3"            : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/examl",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/examl -v | grep 'ExaML version'"
+    },
+    "exonerate_exe"             : {
+        "spec": ["check_exe_in_cellar", "exonerate24/2.4.0/bin/exonerate"],
+        "version_command": "##linuxbrew_home##/Cellar/exonerate24/2.4.0/bin/exonerate | grep 'exonerate version'"
+    },
+    "extaligners_exe_dir"       : {
+        "spec": "##linuxbrew_home##/bin/",
+        "version_commands": [
+            "##linuxbrew_home##/bin/clustalw2 -FULLHELP | grep 'Clustal W version'",
+            "##linuxbrew_home##/bin/kalign 2>&1 | grep 'Kalign version'",
+            "##linuxbrew_home##/bin/mafft --help 2>&1 | grep 'MAFFT v'",
+            "##linuxbrew_home##/bin/muscle -version",
+            "##linuxbrew_home##/bin/prank -version | grep 'PRANK v'",
+            "##linuxbrew_home##/bin/t_coffee t_coffee 2>&1 | grep 'T-COFFEE Version'"
+        ]
+    },
+    "fasta2esd_exe"             : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/fasta2esd",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/fasta2esd | grep 'exonerate version'"
+    },
+    "fasttree_exe"              : {
+        "spec": ["check_exe_in_cellar","fasttree/2.1.8/bin/FastTree"],
+        "version_command": "##linuxbrew_home##/Cellar/fasttree/2.1.8/bin/FastTree 2>&1 | grep 'FastTree version'"
+    },
+    "faToNib_exe"               : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/faToNib",
+        "version_command": "echo https://github.com/ucscGenomeBrowser/kent/archive/refs/tags/v415_branch.1.tar.gz"
+    },
+    "gerp_exe_dir"              : {
+        "spec": ["check_dir_in_cellar","gerp/20080211_1/bin"],
+        "version_command": "echo https://github.com/Ensembl/homebrew-ensembl/blob/92e2660/gerp.rb"
+    },
+    "getPatterns_exe"           : {
+        "spec": ["check_exe_in_cellar","raxml-get-patterns/1.0/bin/getPatterns"],
+        "version_command": "echo https://github.com/Ensembl/homebrew-ensembl/blob/0bbf5ec/raxml-get-patterns.rb"
+    },
+    "hal2maf_exe"               : {
+        "spec": "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/hal2maf",
+        "version_command": "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/hal2maf 2>&1 | grep 'hal2maf v'"
+    },
+    "halStats_exe"              : {
+        "spec": "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/halStats",
+        "version_command": "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/halStats 2>&1 | grep 'halStats v'"
+    },
+    "halAlignmentDepth_exe"     : {
+        "spec": "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/halAlignmentDepth",
+        "version_command": "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/halAlignmentDepth 2>&1 | grep 'halAlignmentDepth v'"
+    },
+    "hcluster_exe"              : {
+        "spec": ["check_exe_in_cellar","hclustersg/0.5.0/bin/hcluster_sg"],
+        "version_command": "##linuxbrew_home##/Cellar/hclustersg/0.5.0/bin/hcluster_sg 2>&1 | grep Version"
+    },
+    "hmmer2_home"               : {
+        "spec": ["check_dir_in_cellar","hmmer2/2.3.2/bin"],
+        "version_command": "##linuxbrew_home##/Cellar/hmmer2/2.3.2/bin/hmmsearch -h | grep '^HMMER'"
+    },
+    "hmmer3_home"               : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/hmmsearch -h | grep '^# HMMER'"
+    },
+    "java_exe"                  : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/java",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/java --version"
+    },
+    "ktreedist_exe"             : {
+        "spec": ["check_exe_in_cellar","ktreedist/1.0.0/bin/Ktreedist.pl"],
+        "version_command": "##linuxbrew_home##/Cellar/ktreedist/1.0.0/bin/Ktreedist.pl | grep 'Ktreedist version'"
+    },
+    "lastz_exe"                 : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/lastz",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/lastz -version"
+    },
+    "lavToAxt_exe"              : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/lavToAxt",
+        "version_command": "echo https://github.com/ucscGenomeBrowser/kent/archive/refs/tags/v415_branch.1.tar.gz"
+    },
+    "mafDuplicateFilter_exe"    : {
+        "spec": "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/mafDuplicateFilter",
+        "version_command": "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/mafDuplicateFilter --version"
+    },
+    "maf_convert_exe"           : {
+        "spec": "/hps/software/users/ensembl/compara/twalsh/build/last/bin/maf-convert",
+        "version_command": "/hps/software/users/ensembl/compara/twalsh/build/last/bin/lastal --version"
+    },
+    "mafft_exe"                 : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/mafft",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/mafft --help 2>&1 | grep 'MAFFT v'"
+    },
     "mash_exe"                  : null,
-    "mcl_bin_dir"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin",
-    "mcoffee_exe"               : ["check_exe_in_cellar","t-coffee/9.03.r1318/bin/t_coffee"],
-    "mercator_exe"              : ["check_exe_in_cellar","cndsrc/2013.01.11/bin/mercator"],
-    "mpirun_exe"                : "/hps/software/spack/opt/spack/linux-rocky8-cascadelake/gcc-11.2.0/openmpi-4.1.5-lcbtwbhjm5p3dlttbconb6si7n4j3xsl/bin/mpirun",
-    "noisy_exe"                 : ["check_exe_in_cellar","noisy/1.5.12/bin/noisy"],
-    "notung_jar"                : ["check_file_in_cellar","notung/2.6.0/libexec/Notung-2.6.jar"],
-    "ortheus_c_exe"             : ["check_exe_in_venv","ortheus_core"],
-    "ortheus_py"                : ["check_exe_in_venv","Ortheus.py"],
-    "pantherScore_path"         : ["check_dir_in_cellar","pantherscore/1.03"],
-    "parse_examl_exe"           : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/parse-examl",
-    "parsimonator_exe"          : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/parsimonator-AVX",
-    "pecan_exe_dir"             : ["check_dir_in_cellar","pecan/0.8.0/libexec"],
-    "prank_exe"                 : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/prank",
-    "prottest_jar"              : ["check_file_in_cellar","prottest3/3.4.2/libexec/prottest-3.4.2.jar"],
-    "quicktree_exe"             : ["check_exe_in_cellar","quicktree/2.2/bin/quicktree"],
-    "rscript_exe"               : "/hps/software/users/ensembl/ensw/swenv/env/prod-r-v1/bin/Rscript",
-    "r2r_exe"                   : ["check_exe_in_cellar","r2r/1.0.5/bin/r2r"],
-    "rapidnj_exe"               : ["check_exe_in_cellar","rapidnj/2.3.2/bin/rapidnj"],
-    "raxml_exe_avx"             : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-AVX",
-    "raxml_exe_sse3"            : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-SSE3",
-    "raxml_pthread_exe_avx"     : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-PTHREADS-AVX",
-    "raxml_pthread_exe_sse3"    : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-PTHREADS-SSE3",
-    "samtools_exe"              : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/samtools",
-    "semphy_exe"                : ["check_exe_in_cellar","semphy/2.0b3/bin/semphy"],
-    "server_exe"                : ["check_exe_in_cellar", "exonerate24/2.4.0/bin/exonerate-server"],
-    "taffy_exe"                 : "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/taffy",
-    "textlint_exe"              : "/hps/software/users/ensembl/compara/shared/build/textlint/textlint",
-    "treebest_exe"              : ["check_exe_in_compara","treebest/rc5/bin/treebest"],
-    "treerecs_exe"              : "##warehouse_dir##/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs",
-    "trimal_exe"                : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/trimal",
-    "validateFiles_exe"         : "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/validateFiles",
-    "xmllint_exe"               : ["check_exe_in_linuxbrew_opt", "libxml2/bin/xmllint"]
+    "mcl_bin_dir"               : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin",
+        "version_commands": [
+            "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/mcl --version",
+            "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/mcxload --version"
+        ]
+    },
+    "mcoffee_exe"               : {
+        "spec": ["check_exe_in_cellar","t-coffee/9.03.r1318/bin/t_coffee"],
+        "version_command": "##linuxbrew_home##/Cellar/t-coffee/9.03.r1318/bin/t_coffee 2>&1 | grep 'T-COFFEE Version'"
+    },
+    "mercator_exe"              : {
+        "spec": ["check_exe_in_cellar","cndsrc/2013.01.11/bin/mercator"],
+        "version_command": "##linuxbrew_home##/Cellar/cndsrc/2013.01.11/bin/mercator --version"
+    },
+    "mpirun_exe"                : {
+        "spec": "/hps/software/spack/opt/spack/linux-rocky8-cascadelake/gcc-11.2.0/openmpi-4.1.5-lcbtwbhjm5p3dlttbconb6si7n4j3xsl/bin/mpirun",
+        "version_command": "/hps/software/spack/opt/spack/linux-rocky8-cascadelake/gcc-11.2.0/openmpi-4.1.5-lcbtwbhjm5p3dlttbconb6si7n4j3xsl/bin/mpirun --version"
+    },
+    "noisy_exe"                 : {
+        "spec": ["check_exe_in_cellar","noisy/1.5.12/bin/noisy"],
+        "version_command": "echo https://github.com/Ensembl/homebrew-ensembl/blob/0bbf5ec/noisy.rb"
+    },
+    "notung_jar"                : {
+        "spec": ["check_file_in_cellar","notung/2.6.0/libexec/Notung-2.6.jar"],
+        "version_command": "echo https://github.com/Ensembl/homebrew-ensembl/commits/0bbf5ec/notung.rb"
+    },
+    "ortheus_c_exe"             : {
+        "spec": ["check_exe_in_venv","ortheus_core"],
+        "version_command": "echo https://github.com/Ensembl/ortheus/releases/tag/ensembl_production_116"
+    },
+    "ortheus_py"             : {
+        "spec": ["check_exe_in_venv","Ortheus.py"],
+        "version_command": "echo https://github.com/Ensembl/ortheus/releases/tag/ensembl_production_116"
+    },
+    "pantherScore_path"         : {
+        "spec": ["check_dir_in_cellar","pantherscore/1.03"],
+        "version_command": "echo https://github.com/Ensembl/homebrew-ensembl/blob/0bbf5ec/pantherscore.rb"
+    },
+    "parse_examl_exe"           : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/parse-examl",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/parse-examl -h | grep 'parse-examl version'"
+    },
+    "parsimonator_exe"          : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/parsimonator-AVX",
+        "version_command": "echo https://github.com/stamatak/Parsimonator-1.0.2.git"
+    },
+    "pecan_exe_dir"             : {
+        "spec": ["check_dir_in_cellar","pecan/0.8.0/libexec"],
+        "version_command": "echo https://github.com/Ensembl/homebrew-ensembl/commits/0bbf5ec/pecan.rb"
+    },
+    "prank_exe"                 : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/prank",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/prank -version | grep 'PRANK v'"
+    },
+    "prottest_jar"              : {
+        "spec": ["check_file_in_cellar","prottest3/3.4.2/libexec/prottest-3.4.2.jar"],
+        "version_command": "echo https://github.com/Ensembl/homebrew-ensembl/commits/0bbf5ec/prottest3.rb"
+    },
+    "quicktree_exe"             : {
+        "spec": ["check_exe_in_cellar","quicktree/2.2/bin/quicktree"],
+        "version_command": "##linuxbrew_home##/Cellar/quicktree/2.2/bin/quicktree -v"
+    },
+    "rscript_exe"               : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-r-v1/bin/Rscript",
+        "version_command": " /hps/software/users/ensembl/ensw/swenv/env/prod-r-v1/bin/Rscript --version"
+    },
+    "r2r_exe"                   : {
+        "spec": ["check_exe_in_cellar","r2r/1.0.5/bin/r2r"],
+        "version_command": "echo https://github.com/Ensembl/homebrew-ensembl/blob/ff917ab/r2r.rb"
+    },
+    "rapidnj_exe"               : {
+        "spec": ["check_exe_in_cellar","rapidnj/2.3.2/bin/rapidnj"],
+        "version_command": "echo https://github.com/Ensembl/homebrew-ensembl/blob/ff917ab/r2r.rb"
+    },
+    "raxml_exe_avx"             : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-AVX",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-AVX -version"
+    },
+    "raxml_exe_sse3"            : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-SSE3",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-SSE3 -version"
+    },
+    "raxml_pthread_exe_avx"     : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-PTHREADS-AVX",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-PTHREADS-AVX -version"
+    },
+    "raxml_pthread_exe_sse3"    : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-PTHREADS-SSE3",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/raxmlHPC-PTHREADS-SSE3 -version"
+    },
+    "samtools_exe"              : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/samtools",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/samtools version"
+    },
+    "semphy_exe"                : {
+        "spec": ["check_exe_in_cellar","semphy/2.0b3/bin/semphy"],
+        "version_command": "##linuxbrew_home##/Cellar/semphy/2.0b3/bin/semphy --version"
+    },
+    "server_exe"                : {
+        "spec": ["check_exe_in_cellar", "exonerate24/2.4.0/bin/exonerate-server"],
+        "version_command": "##linuxbrew_home##/Cellar/exonerate24/2.4.0/bin/exonerate-server | grep 'exonerate version'"
+    },
+    "taffy_exe"                 : {
+        "spec": "/hps/software/users/ensembl/compara/shared/build/cactus/3.0.0/local/bin/taffy",
+        "version_command": "echo https://github.com/ComparativeGenomicsToolkit/taffy/commit/1329d99"
+    },
+    "textlint_exe"              : {
+        "spec": "/hps/software/users/ensembl/compara/shared/build/textlint/textlint",
+        "version_command": "echo https://github.com/ens-sb/textlint/commit/2522bd2"
+    },
+    "treebest_exe"              : {
+        "spec": ["check_exe_in_compara","treebest/rc5/bin/treebest"],
+        "version_command": "echo https://github.com/Ensembl/treebest/releases/tag/ensembl_release_candidate_5"
+    },
+    "treerecs_exe"              : {
+        "spec": "##warehouse_dir##/alumni/mateus/home/reconcile/Treerecs/bin/Treerecs",
+        "version_command": "echo 'version alpha 0.1'"
+    },
+    "trimal_exe"                : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/trimal",
+        "version_command": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/trimal --version"
+    },
+    "validateFiles_exe"         : {
+        "spec": "/hps/software/users/ensembl/ensw/swenv/env/prod-base/bin/validateFiles",
+        "version_command": "echo https://github.com/ucscGenomeBrowser/kent/archive/refs/tags/v415_branch.1.tar.gz"
+    },
+    "xmllint_exe"               : {
+        "spec": ["check_exe_in_linuxbrew_opt", "libxml2/bin/xmllint"],
+        "version_command": "##linuxbrew_home##/opt/libxml2/bin/xmllint --version"
+    }
 }

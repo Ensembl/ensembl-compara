@@ -77,6 +77,11 @@ sub meadow_options {
     my $json = decode_json(slurp($json_file));
     my %hash;
     while (my ($key, $value) = each %$json) {
+
+        if (defined $value && ref($value) eq 'HASH' && exists $value->{'spec'}) {
+            $value = $value->{'spec'};
+        }
+
         if (ref($value) eq 'ARRAY') {
             my $func_name = shift @$value;
             $hash{$key} = $self->$func_name(@$value);
