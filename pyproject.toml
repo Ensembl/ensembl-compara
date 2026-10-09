@@ -23,7 +23,7 @@ build-backend = "setuptools.build_meta"
 [project]
 name = "ensembl-compara"
 description = "Ensembl Compara's Python library"
-requires-python = ">= 3.10"
+requires-python = ">= 3.12"
 dynamic = [
     "readme",
     "version",
@@ -38,7 +38,7 @@ classifiers = [
     "Intended Audience :: Science/Research",
     "License :: OSI Approved :: Apache Software License",
     "Natural Language :: English",
-    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.12",
     "Topic :: Scientific/Engineering :: Bio-Informatics",
     "Topic :: Software Development :: Libraries :: Python Modules",
 ]
@@ -98,7 +98,7 @@ version = {file = ["PIP_VERSION"]}
 addopts = [
     "-v",
     "--tb=native",
-    "--server=mysql://ensadmin:${ENSADMIN_PSW}@mysql-ens-compara-prod-1:4485/",
+    "--server=mysql+pymysql://ensadmin:${ENSADMIN_PSW}@mysql-ens-compara-prod-1:4485/",
     "--ignore=src/python/tests/helpers.py",
     # CITest project is on hold and it needs to be updated before resuming its unit tests
     "--ignore=src/python/tests/test_citest.py",
